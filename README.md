@@ -1,2 +1,2 @@
 # DSMEditor
-An application for editing and designing Design Structure Matrices
+An application for editing and designing Dependency Structure Matrices
