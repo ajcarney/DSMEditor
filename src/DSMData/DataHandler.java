@@ -7,12 +7,10 @@ public class DataHandler {
     private Vector<DSMItem> cols;
     private boolean symmetrical;
 
-    private boolean isSaved = false;
-    private String fileSaveName = "";
+    private boolean wasModified = true;
 
-    public DataHandler(boolean symmetrical) {
-        this.symmetrical = symmetrical;
-        this.isSaved = false;
+    public DataHandler() {
+        this.wasModified = true;
     }
 
     public Vector<DSMItem> getRows() {
@@ -29,6 +27,10 @@ public class DataHandler {
         return symmetrical;
     }
 
+    public void setSymmetrical(boolean isSymmetrical) {
+        this.symmetrical = isSymmetrical;
+    }
+
 
 
 
@@ -40,7 +42,7 @@ public class DataHandler {
         this.rows.add(item);  // object is the same for row and column because matrix is symmetrical
         this.cols.add(item);
 
-        this.isSaved = false;
+        this.wasModified = true;
     }
 
     public void addItem(String name, boolean is_row) {
@@ -54,7 +56,7 @@ public class DataHandler {
             this.cols.add(col);
         }
 
-        this.isSaved = false;
+        this.wasModified = true;
     }
 
 
@@ -76,7 +78,7 @@ public class DataHandler {
             }
         }
         assert (!(r_index == -1 || c_index == -1)) : "could not find same uid in row and column in symmetrical matrix when deleting item";
-        this.isSaved = false;
+        this.wasModified = true;
     }
 
     public void deleteItem(int uid) {
@@ -100,7 +102,7 @@ public class DataHandler {
                 cols.remove(index);
             }
         }
-        this.isSaved = false;
+        this.wasModified = true;
     }
 
 
@@ -120,7 +122,7 @@ public class DataHandler {
             }
         }
         assert (r_index != -1 && c_index != -1) : "could not find same uid in row and column in symmetrical matrix when changing item name";
-        this.isSaved = false;
+        this.wasModified = true;
     }
 
     public void setItemName(int uid, String new_name) {
@@ -144,7 +146,7 @@ public class DataHandler {
                 cols.elementAt(index).setName(new_name);
             }
         }
-        this.isSaved = false;
+        this.wasModified = true;
     }
 
     public void modifyConnection(int row_uid, int col_uid, String connectionName, double weight) {
@@ -167,20 +169,12 @@ public class DataHandler {
 
         rows.elementAt(row_index).modifyConnectionTo(col_uid, connectionName, weight);
         cols.elementAt(col_index).modifyConnectionTo(row_uid, connectionName, weight);
+
+        this.wasModified = true;
     }
 
-
-
-    public int saveFile(String filename) {
-        if(this.fileSaveName != "") {
-            this.isSaved = true;
-            System.out.println("Saving file");
-
-            return 1;  // file was successfully saved
-        }
-
-        return 0;  // 0 means the filename was not present, so the data could not be saved
-
+    public void clearWasModifiedFlag() {
+        this.wasModified = false;
     }
 
 }
