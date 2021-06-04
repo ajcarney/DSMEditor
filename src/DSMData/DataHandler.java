@@ -177,4 +177,8 @@ public class DataHandler {
         this.wasModified = false;
     }
 
+    public boolean getWasModified() {
+        return wasModified;
+    }
+
 }

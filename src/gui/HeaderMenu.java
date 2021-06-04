@@ -9,8 +9,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 
 public class HeaderMenu {
-    private static int currentMatrixOpen;  // uid of the current matrix open (used to save the correct file)
-    private static int defaultName;
+    private static int defaultName = 0;
 
     private static Menu fileMenu;
     private static Menu editMenu;
@@ -19,7 +18,8 @@ public class HeaderMenu {
     private static IOHandler ioHandler;
     private static TabView tabView;
 
-    HeaderMenu(IOHandler ioHandler, TabView tabView) {
+    public HeaderMenu(IOHandler ioHandler, TabView tabView) {
+        menuBar = new MenuBar();
         this.ioHandler = ioHandler;
         this.tabView = tabView;
 
@@ -28,7 +28,8 @@ public class HeaderMenu {
         MenuItem newFile = new MenuItem("New...");
         newFile.setOnAction(e -> {
             DataHandler matrix = new DataHandler();
-            this.ioHandler.addMatrix(matrix, ".\\untitled" + Integer.toString(defaultName));
+            int uid = this.ioHandler.addMatrix(matrix, ".\\untitled" + Integer.toString(defaultName));  // TODO: add checking to make sure this file does not exist
+            this.tabView.addTab(uid);
             defaultName += 1;
         });
 
@@ -37,23 +38,27 @@ public class HeaderMenu {
             String fileName = "";
             // TODO: open new window asking for what file to open
             DataHandler matrix = this.ioHandler.readFile(fileName);
-            this.ioHandler.addMatrix(matrix, fileName);
+            int uid = this.ioHandler.addMatrix(matrix, fileName);
+            this.tabView.addTab(uid);
         });
 
         MenuItem saveFile = new MenuItem("Save...");
         saveFile.setOnAction( e -> {
-            if(this.ioHandler.getMatrixSaveFile(currentMatrixOpen).contains("untitled")) {
-                // TODO: open new window asking for a file to save to
-                String fileName = "";
+            if(this.ioHandler.getMatrixSaveFile(tabView.getFocusedMatrixUid()).contains("untitled")) {
+                // TODO: open new window asking for a file to save to when it is only a default value
+                String fileName = "untitled";
             }
-            int code = this.ioHandler.saveMatrixToFile(currentMatrixOpen);
+            int code = this.ioHandler.saveMatrixToFile(tabView.getFocusedMatrixUid());  // TODO: add checking with the return code
+            // tell tabView to refresh names
         });
 
         MenuItem saveFileAs = new MenuItem("Save As...");
         saveFileAs.setOnAction( e -> {
             String fileName = "";
             // TODO: open new window asking for what file to save to
-            this.ioHandler.saveMatrixToNewFile(currentMatrixOpen, fileName);
+            int code = this.ioHandler.saveMatrixToNewFile(tabView.getFocusedMatrixUid(), fileName);
+            // tell tabView to refresh names
+
         });
 
         fileMenu.getItems().add(newFile);
@@ -83,7 +88,4 @@ public class HeaderMenu {
         return menuBar;
     }
 
-    public static void setCurrentMatrixOpen(int currentMatrixOpen) {
-        HeaderMenu.currentMatrixOpen = currentMatrixOpen;
-    }
 }

@@ -1,9 +1,13 @@
 import DSMData.DSMConnection;
+import IOHandler.IOHandler;
+import gui.HeaderMenu;
+import gui.TabView;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;import javafx.stage.Stage;
 
 import java.util.Vector;
@@ -12,12 +16,14 @@ public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        Button btn = new Button();
-        btn.setText("Say 'Hello World'");
-        btn.setOnAction(e -> System.out.println("Hello World!"));
+        IOHandler ioHandler = new IOHandler();
+        TabView editor = new TabView(ioHandler);
+        HeaderMenu menu = new HeaderMenu(ioHandler, editor);
 
-        StackPane root = new StackPane();
-        root.getChildren().add(btn);
+
+        BorderPane root = new BorderPane();
+        root.setTop(menu.getMenuBar());
+        root.setCenter(editor.getTabPane());
 
         Scene scene = new Scene(root, 300, 250);
 
@@ -27,8 +33,6 @@ public class Main extends Application {
     }
 
     public static void main(String[] args) {
-        Vector<DSMConnection> rows = new Vector();
-
         launch(args);  // starts gui application
     }
 }

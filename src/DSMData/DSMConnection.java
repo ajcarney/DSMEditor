@@ -6,6 +6,13 @@ public class DSMConnection {
     private int toUid;
     private int fromUid;
 
+    public DSMConnection(String connectionName, double weight, int toUid, int fromUid) {
+        this.connectionName = connectionName;
+        this.weight = weight;
+        this.toUid = toUid;
+        this.fromUid = fromUid;
+    }
+
     public String getConnectionName() {
         return connectionName;
     }
@@ -30,11 +37,5 @@ public class DSMConnection {
         this.weight = weight;
     }
 
-    public DSMConnection(String connectionName, double weight, int toUid, int fromUid) {
-        this.connectionName = connectionName;
-        this.weight = weight;
-        this.toUid = toUid;
-        this.fromUid = fromUid;
-    }
 
 }
