@@ -6,7 +6,10 @@ import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+
+import java.io.File;
 
 public class HeaderMenu {
     private static int defaultName = 0;
@@ -25,38 +28,62 @@ public class HeaderMenu {
 
         //File menu
         fileMenu = new Menu("File");
+
         MenuItem newFile = new MenuItem("New...");
         newFile.setOnAction(e -> {
             DataHandler matrix = new DataHandler();
-            int uid = this.ioHandler.addMatrix(matrix, ".\\untitled" + Integer.toString(defaultName));  // TODO: add checking to make sure this file does not exist
+            File file = new File("./untitled" + Integer.toString(defaultName));
+            while(file.exists()) {  // make sure file does not exist
+                defaultName += 1;
+                file = new File("./untitled" + Integer.toString(defaultName));
+            }
+
+            int uid = this.ioHandler.addMatrix(matrix, file);
             this.tabView.addTab(uid);
+
             defaultName += 1;
         });
 
         MenuItem openFile = new MenuItem("Open...");
         openFile.setOnAction( e -> {
-            String fileName = "";
-            // TODO: open new window asking for what file to open
-            DataHandler matrix = this.ioHandler.readFile(fileName);
-            int uid = this.ioHandler.addMatrix(matrix, fileName);
-            this.tabView.addTab(uid);
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("DSM File", "*.dsm"));  // dsm is the only file type usable
+            File fileName = fileChooser.showOpenDialog(menuBar.getScene().getWindow());
+            if(fileName != null) {  // make sure user did not just close out of the file chooser window
+                DataHandler matrix = this.ioHandler.readFile(fileName);
+                if(matrix == null) {
+                    // TODO: open window saying there was an error parsing the document
+                    System.out.println("there was an error reading the file " + fileName.toString());
+                } else {
+                    int uid = this.ioHandler.addMatrix(matrix, fileName);
+                    this.tabView.addTab(uid);
+                }
+            }
         });
 
         MenuItem saveFile = new MenuItem("Save...");
         saveFile.setOnAction( e -> {
-            if(this.ioHandler.getMatrixSaveFile(tabView.getFocusedMatrixUid()).contains("untitled")) {
-                // TODO: open new window asking for a file to save to when it is only a default value
-                String fileName = "untitled";
+            if(this.ioHandler.getMatrixSaveFile(tabView.getFocusedMatrixUid()).getName().contains("untitled")) {
+                FileChooser fileChooser = new FileChooser();
+                fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("DSM File", "*.dsm"));  // dsm is the only file type usable
+                File fileName = fileChooser.showSaveDialog(menuBar.getScene().getWindow());
+                if(fileName != null) {
+                    this.ioHandler.setMatrixSaveFile(tabView.getFocusedMatrixUid(), fileName);
+                    int code = this.ioHandler.saveMatrixToFile(tabView.getFocusedMatrixUid());  // TODO: add checking with the return code
+                }
             }
-            int code = this.ioHandler.saveMatrixToFile(tabView.getFocusedMatrixUid());  // TODO: add checking with the return code
-            // tell tabView to refresh names
+
+            // TODO: tell tabView to refresh names
         });
 
         MenuItem saveFileAs = new MenuItem("Save As...");
         saveFileAs.setOnAction( e -> {
-            String fileName = "";
-            // TODO: open new window asking for what file to save to
-            int code = this.ioHandler.saveMatrixToNewFile(tabView.getFocusedMatrixUid(), fileName);
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("DSM File", "*.dsm"));  // dsm is the only file type usable
+            File fileName = fileChooser.showSaveDialog(menuBar.getScene().getWindow());
+            if(fileName != null) {
+                int code = this.ioHandler.saveMatrixToNewFile(tabView.getFocusedMatrixUid(), fileName);
+            }
             // tell tabView to refresh names
 
         });

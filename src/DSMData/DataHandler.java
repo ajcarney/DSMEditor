@@ -1,15 +1,27 @@
 package DSMData;
 
+import java.util.Set;
 import java.util.Vector;
 
 public class DataHandler {
     private Vector<DSMItem> rows;
     private Vector<DSMItem> cols;
+    private Vector<DSMConnection> connections;
+
     private boolean symmetrical;
+
+    private String title = "";
+    private String projectName = "";
+    private String customer = "";
+    private String versionNumber = "";
 
     private boolean wasModified = true;
 
     public DataHandler() {
+        rows = new Vector<DSMItem>();
+        cols = new Vector<DSMItem>();
+        connections = new Vector<DSMConnection>();
+
         this.wasModified = true;
     }
 
@@ -38,9 +50,10 @@ public class DataHandler {
         assert isSymmetrical() : "cannot call symmetrical function on non symmetrical dataset";
 
         double index = rows.size();
-        DSMItem item = new DSMItem(index, name);
-        this.rows.add(item);  // object is the same for row and column because matrix is symmetrical
-        this.cols.add(item);
+        DSMItem rowItem = new DSMItem(index, name);
+        DSMItem colItem = new DSMItem(index, name);
+        this.rows.add(rowItem);  // object is the same for row and column because matrix is symmetrical
+        this.cols.add(colItem);
 
         this.wasModified = true;
     }
@@ -59,7 +72,26 @@ public class DataHandler {
         this.wasModified = true;
     }
 
+    public void addItem(DSMItem item, boolean is_row) {
+        if(is_row) {
+            this.rows.add(item);
+        } else {
+            this.cols.add(item);
+        }
 
+        this.wasModified = true;
+    }
+
+
+    private void clearItemConnections(int uid) {
+        Vector<DSMConnection> toRemove = new Vector<>();
+        for(DSMConnection connection : connections) {     // check to see if uid is in the rows
+            if(connection.getFromUid() == uid || connection.getToUid() == uid) {
+                toRemove.add(connection);
+            }
+        }
+        connections.removeAll((Set)toRemove);
+    }
 
 
     public void deleteSymmetricItem(int uid) {
@@ -77,6 +109,8 @@ public class DataHandler {
                 break;
             }
         }
+
+        clearItemConnections(uid);
         assert (!(r_index == -1 || c_index == -1)) : "could not find same uid in row and column in symmetrical matrix when deleting item";
         this.wasModified = true;
     }
@@ -102,6 +136,7 @@ public class DataHandler {
                 cols.remove(index);
             }
         }
+        clearItemConnections(uid);
         this.wasModified = true;
     }
 
@@ -149,26 +184,43 @@ public class DataHandler {
         this.wasModified = true;
     }
 
+
     public void modifyConnection(int row_uid, int col_uid, String connectionName, double weight) {
-        int row_index = -1;
-        for(int i=0; i<this.rows.size(); i++) {     // find uid in the row
-            if(rows.elementAt(i).getUid() == row_uid) {
-                row_index = i;
+        // check to see if the connection is in the list of connections already
+        boolean connectionExists = false;
+        for(DSMConnection conn : this.connections) {
+            if(row_uid == conn.getFromUid() && col_uid == conn.getToUid()) {
+                connectionExists = true;
+                // connection exists, so modify it
+                conn.setConnectionName(connectionName);  // TODO: make sure this actually modifies the object and not just a copy of it
+                conn.setWeight(weight);
                 break;
             }
         }
 
-        int col_index = -1;
-        for(int i=0; i<this.rows.size(); i++) {     // find uid in the column
-            if(cols.elementAt(i).getUid() == col_uid) {
-                col_index = i;
-                break;
+        if(!connectionExists) {  // if connection does not exist, add it
+            DSMConnection connection = new DSMConnection(connectionName, weight, row_uid, col_uid);
+            connections.add(connection);
+        }
+
+        if(isSymmetrical()) {  // if symmetrical, then it needs to create the connection that is the same
+            // check to see if the connection is in the list of connections already
+            connectionExists = false;
+            for(DSMConnection conn : this.connections) {
+                if(col_uid == conn.getFromUid() && row_uid == conn.getToUid()) {
+                    connectionExists = true;
+                    // connection exists, so modify it
+                    conn.setConnectionName(connectionName);  // TODO: make sure this actually modifies the object and not just a copy of it
+                    conn.setWeight(weight);
+                    break;
+                }
+            }
+
+            if(!connectionExists) {  // if connection does not exist, add it
+                DSMConnection connection = new DSMConnection(connectionName, weight, row_uid, col_uid);
+                connections.add(connection);
             }
         }
-        assert (!(row_index == -1 || col_index == -1)) : "could not find same uid in row and column in matrix when adding a connection";
-
-        rows.elementAt(row_index).modifyConnectionTo(col_uid, connectionName, weight);
-        cols.elementAt(col_index).modifyConnectionTo(row_uid, connectionName, weight);
 
         this.wasModified = true;
     }
@@ -181,4 +233,35 @@ public class DataHandler {
         return wasModified;
     }
 
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getProjectName() {
+        return projectName;
+    }
+
+    public void setProjectName(String projectName) {
+        this.projectName = projectName;
+    }
+
+    public String getCustomer() {
+        return customer;
+    }
+
+    public void setCustomer(String customer) {
+        this.customer = customer;
+    }
+
+    public String getVersionNumber() {
+        return versionNumber;
+    }
+
+    public void setVersionNumber(String versionNumber) {
+        this.versionNumber = versionNumber;
+    }
 }

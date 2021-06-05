@@ -1,5 +1,6 @@
 package gui;
 
+import DSMData.DSMItem;
 import DSMData.DataHandler;
 import IOHandler.IOHandler;
 import javafx.scene.control.Label;
@@ -8,6 +9,7 @@ import javafx.scene.control.TabPane;
 
 import java.util.HashMap;
 import java.util.Set;
+import java.util.Vector;
 
 public class TabView {
     private static TabPane tabPane;
@@ -24,7 +26,7 @@ public class TabView {
         // create current tabs
         Set<Integer> keys = this.ioHandler.getMatrices().keySet();
         for(int uid : keys) {
-            Tab tab = new Tab(this.ioHandler.getMatrixSaveFile(uid), new Label("grid layout of matrix"));
+            Tab tab = new Tab(this.ioHandler.getMatrixSaveFile(uid).getName(), new Label("there is nothing here"));
             // update closing policy to open a window asking for confirmation when closing a file
             tab.setOnCloseRequest(e -> {
                 // remove the next line: you only want to consume the event for "No"
@@ -43,7 +45,13 @@ public class TabView {
     }
 
     public void addTab(int matrixUid) {
-        Tab tab = new Tab(this.ioHandler.getMatrixSaveFile(matrixUid), new Label("grid layout of matrix"));
+        Vector<DSMItem> rows = this.ioHandler.getMatrix(matrixUid).getRows();
+        String label = "";
+        for(DSMItem row : rows) {
+            label += row.getName() + '\n';
+        }
+
+        Tab tab = new Tab(this.ioHandler.getMatrixSaveFile(matrixUid).getName(), new Label(label));
         tabs.put(tab, matrixUid);
         this.tabPane.getTabs().add(tab);
     }
