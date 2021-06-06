@@ -34,6 +34,11 @@ public class DataHandler {
         Vector<DSMItem> copy_cols = (Vector<DSMItem>)cols.clone();
         return copy_cols;
     }
+    
+    public Vector<DSMConnection> getConnections() {
+        Vector<DSMConnection> copy_connections = (Vector<DSMConnection>)connections.clone();
+        return copy_connections;
+    }
 
     public boolean isSymmetrical() {
         return symmetrical;
@@ -86,7 +91,7 @@ public class DataHandler {
     private void clearItemConnections(int uid) {
         Vector<DSMConnection> toRemove = new Vector<>();
         for(DSMConnection connection : connections) {     // check to see if uid is in the rows
-            if(connection.getFromUid() == uid || connection.getToUid() == uid) {
+            if(connection.getRowUid() == uid || connection.getColUid() == uid) {
                 toRemove.add(connection);
             }
         }
@@ -185,11 +190,11 @@ public class DataHandler {
     }
 
 
-    public void modifyConnection(int row_uid, int col_uid, String connectionName, double weight) {
+    public void modifyConnection(int rowUid, int colUid, String connectionName, double weight) {
         // check to see if the connection is in the list of connections already
         boolean connectionExists = false;
         for(DSMConnection conn : this.connections) {
-            if(row_uid == conn.getFromUid() && col_uid == conn.getToUid()) {
+            if(rowUid == conn.getRowUid() && colUid == conn.getColUid()) {
                 connectionExists = true;
                 // connection exists, so modify it
                 conn.setConnectionName(connectionName);  // TODO: make sure this actually modifies the object and not just a copy of it
@@ -199,7 +204,7 @@ public class DataHandler {
         }
 
         if(!connectionExists) {  // if connection does not exist, add it
-            DSMConnection connection = new DSMConnection(connectionName, weight, row_uid, col_uid);
+            DSMConnection connection = new DSMConnection(connectionName, weight, rowUid, colUid);
             connections.add(connection);
         }
 
@@ -207,7 +212,7 @@ public class DataHandler {
             // check to see if the connection is in the list of connections already
             connectionExists = false;
             for(DSMConnection conn : this.connections) {
-                if(col_uid == conn.getFromUid() && row_uid == conn.getToUid()) {
+                if(colUid == conn.getRowUid() && rowUid == conn.getColUid()) {
                     connectionExists = true;
                     // connection exists, so modify it
                     conn.setConnectionName(connectionName);  // TODO: make sure this actually modifies the object and not just a copy of it
@@ -217,7 +222,7 @@ public class DataHandler {
             }
 
             if(!connectionExists) {  // if connection does not exist, add it
-                DSMConnection connection = new DSMConnection(connectionName, weight, row_uid, col_uid);
+                DSMConnection connection = new DSMConnection(connectionName, weight, rowUid, colUid);
                 connections.add(connection);
             }
         }

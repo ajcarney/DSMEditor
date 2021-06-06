@@ -48,15 +48,17 @@ public class HeaderMenu {
         openFile.setOnAction( e -> {
             FileChooser fileChooser = new FileChooser();
             fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("DSM File", "*.dsm"));  // dsm is the only file type usable
-            File fileName = fileChooser.showOpenDialog(menuBar.getScene().getWindow());
-            if(fileName != null) {  // make sure user did not just close out of the file chooser window
-                DataHandler matrix = this.ioHandler.readFile(fileName);
+            File file = fileChooser.showOpenDialog(menuBar.getScene().getWindow());
+            if(file != null) {  // make sure user did not just close out of the file chooser window
+                DataHandler matrix = this.ioHandler.readFile(file);
                 if(matrix == null) {
                     // TODO: open window saying there was an error parsing the document
-                    System.out.println("there was an error reading the file " + fileName.toString());
-                } else {
-                    int uid = this.ioHandler.addMatrix(matrix, fileName);
+                    System.out.println("there was an error reading the file " + file.toString());
+                } else if(!ioHandler.getMatrixSaveNames().containsValue(file)) {
+                    int uid = this.ioHandler.addMatrix(matrix, file);
                     this.tabView.addTab(uid);
+                } else {
+                    tabView.focusTab(file);  // focus on that tab because it is already open
                 }
             }
         });
@@ -72,8 +74,7 @@ public class HeaderMenu {
                     int code = this.ioHandler.saveMatrixToFile(tabView.getFocusedMatrixUid());  // TODO: add checking with the return code
                 }
             }
-
-            // TODO: tell tabView to refresh names
+            tabView.refreshNames();
         });
 
         MenuItem saveFileAs = new MenuItem("Save As...");
@@ -84,8 +85,7 @@ public class HeaderMenu {
             if(fileName != null) {
                 int code = this.ioHandler.saveMatrixToNewFile(tabView.getFocusedMatrixUid(), fileName);
             }
-            // tell tabView to refresh names
-
+            tabView.refreshNames();
         });
 
         fileMenu.getItems().add(newFile);

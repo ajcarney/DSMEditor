@@ -1,20 +1,21 @@
 package IOHandler;
 
+import DSMData.DSMConnection;
 import DSMData.DSMItem;
 import DSMData.DataHandler;
 import net.minidev.json.JSONObject;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.io.FileOutputStream;
+import java.util.*;
 
 import org.jdom2.Attribute;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
 import org.jdom2.input.SAXBuilder;
+import org.jdom2.output.Format;
+import org.jdom2.output.XMLOutputter;
 
 import javax.xml.crypto.Data;
 
@@ -40,16 +41,72 @@ public class IOHandler {
 
 
     public int saveMatrixToFile(int matrixUid) {
-        if(!this.matrixSaveNames.get(matrixUid).equals("")) {  // TODO: add actual file IO
-            matrices.get(matrixUid).clearWasModifiedFlag();
+        try {
+            // create xml
+            Element rootElement = new Element("dsm");
+            Document doc = new Document(rootElement);
 
+            Element infoElement = new Element("info");
+            Element rowsElement = new Element("rows");
+            Element colsElement = new Element("columns");
+            Element connectionsElement = new Element("connections");
+
+            // update information
+            infoElement.addContent(new Element("title").setText(matrices.get(matrixUid).getTitle()));
+            infoElement.addContent(new Element("project").setText(matrices.get(matrixUid).getProjectName()));
+            infoElement.addContent(new Element("customer").setText(matrices.get(matrixUid).getCustomer()));
+            infoElement.addContent(new Element("version").setText(matrices.get(matrixUid).getVersionNumber()));
+            if(matrices.get(matrixUid).isSymmetrical()) {
+                infoElement.addContent(new Element("symmetric").setText("1"));
+            } else {
+                infoElement.addContent(new Element("symmetric").setText("0"));
+            }
+
+            // create row elements
+            for(DSMItem row : matrices.get(matrixUid).getRows()) {
+                Element rowElement = new Element("row");
+                rowElement.setAttribute(new Attribute("uid", Integer.valueOf(row.getUid()).toString()));
+                rowElement.addContent(new Element("name").setText(row.getName()));
+                rowElement.addContent(new Element("sort_index").setText(Double.valueOf(row.getSortIndex()).toString()));
+                rowsElement.addContent(rowElement);
+            }
+
+            // create column elements
+            for(DSMItem col : matrices.get(matrixUid).getCols()) {
+                Element colElement = new Element("row");
+                colElement.setAttribute(new Attribute("uid", Integer.valueOf(col.getUid()).toString()));
+                colElement.addContent(new Element("name").setText(col.getName()));
+                colElement.addContent(new Element("sort_index").setText(Double.valueOf(col.getSortIndex()).toString()));
+                colsElement.addContent(colElement);
+            }
+
+            // create connection elements
+            for(DSMConnection connection : matrices.get(matrixUid).getConnections()) {
+                Element connElement = new Element("row");
+                connElement.addContent(new Element("row_uid").setText(Integer.valueOf(connection.getRowUid()).toString()));
+                connElement.addContent(new Element("col_uid").setText(Integer.valueOf(connection.getRowUid()).toString()));
+                connElement.addContent(new Element("name").setText(connection.getConnectionName()));
+                connElement.addContent(new Element("weight").setText(Double.valueOf(connection.getWeight()).toString()));
+                connectionsElement.addContent(connElement);
+            }
+
+            doc.getRootElement().addContent(infoElement);
+            doc.getRootElement().addContent(rowsElement);
+            doc.getRootElement().addContent(colsElement);
+            doc.getRootElement().addContent(connectionsElement);
+
+            XMLOutputter xmlOutput = new XMLOutputter();
+            xmlOutput.setFormat(Format.getPrettyFormat());  // TODO: change this to getCompactFormat() for release
+            xmlOutput.output(doc, new FileOutputStream(getMatrixSaveFile(matrixUid)));
+
+            matrices.get(matrixUid).clearWasModifiedFlag();
             System.out.println("Saving file " + getMatrixSaveFile(matrixUid));
 
             return 1;  // file was successfully saved
+        } catch(Exception e) {  // TODO: add better error handling and bring up an alert box
+            System.out.println(e);
+            return 0;  // 0 means there was an error somewhere
         }
-
-        return 0;  // 0 means the filename was not present, so the data could not be saved
-
     }
 
     public int saveMatrixToNewFile(int matrixUid, File fileName) {
@@ -110,11 +167,13 @@ public class IOHandler {
             matrix.setCustomer(customer);
             matrix.setVersionNumber(version);
 
-            // TODO: add checking to make sure that there are no uid exists multiple times
             // parse rows
+            ArrayList<Integer> uids = new ArrayList<Integer>();
+
             List<Element> rows = rootElement.getChild("rows").getChildren();
             for(Element row : rows) {
                 int uid = Integer.parseInt(row.getAttribute("uid").getValue());
+                uids.add(uid);
                 String name = row.getChild("name").getText();
                 double sortIndex = Double.parseDouble(row.getChild("sort_index").getText());
 
@@ -126,6 +185,7 @@ public class IOHandler {
             List<Element> cols = rootElement.getChild("columns").getChildren();
             for(Element col : cols) {
                 int uid = Integer.parseInt(col.getAttribute("uid").getValue());
+                uids.add(uid);
                 String name = col.getChild("name").getText();
                 double sortIndex = Double.parseDouble(col.getChild("sort_index").getText());
 
@@ -144,8 +204,16 @@ public class IOHandler {
                 matrix.modifyConnection(rowUid, colUid, name, weight);
             }
 
-            matrix.clearWasModifiedFlag();  // clear flag because no write operations were performed to the file
-            return matrix;
+            Set<Integer> set = new HashSet<Integer>(uids);
+            if(set.size() != uids.size()) {  // uids were repeated and file is corrupt in some way
+                // TODO: add alert box that says the file was corrupted in some way and could not be read in
+
+                System.out.println("There were multiple occurrences of a uid (file is corrupted)");
+                return null;
+            } else {
+                matrix.clearWasModifiedFlag();  // clear flag because no write operations were performed to the file
+                return matrix;
+            }
 
         } catch(Exception e) {
             // TODO: add alert box that says the file was corrupted in some way and could not be read in
@@ -153,6 +221,11 @@ public class IOHandler {
             System.out.println(e);
             return null;
         }
+    }
+
+    public void removeMatrix(int matrixUid) {
+        matrices.remove(matrixUid);
+        matrixSaveNames.remove(matrixUid);
     }
 
 }

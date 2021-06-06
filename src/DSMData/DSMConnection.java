@@ -3,14 +3,14 @@ package DSMData;
 public class DSMConnection {
     private String connectionName;
     private double weight;
-    private int toUid;
-    private int fromUid;
+    private int colUid;
+    private int rowUid;
 
-    public DSMConnection(String connectionName, double weight, int toUid, int fromUid) {
+    public DSMConnection(String connectionName, double weight, int colUid, int rowUid) {
         this.connectionName = connectionName;
         this.weight = weight;
-        this.toUid = toUid;
-        this.fromUid = fromUid;
+        this.colUid = colUid;
+        this.rowUid = rowUid;
     }
 
     public String getConnectionName() {
@@ -21,12 +21,12 @@ public class DSMConnection {
         return weight;
     }
 
-    public int getToUid() {
-        return toUid;
+    public int getColUid() {
+        return colUid;
     }
 
-    public int getFromUid() {
-        return fromUid;
+    public int getRowUid() {
+        return rowUid;
     }
 
     public void setConnectionName(String connectionName) {

@@ -30,7 +30,7 @@ public class Main extends Application {
         root.setTop(menu.getMenuBar());
         root.setCenter(editor.getTabPane());
 
-        Scene scene = new Scene(root, 300, 250);
+        Scene scene = new Scene(root, 1600, 900);
 
         primaryStage.setTitle("Hello World!");
         primaryStage.setScene(scene);
