@@ -4,6 +4,7 @@ package gui;
 import DSMData.DSMItem;
 import DSMData.DataHandler;
 import IOHandler.IOHandler;
+import com.intellij.util.Matrix;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
@@ -16,6 +17,7 @@ import java.util.Vector;
 public class TabView {
     private static TabPane tabPane;
     private static HashMap<Tab, Integer> tabs;
+    private static HashMap<Integer, MatrixGuiHandler> editors;
 
     private static IOHandler ioHandler;
 
@@ -32,7 +34,8 @@ public class TabView {
             if(!ioHandler.isMatrixSaved(uid)) {
                 title += "*";
             }
-            Tab tab = new Tab(title, new Label("there is nothing here"));
+            MatrixGuiHandler editor = new MatrixGuiHandler(ioHandler.getMatrix(uid));
+            Tab tab = new Tab(title, editor.getMatrixEditor());
             // update closing policy to open a window asking for confirmation when closing a file
             tab.setOnCloseRequest(e -> {
                 // remove the next line: you only want to consume the event for "No"
@@ -64,7 +67,8 @@ public class TabView {
         if(!ioHandler.isMatrixSaved(matrixUid)) {
             title += "*";
         }
-        Tab tab = new Tab(title, new Label(label));
+        MatrixGuiHandler editor = new MatrixGuiHandler(ioHandler.getMatrix(matrixUid));
+        Tab tab = new Tab(title, editor.getMatrixEditor());
         tab.setOnCloseRequest(e -> {
             // remove the next line: you only want to consume the event for "No"
             // e.consume();

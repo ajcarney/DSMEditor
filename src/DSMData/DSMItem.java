@@ -42,7 +42,7 @@ public class DSMItem {
         this.name = name;
     }
 
-    public void setSortIndex(int index) {
+    public void setSortIndex(double index) {
         this.sortIndex = index;
     }
 

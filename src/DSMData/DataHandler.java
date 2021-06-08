@@ -1,7 +1,8 @@
 package DSMData;
 
-import java.util.Set;
-import java.util.Vector;
+import javafx.util.Pair;
+
+import java.util.*;
 
 public class DataHandler {
     private Vector<DSMItem> rows;
@@ -9,6 +10,7 @@ public class DataHandler {
     private Vector<DSMConnection> connections;
 
     private boolean symmetrical;
+    private HashMap<Integer, Integer> columnLookup;  // only used for symmetrical matrices, keys are row uid and values are corresponding column uid
 
     private String title = "";
     private String projectName = "";
@@ -21,23 +23,25 @@ public class DataHandler {
         rows = new Vector<DSMItem>();
         cols = new Vector<DSMItem>();
         connections = new Vector<DSMConnection>();
+        columnLookup = new HashMap<>();
 
         this.wasModified = true;
     }
 
     public Vector<DSMItem> getRows() {
-        Vector<DSMItem> copy_rows = (Vector<DSMItem>)rows.clone();
-        return copy_rows;
+        return rows;
     }
 
     public Vector<DSMItem> getCols() {
-        Vector<DSMItem> copy_cols = (Vector<DSMItem>)cols.clone();
-        return copy_cols;
+        return cols;
     }
     
     public Vector<DSMConnection> getConnections() {
-        Vector<DSMConnection> copy_connections = (Vector<DSMConnection>)connections.clone();
-        return copy_connections;
+        return connections;
+    }
+
+    public HashMap<Integer, Integer> getColumnLookup() {
+        return columnLookup;
     }
 
     public boolean isSymmetrical() {
@@ -59,7 +63,14 @@ public class DataHandler {
         DSMItem colItem = new DSMItem(index, name);
         this.rows.add(rowItem);  // object is the same for row and column because matrix is symmetrical
         this.cols.add(colItem);
+        this.columnLookup.put(rowItem.getUid(), colItem.getUid());
 
+        this.wasModified = true;
+    }
+
+    public void addSymmetricRowItem(DSMItem item, int colUid) {
+        this.rows.add(item);
+        this.columnLookup.put(item.getUid(), colUid);
         this.wasModified = true;
     }
 
@@ -99,14 +110,14 @@ public class DataHandler {
     }
 
 
-    public void deleteSymmetricItem(int uid) {
+    public void deleteSymmetricItem(int rowUid) {
         assert isSymmetrical() : "cannot call symmetrical function on non symmetrical dataset";
 
         int r_index = -1;
         int c_index = -1;
         for (int i = 0; i < this.rows.size(); i++) {
-            if (rows.elementAt(i).getUid() == uid) r_index = i;
-            if (cols.elementAt(i).getUid() == uid) c_index = i;
+            if (rows.elementAt(i).getUid() == rowUid) r_index = i;
+            if (cols.elementAt(i).getUid() == columnLookup.get(rowUid)) c_index = i;
 
             if (r_index != -1 && c_index != -1) {
                 rows.remove(r_index);
@@ -114,8 +125,9 @@ public class DataHandler {
                 break;
             }
         }
+        columnLookup.remove(rowUid);
+        clearItemConnections(rowUid);
 
-        clearItemConnections(uid);
         assert (!(r_index == -1 || c_index == -1)) : "could not find same uid in row and column in symmetrical matrix when deleting item";
         this.wasModified = true;
     }
@@ -147,14 +159,14 @@ public class DataHandler {
 
 
 
-    public void setItemNameSymmetric(int uid, String new_name) {
+    public void setItemNameSymmetric(int rowUid, String new_name) {
         assert isSymmetrical() : "cannot call symmetrical function on non symmetrical dataset";
 
         int r_index = -1;
         int c_index = -1;
         for (int i = 0; i < this.rows.size(); i++) {
-            if (rows.elementAt(i).getUid() == uid) r_index = i;
-            if (cols.elementAt(i).getUid() == uid) c_index = i;
+            if (rows.elementAt(i).getUid() == rowUid) r_index = i;
+            if (cols.elementAt(i).getUid() == columnLookup.get(rowUid)) c_index = i;
 
             if (r_index != -1 && c_index != -1) {
                 rows.elementAt(r_index).setName(new_name);
@@ -164,6 +176,7 @@ public class DataHandler {
         assert (r_index != -1 && c_index != -1) : "could not find same uid in row and column in symmetrical matrix when changing item name";
         this.wasModified = true;
     }
+
 
     public void setItemName(int uid, String new_name) {
         int index = -1;
@@ -189,6 +202,63 @@ public class DataHandler {
         this.wasModified = true;
     }
 
+
+    public void setSortIndexSymmetric(int rowUid, double newIndex) {
+        assert isSymmetrical() : "cannot call symmetrical function on non symmetrical dataset";
+
+        int r_index = -1;
+        int c_index = -1;
+        for (int i = 0; i < this.rows.size(); i++) {
+            if (rows.elementAt(i).getUid() == rowUid) r_index = i;
+            if (cols.elementAt(i).getUid() == columnLookup.get(rowUid)) c_index = i;
+
+            if (r_index != -1 && c_index != -1) {
+                rows.elementAt(r_index).setSortIndex(newIndex);
+                cols.elementAt(c_index).setSortIndex(newIndex);
+            }
+        }
+        assert (r_index != -1 && c_index != -1) : "could not find same uid matching row and column in symmetrical matrix when changing item name";
+        this.wasModified = true;
+    }
+
+
+    public void setSortIndex(int uid, double newIndex) {
+        int index = -1;
+        for(int i=0; i<this.rows.size(); i++) {     // check to see if uid is in the rows
+            if(rows.elementAt(i).getUid() == uid) {
+                index = i;
+                break;
+            }
+        }
+        if (index != -1) {  // uid was not in a row, must be in a column
+            rows.elementAt(index).setSortIndex(newIndex);
+        } else {
+            for(int i=0; i<this.cols.size(); i++) {
+                if(cols.elementAt(i).getUid() == uid) {
+                    index = i;
+                    break;
+                }
+            }
+            if (index != -1) {
+                cols.elementAt(index).setSortIndex(newIndex);
+            }
+        }
+        this.wasModified = true;
+    }
+
+
+
+    public DSMConnection getConnection(int rowUid, int colUid) {
+        DSMConnection connection = null;
+        for(DSMConnection conn : connections) {
+            if(conn.getRowUid() == rowUid && conn.getColUid() == colUid) {
+                connection = conn;
+                break;
+            }
+        }
+
+        return connection;
+    }
 
     public void modifyConnection(int rowUid, int colUid, String connectionName, double weight) {
         // check to see if the connection is in the list of connections already
@@ -229,6 +299,58 @@ public class DataHandler {
 
         this.wasModified = true;
     }
+
+
+    public ArrayList< ArrayList<Pair< String, Object> > > getGridArray() {
+        ArrayList< ArrayList<Pair< String, Object> > > grid = new ArrayList<>();
+
+        // sort row and columns by sortIndex
+        Collections.sort(rows, Comparator.comparing(r -> r.getSortIndex()));
+        Collections.sort(cols, Comparator.comparing(c -> c.getSortIndex()));
+
+        // create header row
+        ArrayList<Pair< String, Object> > row0 = new ArrayList<Pair< String, Object> >();
+        row0.add(new Pair<String, Object>(new String("plain_text"), new String("")));
+        row0.add(new Pair<String, Object>(new String("plain_text"), new String("Column Items")));
+        for(DSMItem c : cols) {
+            row0.add(new Pair<String, Object>(new String("item_name"), c.getUid()));
+        }
+
+        // create second header row
+        ArrayList<Pair< String, Object> > row1 = new ArrayList<Pair< String, Object> >();
+        row1.add(new Pair<String, Object>(new String("plain_text"), new String("Row Items")));
+        row1.add(new Pair<String, Object>(new String("plain_text"), new String("Re-Sort Index")));
+        if(isSymmetrical()) {  // add nothing to this row because it does not need to be displayed to the user
+            for(DSMItem c : cols) {
+                row1.add(new Pair<String, Object>(new String("plain_text"), new String("")));
+            }
+        } else {
+            for(DSMItem c : cols) {
+                row1.add(new Pair<String, Object>(new String("index_item"), c.getUid()));
+            }
+        }
+
+        grid.add(row0);
+        grid.add(row1);
+
+        // create rows
+        for(DSMItem r : rows) {
+            ArrayList<Pair< String, Object> > row = new ArrayList<Pair< String, Object> >();
+            row.add(new Pair<String, Object>(new String("item_name"), r.getUid()));
+            row.add(new Pair<String, Object>(new String("index_item"), r.getUid()));
+            for(DSMItem c : cols) {  // create connection items for all columns
+                if(isSymmetrical() && c.getUid() == columnLookup.get(r.getUid())) {  // can't have connection to itself in a symmetrical matrix
+                    row.add(new Pair<String, Object>(new String("uneditable_connection"), null));
+                } else {
+                    row.add(new Pair<String, Object>(new String("editable_connection"), new Pair<Integer, Integer>(r.getUid(), c.getUid())));
+                }
+            }
+            grid.add(row);
+        }
+
+        return grid;
+    }
+
 
     public void clearWasModifiedFlag() {
         this.wasModified = false;

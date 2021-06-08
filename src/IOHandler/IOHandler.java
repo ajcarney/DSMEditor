@@ -62,15 +62,6 @@ public class IOHandler {
                 infoElement.addContent(new Element("symmetric").setText("0"));
             }
 
-            // create row elements
-            for(DSMItem row : matrices.get(matrixUid).getRows()) {
-                Element rowElement = new Element("row");
-                rowElement.setAttribute(new Attribute("uid", Integer.valueOf(row.getUid()).toString()));
-                rowElement.addContent(new Element("name").setText(row.getName()));
-                rowElement.addContent(new Element("sort_index").setText(Double.valueOf(row.getSortIndex()).toString()));
-                rowsElement.addContent(rowElement);
-            }
-
             // create column elements
             for(DSMItem col : matrices.get(matrixUid).getCols()) {
                 Element colElement = new Element("row");
@@ -78,6 +69,18 @@ public class IOHandler {
                 colElement.addContent(new Element("name").setText(col.getName()));
                 colElement.addContent(new Element("sort_index").setText(Double.valueOf(col.getSortIndex()).toString()));
                 colsElement.addContent(colElement);
+            }
+
+            // create row elements
+            for(DSMItem row : matrices.get(matrixUid).getRows()) {
+                Element rowElement = new Element("row");
+                rowElement.setAttribute(new Attribute("uid", Integer.valueOf(row.getUid()).toString()));
+                rowElement.addContent(new Element("name").setText(row.getName()));
+                rowElement.addContent(new Element("sort_index").setText(Double.valueOf(row.getSortIndex()).toString()));
+                if(matrices.get(matrixUid).isSymmetrical()) {
+                    rowElement.addContent(new Element("associated_col").setText(Integer.valueOf(matrices.get(matrixUid).getColumnLookup().get(row.getUid())).toString()));
+                }
+                rowsElement.addContent(rowElement);
             }
 
             // create connection elements
@@ -91,8 +94,8 @@ public class IOHandler {
             }
 
             doc.getRootElement().addContent(infoElement);
-            doc.getRootElement().addContent(rowsElement);
             doc.getRootElement().addContent(colsElement);
+            doc.getRootElement().addContent(rowsElement);
             doc.getRootElement().addContent(connectionsElement);
 
             XMLOutputter xmlOutput = new XMLOutputter();
@@ -170,17 +173,6 @@ public class IOHandler {
             // parse rows
             ArrayList<Integer> uids = new ArrayList<Integer>();
 
-            List<Element> rows = rootElement.getChild("rows").getChildren();
-            for(Element row : rows) {
-                int uid = Integer.parseInt(row.getAttribute("uid").getValue());
-                uids.add(uid);
-                String name = row.getChild("name").getText();
-                double sortIndex = Double.parseDouble(row.getChild("sort_index").getText());
-
-                DSMItem item = new DSMItem(uid, sortIndex, name);
-                matrix.addItem(item, true);
-            }
-
             // parse columns
             List<Element> cols = rootElement.getChild("columns").getChildren();
             for(Element col : cols) {
@@ -191,6 +183,23 @@ public class IOHandler {
 
                 DSMItem item = new DSMItem(uid, sortIndex, name);
                 matrix.addItem(item, false);
+            }
+
+            // parse rows
+            List<Element> rows = rootElement.getChild("rows").getChildren();
+            for(Element row : rows) {
+                int uid = Integer.parseInt(row.getAttribute("uid").getValue());
+                uids.add(uid);
+                String name = row.getChild("name").getText();
+                double sortIndex = Double.parseDouble(row.getChild("sort_index").getText());
+
+                DSMItem item = new DSMItem(uid, sortIndex, name);
+                if(isSymmetrical) {
+                    int colUid = Integer.parseInt(row.getChild("associated_col").getValue());
+                    matrix.addSymmetricRowItem(item, colUid);  // this will create the link between row and column
+                } else {
+                    matrix.addItem(item, true);
+                }
             }
 
             // parse connections
