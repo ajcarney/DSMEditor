@@ -9,6 +9,7 @@ import javafx.geometry.VerticalDirection;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.TextAlignment;
@@ -78,6 +79,18 @@ public class MatrixGuiHandler {
                     } else {
                         label = new Label(conn.getConnectionName());
                     }
+                    cell.setBackground(new Background(new BackgroundFill(Color.color(.9, .9, .9), new CornerRadii(3), new Insets(0))));
+                    cell.setOnMouseClicked(e -> {
+                        if(e.getButton().equals(MouseButton.PRIMARY)) {
+                            System.out.println("editing connection");
+                        } else if(e.getButton().equals(MouseButton.SECONDARY)) {  // toggle highlighting
+                            if(cell.getBackground().getFills().get(0).getFill().equals(Color.color(.9, 1, 0))) {
+                                cell.setBackground(new Background(new BackgroundFill(Color.color(.9, .9, .9), new CornerRadii(3), new Insets(0))));
+                            } else {
+                                cell.setBackground(new Background(new BackgroundFill(Color.color(.9, 1, 0), new CornerRadii(3), new Insets(0))));
+                            }
+                        }
+                    });
                     cell.getChildren().add(label);
                 }
                 cell.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));

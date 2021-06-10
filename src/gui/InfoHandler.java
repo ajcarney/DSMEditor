@@ -53,11 +53,12 @@ public class InfoHandler {
         modifyButton.setOnAction(e -> {
             System.out.println("Modifying matrix");
         });
-        modifyButton.setAlignment(Pos.CENTER_RIGHT);
+        modifyButton.setMaxWidth(Double.MAX_VALUE);
 
         layout.getChildren().addAll(detailsLayout, modifyButton);
         layout.setSpacing(20);
         layout.setPadding(new Insets(10, 10, 10, 10));
+        layout.setAlignment(Pos.CENTER);
     }
 
     public void setMatrix(DataHandler newMatrix) {

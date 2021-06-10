@@ -3,6 +3,7 @@ import IOHandler.IOHandler;
 import gui.HeaderMenu;
 import gui.InfoHandler;
 import gui.TabView;
+import gui.ToolbarHandler;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -25,13 +26,13 @@ public class Main extends Application {
         InfoHandler infoHandler = new InfoHandler();
         TabView editor = new TabView(ioHandler, infoHandler);
         HeaderMenu menu = new HeaderMenu(ioHandler, editor);
-
-        ioHandler.readFile(new File("C:/Users/ajcar/Documents/DSMEditor/test2.dsm"));
+        ToolbarHandler toolbarHandler = new ToolbarHandler(editor);
 
         BorderPane root = new BorderPane();
         root.setTop(menu.getMenuBar());
         root.setCenter(editor.getTabPane());
         root.setRight(infoHandler.getLayout());
+        root.setLeft(toolbarHandler.getLayout());
 
         Scene scene = new Scene(root, 1000, 600);
 

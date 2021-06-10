@@ -65,6 +65,9 @@ public class HeaderMenu {
 
         MenuItem saveFile = new MenuItem("Save...");
         saveFile.setOnAction( e -> {
+            if(tabView.getFocusedMatrixUid() == null) {
+                return;
+            }
             if(this.ioHandler.getMatrixSaveFile(tabView.getFocusedMatrixUid()).getName().contains("untitled")) {
                 FileChooser fileChooser = new FileChooser();
                 fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("DSM File", "*.dsm"));  // dsm is the only file type usable
@@ -79,6 +82,9 @@ public class HeaderMenu {
 
         MenuItem saveFileAs = new MenuItem("Save As...");
         saveFileAs.setOnAction( e -> {
+            if(tabView.getFocusedMatrixUid() == null) {
+                return;
+            }
             FileChooser fileChooser = new FileChooser();
             fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("DSM File", "*.dsm"));  // dsm is the only file type usable
             File fileName = fileChooser.showSaveDialog(menuBar.getScene().getWindow());

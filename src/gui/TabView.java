@@ -17,7 +17,6 @@ import java.util.Vector;
 public class TabView {
     private static TabPane tabPane;
     private static HashMap<Tab, Integer> tabs;
-    private static HashMap<Integer, MatrixGuiHandler> editors;
 
     private static IOHandler ioHandler;
     private static InfoHandler infoHandler;
@@ -77,6 +76,7 @@ public class TabView {
         }
         MatrixGuiHandler editor = new MatrixGuiHandler(ioHandler.getMatrix(matrixUid));
         Tab tab = new Tab(title, editor.getMatrixEditor());
+
         tab.setOnCloseRequest(e -> {
             // remove the next line: you only want to consume the event for "No"
             // e.consume();
@@ -110,8 +110,23 @@ public class TabView {
         this.tabPane.getTabs().add(tab);
     }
 
-    public int getFocusedMatrixUid() {
-        return tabs.get(this.tabPane.getSelectionModel().getSelectedItem());
+    public Integer getFocusedMatrixUid() {
+        try {
+            return tabs.get(this.tabPane.getSelectionModel().getSelectedItem());
+        } catch(Exception e) {
+            return null;
+        }
+    }
+
+    public Tab getFocusedTab() {
+        Tab tab = null;
+        for (HashMap.Entry<Tab, Integer> m : tabs.entrySet()) {  // remove from HashMap by uid
+            if(m.getValue().equals(getFocusedMatrixUid())) {
+                tab = m.getKey();
+                break;
+            }
+        }
+        return tab;
     }
 
     public void refreshNames() {
@@ -139,5 +154,10 @@ public class TabView {
 
     public static TabPane getTabPane() {
         return tabPane;
+    }
+
+    public void refreshTab() {
+        MatrixGuiHandler editor = new MatrixGuiHandler(ioHandler.getMatrix(getFocusedMatrixUid()));
+        getFocusedTab().setContent(editor.getMatrixEditor());
     }
 }
