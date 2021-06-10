@@ -1,6 +1,7 @@
 import DSMData.DSMConnection;
 import IOHandler.IOHandler;
 import gui.HeaderMenu;
+import gui.InfoHandler;
 import gui.TabView;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
@@ -21,7 +22,8 @@ public class Main extends Application {
     @Override
     public void start(Stage primaryStage) {
         IOHandler ioHandler = new IOHandler();
-        TabView editor = new TabView(ioHandler);
+        InfoHandler infoHandler = new InfoHandler();
+        TabView editor = new TabView(ioHandler, infoHandler);
         HeaderMenu menu = new HeaderMenu(ioHandler, editor);
 
         ioHandler.readFile(new File("C:/Users/ajcar/Documents/DSMEditor/test2.dsm"));
@@ -29,10 +31,11 @@ public class Main extends Application {
         BorderPane root = new BorderPane();
         root.setTop(menu.getMenuBar());
         root.setCenter(editor.getTabPane());
+        root.setRight(infoHandler.getLayout());
 
-        Scene scene = new Scene(root, 1600, 900);
+        Scene scene = new Scene(root, 1000, 600);
 
-        primaryStage.setTitle("Hello World!");
+        primaryStage.setTitle("DSM Editor");
         primaryStage.setScene(scene);
         primaryStage.show();
     }

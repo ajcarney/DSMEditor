@@ -48,11 +48,17 @@
     </row>
   </rows>
   <connections>
-    <row>
-      <row_uid>1246</row_uid>
-      <col_uid>1246</col_uid>
+    <connection>
+      <row_uid>1234</row_uid>
+      <col_uid>1239</col_uid>
       <name>X</name>
       <weight>1.0</weight>
-    </row>
+    </connection>
+    <connection>
+      <row_uid>1235</row_uid>
+      <col_uid>1238</col_uid>
+      <name>X</name>
+      <weight>1.0</weight>
+    </connection>
   </connections>
 </dsm>

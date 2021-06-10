@@ -35,6 +35,20 @@ public class DataHandler {
     public Vector<DSMItem> getCols() {
         return cols;
     }
+
+    public DSMItem getItem(int uid) {
+        for(DSMItem row : rows) {
+            if(row.getUid() == uid) {
+                return row;
+            }
+        }
+        for(DSMItem col : cols) {
+            if(col.getUid() == uid) {
+                return col;
+            }
+        }
+        return null;
+    }
     
     public Vector<DSMConnection> getConnections() {
         return connections;

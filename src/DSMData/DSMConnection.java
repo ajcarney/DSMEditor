@@ -6,7 +6,7 @@ public class DSMConnection {
     private int colUid;
     private int rowUid;
 
-    public DSMConnection(String connectionName, double weight, int colUid, int rowUid) {
+    public DSMConnection(String connectionName, double weight, int rowUid, int colUid) {
         this.connectionName = connectionName;
         this.weight = weight;
         this.colUid = colUid;

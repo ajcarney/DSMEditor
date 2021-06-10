@@ -20,11 +20,13 @@ public class TabView {
     private static HashMap<Integer, MatrixGuiHandler> editors;
 
     private static IOHandler ioHandler;
+    private static InfoHandler infoHandler;
 
-    public TabView(IOHandler ioHandler) {
+    public TabView(IOHandler ioHandler, InfoHandler infoHandler) {
         tabPane = new TabPane();
         tabs = new HashMap<>();
         this.ioHandler = ioHandler;
+        this.infoHandler = infoHandler;
 
 
         // create current tabs
@@ -47,6 +49,12 @@ public class TabView {
                     // TODO: add alert box that opens asking if you want to save before closing the tab
                 }
             });
+
+            tab.setOnSelectionChanged(e -> {
+                infoHandler.setMatrix(ioHandler.getMatrix(uid));
+            });
+
+
             tabs.put(tab, uid);
             this.tabPane.getTabs().add(tab);
         };
@@ -93,6 +101,11 @@ public class TabView {
             ioHandler.removeMatrix(matrixUid);
 
         });
+
+        tab.setOnSelectionChanged(e -> {
+            infoHandler.setMatrix(ioHandler.getMatrix(matrixUid));
+        });
+
         tabs.put(tab, matrixUid);
         this.tabPane.getTabs().add(tab);
     }

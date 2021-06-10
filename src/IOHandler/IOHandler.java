@@ -85,7 +85,7 @@ public class IOHandler {
 
             // create connection elements
             for(DSMConnection connection : matrices.get(matrixUid).getConnections()) {
-                Element connElement = new Element("row");
+                Element connElement = new Element("connection");
                 connElement.addContent(new Element("row_uid").setText(Integer.valueOf(connection.getRowUid()).toString()));
                 connElement.addContent(new Element("col_uid").setText(Integer.valueOf(connection.getRowUid()).toString()));
                 connElement.addContent(new Element("name").setText(connection.getConnectionName()));
