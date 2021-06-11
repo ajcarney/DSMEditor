@@ -36,6 +36,26 @@ public class DataHandler {
         return cols;
     }
 
+    public double getRowMaxSortIndex() {
+        double index = 0;
+        for(DSMItem row : rows) {
+            if(row.getSortIndex() > index) {
+                index = row.getSortIndex();
+            }
+        }
+        return index;
+    }
+
+    public double getColMaxSortIndex() {
+        double index = 0;
+        for(DSMItem col : cols) {
+            if(col.getSortIndex() > index) {
+                index = col.getSortIndex();
+            }
+        }
+        return index;
+    }
+
     public DSMItem getItem(int uid) {
         for(DSMItem row : rows) {
             if(row.getUid() == uid) {
@@ -72,7 +92,7 @@ public class DataHandler {
     public void addSymmetricItem(String name) {
         assert isSymmetrical() : "cannot call symmetrical function on non symmetrical dataset";
 
-        double index = rows.size();
+        double index = getRowMaxSortIndex() + 1;
         DSMItem rowItem = new DSMItem(index, name);
         DSMItem colItem = new DSMItem(index, name);
         this.rows.add(rowItem);  // object is the same for row and column because matrix is symmetrical
@@ -90,12 +110,11 @@ public class DataHandler {
 
     public void addItem(String name, boolean is_row) {
         if(is_row) {
-            double index = rows.size();
-            DSMItem row = new DSMItem(index, name);
+            DSMItem row = new DSMItem(getRowMaxSortIndex() + 1, name);
             this.rows.add(row);
         } else {
             double index = cols.size();
-            DSMItem col = new DSMItem(index, name);
+            DSMItem col = new DSMItem(getColMaxSortIndex() + 1, name);
             this.cols.add(col);
         }
 

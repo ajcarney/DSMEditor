@@ -159,5 +159,6 @@ public class TabView {
     public void refreshTab() {
         MatrixGuiHandler editor = new MatrixGuiHandler(ioHandler.getMatrix(getFocusedMatrixUid()));
         getFocusedTab().setContent(editor.getMatrixEditor());
+        refreshNames();
     }
 }

@@ -26,7 +26,7 @@ public class Main extends Application {
         InfoHandler infoHandler = new InfoHandler();
         TabView editor = new TabView(ioHandler, infoHandler);
         HeaderMenu menu = new HeaderMenu(ioHandler, editor);
-        ToolbarHandler toolbarHandler = new ToolbarHandler(editor);
+        ToolbarHandler toolbarHandler = new ToolbarHandler(ioHandler, editor);
 
         BorderPane root = new BorderPane();
         root.setTop(menu.getMenuBar());
