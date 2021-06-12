@@ -8,6 +8,7 @@ import com.intellij.util.Matrix;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
+import javafx.scene.input.KeyCode;
 
 import java.io.File;
 import java.util.HashMap;
@@ -31,31 +32,7 @@ public class TabView {
         // create current tabs
         Set<Integer> keys = this.ioHandler.getMatrices().keySet();
         for(int uid : keys) {
-            String title = ioHandler.getMatrixSaveFile(uid).getName();
-            if(!ioHandler.isMatrixSaved(uid)) {
-                title += "*";
-            }
-            MatrixGuiHandler editor = new MatrixGuiHandler(ioHandler.getMatrix(uid));
-            Tab tab = new Tab(title, editor.getMatrixEditor());
-            // update closing policy to open a window asking for confirmation when closing a file
-            tab.setOnCloseRequest(e -> {
-                // remove the next line: you only want to consume the event for "No"
-                // e.consume();
-                tabs.remove(tab);
-                System.out.println(uid);
-                if(!ioHandler.isMatrixSaved(uid)) {
-                    System.out.println("do you really want to close this");
-                    // TODO: add alert box that opens asking if you want to save before closing the tab
-                }
-            });
-
-            tab.setOnSelectionChanged(e -> {
-                infoHandler.setMatrix(ioHandler.getMatrix(uid));
-            });
-
-
-            tabs.put(tab, uid);
-            this.tabPane.getTabs().add(tab);
+            addTab(uid);
         };
 
         tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.ALL_TABS);  // any tab can be closed, but add event to be called on close
@@ -76,6 +53,11 @@ public class TabView {
         }
         MatrixGuiHandler editor = new MatrixGuiHandler(ioHandler.getMatrix(matrixUid));
         Tab tab = new Tab(title, editor.getMatrixEditor());
+        tabPane.getScene().setOnKeyPressed(e -> {  // add keybinding to toggle cross-highlighting on the editor
+            if (e.getCode() == KeyCode.F) {
+                editor.toggleCrossHighlighting();
+            }
+        });
 
         tab.setOnCloseRequest(e -> {
             // remove the next line: you only want to consume the event for "No"
