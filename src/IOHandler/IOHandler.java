@@ -64,7 +64,7 @@ public class IOHandler {
 
             // create column elements
             for(DSMItem col : matrices.get(matrixUid).getCols()) {
-                Element colElement = new Element("row");
+                Element colElement = new Element("col");
                 colElement.setAttribute(new Attribute("uid", Integer.valueOf(col.getUid()).toString()));
                 colElement.addContent(new Element("name").setText(col.getName()));
                 colElement.addContent(new Element("sort_index").setText(Double.valueOf(col.getSortIndex()).toString()));
@@ -87,7 +87,7 @@ public class IOHandler {
             for(DSMConnection connection : matrices.get(matrixUid).getConnections()) {
                 Element connElement = new Element("connection");
                 connElement.addContent(new Element("row_uid").setText(Integer.valueOf(connection.getRowUid()).toString()));
-                connElement.addContent(new Element("col_uid").setText(Integer.valueOf(connection.getRowUid()).toString()));
+                connElement.addContent(new Element("col_uid").setText(Integer.valueOf(connection.getColUid()).toString()));
                 connElement.addContent(new Element("name").setText(connection.getConnectionName()));
                 connElement.addContent(new Element("weight").setText(Double.valueOf(connection.getWeight()).toString()));
                 connectionsElement.addContent(connElement);

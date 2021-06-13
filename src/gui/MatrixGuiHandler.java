@@ -3,18 +3,24 @@ package gui;
 import DSMData.DSMConnection;
 import DSMData.DSMItem;
 import DSMData.DataHandler;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.VerticalDirection;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.TextAlignment;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 import javafx.util.Pair;
 
 import java.util.ArrayList;
@@ -26,6 +32,7 @@ public class MatrixGuiHandler {
     private final Background UNEDITABLE_CONNECTION_BACKGROUND = new Background(new BackgroundFill(Color.color(0, 0, 0), new CornerRadii(3), new Insets(0)));
     private final Background HIGHLIGHT_BACKGROUND = new Background(new BackgroundFill(Color.color(.9, 1, 0), new CornerRadii(3), new Insets(0)));
     private final Background CROSS_HIGHLIGHT_BACKGROUND = new Background(new BackgroundFill(Color.color(.2, 1, 0), new CornerRadii(3), new Insets(0)));
+    private final Background ERROR_BACKGROUND = new Background(new BackgroundFill(Color.color(1, 0, 0), new CornerRadii(3), new Insets(0)));
 
     private Thread highlightThread;
     private static boolean crossHighlight = false;
@@ -87,11 +94,11 @@ public class MatrixGuiHandler {
         highlightThread.start();
     }
 
-    private void highlightCell(Pair<Integer, Integer> cellLoc) {
+    private void toggleHighlightCell(Pair<Integer, Integer> cellLoc, Background bg) {
         for(Triplet<Pair<Integer, Integer>, HBox, Triplet<Background, Background, Background>> cell : cells) {  // determine the value to decrease to
             if(cell.getFirst().getKey() == cellLoc.getKey() && cell.getFirst().getValue() == cellLoc.getValue()) {
                 if(cell.getThird().getSecond() == null) {  // is highlighted, so unhighlight it
-                    cell.getThird().setSecond(HIGHLIGHT_BACKGROUND);
+                    cell.getThird().setSecond(bg);
                 } else {
                     cell.getThird().setSecond(null);
                 }
@@ -99,6 +106,25 @@ public class MatrixGuiHandler {
             }
         }
     }
+
+    private void clearCellHighlight(Pair<Integer, Integer> cellLoc) {
+        for(Triplet<Pair<Integer, Integer>, HBox, Triplet<Background, Background, Background>> cell : cells) {  // determine the value to decrease to
+            if(cell.getFirst().getKey() == cellLoc.getKey() && cell.getFirst().getValue() == cellLoc.getValue()) {
+                cell.getThird().setSecond(null);
+                break;
+            }
+        }
+    }
+
+    private void enableCellHighlight(Pair<Integer, Integer> cellLoc, Background bg) {
+        for(Triplet<Pair<Integer, Integer>, HBox, Triplet<Background, Background, Background>> cell : cells) {  // determine the value to decrease to
+            if(cell.getFirst().getKey() == cellLoc.getKey() && cell.getFirst().getValue() == cellLoc.getValue()) {
+                cell.getThird().setSecond(bg);
+                break;
+            }
+        }
+    }
+
 
     private void crossHighlightCell(Pair<Integer, Integer> endLocation, boolean shouldHighlight) {
         int endRow = endLocation.getKey();
@@ -186,9 +212,40 @@ public class MatrixGuiHandler {
                     }
                     cell.getChildren().add((Node) label);
                 } else if(item.getKey().equals("index_item")) {
-                    Label label = new Label(((Double)matrix.getItem((Integer)item.getValue()).getSortIndex()).toString());
+                    TextField entry = new TextField(((Double)matrix.getItem((Integer)item.getValue()).getSortIndex()).toString());
+                    // force the field to be numeric only
+                    entry.textProperty().addListener(new ChangeListener<String>() {
+                        @Override
+                        public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+                            if (!newValue.matches("\\d*+\\.")) {
+                                entry.setText(newValue.replaceAll("[^\\d]+[.]", ""));
+                            }
+                        }
+                    });
                     cell.setAlignment(Pos.CENTER_RIGHT);
-                    cell.getChildren().add(label);
+
+                    int finalR = r;
+                    int finalC = c;
+                    entry.setOnAction(e -> {
+                        cell.getParent().requestFocus();
+                    });
+                    entry.focusedProperty().addListener((obs, oldVal, newVal) -> {
+                        if(!newVal) {  // if changing to not focused
+                            try {
+                                Double newSortIndex = Double.parseDouble(entry.getText());
+                                if(matrix.isSymmetrical()) {
+                                    matrix.setSortIndexSymmetric((Integer)item.getValue(), newSortIndex);
+                                } else {
+                                    matrix.setSortIndex((Integer)item.getValue(), newSortIndex);
+                                }
+                                clearCellHighlight(new Pair<Integer, Integer>(finalR, finalC));
+                            } catch(NumberFormatException ee) {
+                                enableCellHighlight(new Pair<Integer, Integer>(finalR, finalC), ERROR_BACKGROUND);
+                            }
+                        }
+                    });
+
+                    cell.getChildren().add(entry);
                 } else if(item.getKey().equals("uneditable_connection")) {
                     HBox label = new HBox();  // use an HBox object because then background color is not tied to the text
                     defaultBackground = UNEDITABLE_CONNECTION_BACKGROUND;
@@ -196,7 +253,7 @@ public class MatrixGuiHandler {
                     int rowUid = ((Pair<Integer, Integer>)item.getValue()).getKey();
                     int colUid = ((Pair<Integer, Integer>)item.getValue()).getValue();
                     DSMConnection conn = matrix.getConnection(rowUid, colUid);
-                    Label label = null;
+                    final Label label;
                     if(conn == null) {
                         label = new Label("");
                     } else {
@@ -207,9 +264,103 @@ public class MatrixGuiHandler {
                     int finalC = c;
                     cell.setOnMouseClicked(e -> {
                         if(e.getButton().equals(MouseButton.PRIMARY)) {
-                            System.out.println("editing connection");
+
+                            // create popup window to edit the connection
+                            Stage window = new Stage();
+
+                            // Create Root window
+                            window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
+                            window.setTitle("Modify Connection");
+
+                            VBox layout = new VBox();
+
+                            // row 0
+                            Label titleLabel = new Label("Connection From " + matrix.getItem(rowUid).getName() + " to " + matrix.getItem(colUid).getName());
+                            GridPane.setConstraints(titleLabel, 0, 0, 3, 1);  // span 3 columns
+
+                            // row 1
+                            HBox row1 = new HBox();
+                            row1.setPadding(new Insets(10, 10, 10, 10));
+                            row1.setSpacing(10);
+                            Label nameLabel = new Label("Connection Type:  ");
+
+                            String currentName = null;
+                            if(matrix.getConnection(rowUid, colUid) != null) {
+                                currentName = matrix.getConnection(rowUid, colUid).getConnectionName();
+                            } else {
+                                currentName = "";
+                            }
+                            TextField nameField = new TextField(currentName);
+                            nameField.setMaxWidth(Double.MAX_VALUE);
+                            HBox.setHgrow(nameField, Priority.ALWAYS);
+                            row1.getChildren().addAll(nameLabel, nameField);
+
+                            // row 2
+                            HBox row2 = new HBox();
+                            Label weightLabel = new Label("Connection Weight:");
+                            row2.setPadding(new Insets(10, 10, 10, 10));
+                            row2.setSpacing(10);
+
+                            String currentWeight = null;
+                            if(matrix.getConnection(rowUid, colUid) != null) {
+                                currentWeight = ((Double)matrix.getConnection(rowUid, colUid).getWeight()).toString();
+                            } else {
+                                currentWeight = "1.0";
+                            }
+                            TextField weightField = new TextField(currentWeight);
+                            weightField.setMaxWidth(Double.MAX_VALUE);
+                            HBox.setHgrow(weightField, Priority.ALWAYS);
+                            // force the field to be numeric only
+                            weightField.textProperty().addListener(new ChangeListener<String>() {
+                                @Override
+                                public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+                                    if (!newValue.matches("\\d*+\\.")) {
+                                        weightField.setText(newValue.replaceAll("[^\\d]+[.]", ""));
+                                    }
+                                }
+                            });
+                            row2.getChildren().addAll(weightLabel, weightField);
+
+                            // row 3
+                            // create HBox for user to close with our without changes
+                            HBox closeArea = new HBox();
+                            Button applyButton = new Button("Apply Changes");
+                            applyButton.setOnAction(ee -> {
+                                if(!nameField.getText().equals("")) {
+                                    Double weight = null;
+                                    try {
+                                        weight = Double.parseDouble(weightField.getText());
+                                    } catch(NumberFormatException nfe) {
+                                        weight = 1.0;
+                                    }
+                                    matrix.modifyConnection(rowUid, colUid, nameField.getText(), weight);
+                                }
+                                window.close();
+                                label.setText(nameField.getText());
+                            });
+
+                            Pane spacer = new Pane();  // used as a spacer between buttons
+                            HBox.setHgrow(spacer, Priority.ALWAYS);
+                            spacer.setMaxWidth(Double.MAX_VALUE);
+
+                            Button cancelButton = new Button("Cancel");
+                            cancelButton.setOnAction(ee -> {
+                                window.close();
+                            });
+                            closeArea.getChildren().addAll(cancelButton, spacer, applyButton);
+
+                            //Display window and wait for it to be closed before returning
+                            layout.getChildren().addAll(titleLabel, row1, row2, closeArea);
+                            layout.setAlignment(Pos.CENTER);
+                            layout.setPadding(new Insets(10, 10, 10, 10));
+                            layout.setSpacing(10);
+
+                            Scene scene = new Scene(layout, 400, 200);
+                            window.setScene(scene);
+                            window.showAndWait();
+
                         } else if(e.getButton().equals(MouseButton.SECONDARY)) {  // toggle highlighting
-                            highlightCell(new Pair<Integer, Integer>(finalR, finalC));
+                            toggleHighlightCell(new Pair<Integer, Integer>(finalR, finalC), HIGHLIGHT_BACKGROUND);
                         }
                     });
                     cell.setOnMouseEntered(e -> {

@@ -180,6 +180,7 @@ public class ToolbarHandler {
         sort = new Button("Sort");
         sort.setOnAction(e -> {
             System.out.println("Sorting");
+            editor.refreshTab();
         });
         sort.setMaxWidth(Double.MAX_VALUE);
 
