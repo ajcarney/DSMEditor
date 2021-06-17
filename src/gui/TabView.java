@@ -4,7 +4,6 @@ package gui;
 import DSMData.DSMItem;
 import DSMData.DataHandler;
 import IOHandler.IOHandler;
-import com.intellij.util.Matrix;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;

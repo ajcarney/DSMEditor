@@ -3,7 +3,6 @@ package IOHandler;
 import DSMData.DSMConnection;
 import DSMData.DSMItem;
 import DSMData.DataHandler;
-import net.minidev.json.JSONObject;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -68,6 +67,9 @@ public class IOHandler {
                 colElement.setAttribute(new Attribute("uid", Integer.valueOf(col.getUid()).toString()));
                 colElement.addContent(new Element("name").setText(col.getName()));
                 colElement.addContent(new Element("sort_index").setText(Double.valueOf(col.getSortIndex()).toString()));
+                if(col.getAliasUid() != null) {
+                    colElement.addContent(new Element("alias").setText(Integer.valueOf(col.getAliasUid()).toString()));
+                }
                 colsElement.addContent(colElement);
             }
 
@@ -77,9 +79,6 @@ public class IOHandler {
                 rowElement.setAttribute(new Attribute("uid", Integer.valueOf(row.getUid()).toString()));
                 rowElement.addContent(new Element("name").setText(row.getName()));
                 rowElement.addContent(new Element("sort_index").setText(Double.valueOf(row.getSortIndex()).toString()));
-                if(matrices.get(matrixUid).isSymmetrical()) {
-                    rowElement.addContent(new Element("associated_col").setText(Integer.valueOf(matrices.get(matrixUid).getColumnLookup().get(row.getUid())).toString()));
-                }
                 rowsElement.addContent(rowElement);
             }
 
@@ -180,8 +179,14 @@ public class IOHandler {
                 uids.add(uid);
                 String name = col.getChild("name").getText();
                 double sortIndex = Double.parseDouble(col.getChild("sort_index").getText());
+                Integer aliasUid = null;
+                try {
+                    aliasUid = Integer.parseInt(col.getChild("alias").getText());
+                } catch(NullPointerException npe) {
+                    continue;
+                }
 
-                DSMItem item = new DSMItem(uid, sortIndex, name);
+                DSMItem item = new DSMItem(uid, aliasUid, sortIndex, name);
                 matrix.addItem(item, false);
             }
 
@@ -193,13 +198,8 @@ public class IOHandler {
                 String name = row.getChild("name").getText();
                 double sortIndex = Double.parseDouble(row.getChild("sort_index").getText());
 
-                DSMItem item = new DSMItem(uid, sortIndex, name);
-                if(isSymmetrical) {
-                    int colUid = Integer.parseInt(row.getChild("associated_col").getValue());
-                    matrix.addSymmetricRowItem(item, colUid);  // this will create the link between row and column
-                } else {
-                    matrix.addItem(item, true);
-                }
+                DSMItem item = new DSMItem(uid, null, sortIndex, name);
+                matrix.addItem(item, true);
             }
 
             // parse connections

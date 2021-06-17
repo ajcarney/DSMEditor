@@ -334,6 +334,8 @@ public class MatrixGuiHandler {
                                         weight = 1.0;
                                     }
                                     matrix.modifyConnection(rowUid, colUid, nameField.getText(), weight);
+                                } else {
+                                    matrix.clearConnection(rowUid, colUid);
                                 }
                                 window.close();
                                 label.setText(nameField.getText());

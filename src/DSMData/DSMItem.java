@@ -4,11 +4,12 @@ import java.time.Instant;
 import java.util.Vector;
 
 public class DSMItem {
-    private int uid;
+    private Integer uid;
+    private Integer aliasUid;
     private String name;
-    private double sortIndex;
+    private Double sortIndex;
 
-    public DSMItem(double index, String name) {
+    public DSMItem(Double index, String name) {
         this.uid = name.hashCode() + Instant.now().toString().hashCode();
         try {  // wait a millisecond to ensure that the next uid will for sure be unique even with the same name
             Thread.sleep(1);
@@ -20,8 +21,9 @@ public class DSMItem {
         this.sortIndex = index;
     }
 
-    public DSMItem(int uid, double index, String name) {
+    public DSMItem(Integer uid, Integer aliasUid, Double index, String name) {
         this.uid = uid;
+        this.aliasUid = aliasUid;
         this.name = name;
         this.sortIndex = index;
     }
@@ -46,6 +48,12 @@ public class DSMItem {
         this.sortIndex = index;
     }
 
+    public Integer getAliasUid() {
+        return aliasUid;
+    }
 
+    public void setAliasUid(Integer aliasUid) {
+        this.aliasUid = aliasUid;
+    }
 }
 
