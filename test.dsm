@@ -28,6 +28,11 @@
       <sort_index>4.0</sort_index>
       <alias>1237</alias>
     </col>
+    <col uid="1405922570">
+      <name>asd</name>
+      <sort_index>5.0</sort_index>
+      <alias>-976554682</alias>
+    </col>
   </columns>
   <rows>
     <row uid="1234">
@@ -45,6 +50,10 @@
     <row uid="1237">
       <name>Second Motor</name>
       <sort_index>4.0</sort_index>
+    </row>
+    <row uid="-976554682">
+      <name>asd</name>
+      <sort_index>5.0</sort_index>
     </row>
   </rows>
   <connections>

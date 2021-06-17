@@ -1,4 +1,5 @@
 import DSMData.DSMConnection;
+import DSMData.DataHandler;
 import IOHandler.IOHandler;
 import gui.HeaderMenu;
 import gui.InfoHandler;
@@ -35,6 +36,13 @@ public class Main extends Application {
         root.setLeft(toolbarHandler.getLayout());
 
         Scene scene = new Scene(root, 1000, 600);
+
+        // start with a tab open
+        File file = new File("C:\\Users\\ajcar\\Documents\\DSMEditor\\test.dsm");
+        DataHandler matrix = ioHandler.readFile(file);
+        int uid = ioHandler.addMatrix(matrix, file);
+        editor.addTab(uid);
+
 
         primaryStage.setTitle("DSM Editor");
         primaryStage.setScene(scene);

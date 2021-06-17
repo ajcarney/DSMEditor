@@ -55,5 +55,10 @@ public class DSMItem {
     public void setAliasUid(Integer aliasUid) {
         this.aliasUid = aliasUid;
     }
+
+    @Override
+    public String toString() {
+        return name;
+    }
 }
 

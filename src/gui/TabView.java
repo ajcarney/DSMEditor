@@ -4,10 +4,14 @@ package gui;
 import DSMData.DSMItem;
 import DSMData.DataHandler;
 import IOHandler.IOHandler;
+import javafx.application.Platform;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.input.KeyCode;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.HBox;
+import javafx.util.Pair;
 
 import java.io.File;
 import java.util.HashMap;
@@ -20,6 +24,8 @@ public class TabView {
 
     private static IOHandler ioHandler;
     private static InfoHandler infoHandler;
+
+    private Thread nameHandlerThread;
 
     public TabView(IOHandler ioHandler, InfoHandler infoHandler) {
         tabPane = new TabPane();
@@ -35,6 +41,34 @@ public class TabView {
         };
 
         tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.ALL_TABS);  // any tab can be closed, but add event to be called on close
+
+        this.nameHandlerThread = new Thread(() -> {
+            while(true) {  // go through and update names
+                for(HashMap.Entry<Tab, Integer> entry : tabs.entrySet()) {
+                    String title = ioHandler.getMatrixSaveFile(entry.getValue()).getName();
+                    if(!ioHandler.isMatrixSaved(entry.getValue())) {
+                        title += "*";
+                    }
+                    if(entry.getKey().getText() != title) {
+                        String finalTitle = title;
+                        Platform.runLater(new Runnable(){
+                            @Override
+                            public void run() {
+                                entry.getKey().setText(finalTitle);
+                            }
+                        });
+                    }
+                }
+
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        nameHandlerThread.setDaemon(true);
+        nameHandlerThread.start();
 
 
     }
@@ -110,15 +144,6 @@ public class TabView {
         return tab;
     }
 
-    public void refreshNames() {
-        for(HashMap.Entry<Tab, Integer> entry : tabs.entrySet()) {
-            String title = ioHandler.getMatrixSaveFile(entry.getValue()).getName();
-            if(!ioHandler.isMatrixSaved(entry.getValue())) {
-                title += "*";
-            }
-            entry.getKey().setText(title);
-        }
-    }
 
     public void focusTab(File file) {
         Tab tab = null;
@@ -140,6 +165,5 @@ public class TabView {
     public void refreshTab() {
         MatrixGuiHandler editor = new MatrixGuiHandler(ioHandler.getMatrix(getFocusedMatrixUid()));
         getFocusedTab().setContent(editor.getMatrixEditor());
-        refreshNames();
     }
 }

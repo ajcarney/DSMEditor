@@ -74,10 +74,10 @@ public class HeaderMenu {
                 File fileName = fileChooser.showSaveDialog(menuBar.getScene().getWindow());
                 if(fileName != null) {
                     this.ioHandler.setMatrixSaveFile(tabView.getFocusedMatrixUid(), fileName);
-                    int code = this.ioHandler.saveMatrixToFile(tabView.getFocusedMatrixUid());  // TODO: add checking with the return code
                 }
             }
-            tabView.refreshNames();
+            int code = this.ioHandler.saveMatrixToFile(tabView.getFocusedMatrixUid());  // TODO: add checking with the return code
+
         });
 
         MenuItem saveFileAs = new MenuItem("Save As...");
@@ -91,7 +91,6 @@ public class HeaderMenu {
             if(fileName != null) {
                 int code = this.ioHandler.saveMatrixToNewFile(tabView.getFocusedMatrixUid(), fileName);
             }
-            tabView.refreshNames();
         });
 
         fileMenu.getItems().add(newFile);
