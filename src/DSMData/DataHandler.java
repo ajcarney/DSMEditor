@@ -122,13 +122,13 @@ public class DataHandler {
 
 
     public void clearItemConnections(int uid) {
-        Vector<DSMConnection> toRemove = new Vector<>();
+        Set<DSMConnection> toRemove = new HashSet<>();  // this will not allow duplicates, although there should never be duplicates
         for(DSMConnection connection : connections) {     // check to see if uid is in the rows
             if(connection.getRowUid() == uid || connection.getColUid() == uid) {
                 toRemove.add(connection);
             }
         }
-        connections.removeAll((Set)toRemove);
+        connections.removeAll(toRemove);
     }
 
     public void clearConnection(int rowUid, int colUid) {

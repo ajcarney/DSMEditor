@@ -35,7 +35,7 @@ public class ToolbarHandler {
         this.editor = editor;
         this.ioHandler = ioHandler;
 
-        addMatrixItem = new Button("Add Row/Column");
+        addMatrixItem = new Button("Add Rows/Columns");
         addMatrixItem.setOnAction(e -> {
             if(editor.getFocusedMatrixUid() == null) {
                 return;
@@ -154,7 +154,119 @@ public class ToolbarHandler {
 
         deleteMatrixItem = new Button("Delete Row/Column");
         deleteMatrixItem.setOnAction(e -> {
-            System.out.println("Deleting row or column");
+            if(editor.getFocusedMatrixUid() == null) {
+                return;
+            }
+            Stage window = new Stage();  // Create Root window
+            window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
+            window.setTitle("Delete Rows/Columns");
+
+            // Create changes view and button for it
+            Label label = new Label("Changes to be made");
+            ListView< Pair<String, Integer> > changesToMakeView = new ListView<>();
+            changesToMakeView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+            changesToMakeView.setCellFactory(param -> new ListCell< Pair<String, Integer> >() {  // row/column/symmetric | item uid
+                @Override
+                protected void updateItem(Pair<String, Integer> item, boolean empty) {
+                    super.updateItem(item, empty);
+
+                    if (empty || item == null || item.getKey() == null) {
+                        setText(null);
+                    } else {
+                        if(item.getKey().equals("symmetric")) {
+                            setText(ioHandler.getMatrix(editor.getFocusedMatrixUid()).getItem(item.getValue()).getName() + " (Row/Column)");
+                        } else {
+                            setText(ioHandler.getMatrix(editor.getFocusedMatrixUid()).getItem(item.getValue()).getName());
+                        }
+                    }
+                }
+            });
+
+            Button deleteSelected = new Button("Delete Selected Item(s)");
+            deleteSelected.setOnAction(ee -> {
+                changesToMakeView.getItems().removeAll(changesToMakeView.getSelectionModel().getSelectedItems());
+            });
+
+            // Create user input area
+            HBox entryArea = new HBox();
+
+            // ComboBox to choose which row or column to modify connections of
+            ComboBox< DSMItem > itemSelector = new ComboBox<>();  // rowUid | colUid | name | weight
+            itemSelector.setCellFactory(param -> new ListCell< DSMItem >() {
+                @Override
+                protected void updateItem(DSMItem item, boolean empty) {
+                    super.updateItem(item, empty);
+
+                    if (empty || item == null) {
+                        setText(null);
+                    } else {
+                        setText(item.getName());
+                    }
+                }
+            });
+            itemSelector.setMaxWidth(Double.MAX_VALUE);
+            itemSelector.setPromptText("Row/Column Name");
+            HBox.setHgrow(itemSelector, Priority.ALWAYS);
+
+            Button deleteItem = new Button("Delete Item");
+
+            entryArea.getChildren().addAll(itemSelector, deleteItem);
+            entryArea.setPadding(new Insets(10, 10, 10, 10));
+            entryArea.setSpacing(20);
+
+            if(ioHandler.getMatrix(editor.getFocusedMatrixUid()).isSymmetrical()) {
+                itemSelector.getItems().addAll(ioHandler.getMatrix(editor.getFocusedMatrixUid()).getRows());
+
+                deleteItem.setOnAction(ee -> {
+                    Integer itemUid = itemSelector.getValue().getUid();
+                    changesToMakeView.getItems().add(new Pair<String, Integer>("symmetric", itemUid));
+                });
+            } else {
+                itemSelector.getItems().addAll(ioHandler.getMatrix(editor.getFocusedMatrixUid()).getRows());
+                itemSelector.getItems().addAll(ioHandler.getMatrix(editor.getFocusedMatrixUid()).getCols());
+
+                deleteItem.setOnAction(ee -> {
+                    Integer itemUid = itemSelector.getValue().getUid();
+                    changesToMakeView.getItems().add(new Pair<String, Integer>("row/col", itemUid));
+                });
+
+            }
+
+            // create HBox for user to close with our without changes
+            HBox closeArea = new HBox();
+            Button applyButton = new Button("Apply Changes");
+            applyButton.setOnAction(ee -> {
+                for(Pair<String, Integer> item : changesToMakeView.getItems()) {
+                    if(item.getKey().equals("symmetric")) {
+                        ioHandler.getMatrix(editor.getFocusedMatrixUid()).deleteSymmetricItem(item.getValue());
+                    } else {
+                        ioHandler.getMatrix(editor.getFocusedMatrixUid()).deleteItem(item.getValue());
+                    }
+                }
+                window.close();
+                editor.refreshTab();
+            });
+
+            Pane spacer = new Pane();  // used as a spacer between buttons
+            HBox.setHgrow(spacer, Priority.ALWAYS);
+            spacer.setMaxWidth(Double.MAX_VALUE);
+
+            Button cancelButton = new Button("Cancel");
+            cancelButton.setOnAction(ee -> {
+                window.close();
+            });
+            closeArea.getChildren().addAll(cancelButton, spacer, applyButton);
+
+            VBox layout = new VBox(10);
+            layout.getChildren().addAll(label, changesToMakeView, entryArea, closeArea);
+            layout.setAlignment(Pos.CENTER);
+            layout.setPadding(new Insets(10, 10, 10, 10));
+            layout.setSpacing(10);
+
+            //Display window and wait for it to be closed before returning
+            Scene scene = new Scene(layout, 500, 300);
+            window.setScene(scene);
+            window.showAndWait();
         });
         deleteMatrixItem.setMaxWidth(Double.MAX_VALUE);
 
@@ -475,7 +587,7 @@ public class ToolbarHandler {
 
 
             //Display window and wait for it to be closed before returning
-            Scene scene = new Scene(layout, 700, 300);
+            Scene scene = new Scene(layout, 700, 500);
             window.setScene(scene);
             window.showAndWait();
         });

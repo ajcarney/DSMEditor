@@ -1,4 +1,4 @@
-// TODO: maybe think about switching to these tabs: https://berry120.blogspot.com/2014/01/draggable-and-detachable-tabs-in-javafx.html
+// TODO: maybe think about switching to these tabs so that the application is more "IDE-like": https://berry120.blogspot.com/2014/01/draggable-and-detachable-tabs-in-javafx.html
 package gui;
 
 import DSMData.DSMItem;
@@ -51,7 +51,7 @@ public class TabView {
                     }
                     if(entry.getKey().getText() != title) {
                         String finalTitle = title;
-                        Platform.runLater(new Runnable(){
+                        Platform.runLater(new Runnable(){  // this allows a thread to update the gui
                             @Override
                             public void run() {
                                 entry.getKey().setText(finalTitle);
@@ -93,13 +93,11 @@ public class TabView {
         });
 
         tab.setOnCloseRequest(e -> {
-            // remove the next line: you only want to consume the event for "No"
-            // e.consume();
             if(!ioHandler.isMatrixSaved(matrixUid)) {
                 // TODO: add alert box that opens asking if you want to save before closing the tab
                 int selection = 1;  // 0 = close the tab, 1 = save and close, 2 = don't close
                 if(selection == 2) {  // user doesn't want to close the pane so consume the event
-                    e.consume();
+                    e.consume();  // will not close window
                     return;
                 } else if(selection == 1) {  // user wants to save before closing the pane
                     ioHandler.saveMatrixToFile(matrixUid);  // TODO: if there is an error saving, then display a message and don't close the file

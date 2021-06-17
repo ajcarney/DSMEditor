@@ -3,6 +3,7 @@ package gui;
 import DSMData.DSMConnection;
 import DSMData.DSMItem;
 import DSMData.DataHandler;
+import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.HPos;
@@ -75,11 +76,26 @@ public class MatrixGuiHandler {
             while(true) {
                 for(Triplet<Pair<Integer, Integer>, HBox, Triplet<Background, Background, Background>> cell : cells) {
                     if(cell.getThird().getSecond() != null) {
-                        cell.getSecond().setBackground(cell.getThird().getSecond());
+                        Platform.runLater(new Runnable(){  // this allows a thread to update the gui
+                            @Override
+                            public void run() {
+                                cell.getSecond().setBackground(cell.getThird().getSecond());
+                            }
+                        });
                     } else if(cell.getThird().getThird() != null && crossHighlight) {
-                        cell.getSecond().setBackground(cell.getThird().getThird());
+                        Platform.runLater(new Runnable(){  // this allows a thread to update the gui
+                            @Override
+                            public void run() {
+                                cell.getSecond().setBackground(cell.getThird().getThird());
+                            }
+                        });
                     } else {
-                        cell.getSecond().setBackground(cell.getThird().getFirst());
+                        Platform.runLater(new Runnable(){  // this allows a thread to update the gui
+                            @Override
+                            public void run() {
+                                cell.getSecond().setBackground(cell.getThird().getFirst());
+                            }
+                        });
                     }
                 }
 
