@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.util.*;
 
+import javafx.scene.paint.Color;
 import org.jdom2.Attribute;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -49,6 +50,7 @@ public class IOHandler {
             Element rowsElement = new Element("rows");
             Element colsElement = new Element("columns");
             Element connectionsElement = new Element("connections");
+            Element groupingsElement = new Element("groupings");
 
             // update information
             infoElement.addContent(new Element("title").setText(matrices.get(matrixUid).getTitle()));
@@ -70,6 +72,8 @@ public class IOHandler {
                 if(col.getAliasUid() != null) {
                     colElement.addContent(new Element("alias").setText(Integer.valueOf(col.getAliasUid()).toString()));
                 }
+                colElement.addContent(new Element("group").setText(col.getGroup()));
+
                 colsElement.addContent(colElement);
             }
 
@@ -79,6 +83,7 @@ public class IOHandler {
                 rowElement.setAttribute(new Attribute("uid", Integer.valueOf(row.getUid()).toString()));
                 rowElement.addContent(new Element("name").setText(row.getName()));
                 rowElement.addContent(new Element("sort_index").setText(Double.valueOf(row.getSortIndex()).toString()));
+                rowElement.addContent(new Element("group").setText(row.getGroup()));
                 rowsElement.addContent(rowElement);
             }
 
@@ -92,10 +97,22 @@ public class IOHandler {
                 connectionsElement.addContent(connElement);
             }
 
+            // create groupings elements
+            for(Map.Entry<String, Color> group: matrices.get(matrixUid).getGroupingColors().entrySet()) {
+                Element groupElement = new Element("group");
+                groupElement.addContent(new Element("name").setText(group.getKey()));
+                groupElement.addContent(new Element("r").setText(Double.valueOf(group.getValue().getRed()).toString()));
+                groupElement.addContent(new Element("g").setText(Double.valueOf(group.getValue().getGreen()).toString()));
+                groupElement.addContent(new Element("b").setText(Double.valueOf(group.getValue().getBlue()).toString()));
+
+                groupingsElement.addContent(groupElement);
+            }
+
             doc.getRootElement().addContent(infoElement);
             doc.getRootElement().addContent(colsElement);
             doc.getRootElement().addContent(rowsElement);
             doc.getRootElement().addContent(connectionsElement);
+            doc.getRootElement().addContent(groupingsElement);
 
             XMLOutputter xmlOutput = new XMLOutputter();
             xmlOutput.setFormat(Format.getPrettyFormat());  // TODO: change this to getCompactFormat() for release
@@ -180,13 +197,14 @@ public class IOHandler {
                 String name = col.getChild("name").getText();
                 double sortIndex = Double.parseDouble(col.getChild("sort_index").getText());
                 Integer aliasUid = null;
+                String group = col.getChild("group").getText();
                 try {
                     aliasUid = Integer.parseInt(col.getChild("alias").getText());
                 } catch(NullPointerException npe) {
                     continue;
                 }
 
-                DSMItem item = new DSMItem(uid, aliasUid, sortIndex, name);
+                DSMItem item = new DSMItem(uid, aliasUid, sortIndex, name, group);
                 matrix.addItem(item, false);
             }
 
@@ -197,8 +215,9 @@ public class IOHandler {
                 uids.add(uid);
                 String name = row.getChild("name").getText();
                 double sortIndex = Double.parseDouble(row.getChild("sort_index").getText());
+                String group = row.getChild("group").getText();
 
-                DSMItem item = new DSMItem(uid, null, sortIndex, name);
+                DSMItem item = new DSMItem(uid, null, sortIndex, name, group);
                 matrix.addItem(item, true);
             }
 
@@ -211,6 +230,17 @@ public class IOHandler {
                 double weight = Double.parseDouble(conn.getChild("weight").getText());
 
                 matrix.modifyConnection(rowUid, colUid, name, weight);
+            }
+
+            // parse groupings
+            List<Element> groupings = rootElement.getChild("groupings").getChildren();
+            for(Element conn : groupings) {
+                String name = conn.getChild("name").getText();
+                double r = Double.parseDouble(conn.getChild("r").getText());
+                double g = Double.parseDouble(conn.getChild("g").getText());
+                double b = Double.parseDouble(conn.getChild("b").getText());
+
+                matrix.addGrouping(name, Color.color(r, g, b));
             }
 
             Set<Integer> set = new HashSet<Integer>(uids);

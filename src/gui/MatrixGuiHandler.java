@@ -10,9 +10,11 @@ import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.VerticalDirection;
+import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
@@ -25,6 +27,7 @@ import javafx.stage.Stage;
 import javafx.util.Pair;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Vector;
 
 public class MatrixGuiHandler {
@@ -64,9 +67,54 @@ public class MatrixGuiHandler {
         }
     }
 
-    // pair of locations (row, column) | cell object | triple of highlight colors (default, highlight1, highlight2)
-    Vector<Triplet<Pair<Integer, Integer>, HBox, Triplet<Background, Background, Background>>> cells;
+    private class HighlightScheme {
+        private Background defaultBG;
+        private Background userHighlightBG;
+        private Background crossHighlightBG;
+        private Background errorHighlightBG;
 
+        public HighlightScheme(Background defaultBG, Background userHighlightBG, Background crossHighlightBG, Background errorHighlightBG) {
+            this.defaultBG = defaultBG;
+            this.userHighlightBG = userHighlightBG;
+            this.crossHighlightBG = crossHighlightBG;
+            this.errorHighlightBG = errorHighlightBG;
+        }
+
+        public Background getDefaultBG() {
+            return defaultBG;
+        }
+
+        public void setDefaultBG(Background defaultBG) {
+            this.defaultBG = defaultBG;
+        }
+
+        public Background getUserHighlightBG() {
+            return userHighlightBG;
+        }
+
+        public void setUserHighlightBG(Background userHighlightBG) {
+            this.userHighlightBG = userHighlightBG;
+        }
+
+        public Background getCrossHighlightBG() {
+            return crossHighlightBG;
+        }
+
+        public void setCrossHighlightBG(Background crossHighlightBG) {
+            this.crossHighlightBG = crossHighlightBG;
+        }
+
+        public Background getErrorHighlightBG() {
+            return errorHighlightBG;
+        }
+
+        public void setErrorHighlightBG(Background errorHighlightBG) {
+            this.errorHighlightBG = errorHighlightBG;
+        }
+    }
+
+    // pair of locations (row, column) | cell object | triple of highlight colors (default, highlight1, highlight2)
+    Vector<Triplet<Pair<Integer, Integer>, HBox, HighlightScheme>> cells;
 
     MatrixGuiHandler(DataHandler matrix) {
         this.matrix = matrix;
@@ -74,30 +122,22 @@ public class MatrixGuiHandler {
 
         this.highlightThread = new Thread(() -> {
             while(true) {
-                for(Triplet<Pair<Integer, Integer>, HBox, Triplet<Background, Background, Background>> cell : cells) {
-                    if(cell.getThird().getSecond() != null) {
-                        Platform.runLater(new Runnable(){  // this allows a thread to update the gui
-                            @Override
-                            public void run() {
-                                cell.getSecond().setBackground(cell.getThird().getSecond());
+                Platform.runLater(new Runnable() {  // this allows a thread to update the gui
+                    @Override
+                    public void run() {
+                        for (Triplet<Pair<Integer, Integer>, HBox, HighlightScheme> cell : cells) {
+                            if (cell.getThird().getErrorHighlightBG() != null) {
+                                cell.getSecond().setBackground(cell.getThird().getErrorHighlightBG());
+                            } else if (cell.getThird().getCrossHighlightBG() != null && crossHighlight) {
+                                cell.getSecond().setBackground(cell.getThird().getCrossHighlightBG());
+                            } else if (cell.getThird().getUserHighlightBG() != null) {
+                                cell.getSecond().setBackground(cell.getThird().getUserHighlightBG());
+                            } else {
+                                cell.getSecond().setBackground(cell.getThird().getDefaultBG());
                             }
-                        });
-                    } else if(cell.getThird().getThird() != null && crossHighlight) {
-                        Platform.runLater(new Runnable(){  // this allows a thread to update the gui
-                            @Override
-                            public void run() {
-                                cell.getSecond().setBackground(cell.getThird().getThird());
-                            }
-                        });
-                    } else {
-                        Platform.runLater(new Runnable(){  // this allows a thread to update the gui
-                            @Override
-                            public void run() {
-                                cell.getSecond().setBackground(cell.getThird().getFirst());
-                            }
-                        });
+                        }
                     }
-                }
+                });
 
                 try {
                     Thread.sleep(100);
@@ -110,35 +150,40 @@ public class MatrixGuiHandler {
         highlightThread.start();
     }
 
-    private void toggleHighlightCell(Pair<Integer, Integer> cellLoc, Background bg) {
-        for(Triplet<Pair<Integer, Integer>, HBox, Triplet<Background, Background, Background>> cell : cells) {  // determine the value to decrease to
+    private Triplet<Pair<Integer, Integer>, HBox, HighlightScheme> getCellByLoc(Pair<Integer, Integer> cellLoc) {
+        for(Triplet<Pair<Integer, Integer>, HBox, HighlightScheme> cell : cells) {  // determine the value to decrease to
             if(cell.getFirst().getKey() == cellLoc.getKey() && cell.getFirst().getValue() == cellLoc.getValue()) {
-                if(cell.getThird().getSecond() == null) {  // is highlighted, so unhighlight it
-                    cell.getThird().setSecond(bg);
-                } else {
-                    cell.getThird().setSecond(null);
-                }
-                break;
+                return cell;
             }
+        }
+        return null;
+    }
+
+    private void toggleUserHighlightCell(Pair<Integer, Integer> cellLoc, Background bg) {
+        Triplet<Pair<Integer, Integer>, HBox, HighlightScheme> cell = getCellByLoc(cellLoc);
+        if(cell.getThird().getUserHighlightBG() == null) {  // is highlighted, so unhighlight it
+            cell.getThird().setUserHighlightBG(bg);
+        } else {
+            cell.getThird().setUserHighlightBG(null);
         }
     }
 
-    private void clearCellHighlight(Pair<Integer, Integer> cellLoc) {
-        for(Triplet<Pair<Integer, Integer>, HBox, Triplet<Background, Background, Background>> cell : cells) {  // determine the value to decrease to
-            if(cell.getFirst().getKey() == cellLoc.getKey() && cell.getFirst().getValue() == cellLoc.getValue()) {
-                cell.getThird().setSecond(null);
-                break;
-            }
-        }
+
+    private void setCellHighlight(Pair<Integer, Integer> cellLoc, Background bg, String highlightType) {
+        Triplet<Pair<Integer, Integer>, HBox, HighlightScheme> cell = getCellByLoc(cellLoc);
+        HashMap<String, Runnable> functions = new HashMap<>();
+        functions.put("userHighlight", () -> cell.getThird().setUserHighlightBG(bg));
+        functions.put("errorHighlight", () -> cell.getThird().setErrorHighlightBG(bg));
+        functions.get(highlightType).run();
     }
 
-    private void enableCellHighlight(Pair<Integer, Integer> cellLoc, Background bg) {
-        for(Triplet<Pair<Integer, Integer>, HBox, Triplet<Background, Background, Background>> cell : cells) {  // determine the value to decrease to
-            if(cell.getFirst().getKey() == cellLoc.getKey() && cell.getFirst().getValue() == cellLoc.getValue()) {
-                cell.getThird().setSecond(bg);
-                break;
-            }
-        }
+
+    private void clearCellHighlight(Pair<Integer, Integer> cellLoc, String highlightType) {
+        Triplet<Pair<Integer, Integer>, HBox, HighlightScheme> cell = getCellByLoc(cellLoc);
+        HashMap<String, Runnable> functions = new HashMap<>();
+        functions.put("userHighlight", () -> cell.getThird().setUserHighlightBG(null));
+        functions.put("errorHighlight", () -> cell.getThird().setErrorHighlightBG(null));
+        functions.get(highlightType).run();
     }
 
 
@@ -148,7 +193,7 @@ public class MatrixGuiHandler {
 
         int minRow = Integer.MAX_VALUE;
         int minCol = Integer.MAX_VALUE;
-        for(Triplet<Pair<Integer, Integer>, HBox, Triplet<Background, Background, Background>> cell : cells) {  // determine the value to decrease to
+        for(Triplet<Pair<Integer, Integer>, HBox, HighlightScheme> cell : cells) {  // determine the value to decrease to
             if(cell.getFirst().getKey() < minRow) {
                 minRow = cell.getFirst().getKey();
             }
@@ -158,12 +203,12 @@ public class MatrixGuiHandler {
         }
 
         for(int i=endRow; i>=minRow; i--) {  // highlight vertically
-            for(Triplet<Pair<Integer, Integer>, HBox, Triplet<Background, Background, Background>> triplet : cells) {  // find the cell to modify
+            for(Triplet<Pair<Integer, Integer>, HBox, HighlightScheme> triplet : cells) {  // find the cell to modify
                 if(triplet.getFirst().getKey() == i && triplet.getFirst().getValue() == endCol) {
                     if(shouldHighlight) {
-                        triplet.getThird().setThird(CROSS_HIGHLIGHT_BACKGROUND);
+                        triplet.getThird().setCrossHighlightBG(CROSS_HIGHLIGHT_BACKGROUND);
                     } else {
-                        triplet.getThird().setThird(null);
+                        triplet.getThird().setCrossHighlightBG(null);
                     }
                     break;
                 }
@@ -171,12 +216,12 @@ public class MatrixGuiHandler {
         }
 
         for(int i=endCol - 1; i>=minCol; i--) {  // highlight horizontally, start at one less because first cell it will find is already highlighted
-            for(Triplet<Pair<Integer, Integer>, HBox, Triplet<Background, Background, Background>> triplet : cells) {  // find the cell to modify
+            for(Triplet<Pair<Integer, Integer>, HBox, HighlightScheme> triplet : cells) {  // find the cell to modify
                 if(triplet.getFirst().getValue() == i && triplet.getFirst().getKey() == endRow) {
                     if(shouldHighlight) {
-                        triplet.getThird().setThird(CROSS_HIGHLIGHT_BACKGROUND);
+                        triplet.getThird().setCrossHighlightBG(CROSS_HIGHLIGHT_BACKGROUND);
                     } else {
-                        triplet.getThird().setThird(null);
+                        triplet.getThird().setCrossHighlightBG(null);
                     }
                     break;
                 }
@@ -193,12 +238,9 @@ public class MatrixGuiHandler {
         GridPane grid = new GridPane();
 
         grid.setAlignment(Pos.CENTER);
-        ArrayList< ArrayList< Pair<String, Object> > > template = matrix.getGridArray();
+        ArrayList<ArrayList<Pair<String, Object>>> template = matrix.getGridArray();
         int rows = template.size();
         int columns = template.get(0).size();
-
-        int connectionR = 0;
-        int connectionC = 0;
 
         for(int r=0; r<rows; r++) {
             for(int c=0; c<columns; c++) {
@@ -209,7 +251,7 @@ public class MatrixGuiHandler {
 
                 if(item.getKey().equals("plain_text")) {
                     Object label = null;
-                    if(r == 0) {
+                    if(r == 0 || r == 1) {
                         label = new VerticalLabel(VerticalDirection.UP);
                         ((VerticalLabel) label).setText((String)item.getValue());
                         cell.setAlignment(Pos.BOTTOM_RIGHT);
@@ -219,7 +261,7 @@ public class MatrixGuiHandler {
                     cell.getChildren().add((Node) label);
                 } else if(item.getKey().equals("item_name")) {
                     Object label = null;
-                    if(r == 0) {
+                    if(r == 0 || r == 1) {
                         label = new VerticalLabel(VerticalDirection.UP);
                         ((VerticalLabel) label).setText(matrix.getItem((Integer)item.getValue()).getName());
                         cell.setAlignment(Pos.BOTTOM_RIGHT);
@@ -227,9 +269,35 @@ public class MatrixGuiHandler {
                         label = new Label(matrix.getItem((Integer)item.getValue()).getName());
                     }
                     cell.getChildren().add((Node) label);
+                } else if(item.getKey().equals("grouping_item")) {
+                    Object label = null;
+                    Group g = new Group();
+                    if(r == 0 || r == 1) {
+//                        label = new VerticalLabel(VerticalDirection.UP);
+//                        ((VerticalLabel) label).setText("grouping");
+//                        cell.setAlignment(Pos.BOTTOM_RIGHT);
+                        label = new ComboBox<Object>();
+                        ((ComboBox)label).setStyle("-fx-focus-color: transparent;    " +
+                                "-fx-background-color: -fx-outer-border, -fx-inner-border, -fx-body-color; \n" +
+                                "    -fx-background-insets: 0, 0, 0;\n" +
+                                "    -fx-background-radius: 0, 0, 0;");
+
+                        ((ComboBox)label).setPrefWidth(((ComboBox)label).getMaxWidth());
+
+                        ((ComboBox)label).setRotate(-90);
+                        ((ComboBox)label).getItems().addAll(54323453421.0, 2, 3, 4, 5);
+
+
+                    } else {
+                        label = new Label("");
+                    }
+                    g.getChildren().add((Node) label);
+                    cell.getChildren().add(g);
                 } else if(item.getKey().equals("index_item")) {
                     TextField entry = new TextField(((Double)matrix.getItem((Integer)item.getValue()).getSortIndex()).toString());
-                    // force the field to be numeric only
+                    entry.setPrefColumnCount(5);  // set size to 5 characters fitting
+
+                    // force the field to be numeric only TODO: this stopped working on 6/20
                     entry.textProperty().addListener(new ChangeListener<String>() {
                         @Override
                         public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
@@ -238,7 +306,7 @@ public class MatrixGuiHandler {
                             }
                         }
                     });
-                    cell.setAlignment(Pos.CENTER_RIGHT);
+                    cell.setMaxWidth(Region.USE_COMPUTED_SIZE);
 
                     int finalR = r;
                     int finalC = c;
@@ -254,9 +322,9 @@ public class MatrixGuiHandler {
                                 } else {
                                     matrix.setSortIndex((Integer)item.getValue(), newSortIndex);
                                 }
-                                clearCellHighlight(new Pair<Integer, Integer>(finalR, finalC));
+                                clearCellHighlight(new Pair<Integer, Integer>(finalR, finalC), "errorHighlight");
                             } catch(NumberFormatException ee) {
-                                enableCellHighlight(new Pair<Integer, Integer>(finalR, finalC), ERROR_BACKGROUND);
+                                setCellHighlight(new Pair<Integer, Integer>(finalR, finalC), ERROR_BACKGROUND, "errorHighlight");
                             }
                         }
                     });
@@ -378,7 +446,7 @@ public class MatrixGuiHandler {
                             window.showAndWait();
 
                         } else if(e.getButton().equals(MouseButton.SECONDARY)) {  // toggle highlighting
-                            toggleHighlightCell(new Pair<Integer, Integer>(finalR, finalC), HIGHLIGHT_BACKGROUND);
+                            toggleUserHighlightCell(new Pair<Integer, Integer>(finalR, finalC), HIGHLIGHT_BACKGROUND);
                         }
                     });
                     cell.setOnMouseEntered(e -> {
@@ -398,7 +466,7 @@ public class MatrixGuiHandler {
                 cells.add(new Triplet<>(
                         new Pair<>(r, c),
                         cell,
-                        new Triplet<>(defaultBackground, null, null)
+                        new HighlightScheme(defaultBackground, null, null, null)
                 ));
 
             }

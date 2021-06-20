@@ -8,6 +8,7 @@ public class DSMItem {
     private Integer aliasUid;
     private String name;
     private Double sortIndex;
+    private String group;
 
     public DSMItem(Double index, String name) {
         this.uid = name.hashCode() + Instant.now().toString().hashCode();
@@ -19,13 +20,15 @@ public class DSMItem {
 
         this.name = name;
         this.sortIndex = index;
+        this.group = "(None)";
     }
 
-    public DSMItem(Integer uid, Integer aliasUid, Double index, String name) {
+    public DSMItem(Integer uid, Integer aliasUid, Double index, String name, String group) {
         this.uid = uid;
         this.aliasUid = aliasUid;
         this.name = name;
         this.sortIndex = index;
+        this.group = group;
     }
 
     public int getUid() {
@@ -54,6 +57,14 @@ public class DSMItem {
 
     public void setAliasUid(Integer aliasUid) {
         this.aliasUid = aliasUid;
+    }
+
+    public String getGroup() {
+        return group;
+    }
+
+    public void setGroup(String group) {
+        this.group = group;
     }
 
     @Override
