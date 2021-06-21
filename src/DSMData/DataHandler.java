@@ -1,5 +1,8 @@
 package DSMData;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.collections.ObservableSet;
 import javafx.scene.control.ComboBox;
 import javafx.scene.paint.Color;
 import javafx.util.Pair;
@@ -12,23 +15,7 @@ public class DataHandler {
     private Vector<DSMConnection> connections;
 
     private HashMap<String, Color> groupingColors;
-    private final Color[] uniqueColors = new Color[]{
-            Color.color(.3, .3, .5),
-            Color.color(.5, .2, .5),
-            Color.color(.6, .4, .6),
-            Color.color(.2, .2, .99),
-            Color.color(.5, .5, .99),
-            Color.color(.6, .8, .9),
-            Color.color(.1, .5, .4),
-            Color.color(.2, .8, .5),
-            Color.color(.2, .7, .7),
-            Color.color(.6, 1.0, .9),
-            Color.color(1.0, .8, .6),
-            Color.color(.9, .6, .2),
-            Color.color(.9, .7, .3),
-            Color.color(.8, .8, .6),
-            Color.color(.9, .6, .9)
-    };
+    private ObservableSet<String> groupings;
 
     private boolean symmetrical;
 
@@ -44,6 +31,7 @@ public class DataHandler {
         cols = new Vector<DSMItem>();
         connections = new Vector<DSMConnection>();
         groupingColors = new HashMap<>();
+        groupings = FXCollections.observableSet();
 
         this.wasModified = true;
     }
@@ -109,17 +97,24 @@ public class DataHandler {
 
     public void addGrouping(String name, Color color) {
         groupingColors.put(name, color);
+        groupings.add(name);
         this.wasModified = true;
     }
 
     public void removeGrouping(String name) {
         groupingColors.remove(name);
+        groupings.remove(name);
         this.wasModified = true;
     }
 
     public void clearGroupings() {
         groupingColors.clear();
+        groupings.clear();
         this.wasModified = true;
+    }
+
+    public ObservableSet<String> getGroupings() {
+        return groupings;
     }
 
     public void renameGrouping(String oldName, String newName) {
@@ -240,7 +235,7 @@ public class DataHandler {
 
 
 
-    public void setItemNameSymmetric(int rowUid, String new_name) {
+    public void setItemNameSymmetric(int rowUid, String newName) {
         assert isSymmetrical() : "cannot call symmetrical function on non symmetrical dataset";
 
         int r_index = -1;
@@ -250,8 +245,8 @@ public class DataHandler {
             if (cols.elementAt(i).getAliasUid() == rowUid) c_index = i;
 
             if (r_index != -1 && c_index != -1) {
-                rows.elementAt(r_index).setName(new_name);
-                cols.elementAt(r_index).setName(new_name);
+                rows.elementAt(r_index).setName(newName);
+                cols.elementAt(r_index).setName(newName);
             }
         }
         assert (r_index != -1 && c_index != -1) : "could not find same uid in row and column in symmetrical matrix when changing item name";
@@ -259,25 +254,17 @@ public class DataHandler {
     }
 
 
-    public void setItemName(int uid, String new_name) {
-        int index = -1;
+    public void setItemName(int uid, String newName) {
         for(int i=0; i<this.rows.size(); i++) {     // check to see if uid is in the rows
             if(rows.elementAt(i).getUid() == uid) {
-                index = i;
-                break;
+                rows.elementAt(i).setName(newName);
+                return;
             }
         }
-        if (index != -1) {  // uid was not in a row, must be in a column
-            rows.elementAt(index).setName(new_name);
-        } else {
-            for(int i=0; i<this.cols.size(); i++) {
-                if(cols.elementAt(i).getUid() == uid) {
-                    index = i;
-                    break;
-                }
-            }
-            if (index != -1) {
-                cols.elementAt(index).setName(new_name);
+        for(int i=0; i<this.cols.size(); i++) {
+            if(cols.elementAt(i).getUid() == uid) {
+                cols.elementAt(i).setName(newName);
+                return;
             }
         }
         this.wasModified = true;
@@ -304,24 +291,52 @@ public class DataHandler {
 
 
     public void setSortIndex(int uid, double newIndex) {
-        int index = -1;
         for(int i=0; i<this.rows.size(); i++) {     // check to see if uid is in the rows
             if(rows.elementAt(i).getUid() == uid) {
-                index = i;
-                break;
+                rows.elementAt(i).setSortIndex(newIndex);
+                return;
             }
         }
-        if (index != -1) {  // uid was not in a row, must be in a column
-            rows.elementAt(index).setSortIndex(newIndex);
-        } else {
-            for(int i=0; i<this.cols.size(); i++) {
-                if(cols.elementAt(i).getUid() == uid) {
-                    index = i;
-                    break;
-                }
+        for(int i=0; i<this.cols.size(); i++) {
+            if(cols.elementAt(i).getUid() == uid) {
+                cols.elementAt(i).setSortIndex(newIndex);
+                return;
             }
-            if (index != -1) {
-                cols.elementAt(index).setSortIndex(newIndex);
+        }
+        this.wasModified = true;
+    }
+
+
+    public void setGroupSymmetric(int rowUid, String newGroup) {
+        assert isSymmetrical() : "cannot call symmetrical function on non symmetrical dataset";
+
+        int r_index = -1;
+        int c_index = -1;
+        for (int i = 0; i < this.rows.size(); i++) {
+            if (rows.elementAt(i).getUid() == rowUid) r_index = i;
+            if (cols.elementAt(i).getAliasUid() == rowUid) c_index = i;
+
+            if (r_index != -1 && c_index != -1) {
+                rows.elementAt(r_index).setGroup(newGroup);
+                cols.elementAt(r_index).setGroup(newGroup);
+            }
+        }
+        assert (r_index != -1 && c_index != -1) : "could not find same uid in row and column in symmetrical matrix when changing item name";
+        this.wasModified = true;
+    }
+
+
+    public void setGroup(int uid, String newGroup) {
+        for(int i=0; i<this.rows.size(); i++) {     // check to see if uid is in the rows
+            if(rows.elementAt(i).getUid() == uid) {
+                rows.elementAt(i).setGroup(newGroup);
+                return;
+            }
+        }
+        for(int i=0; i<this.cols.size(); i++) {
+            if(cols.elementAt(i).getUid() == uid) {
+                cols.elementAt(i).setGroup(newGroup);
+                return;
             }
         }
         this.wasModified = true;
@@ -377,34 +392,30 @@ public class DataHandler {
 
         // create header row
         ArrayList<Pair< String, Object> > row0 = new ArrayList<Pair< String, Object> >();
-        row0.add(new Pair<String, Object>(new String("plain_text"), new String("")));
-        row0.add(new Pair<String, Object>(new String("plain_text"), new String("")));
-        row0.add(new Pair<String, Object>(new String("plain_text"), new String("Column Items")));
+        row0.add(new Pair<String, Object>(new String("plain_text_v"), new String("")));
+        row0.add(new Pair<String, Object>(new String("plain_text_v"), new String("")));
+        row0.add(new Pair<String, Object>(new String("plain_text_v"), new String("Column Items")));
         for(DSMItem c : cols) {
-            row0.add(new Pair<String, Object>(new String("item_name"), c.getUid()));
+            row0.add(new Pair<String, Object>(new String("item_name_v"), c.getUid()));
         }
         grid.add(row0);
 
-        // create second header row
-        ArrayList<Pair< String, Object> > row1 = new ArrayList<Pair< String, Object> >();
-        row1.add(new Pair<String, Object>(new String("plain_text"), new String("")));
-        row1.add(new Pair<String, Object>(new String("plain_text"), new String("")));
-        row1.add(new Pair<String, Object>(new String("plain_text"), new String("Grouping")));
-        if(isSymmetrical()) {  // add nothing to this row because it does not need to be displayed to the user
-            for(DSMItem c : cols) {
-                row1.add(new Pair<String, Object>(new String("grouping_item"), new String("")));
+        // create second header row for groupings if it is a non-symmetrical matrix
+        if(!isSymmetrical()) {
+            ArrayList<Pair<String, Object>> row1 = new ArrayList<Pair<String, Object>>();
+            row1.add(new Pair<String, Object>(new String("plain_text_v"), new String("")));
+            row1.add(new Pair<String, Object>(new String("plain_text_v"), new String("")));
+            row1.add(new Pair<String, Object>(new String("plain_text_v"), new String("Grouping")));
+            for (DSMItem c : cols) {
+                row1.add(new Pair<String, Object>(new String("grouping_item_v"), c.getUid()));
             }
-        } else {
-            for(DSMItem c : cols) {
-                row1.add(new Pair<String, Object>(new String("grouping_item"), c.getUid()));
-            }
+            grid.add(row1);
         }
-        grid.add(row1);
 
         // create third header row
         ArrayList<Pair< String, Object> > row2 = new ArrayList<Pair< String, Object> >();
-        row2.add(new Pair<String, Object>(new String("plain_text"), new String("Row Items")));
         row2.add(new Pair<String, Object>(new String("plain_text"), new String("Grouping")));
+        row2.add(new Pair<String, Object>(new String("plain_text"), new String("Row Items")));
         row2.add(new Pair<String, Object>(new String("plain_text"), new String("Re-Sort Index")));
         if(isSymmetrical()) {  // add nothing to this row because it does not need to be displayed to the user
             for(DSMItem c : cols) {
@@ -420,8 +431,8 @@ public class DataHandler {
         // create rows
         for(DSMItem r : rows) {
             ArrayList<Pair< String, Object> > row = new ArrayList<Pair< String, Object> >();
-            row.add(new Pair<String, Object>(new String("item_name"), r.getUid()));
             row.add(new Pair<String, Object>(new String("grouping_item"), r.getUid()));
+            row.add(new Pair<String, Object>(new String("item_name"), r.getUid()));
             row.add(new Pair<String, Object>(new String("index_item"), r.getUid()));
             for(DSMItem c : cols) {  // create connection items for all columns
                 if(isSymmetrical() && c.getAliasUid() == r.getUid()) {  // can't have connection to itself in a symmetrical matrix

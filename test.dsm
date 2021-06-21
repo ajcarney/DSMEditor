@@ -28,8 +28,14 @@
     </col>
     <col uid="1247">
       <name>Second Motor</name>
-      <sort_index>4.0</sort_index>
+      <sort_index>4.1</sort_index>
       <alias>1237</alias>
+      <group>(None)</group>
+    </col>
+    <col uid="1248509279">
+      <name>Battery</name>
+      <sort_index>5.1</sort_index>
+      <alias>1161978170</alias>
       <group>(None)</group>
     </col>
   </columns>
@@ -51,7 +57,12 @@
     </row>
     <row uid="1237">
       <name>Second Motor</name>
-      <sort_index>4.0</sort_index>
+      <sort_index>4.1</sort_index>
+      <group>(None)</group>
+    </row>
+    <row uid="1161978170">
+      <name>Battery</name>
+      <sort_index>5.1</sort_index>
       <group>(None)</group>
     </row>
   </rows>

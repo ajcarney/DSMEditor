@@ -454,6 +454,11 @@ public class ToolbarHandler {
                 connectionsModifier.getChildren().add(connectionVBox);
             }
             ScrollPane scrollPane = new ScrollPane(connectionsModifier);
+            scrollPane.setOnScroll(event -> {  // allow vertical scrolling to scroll horizontally
+                if(event.getDeltaX() == 0 && event.getDeltaY() != 0) {
+                    scrollPane.setHvalue(scrollPane.getHvalue() - event.getDeltaY() / connectionsModifier.getWidth());
+                }
+            });
             scrollPane.setFitToHeight(true);
 
             // vbox to choose row or column
@@ -563,12 +568,14 @@ public class ToolbarHandler {
             connectionDetailsLayout.setSpacing(10);
             connectionDetailsLayout.setPadding(new Insets(10, 10, 10, 10));
             VBox.setVgrow(connectionDetailsLayout, Priority.ALWAYS);
-//            connectionDetailsLayout.setMinWidth(Region.USE_PREF_SIZE);
+            connectionDetailsLayout.setMinWidth(Region.USE_PREF_SIZE);
 
             TextField connectionName = new TextField();
             TextField weight = new TextField();
             connectionName.setPromptText("Connection Name");
             weight.setPromptText("Connection Weight");
+            connectionName.setMinWidth(connectionName.getPrefWidth());
+            weight.setMinWidth(weight.getPrefWidth());
 
             connectionDetailsLayout.getChildren().addAll(connectionName, weight);
 
@@ -603,7 +610,6 @@ public class ToolbarHandler {
                         if(!changesToMakeView.getItems().contains(data)) {  // ensure no duplicates
                             changesToMakeView.getItems().add(data);
                         }
-                        System.out.println(data);
                     }
                 }
             });
@@ -985,10 +991,12 @@ public class ToolbarHandler {
                             groupingName = ((Label)item).getText();
                         } else if (item.getClass().equals(ColorPicker.class)) {
                             ColorPicker c = (ColorPicker)item;
-                            groupingColor = Color.color(c.getValue().getRed(), c.getValue().getGreen(), c.getValue().getBlue());
+                            if(c.getValue() != null) {  // if color is selected
+                                groupingColor = Color.color(c.getValue().getRed(), c.getValue().getGreen(), c.getValue().getBlue());
+                            }
                         }
                     }
-                    assert(groupingName != null && groupingColor != null) : "could not find name and color objects on screen when configuring groupings";
+                    assert(groupingName != null) : "could not find name on screen when configuring groupings";
                     ioHandler.getMatrix(editor.getFocusedMatrixUid()).addGrouping(groupingName, groupingColor);
                 }
                 window.close();

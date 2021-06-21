@@ -6,6 +6,7 @@ import DSMData.DataHandler;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.ObservableList;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -13,10 +14,7 @@ import javafx.geometry.VerticalDirection;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
@@ -25,6 +23,8 @@ import javafx.scene.text.TextAlignment;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Pair;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -40,32 +40,6 @@ public class MatrixGuiHandler {
 
     private Thread highlightThread;
     private static boolean crossHighlight = false;
-
-    private class Triplet<T, U, V> {
-        private T first;
-        private U second;
-        private V third;
-
-        public Triplet(T first, U second, V third) {
-            this.first = first;
-            this.second = second;
-            this.third = third;
-        }
-
-        public T getFirst() { return first; }
-        public U getSecond() { return second; }
-        public V getThird() { return third; }
-
-        public void setFirst(T first) {
-            this.first = first;
-        }
-        public void setSecond(U second) {
-            this.second = second;
-        }
-        public void setThird(V third) {
-            this.third = third;
-        }
-    }
 
     private class HighlightScheme {
         private Background defaultBG;
@@ -113,27 +87,84 @@ public class MatrixGuiHandler {
         }
     }
 
-    // pair of locations (row, column) | cell object | triple of highlight colors (default, highlight1, highlight2)
-    Vector<Triplet<Pair<Integer, Integer>, HBox, HighlightScheme>> cells;
+    private class Cell {
+        private Pair<Integer, Integer> gridLocation;
+        private HBox guiCell;
+        private HighlightScheme highlightScheme;
+
+        public Cell(Pair<Integer, Integer> gridLocation, HBox guiCell, HighlightScheme highlightScheme) {
+            this.gridLocation = gridLocation;
+            this.guiCell = guiCell;
+            this.highlightScheme = highlightScheme;
+        }
+
+        public Pair<Integer, Integer> getGridLocation() {
+            return gridLocation;
+        }
+
+        public HBox getGuiCell() {
+            return guiCell;
+        }
+
+        public HighlightScheme getHighlightScheme() {
+            return highlightScheme;
+        }
+    }
+
+    Vector<Cell> cells;  // contains information for highlighting
+    HashMap<String, HashMap<Integer, Integer>> gridUidLookup;
 
     MatrixGuiHandler(DataHandler matrix) {
         this.matrix = matrix;
         cells = new Vector<>();
+        gridUidLookup = new HashMap<>();
+        gridUidLookup.put("rows", new HashMap<Integer, Integer>());
+        gridUidLookup.put("cols", new HashMap<Integer, Integer>());
 
         this.highlightThread = new Thread(() -> {
             while(true) {
                 Platform.runLater(new Runnable() {  // this allows a thread to update the gui
                     @Override
                     public void run() {
-                        for (Triplet<Pair<Integer, Integer>, HBox, HighlightScheme> cell : cells) {
-                            if (cell.getThird().getErrorHighlightBG() != null) {
-                                cell.getSecond().setBackground(cell.getThird().getErrorHighlightBG());
-                            } else if (cell.getThird().getCrossHighlightBG() != null && crossHighlight) {
-                                cell.getSecond().setBackground(cell.getThird().getCrossHighlightBG());
-                            } else if (cell.getThird().getUserHighlightBG() != null) {
-                                cell.getSecond().setBackground(cell.getThird().getUserHighlightBG());
-                            } else {
-                                cell.getSecond().setBackground(cell.getThird().getDefaultBG());
+                        for (Cell cell : cells) {
+                            if (cell.getHighlightScheme().getErrorHighlightBG() != null) {
+                                cell.getGuiCell().setBackground(cell.getHighlightScheme().getErrorHighlightBG());
+                            } else if (cell.getHighlightScheme().getCrossHighlightBG() != null && crossHighlight) {
+                                cell.getGuiCell().setBackground(cell.getHighlightScheme().getCrossHighlightBG());
+                            } else if (cell.getHighlightScheme().getUserHighlightBG() != null) {
+                                cell.getGuiCell().setBackground(cell.getHighlightScheme().getUserHighlightBG());
+                            } else {  // default background determined by groupings
+                                Integer rowUid = getUidsFromGridLoc(cell.getGridLocation()).getKey();
+                                Integer colUid = getUidsFromGridLoc(cell.getGridLocation()).getValue();
+                                Color mergedColor = null;
+                                if(rowUid == null && colUid != null) {  // highlight with column color
+                                    mergedColor = matrix.getGroupingColors().get(matrix.getItem(colUid).getGroup());
+                                    cell.getGuiCell().setBackground(new Background(new BackgroundFill(mergedColor, new CornerRadii(3), new Insets(0))));
+                                    continue;
+                                } else if(rowUid != null && colUid == null) {  // highlight with row color
+                                    mergedColor = matrix.getGroupingColors().get(matrix.getItem(rowUid).getGroup());
+                                    cell.getGuiCell().setBackground(new Background(new BackgroundFill(mergedColor, new CornerRadii(3), new Insets(0))));
+                                    continue;
+                                } else if(rowUid != null && colUid != null) {  // highlight with merged color
+                                    Color rowColor = matrix.getGroupingColors().get(matrix.getItem(rowUid).getGroup());
+                                    if(rowColor == null) rowColor = Color.color(1.0, 1.0, 1.0);
+
+                                    Color colColor = matrix.getGroupingColors().get(matrix.getItem(colUid).getGroup());
+                                    if(colColor == null) colColor = Color.color(1.0, 1.0, 1.0);
+
+                                    double r = (rowColor.getRed() + colColor.getRed()) / 2;
+                                    double g = (rowColor.getGreen() + colColor.getGreen()) / 2;
+                                    double b = (rowColor.getBlue() + colColor.getBlue()) / 2;
+                                    mergedColor = Color.color(r, g, b);
+
+//                                    System.out.println(rowUid + " " + colUid + " " + matrix.getItem(colUid).getAliasUid() + " " + matrix.getItem(rowUid).getGroup() + " " + matrix.getItem(colUid).getGroup());
+                                    if(!rowUid.equals(matrix.getItem(colUid).getAliasUid()) && matrix.getItem(rowUid).getGroup().equals(matrix.getItem(colUid).getGroup())) {
+                                        cell.getGuiCell().setBackground(new Background(new BackgroundFill(mergedColor, new CornerRadii(3), new Insets(0))));
+                                        continue;
+                                    }
+                                }
+
+                                cell.getGuiCell().setBackground(cell.getHighlightScheme().getDefaultBG());
                             }
                         }
                     }
@@ -150,39 +181,45 @@ public class MatrixGuiHandler {
         highlightThread.start();
     }
 
-    private Triplet<Pair<Integer, Integer>, HBox, HighlightScheme> getCellByLoc(Pair<Integer, Integer> cellLoc) {
-        for(Triplet<Pair<Integer, Integer>, HBox, HighlightScheme> cell : cells) {  // determine the value to decrease to
-            if(cell.getFirst().getKey() == cellLoc.getKey() && cell.getFirst().getValue() == cellLoc.getValue()) {
+    private Cell getCellByLoc(Pair<Integer, Integer> cellLoc) {
+        for(Cell cell : cells) {  // determine the value to decrease to
+            if(cell.getGridLocation().getKey() == cellLoc.getKey() && cell.getGridLocation().getValue() == cellLoc.getValue()) {
                 return cell;
             }
         }
         return null;
     }
 
+    private Pair<Integer, Integer> getUidsFromGridLoc(Pair<Integer, Integer> cellLoc) {
+        Integer rowUid = gridUidLookup.get("rows").get(cellLoc.getKey());;
+        Integer colUid = gridUidLookup.get("cols").get(cellLoc.getValue());;
+        return new Pair<>(rowUid, colUid);
+    }
+
     private void toggleUserHighlightCell(Pair<Integer, Integer> cellLoc, Background bg) {
-        Triplet<Pair<Integer, Integer>, HBox, HighlightScheme> cell = getCellByLoc(cellLoc);
-        if(cell.getThird().getUserHighlightBG() == null) {  // is highlighted, so unhighlight it
-            cell.getThird().setUserHighlightBG(bg);
+        Cell cell = getCellByLoc(cellLoc);
+        if(cell.getHighlightScheme().getUserHighlightBG() == null) {  // is highlighted, so unhighlight it
+            cell.getHighlightScheme().setUserHighlightBG(bg);
         } else {
-            cell.getThird().setUserHighlightBG(null);
+            cell.getHighlightScheme().setUserHighlightBG(null);
         }
     }
 
 
     private void setCellHighlight(Pair<Integer, Integer> cellLoc, Background bg, String highlightType) {
-        Triplet<Pair<Integer, Integer>, HBox, HighlightScheme> cell = getCellByLoc(cellLoc);
+        Cell cell = getCellByLoc(cellLoc);
         HashMap<String, Runnable> functions = new HashMap<>();
-        functions.put("userHighlight", () -> cell.getThird().setUserHighlightBG(bg));
-        functions.put("errorHighlight", () -> cell.getThird().setErrorHighlightBG(bg));
+        functions.put("userHighlight", () -> cell.getHighlightScheme().setUserHighlightBG(bg));
+        functions.put("errorHighlight", () -> cell.getHighlightScheme().setErrorHighlightBG(bg));
         functions.get(highlightType).run();
     }
 
 
     private void clearCellHighlight(Pair<Integer, Integer> cellLoc, String highlightType) {
-        Triplet<Pair<Integer, Integer>, HBox, HighlightScheme> cell = getCellByLoc(cellLoc);
+        Cell cell = getCellByLoc(cellLoc);
         HashMap<String, Runnable> functions = new HashMap<>();
-        functions.put("userHighlight", () -> cell.getThird().setUserHighlightBG(null));
-        functions.put("errorHighlight", () -> cell.getThird().setErrorHighlightBG(null));
+        functions.put("userHighlight", () -> cell.getHighlightScheme().setUserHighlightBG(null));
+        functions.put("errorHighlight", () -> cell.getHighlightScheme().setErrorHighlightBG(null));
         functions.get(highlightType).run();
     }
 
@@ -193,22 +230,22 @@ public class MatrixGuiHandler {
 
         int minRow = Integer.MAX_VALUE;
         int minCol = Integer.MAX_VALUE;
-        for(Triplet<Pair<Integer, Integer>, HBox, HighlightScheme> cell : cells) {  // determine the value to decrease to
-            if(cell.getFirst().getKey() < minRow) {
-                minRow = cell.getFirst().getKey();
+        for(Cell cell : cells) {  // determine the value to decrease to
+            if(cell.getGridLocation().getKey() < minRow) {
+                minRow = cell.getGridLocation().getKey();
             }
-            if(cell.getFirst().getValue() < minCol) {
-                minCol = cell.getFirst().getValue();
+            if(cell.getGridLocation().getValue() < minCol) {
+                minCol = cell.getGridLocation().getValue();
             }
         }
 
         for(int i=endRow; i>=minRow; i--) {  // highlight vertically
-            for(Triplet<Pair<Integer, Integer>, HBox, HighlightScheme> triplet : cells) {  // find the cell to modify
-                if(triplet.getFirst().getKey() == i && triplet.getFirst().getValue() == endCol) {
+            for(Cell cell : cells) {  // find the cell to modify
+                if(cell.getGridLocation().getKey() == i && cell.getGridLocation().getValue() == endCol) {
                     if(shouldHighlight) {
-                        triplet.getThird().setCrossHighlightBG(CROSS_HIGHLIGHT_BACKGROUND);
+                        cell.getHighlightScheme().setCrossHighlightBG(CROSS_HIGHLIGHT_BACKGROUND);
                     } else {
-                        triplet.getThird().setCrossHighlightBG(null);
+                        cell.getHighlightScheme().setCrossHighlightBG(null);
                     }
                     break;
                 }
@@ -216,12 +253,12 @@ public class MatrixGuiHandler {
         }
 
         for(int i=endCol - 1; i>=minCol; i--) {  // highlight horizontally, start at one less because first cell it will find is already highlighted
-            for(Triplet<Pair<Integer, Integer>, HBox, HighlightScheme> triplet : cells) {  // find the cell to modify
-                if(triplet.getFirst().getValue() == i && triplet.getFirst().getKey() == endRow) {
+            for(Cell cell : cells) {  // find the cell to modify
+                if(cell.getGridLocation().getValue() == i && cell.getGridLocation().getKey() == endRow) {
                     if(shouldHighlight) {
-                        triplet.getThird().setCrossHighlightBG(CROSS_HIGHLIGHT_BACKGROUND);
+                        cell.getHighlightScheme().setCrossHighlightBG(CROSS_HIGHLIGHT_BACKGROUND);
                     } else {
-                        triplet.getThird().setCrossHighlightBG(null);
+                        cell.getHighlightScheme().setCrossHighlightBG(null);
                     }
                     break;
                 }
@@ -234,7 +271,11 @@ public class MatrixGuiHandler {
         crossHighlight = !crossHighlight;
     }
 
-    GridPane getMatrixEditor() {
+     VBox getMatrixEditor() {
+        VBox rootLayout = new VBox();
+        rootLayout.setAlignment(Pos.CENTER);
+
+        Label location = new Label("");
         GridPane grid = new GridPane();
 
         grid.setAlignment(Pos.CENTER);
@@ -250,48 +291,52 @@ public class MatrixGuiHandler {
                 Background defaultBackground = DEFAULT_BACKGROUND;
 
                 if(item.getKey().equals("plain_text")) {
-                    Object label = null;
-                    if(r == 0 || r == 1) {
-                        label = new VerticalLabel(VerticalDirection.UP);
-                        ((VerticalLabel) label).setText((String)item.getValue());
-                        cell.setAlignment(Pos.BOTTOM_RIGHT);
-                    } else {
-                        label = new Label((String)item.getValue());
-                    }
+                    Label label = new Label((String)item.getValue());
+                    label.setMinWidth(Region.USE_PREF_SIZE);
+                    cell.getChildren().add((Node) label);
+                } else if(item.getKey().equals("plain_text_v")) {
+                    VerticalLabel label = new VerticalLabel(VerticalDirection.UP);
+                    label.setText((String)item.getValue());
+                    cell.setAlignment(Pos.BOTTOM_RIGHT);
                     cell.getChildren().add((Node) label);
                 } else if(item.getKey().equals("item_name")) {
-                    Object label = null;
-                    if(r == 0 || r == 1) {
-                        label = new VerticalLabel(VerticalDirection.UP);
-                        ((VerticalLabel) label).setText(matrix.getItem((Integer)item.getValue()).getName());
-                        cell.setAlignment(Pos.BOTTOM_RIGHT);
-                    } else {
-                        label = new Label(matrix.getItem((Integer)item.getValue()).getName());
-                    }
-                    cell.getChildren().add((Node) label);
+                    Label label = new Label(matrix.getItem((Integer) item.getValue()).getName());
+                    cell.setAlignment(Pos.BOTTOM_RIGHT);
+                    label.setMinWidth(Region.USE_PREF_SIZE);
+                    cell.getChildren().add(label);
+                } else if(item.getKey().equals("item_name_v")) {
+                    VerticalLabel label = new VerticalLabel(VerticalDirection.UP);
+                    label.setText(matrix.getItem((Integer)item.getValue()).getName());
+                    cell.getChildren().add(label);
                 } else if(item.getKey().equals("grouping_item")) {
-                    Object label = null;
-                    Group g = new Group();
-                    if(r == 0 || r == 1) {
-//                        label = new VerticalLabel(VerticalDirection.UP);
-//                        ((VerticalLabel) label).setText("grouping");
-//                        cell.setAlignment(Pos.BOTTOM_RIGHT);
-                        label = new ComboBox<Object>();
-                        ((ComboBox)label).setStyle("-fx-focus-color: transparent;    " +
-                                "-fx-background-color: -fx-outer-border, -fx-inner-border, -fx-body-color; \n" +
-                                "    -fx-background-insets: 0, 0, 0;\n" +
-                                "    -fx-background-radius: 0, 0, 0;");
-
-                        ((ComboBox)label).setPrefWidth(((ComboBox)label).getMaxWidth());
-
-                        ((ComboBox)label).setRotate(-90);
-                        ((ComboBox)label).getItems().addAll(54323453421.0, 2, 3, 4, 5);
-
-
-                    } else {
-                        label = new Label("");
-                    }
-                    g.getChildren().add((Node) label);
+                    ComboBox<String> groupings = new ComboBox<String>();
+                    groupings.setMinWidth(Region.USE_PREF_SIZE);
+                    groupings.getItems().addAll(matrix.getGroupings());
+                    groupings.getSelectionModel().select(matrix.getItem((Integer)item.getValue()).getGroup());
+                    groupings.setOnAction(e -> {
+                        if(matrix.isSymmetrical()) {
+                            matrix.setGroupSymmetric((Integer)item.getValue(), groupings.getValue());
+                        } else {
+                            matrix.setGroup((Integer)item.getValue(), groupings.getValue());
+                        }
+                    });
+                    cell.getChildren().add(groupings);
+                } else if(item.getKey().equals("grouping_item_v")) {
+                    ComboBox<String> groupings = new ComboBox<String>();
+                    groupings.getItems().addAll(matrix.getGroupings());
+                    groupings.setStyle(  // remove border from button when selecting it because this causes weird resizing bugs in the grouping
+                            "-fx-focus-color: transparent;" +
+                            "-fx-background-color: -fx-outer-border, -fx-inner-border, -fx-body-color; \n" +
+                            "-fx-background-insets: 0, 0, 0;\n" +
+                            "-fx-background-radius: 0, 0, 0;"
+                    );
+                    groupings.setRotate(-90);
+                    groupings.getSelectionModel().select(matrix.getItem((Integer)item.getValue()).getGroup());
+                    groupings.setOnAction(e -> {
+                        matrix.setGroup((Integer)item.getValue(), groupings.getValue());
+                    });
+                    Group g = new Group();  // box will be added to a group so that it will be formatted correctly if it is vertical
+                    g.getChildren().add(groupings);
                     cell.getChildren().add(g);
                 } else if(item.getKey().equals("index_item")) {
                     TextField entry = new TextField(((Double)matrix.getItem((Integer)item.getValue()).getSortIndex()).toString());
@@ -343,7 +388,18 @@ public class MatrixGuiHandler {
                     } else {
                         label = new Label(conn.getConnectionName());
                     }
+                    cell.setAlignment(Pos.CENTER);  // center the text
 
+                    // this item type will be used to create the lookup table for finding associated uid from grid location
+                    if(!gridUidLookup.get("rows").containsKey(r)) {
+                        gridUidLookup.get("rows").put(r, rowUid);
+                    }
+
+                    if(!gridUidLookup.get("cols").containsKey(c)) {
+                        gridUidLookup.get("cols").put(c, colUid);
+                    }
+
+                    // set up callback functions
                     int finalR = r;
                     int finalC = c;
                     cell.setOnMouseClicked(e -> {
@@ -451,19 +507,21 @@ public class MatrixGuiHandler {
                     });
                     cell.setOnMouseEntered(e -> {
                         crossHighlightCell(new Pair<Integer, Integer>(finalR, finalC), true);
+                        location.setText(matrix.getItem(rowUid).getName() + ":" + matrix.getItem(colUid).getName());
                     });
                     cell.setOnMouseExited(e -> {
                         crossHighlightCell(new Pair<Integer, Integer>(finalR, finalC), false);
+                        location.setText("");
                     });
 
                     cell.getChildren().add(label);
                 }
                 cell.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
-                cell.setPadding(new Insets(10, 10, 10, 10));
+                cell.setPadding(new Insets(1, 1, 1, 1));
                 GridPane.setConstraints(cell, c, r);
                 grid.getChildren().add(cell);
 
-                cells.add(new Triplet<>(
+                cells.add(new Cell(
                         new Pair<>(r, c),
                         cell,
                         new HighlightScheme(defaultBackground, null, null, null)
@@ -472,6 +530,11 @@ public class MatrixGuiHandler {
             }
         }
 
-        return grid;
+        ScrollPane scrollPane = new ScrollPane(grid);
+        scrollPane.setFitToWidth(true);
+        rootLayout.getChildren().addAll(scrollPane, location);
+
+
+        return rootLayout;
     }
 }

@@ -200,9 +200,7 @@ public class IOHandler {
                 String group = col.getChild("group").getText();
                 try {
                     aliasUid = Integer.parseInt(col.getChild("alias").getText());
-                } catch(NullPointerException npe) {
-                    continue;
-                }
+                } catch(NullPointerException npe) {}
 
                 DSMItem item = new DSMItem(uid, aliasUid, sortIndex, name, group);
                 matrix.addItem(item, false);

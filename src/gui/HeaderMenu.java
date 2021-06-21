@@ -29,9 +29,12 @@ public class HeaderMenu {
         //File menu
         fileMenu = new Menu("File");
 
-        MenuItem newFile = new MenuItem("New...");
-        newFile.setOnAction(e -> {
+        Menu newFileMenu = new Menu("New...");
+
+        MenuItem newSymmetric = new MenuItem("Symmetric Matrix");
+        newSymmetric.setOnAction(e -> {
             DataHandler matrix = new DataHandler();
+            matrix.setSymmetrical(true);
             File file = new File("./untitled" + Integer.toString(defaultName));
             while(file.exists()) {  // make sure file does not exist
                 defaultName += 1;
@@ -43,6 +46,25 @@ public class HeaderMenu {
 
             defaultName += 1;
         });
+        MenuItem newNonSymmetric = new MenuItem("Non-Symmetric Matrix");
+        newNonSymmetric.setOnAction(e -> {
+            DataHandler matrix = new DataHandler();
+            matrix.setSymmetrical(false);
+            File file = new File("./untitled" + Integer.toString(defaultName));
+            while(file.exists()) {  // make sure file does not exist
+                defaultName += 1;
+                file = new File("./untitled" + Integer.toString(defaultName));
+            }
+
+            int uid = this.ioHandler.addMatrix(matrix, file);
+            this.tabView.addTab(uid);
+
+            defaultName += 1;
+        });
+
+        newFileMenu.getItems().addAll(newSymmetric, newNonSymmetric);
+
+
 
         MenuItem openFile = new MenuItem("Open...");
         openFile.setOnAction( e -> {
@@ -93,7 +115,7 @@ public class HeaderMenu {
             }
         });
 
-        fileMenu.getItems().add(newFile);
+        fileMenu.getItems().add(newFileMenu);
         fileMenu.getItems().add(openFile);
         fileMenu.getItems().add(saveFile);
         fileMenu.getItems().add(saveFileAs);
