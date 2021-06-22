@@ -33,6 +33,8 @@ public class DataHandler {
         groupingColors = new HashMap<>();
         groupings = FXCollections.observableSet();
 
+        addGrouping("(None)", Color.color(1.0, 1.0, 1.0));  // add default group
+
         this.wasModified = true;
     }
 
@@ -382,6 +384,20 @@ public class DataHandler {
         modifyConnection(getItem(colUid).getAliasUid(), colUid, connectionName, weight);
         this.wasModified = true;
     }
+
+
+    public void reDistributeSortIndexes() {
+        // sort row and columns by sortIndex
+        Collections.sort(rows, Comparator.comparing(r -> r.getSortIndex()));
+        Collections.sort(cols, Comparator.comparing(c -> c.getSortIndex()));
+        for(int i=0; i<rows.size(); i++) {  // reset row sort indexes 1 -> n
+            rows.elementAt(i).setSortIndex(i + 1);
+        }
+        for(int i=0; i<cols.size(); i++) {  // reset col sort indexes 1 -> n
+            cols.elementAt(i).setSortIndex(i + 1);
+        }
+    }
+
 
     public ArrayList< ArrayList<Pair< String, Object> > > getGridArray() {
         ArrayList< ArrayList<Pair< String, Object> > > grid = new ArrayList<>();

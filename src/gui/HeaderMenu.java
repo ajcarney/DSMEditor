@@ -3,11 +3,13 @@ package gui;
 import DSMData.DataHandler;
 import IOHandler.IOHandler;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 
 import java.io.File;
 
@@ -96,6 +98,8 @@ public class HeaderMenu {
                 File fileName = fileChooser.showSaveDialog(menuBar.getScene().getWindow());
                 if(fileName != null) {
                     this.ioHandler.setMatrixSaveFile(tabView.getFocusedMatrixUid(), fileName);
+                } else {  // user did not select a file, so do not save it
+                    return;
                 }
             }
             int code = this.ioHandler.saveMatrixToFile(tabView.getFocusedMatrixUid());  // TODO: add checking with the return code
@@ -103,7 +107,7 @@ public class HeaderMenu {
         });
 
         MenuItem saveFileAs = new MenuItem("Save As...");
-        saveFileAs.setOnAction( e -> {
+        saveFileAs.setOnAction(e -> {
             if(tabView.getFocusedMatrixUid() == null) {
                 return;
             }
@@ -115,6 +119,16 @@ public class HeaderMenu {
             }
         });
 
+        MenuItem exit = new MenuItem("Exit");
+        exit.setOnAction(e -> {
+            menuBar.getScene().getWindow().fireEvent(
+                    new WindowEvent(
+                        menuBar.getScene().getWindow(),
+                        WindowEvent.WINDOW_CLOSE_REQUEST
+                    )
+            );
+        });
+
         fileMenu.getItems().add(newFileMenu);
         fileMenu.getItems().add(openFile);
         fileMenu.getItems().add(saveFile);
@@ -122,7 +136,7 @@ public class HeaderMenu {
         fileMenu.getItems().add(new SeparatorMenuItem());
         fileMenu.getItems().add(new MenuItem("Settings..."));
         fileMenu.getItems().add(new SeparatorMenuItem());
-        fileMenu.getItems().add(new MenuItem("Exit"));
+        fileMenu.getItems().add(exit);
 
 
         //Edit menu
@@ -130,8 +144,6 @@ public class HeaderMenu {
         editMenu.getItems().add(new MenuItem("Cut"));
         editMenu.getItems().add(new MenuItem("Copy"));
         MenuItem paste = new MenuItem("Paste");
-        paste.setOnAction(e -> System.out.println("Pasting some crap"));
-        paste.setDisable(true);
         editMenu.getItems().add(paste);
 
         menuBar.getMenus().addAll(fileMenu, editMenu);

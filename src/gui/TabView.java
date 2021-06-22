@@ -20,7 +20,7 @@ import java.util.Vector;
 
 public class TabView {
     private static TabPane tabPane;
-    private static HashMap<Tab, Integer> tabs;
+    private static HashMap<Tab, Integer> tabs;  // tab object, matrix uid
 
     private static IOHandler ioHandler;
     private static InfoHandler infoHandler;
@@ -94,10 +94,15 @@ public class TabView {
 
         tab.setOnCloseRequest(e -> {
             if(!ioHandler.isMatrixSaved(matrixUid)) {
+                focusTab(ioHandler.getMatrixSaveFile(matrixUid));
+                int selection = ioHandler.promptSave(matrixUid);
                 // TODO: add alert box that opens asking if you want to save before closing the tab
-                int selection = 1;  // 0 = close the tab, 1 = save and close, 2 = don't close
+
+                // 0 = close the tab, 1 = save and close, 2 = don't close
                 if(selection == 2) {  // user doesn't want to close the pane so consume the event
-                    e.consume();  // will not close window
+                    if(e != null) {
+                        e.consume();
+                    }
                     return;
                 } else if(selection == 1) {  // user wants to save before closing the pane
                     ioHandler.saveMatrixToFile(matrixUid);  // TODO: if there is an error saving, then display a message and don't close the file
@@ -111,6 +116,7 @@ public class TabView {
                 }
             }
             tabs.remove(thisTab);
+            tabPane.getTabs().remove(thisTab);
             ioHandler.removeMatrix(matrixUid);
 
         });
@@ -161,7 +167,17 @@ public class TabView {
     }
 
     public void refreshTab() {
-        MatrixGuiHandler editor = new MatrixGuiHandler(ioHandler.getMatrix(getFocusedMatrixUid()));
-        getFocusedTab().setContent(editor.getMatrixEditor());
+        if(getFocusedMatrixUid() != null) {
+            MatrixGuiHandler editor = new MatrixGuiHandler(ioHandler.getMatrix(getFocusedMatrixUid()));
+            getFocusedTab().setContent(editor.getMatrixEditor());
+        }
+    }
+
+    public static HashMap<Tab, Integer> getTabs() {
+        return tabs;
+    }
+
+    public void closeTab(Tab tab) {
+        tabPane.getTabs().remove(tab);
     }
 }

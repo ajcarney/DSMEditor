@@ -1,22 +1,29 @@
 import DSMData.DSMConnection;
 import DSMData.DataHandler;
 import IOHandler.IOHandler;
+import com.intellij.vcs.log.Hash;
 import gui.HeaderMenu;
 import gui.InfoHandler;
 import gui.TabView;
 import gui.ToolbarHandler;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
+import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.Tab;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 
 import java.io.File;
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Vector;
 
 public class Main extends Application {
@@ -36,6 +43,11 @@ public class Main extends Application {
         root.setLeft(toolbarHandler.getLayout());
 
         Scene scene = new Scene(root, 1000, 600);
+        primaryStage.setTitle("DSM Editor");
+        primaryStage.setScene(scene);
+        primaryStage.show();
+        Platform.setImplicitExit(true);
+
 
         // start with a tab open
         File file = new File("C:\\Users\\ajcar\\Documents\\DSMEditor\\test.dsm");
@@ -43,10 +55,21 @@ public class Main extends Application {
         int uid = ioHandler.addMatrix(matrix, file);
         editor.addTab(uid);
 
+        // on close, iterate through each tab and run the close request to save it or not
+        scene.getWindow().setOnCloseRequest(new EventHandler<WindowEvent>() {
+            public void handle(WindowEvent ev) {
+                for (Map.Entry<Tab, Integer> entry : ((HashMap<Tab, Integer>) editor.getTabs().clone()).entrySet()) {  // iterate over clone
+                    EventHandler<Event> handler = entry.getKey().getOnCloseRequest();
+                    handler.handle(null);
 
-        primaryStage.setTitle("DSM Editor");
-        primaryStage.setScene(scene);
-        primaryStage.show();
+                    if (editor.getTabs().get(entry.getKey()) != null) {
+                        ev.consume();
+                        break;
+                    }
+                }
+            }
+        });
+
     }
 
     public static void main(String[] args) {

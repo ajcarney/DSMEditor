@@ -7,17 +7,26 @@ import DSMData.DataHandler;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 import org.jdom2.Attribute;
 import org.jdom2.Document;
 import org.jdom2.Element;
-import org.jdom2.JDOMException;
 import org.jdom2.input.SAXBuilder;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
-
-import javax.xml.crypto.Data;
 
 public class IOHandler {
 
@@ -31,12 +40,12 @@ public class IOHandler {
     }
 
     public int addMatrix(DataHandler matrix, File fileSaveName) {
-        this.currentMatrixUid += 1;
+        currentMatrixUid += 1;
 
-        this.matrices.put(this.currentMatrixUid, matrix);
-        this.matrixSaveNames.put(this.currentMatrixUid, fileSaveName);
+        this.matrices.put(currentMatrixUid, matrix);
+        this.matrixSaveNames.put(currentMatrixUid, fileSaveName);
 
-        return this.currentMatrixUid;
+        return currentMatrixUid;
     }
 
 
@@ -70,7 +79,7 @@ public class IOHandler {
                 colElement.addContent(new Element("name").setText(col.getName()));
                 colElement.addContent(new Element("sort_index").setText(Double.valueOf(col.getSortIndex()).toString()));
                 if(col.getAliasUid() != null) {
-                    colElement.addContent(new Element("alias").setText(Integer.valueOf(col.getAliasUid()).toString()));
+                    colElement.addContent(new Element("alias").setText(col.getAliasUid().toString()));
                 }
                 colElement.addContent(new Element("group").setText(col.getGroup()));
 
@@ -129,7 +138,7 @@ public class IOHandler {
     }
 
     public int saveMatrixToNewFile(int matrixUid, File fileName) {
-        if(!fileName.equals("")) {  // TODO: add actual validation of path
+        if(!fileName.getPath().equals("")) {  // TODO: add actual validation of path
             matrices.get(matrixUid).clearWasModifiedFlag();
             setMatrixSaveFile(matrixUid, fileName);  // update the location that the file will be saved to
             this.saveMatrixToFile(matrixUid);  // perform save like normal
@@ -165,6 +174,58 @@ public class IOHandler {
         return !matrices.get(matrixUid).getWasModified();
     }
 
+    public Integer promptSave(int matrixUid) {
+        AtomicReference<Integer> code = new AtomicReference<>(); // 0 = close the tab, 1 = save and close, 2 = don't close
+        Stage window = new Stage();
+
+        Label prompt = new Label("Would you like to save your changes to " + getMatrixSaveFile(matrixUid));
+
+        // Create Root window
+        window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
+        window.setTitle("DSMEditor");
+
+        // create HBox for user to close with our without changes
+        HBox optionsArea = new HBox();
+        optionsArea.setAlignment(Pos.CENTER);
+        optionsArea.setSpacing(15);
+        optionsArea.setPadding(new Insets(10, 10, 10, 10));
+
+        Button saveAndCloseButton = new Button("Save");
+        saveAndCloseButton.setOnAction(ee -> {
+            code.set(1);
+            window.close();
+        });
+
+        Button closeButton = new Button("Don't Save");
+        closeButton.setOnAction(ee -> {
+            code.set(0);
+            window.close();
+        });
+
+        Button cancelButton = new Button("Cancel");
+        cancelButton.setOnAction(ee -> {
+            code.set(2);
+            window.close();
+        });
+
+        optionsArea.getChildren().addAll(saveAndCloseButton, closeButton, cancelButton);
+
+
+        VBox layout = new VBox(10);
+        layout.getChildren().addAll(prompt, optionsArea);
+        layout.setAlignment(Pos.CENTER);
+        layout.setPadding(new Insets(10, 10, 10, 10));
+        layout.setSpacing(10);
+
+
+        //Display window and wait for it to be closed before returning
+        Scene scene = new Scene(layout, 300, 75);
+        window.setScene(scene);
+        window.showAndWait();
+
+        return code.get();
+    }
+
     public DataHandler readFile(File fileName) {
         try {
             DataHandler matrix = new DataHandler();
@@ -187,7 +248,7 @@ public class IOHandler {
             matrix.setVersionNumber(version);
 
             // parse rows
-            ArrayList<Integer> uids = new ArrayList<Integer>();
+            ArrayList<Integer> uids = new ArrayList<>();
 
             // parse columns
             List<Element> cols = rootElement.getChild("columns").getChildren();
@@ -241,7 +302,7 @@ public class IOHandler {
                 matrix.addGrouping(name, Color.color(r, g, b));
             }
 
-            Set<Integer> set = new HashSet<Integer>(uids);
+            Set<Integer> set = new HashSet<>(uids);
             if(set.size() != uids.size()) {  // uids were repeated and file is corrupt in some way
                 // TODO: add alert box that says the file was corrupted in some way and could not be read in
 
