@@ -118,6 +118,7 @@ public class TabView {
             tabs.remove(thisTab);
             tabPane.getTabs().remove(thisTab);
             ioHandler.removeMatrix(matrixUid);
+            infoHandler.setMatrix(null);
 
         });
 

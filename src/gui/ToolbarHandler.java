@@ -26,7 +26,8 @@ public class ToolbarHandler {
     private Button addMatrixItem;
     private Button deleteMatrixItem;
     private Button renameMatrixItem;
-    private Button modifyConnections;
+    private Button appendConnections;
+    private Button setConnections;
     private Button configureGroupings;
     private Button sort;
     private Button reDistributeIndexes;
@@ -395,8 +396,8 @@ public class ToolbarHandler {
 
 
 
-        modifyConnections = new Button("Modify Connections");
-        modifyConnections.setOnAction(e -> {
+        appendConnections = new Button("Append Connections");
+        appendConnections.setOnAction(e -> {
             if(editor.getFocusedMatrixUid() == null) {
                 return;
             }
@@ -404,7 +405,7 @@ public class ToolbarHandler {
 
             // Create Root window
             window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
-            window.setTitle("Modify Connections");
+            window.setTitle("Append Connections");
 
 
             // Create changes view (does not have button to remove items from it
@@ -498,22 +499,22 @@ public class ToolbarHandler {
             rowColRadioButtons.setMinHeight(Region.USE_PREF_SIZE);
 
             ToggleGroup tg = new ToggleGroup();
-            RadioButton r1 = new RadioButton("Row");
-            RadioButton r2 = new RadioButton("Column");
-            HBox.setHgrow(r1, Priority.ALWAYS);
-            HBox.setHgrow(r2, Priority.ALWAYS);
-            r1.setMinHeight(Region.USE_PREF_SIZE);
-            r2.setMinHeight(Region.USE_PREF_SIZE);
+            RadioButton selectByRow = new RadioButton("Row");
+            RadioButton selectByCol = new RadioButton("Column");
+            HBox.setHgrow(selectByRow, Priority.ALWAYS);
+            HBox.setHgrow(selectByCol, Priority.ALWAYS);
+            selectByRow.setMinHeight(Region.USE_PREF_SIZE);
+            selectByCol.setMinHeight(Region.USE_PREF_SIZE);
 
-            r1.setToggleGroup(tg);  // add RadioButtons to toggle group
-            r2.setToggleGroup(tg);
-            r1.setSelected(true);  // default to r1
+            selectByRow.setToggleGroup(tg);  // add RadioButtons to toggle group
+            selectByCol.setToggleGroup(tg);
+            selectByRow.setSelected(true);  // default to selectByRow
 
             // add a change listener
             tg.selectedToggleProperty().addListener(new ChangeListener<Toggle>() {
                 public void changed(ObservableValue<? extends Toggle> ob, Toggle o, Toggle n) {
                     RadioButton rb = (RadioButton)tg.getSelectedToggle();
-                    if(rb.equals(r1)) {  // clear all items and add rows to it
+                    if(rb.equals(selectByRow)) {  // clear all items and add rows to it
                         itemSelector.getItems().removeAll(itemSelector.getItems());
                         itemSelector.getItems().addAll(ioHandler.getMatrix(editor.getFocusedMatrixUid()).getRows());
 
@@ -530,7 +531,7 @@ public class ToolbarHandler {
                             connectionVBox.getChildren().addAll(name, box);
                             connectionsModifier.getChildren().add(connectionVBox);
                         }
-                    } else if(rb.equals(r2)) {  // clear all items and add cols to it
+                    } else if(rb.equals(selectByCol)) {  // clear all items and add cols to it
                         itemSelector.getItems().removeAll(itemSelector.getItems());
                         itemSelector.getItems().addAll(ioHandler.getMatrix(editor.getFocusedMatrixUid()).getCols());
 
@@ -556,7 +557,7 @@ public class ToolbarHandler {
                     }
                 }
             });
-            rowColRadioButtons.getChildren().addAll(r1, r2);
+            rowColRadioButtons.getChildren().addAll(selectByRow, selectByCol);
             itemSelectorView.getChildren().addAll(l, rowColRadioButtons, itemSelector);
 
             // add a spacer to ensure that the connections details are to the far side of the window
@@ -598,10 +599,10 @@ public class ToolbarHandler {
                         // rowUid | colUid | name | weight
                         Vector<String> data = new Vector<String>();
 
-                        if(((RadioButton)tg.getSelectedToggle()).equals(r1)) {  // selecting by row
+                        if(((RadioButton)tg.getSelectedToggle()).equals(selectByRow)) {  // selecting by row
                             data.add(Integer.toString(itemSelector.getValue().getUid()));  // row uid
                             data.add(Integer.toString(entry.getValue().getUid()));  // col uid
-                        } else if(((RadioButton)tg.getSelectedToggle()).equals(r2)) {  // selecting by column
+                        } else if(((RadioButton)tg.getSelectedToggle()).equals(selectByCol)) {  // selecting by column
                             data.add(Integer.toString(entry.getValue().getUid()));  // row uid
                             data.add(Integer.toString(itemSelector.getValue().getUid()));  // col uid
                         }
@@ -626,7 +627,7 @@ public class ToolbarHandler {
                         Vector<String> data1 = new Vector<String>();  // original connection
                         Vector<String> data2 = new Vector<String>();  // symmetric connection
 
-                        if(((RadioButton)tg.getSelectedToggle()).equals(r1)) {  // selecting by row
+                        if(((RadioButton)tg.getSelectedToggle()).equals(selectByRow)) {  // selecting by row
                             data1.add(Integer.toString(itemSelector.getValue().getUid()));  // row uid
                             data1.add(Integer.toString(entry.getValue().getUid()));  // col uid
 
@@ -637,7 +638,7 @@ public class ToolbarHandler {
                                     data2.add(Integer.toString(item.getUid()));
                                 }
                             }
-                        } else if(((RadioButton)tg.getSelectedToggle()).equals(r2)) {  // selecting by column
+                        } else if(((RadioButton)tg.getSelectedToggle()).equals(selectByCol)) {  // selecting by column
                             data1.add(Integer.toString(entry.getValue().getUid()));  // row uid
                             data1.add(Integer.toString(itemSelector.getValue().getUid()));  // col uid
 
@@ -710,7 +711,421 @@ public class ToolbarHandler {
             window.setScene(scene);
             window.showAndWait();
         });
-        modifyConnections.setMaxWidth(Double.MAX_VALUE);
+        appendConnections.setMaxWidth(Double.MAX_VALUE);
+
+
+        setConnections = new Button("Set Connections");
+        setConnections.setOnAction(e -> {
+            if(editor.getFocusedMatrixUid() == null) {
+                return;
+            }
+            Stage window = new Stage();
+
+            // Create Root window
+            window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
+            window.setTitle("Set Connections");
+
+
+            // Create changes view (does not have button to remove items from it
+            Label label = new Label("Changes to be made");
+            ListView< Vector<String> > changesToMakeView = new ListView<>();  // rowUid | colUid | name | weight
+            changesToMakeView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+            changesToMakeView.setCellFactory(param -> new ListCell< Vector<String> >() {
+                @Override
+                protected void updateItem(Vector<String> item, boolean empty) {
+                    super.updateItem(item, empty);
+
+                    if (empty || item == null) {
+                        setText(null);
+                    } else {
+                        setText(
+                                ioHandler.getMatrix(editor.getFocusedMatrixUid()).getItem(Integer.parseInt(item.get(0))).getName() + " (Row):" +
+                                        ioHandler.getMatrix(editor.getFocusedMatrixUid()).getItem(Integer.parseInt(item.get(1))).getName() + " (Col)" +
+                                        "  {" + item.get(2) + ", " + item.get(3) + "}"
+                        );
+                    }
+                }
+            });
+            Button deleteSelected = new Button("Delete Selected Item(s)");
+            deleteSelected.setOnAction(ee -> {
+                changesToMakeView.getItems().removeAll(changesToMakeView.getSelectionModel().getSelectedItems());
+            });
+
+
+            // area to interact with the connections
+            HBox connectionsArea = new HBox();
+            connectionsArea.setSpacing(10);
+            connectionsArea.setPadding(new Insets(10, 10, 10, 10));
+
+            // HBox area full of checklists to modify the connections, default to columns
+            HBox connectionsModifier = new HBox();
+            connectionsModifier.setSpacing(10);
+            connectionsModifier.setPadding(new Insets(10, 10, 10, 10));
+            HashMap<CheckBox, DSMItem> connections = new HashMap<>();
+
+            for(DSMItem item : ioHandler.getMatrix(editor.getFocusedMatrixUid()).getCols()) {
+                VBox connectionVBox = new VBox();
+                connectionVBox.setAlignment(Pos.CENTER);
+
+                Label name = new Label(item.getName());
+                CheckBox box = new CheckBox();
+                connections.put(box, item);
+                connectionVBox.getChildren().addAll(name, box);
+                connectionsModifier.getChildren().add(connectionVBox);
+            }
+            ScrollPane scrollPane = new ScrollPane(connectionsModifier);
+            scrollPane.setOnScroll(event -> {  // allow vertical scrolling to scroll horizontally
+                if(event.getDeltaX() == 0 && event.getDeltaY() != 0) {
+                    scrollPane.setHvalue(scrollPane.getHvalue() - event.getDeltaY() / connectionsModifier.getWidth());
+                }
+            });
+            scrollPane.setFitToHeight(true);
+
+            // vbox to choose row or column
+            VBox itemSelectorView = new VBox();
+            itemSelectorView.setMinWidth(Region.USE_PREF_SIZE);
+
+            // ComboBox to choose which row or column to modify connections of
+            ComboBox< DSMItem > itemSelector = new ComboBox<>();  // rowUid | colUid | name | weight
+            itemSelector.setCellFactory(param -> new ListCell< DSMItem >() {
+                @Override
+                protected void updateItem(DSMItem item, boolean empty) {
+                    super.updateItem(item, empty);
+
+                    if (empty || item == null) {
+                        setText(null);
+                    } else {
+                        setText(item.getName());
+                    }
+                }
+            });
+            itemSelector.getItems().addAll(ioHandler.getMatrix(editor.getFocusedMatrixUid()).getRows());  // default to choosing a row item
+
+            Label l = new Label("Create connections by row or column?");
+            l.setWrapText(true);
+            l.prefWidthProperty().bind(itemSelector.widthProperty());  // this will make sure the label will not be bigger than the biggest object
+            VBox.setVgrow(l, Priority.ALWAYS);
+            HBox.setHgrow(l, Priority.ALWAYS);
+            l.setMinHeight(Region.USE_PREF_SIZE);  // make sure all text will be displayed
+
+            // radio buttons
+            HBox rowColRadioButtons = new HBox();
+            HBox.setHgrow(rowColRadioButtons, Priority.ALWAYS);
+            rowColRadioButtons.setSpacing(10);
+            rowColRadioButtons.setPadding(new Insets(10, 10, 10, 10));
+            rowColRadioButtons.setMinHeight(Region.USE_PREF_SIZE);
+
+            ToggleGroup tg = new ToggleGroup();
+            RadioButton selectByRow = new RadioButton("Row");
+            RadioButton selectByCol = new RadioButton("Column");
+            HBox.setHgrow(selectByRow, Priority.ALWAYS);
+            HBox.setHgrow(selectByCol, Priority.ALWAYS);
+            selectByRow.setMinHeight(Region.USE_PREF_SIZE);
+            selectByCol.setMinHeight(Region.USE_PREF_SIZE);
+
+            selectByRow.setToggleGroup(tg);  // add RadioButtons to toggle group
+            selectByCol.setToggleGroup(tg);
+            selectByRow.setSelected(true);  // default to selectByRow
+
+            // add a change listener
+            tg.selectedToggleProperty().addListener(new ChangeListener<Toggle>() {  // re-draw connections when toggled
+                public void changed(ObservableValue<? extends Toggle> ob, Toggle o, Toggle n) {
+                    RadioButton rb = (RadioButton)tg.getSelectedToggle();
+                    if(rb.equals(selectByRow)) {  // clear all items and add rows to it
+                        itemSelector.getItems().removeAll(itemSelector.getItems());
+                        itemSelector.getItems().addAll(ioHandler.getMatrix(editor.getFocusedMatrixUid()).getRows());
+
+                        connectionsModifier.getChildren().removeAll(connectionsModifier.getChildren());
+                        connections.clear();
+
+                        for(DSMItem row : ioHandler.getMatrix(editor.getFocusedMatrixUid()).getCols()) {
+                            VBox connectionVBox = new VBox();
+                            connectionVBox.setAlignment(Pos.CENTER);
+
+                            Label name = new Label(row.getName());
+                            CheckBox box = new CheckBox();
+                            DSMItem col = itemSelector.getValue();
+
+                            connections.put(box, row);
+                            connectionVBox.getChildren().addAll(name, box);
+                            connectionsModifier.getChildren().add(connectionVBox);
+                        }
+                    } else if(rb.equals(selectByCol)) {  // clear all items and add cols to it
+                        itemSelector.getItems().removeAll(itemSelector.getItems());
+                        itemSelector.getItems().addAll(ioHandler.getMatrix(editor.getFocusedMatrixUid()).getCols());
+
+                        connectionsModifier.getChildren().removeAll(connectionsModifier.getChildren());
+                        connections.clear();
+
+                        for(DSMItem col : ioHandler.getMatrix(editor.getFocusedMatrixUid()).getRows()) {
+                            VBox connectionVBox = new VBox();
+                            connectionVBox.setAlignment(Pos.CENTER);
+
+                            Label name = new Label(col.getName());
+                            CheckBox box = new CheckBox();
+                            DSMItem row = itemSelector.getValue();
+
+                            connections.put(box, col);
+                            connectionVBox.getChildren().addAll(name, box);
+                            connectionsModifier.getChildren().add(connectionVBox);
+                        }
+                    } else {  // clear all items
+                        System.out.println("here");
+                        itemSelector.getItems().removeAll(itemSelector.getItems());
+
+                        connectionsModifier.getChildren().removeAll(connectionsModifier.getChildren());
+                        connections.clear();
+                    }
+                }
+            });
+            rowColRadioButtons.getChildren().addAll(selectByRow, selectByCol);
+            itemSelectorView.getChildren().addAll(l, rowColRadioButtons, itemSelector);
+
+            itemSelector.setOnAction(ee -> {  // when item changes, change the connections that are selected
+                if(itemSelector.getValue() == null) {  // ensure connection can be added
+                    return;
+                }
+                for (Map.Entry<CheckBox, DSMItem> entry : connections.entrySet()) {
+                    RadioButton rb = (RadioButton)tg.getSelectedToggle();
+                    if(rb.equals(selectByRow) && ioHandler.getMatrix(editor.getFocusedMatrixUid()).getConnection(itemSelector.getValue().getUid(), entry.getValue().getUid()) != null) {
+                        entry.getKey().setSelected(true);
+                    } else if(rb.equals(selectByCol) && ioHandler.getMatrix(editor.getFocusedMatrixUid()).getConnection(entry.getValue().getUid(), itemSelector.getValue().getUid()) != null) {
+                        entry.getKey().setSelected(true);
+                    } else {
+                        entry.getKey().setSelected(false);
+                    }
+                }
+            });
+
+            // add a spacer to ensure that the connections details are to the far side of the window
+            Pane connectionsSpacer = new Pane();  // used as a spacer between buttons
+            HBox.setHgrow(connectionsSpacer, Priority.ALWAYS);
+            connectionsSpacer.setMaxWidth(Double.MAX_VALUE);
+
+            // area to set details for the connection
+            VBox connectionDetailsLayout = new VBox();
+            connectionDetailsLayout.setSpacing(10);
+            connectionDetailsLayout.setPadding(new Insets(10, 10, 10, 10));
+            VBox.setVgrow(connectionDetailsLayout, Priority.ALWAYS);
+            connectionDetailsLayout.setMinWidth(Region.USE_PREF_SIZE);
+
+            TextField connectionName = new TextField();
+            TextField weight = new TextField();
+            connectionName.setPromptText("Connection Name");
+            weight.setPromptText("Connection Weight");
+            connectionName.setMinWidth(connectionName.getPrefWidth());
+            weight.setMinWidth(weight.getPrefWidth());
+
+            connectionDetailsLayout.getChildren().addAll(connectionName, weight);
+
+
+            connectionsArea.getChildren().addAll(itemSelectorView, scrollPane, connectionsSpacer, connectionDetailsLayout);
+
+            // Pane to modify the connections
+            HBox modifyPane = new HBox();
+            modifyPane.setAlignment(Pos.CENTER);
+
+            Button applyButton = new Button("Modify Connections");
+            applyButton.setOnAction(ee -> {
+                if(itemSelector.getValue() == null || connectionName.getText().isEmpty() || weight.getText().isEmpty()) {  // ensure connection can be added
+                    // TODO: add popup window saying why it cannot make the changes
+                    return;
+                }
+                for (Map.Entry<CheckBox, DSMItem> entry : connections.entrySet()) {
+                    if(entry.getKey().isSelected()) {
+                        // rowUid | colUid | name | weight | add/del
+                        Vector<String> data = new Vector<String>();
+
+                        if(((RadioButton)tg.getSelectedToggle()).equals(selectByRow)) {  // selecting by row
+                            data.add(Integer.toString(itemSelector.getValue().getUid()));  // row uid
+                            data.add(Integer.toString(entry.getValue().getUid()));  // col uid
+                        } else if(((RadioButton)tg.getSelectedToggle()).equals(selectByCol)) {  // selecting by column
+                            data.add(Integer.toString(entry.getValue().getUid()));  // row uid
+                            data.add(Integer.toString(itemSelector.getValue().getUid()));  // col uid
+                        }
+                        data.add(connectionName.getText());
+                        data.add(weight.getText());
+
+                        data.add("add");
+
+                        if(!changesToMakeView.getItems().contains(data)) {  // ensure no duplicates
+                            changesToMakeView.getItems().add(data);
+                        }
+                    } else {
+                        // rowUid | colUid | name | weight | add/del
+                        Vector<String> data = new Vector<String>();
+
+                        if(((RadioButton)tg.getSelectedToggle()).equals(selectByRow)) {  // selecting by row
+                            data.add(Integer.toString(itemSelector.getValue().getUid()));  // row uid
+                            data.add(Integer.toString(entry.getValue().getUid()));  // col uid
+                        } else if(((RadioButton)tg.getSelectedToggle()).equals(selectByCol)) {  // selecting by column
+                            data.add(Integer.toString(entry.getValue().getUid()));  // row uid
+                            data.add(Integer.toString(itemSelector.getValue().getUid()));  // col uid
+                        }
+
+                        data.add(null);
+                        data.add(null);
+
+                        data.add("del");
+
+                        if(!changesToMakeView.getItems().contains(data)) {  // ensure no duplicates
+                            changesToMakeView.getItems().add(data);
+                        }
+                    }
+                }
+            });
+
+            Button applySymmetricButton = new Button("Modify Connections Symmetrically");
+            applySymmetricButton.setOnAction(ee -> {
+                if(itemSelector.getValue() == null || connectionName.getText().isEmpty() || weight.getText().isEmpty()) {  // ensure connection can be added
+                    return;
+                }
+                for (Map.Entry<CheckBox, DSMItem> entry : connections.entrySet()) {
+                    if(entry.getKey().isSelected()) {
+                        // rowUid | colUid | name | weight | add/del
+                        Vector<String> data1 = new Vector<String>();  // original connection
+                        Vector<String> data2 = new Vector<String>();  // symmetric connection
+
+                        if(((RadioButton)tg.getSelectedToggle()).equals(selectByRow)) {  // selecting by row
+                            data1.add(Integer.toString(itemSelector.getValue().getUid()));  // row uid
+                            data1.add(Integer.toString(entry.getValue().getUid()));  // col uid
+
+                            data2.add(Integer.toString(entry.getValue().getAliasUid()));  // row uid for symmetric connection
+                            // iterate over columns and find the one that corresponds to the selected row
+                            for(DSMItem item : ioHandler.getMatrix(editor.getFocusedMatrixUid()).getCols()) {
+                                if(item.getAliasUid() == itemSelector.getValue().getUid()) {
+                                    data2.add(Integer.toString(item.getUid()));
+                                }
+                            }
+                        } else if(((RadioButton)tg.getSelectedToggle()).equals(selectByCol)) {  // selecting by column
+                            data1.add(Integer.toString(entry.getValue().getUid()));  // row uid
+                            data1.add(Integer.toString(itemSelector.getValue().getUid()));  // col uid
+
+                            data2.add(Integer.toString(itemSelector.getValue().getAliasUid()));  // row uid for symmetric connection
+                            for(DSMItem item : ioHandler.getMatrix(editor.getFocusedMatrixUid()).getCols()) {
+                                if(item.getAliasUid() == entry.getValue().getUid()) {
+                                    data2.add(Integer.toString(item.getUid()));
+                                }
+                            }
+
+                            // iterate over columns to find the column that corresponds to the row
+                            for(DSMItem item : ioHandler.getMatrix(editor.getFocusedMatrixUid()).getCols()) {
+                                if(item.getAliasUid() == itemSelector.getValue().getUid()) {
+                                    data2.add(Integer.toString(item.getUid()));
+                                }
+                            }
+                        }
+                        data1.add(connectionName.getText());
+                        data1.add(weight.getText());
+                        data1.add("add");
+
+                        data2.add(connectionName.getText());
+                        data2.add(weight.getText());
+                        data2.add("add");
+
+                        if(!changesToMakeView.getItems().contains(data1)) {  // ensure no duplicates
+                            changesToMakeView.getItems().add(data1);
+                        }
+                        if(!changesToMakeView.getItems().contains(data2)) {  // ensure no duplicates
+                            changesToMakeView.getItems().add(data2);
+                        }
+                    } else {
+                        // rowUid | colUid | name | weight | add/del
+                        Vector<String> data1 = new Vector<String>();  // original connection
+                        Vector<String> data2 = new Vector<String>();  // symmetric connection
+
+                        if(((RadioButton)tg.getSelectedToggle()).equals(selectByRow)) {  // selecting by row
+                            data1.add(Integer.toString(itemSelector.getValue().getUid()));  // row uid
+                            data1.add(Integer.toString(entry.getValue().getUid()));  // col uid
+
+                            data2.add(Integer.toString(entry.getValue().getAliasUid()));  // row uid for symmetric connection
+                            // iterate over columns and find the one that corresponds to the selected row
+                            for(DSMItem item : ioHandler.getMatrix(editor.getFocusedMatrixUid()).getCols()) {
+                                if(item.getAliasUid() == itemSelector.getValue().getUid()) {
+                                    data2.add(Integer.toString(item.getUid()));
+                                }
+                            }
+                        } else if(((RadioButton)tg.getSelectedToggle()).equals(selectByCol)) {  // selecting by column
+                            data1.add(Integer.toString(entry.getValue().getUid()));  // row uid
+                            data1.add(Integer.toString(itemSelector.getValue().getUid()));  // col uid
+
+                            data2.add(Integer.toString(itemSelector.getValue().getAliasUid()));  // row uid for symmetric connection
+                            for(DSMItem item : ioHandler.getMatrix(editor.getFocusedMatrixUid()).getCols()) {
+                                if(item.getAliasUid() == entry.getValue().getUid()) {
+                                    data2.add(Integer.toString(item.getUid()));
+                                }
+                            }
+
+                            // iterate over columns to find the column that corresponds to the row
+                            for(DSMItem item : ioHandler.getMatrix(editor.getFocusedMatrixUid()).getCols()) {
+                                if(item.getAliasUid() == itemSelector.getValue().getUid()) {
+                                    data2.add(Integer.toString(item.getUid()));
+                                }
+                            }
+                        }
+                        data1.add(null);
+                        data1.add(null);
+                        data1.add("del");
+
+                        data2.add(null);
+                        data2.add(null);
+                        data2.add("del");
+
+                        if(!changesToMakeView.getItems().contains(data1)) {  // ensure no duplicates
+                            changesToMakeView.getItems().add(data1);
+                        }
+                        if(!changesToMakeView.getItems().contains(data2)) {  // ensure no duplicates
+                            changesToMakeView.getItems().add(data2);
+                        }
+                    }
+                }
+            });
+            if(!ioHandler.getMatrix(editor.getFocusedMatrixUid()).isSymmetrical()) {  // hide button if not a symmetric matrix
+                applySymmetricButton.setManaged(false);
+                applySymmetricButton.setVisible(false);
+            }
+            modifyPane.getChildren().addAll(applyButton, applySymmetricButton);
+
+
+            // create HBox for user to close with our without changes
+            HBox closeArea = new HBox();
+            Button applyAllButton = new Button("Apply All Changes");
+            applyAllButton.setOnAction(ee -> {
+                for(Vector<String> item : changesToMakeView.getItems()) {  // rowUid | colUid | name | weight | add/del
+                    if(item.get(4).equals("add")) {
+                        ioHandler.getMatrix(editor.getFocusedMatrixUid()).modifyConnection(Integer.parseInt(item.get(0)), Integer.parseInt(item.get(1)), item.get(2), Double.parseDouble(item.get(3)));
+                    } else {
+                        ioHandler.getMatrix(editor.getFocusedMatrixUid()).clearConnection(Integer.parseInt(item.get(0)), Integer.parseInt(item.get(1)));
+                    }
+                }
+                window.close();
+                editor.refreshTab();
+            });
+
+            Pane spacer = new Pane();  // used as a spacer between buttons
+            HBox.setHgrow(spacer, Priority.ALWAYS);
+            spacer.setMaxWidth(Double.MAX_VALUE);
+
+            Button cancelButton = new Button("Cancel");
+            cancelButton.setOnAction(ee -> {
+                window.close();
+            });
+            closeArea.getChildren().addAll(cancelButton, spacer, applyAllButton);
+
+
+            VBox layout = new VBox(10);
+            layout.getChildren().addAll(label, changesToMakeView, deleteSelected, connectionsArea, modifyPane, closeArea);
+            layout.setAlignment(Pos.CENTER);
+            layout.setPadding(new Insets(10, 10, 10, 10));
+            layout.setSpacing(10);
+
+
+            //Display window and wait for it to be closed before returning
+            Scene scene = new Scene(layout, 700, 500);
+            window.setScene(scene);
+            window.showAndWait();
+        });
+        setConnections.setMaxWidth(Double.MAX_VALUE);
 
 
         configureGroupings = new Button("Configure Groupings");
@@ -777,7 +1192,7 @@ public class ToolbarHandler {
                         Pane groupingSpacer = new Pane();
                         groupingSpacer.setMaxWidth(Double.MAX_VALUE);
                         HBox.setHgrow(groupingSpacer, Priority.ALWAYS);
-                        ColorPicker groupingColor = new ColorPicker(null);
+                        ColorPicker groupingColor = new ColorPicker(groupingColorsCopy.get(newName.getText()));
                         display.getChildren().addAll(groupingName, groupingSpacer, groupingColor);
                         currentGroupings.getChildren().add(display);
                     }
@@ -1055,7 +1470,7 @@ public class ToolbarHandler {
 
 
 
-        layout.getChildren().addAll(addMatrixItem, deleteMatrixItem, renameMatrixItem, modifyConnections, configureGroupings, sort, reDistributeIndexes);
+        layout.getChildren().addAll(addMatrixItem, deleteMatrixItem, renameMatrixItem, appendConnections, setConnections, configureGroupings, sort, reDistributeIndexes);
         layout.setPadding(new Insets(10, 10, 10, 10));
         layout.setSpacing(20);
         layout.setAlignment(Pos.CENTER);

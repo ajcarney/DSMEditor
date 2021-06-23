@@ -10,31 +10,31 @@
   <columns>
     <col uid="1238">
       <name>Motor Drive</name>
-      <sort_index>0.0</sort_index>
+      <sort_index>1.0</sort_index>
       <alias>1234</alias>
       <group>(None)</group>
     </col>
     <col uid="1239">
       <name>Hour Motor</name>
-      <sort_index>1.0</sort_index>
+      <sort_index>2.0</sort_index>
       <alias>1235</alias>
       <group>(None)</group>
     </col>
     <col uid="1246">
       <name>Minute Motor</name>
-      <sort_index>2.0</sort_index>
+      <sort_index>3.0</sort_index>
       <alias>1236</alias>
       <group>(None)</group>
     </col>
     <col uid="1247">
       <name>Second Motor</name>
-      <sort_index>3.0</sort_index>
+      <sort_index>4.0</sort_index>
       <alias>1237</alias>
       <group>(None)</group>
     </col>
     <col uid="1248509279">
       <name>Battery</name>
-      <sort_index>4.0</sort_index>
+      <sort_index>5.0</sort_index>
       <alias>1161978170</alias>
       <group>(None)</group>
     </col>
@@ -42,27 +42,27 @@
   <rows>
     <row uid="1234">
       <name>Motor Drive</name>
-      <sort_index>0.0</sort_index>
+      <sort_index>1.0</sort_index>
       <group>(None)</group>
     </row>
     <row uid="1235">
       <name>Hour Motor</name>
-      <sort_index>1.0</sort_index>
+      <sort_index>2.0</sort_index>
       <group>(None)</group>
     </row>
     <row uid="1236">
       <name>Minute Motor</name>
-      <sort_index>2.0</sort_index>
+      <sort_index>3.0</sort_index>
       <group>(None)</group>
     </row>
     <row uid="1237">
       <name>Second Motor</name>
-      <sort_index>3.0</sort_index>
+      <sort_index>4.0</sort_index>
       <group>(None)</group>
     </row>
     <row uid="1161978170">
       <name>Battery</name>
-      <sort_index>4.0</sort_index>
+      <sort_index>5.0</sort_index>
       <group>(None)</group>
     </row>
   </rows>

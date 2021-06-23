@@ -98,7 +98,11 @@ public class DataHandler {
     }
 
     public void addGrouping(String name, Color color) {
-        groupingColors.put(name, color);
+        if(color != null) {
+            groupingColors.put(name, color);
+        } else {
+            groupingColors.put(name, Color.color(1.0, 1.0, 1.0));
+        }
         groupings.add(name);
         this.wasModified = true;
     }
@@ -260,16 +264,17 @@ public class DataHandler {
         for(int i=0; i<this.rows.size(); i++) {     // check to see if uid is in the rows
             if(rows.elementAt(i).getUid() == uid) {
                 rows.elementAt(i).setName(newName);
+                this.wasModified = true;
                 return;
             }
         }
         for(int i=0; i<this.cols.size(); i++) {
             if(cols.elementAt(i).getUid() == uid) {
                 cols.elementAt(i).setName(newName);
+                this.wasModified = true;
                 return;
             }
         }
-        this.wasModified = true;
     }
 
 
@@ -296,16 +301,17 @@ public class DataHandler {
         for(int i=0; i<this.rows.size(); i++) {     // check to see if uid is in the rows
             if(rows.elementAt(i).getUid() == uid) {
                 rows.elementAt(i).setSortIndex(newIndex);
+                this.wasModified = true;
                 return;
             }
         }
         for(int i=0; i<this.cols.size(); i++) {
             if(cols.elementAt(i).getUid() == uid) {
                 cols.elementAt(i).setSortIndex(newIndex);
+                this.wasModified = true;
                 return;
             }
         }
-        this.wasModified = true;
     }
 
 
@@ -332,16 +338,17 @@ public class DataHandler {
         for(int i=0; i<this.rows.size(); i++) {     // check to see if uid is in the rows
             if(rows.elementAt(i).getUid() == uid) {
                 rows.elementAt(i).setGroup(newGroup);
+                this.wasModified = true;
                 return;
             }
         }
         for(int i=0; i<this.cols.size(); i++) {
             if(cols.elementAt(i).getUid() == uid) {
                 cols.elementAt(i).setGroup(newGroup);
+                this.wasModified = true;
                 return;
             }
         }
-        this.wasModified = true;
     }
 
 

@@ -158,7 +158,10 @@ public class MatrixGuiHandler {
                                     mergedColor = Color.color(r, g, b);
 
 //                                    System.out.println(rowUid + " " + colUid + " " + matrix.getItem(colUid).getAliasUid() + " " + matrix.getItem(rowUid).getGroup() + " " + matrix.getItem(colUid).getGroup());
-                                    if(!rowUid.equals(matrix.getItem(colUid).getAliasUid()) && matrix.getItem(rowUid).getGroup().equals(matrix.getItem(colUid).getGroup())) {
+                                    if(matrix.isSymmetrical() && !rowUid.equals(matrix.getItem(colUid).getAliasUid()) && matrix.getItem(rowUid).getGroup().equals(matrix.getItem(colUid).getGroup())) {  // associated row and column are same group
+                                        cell.getGuiCell().setBackground(new Background(new BackgroundFill(mergedColor, new CornerRadii(3), new Insets(0))));
+                                        continue;
+                                    } else if(!matrix.isSymmetrical()) {
                                         cell.getGuiCell().setBackground(new Background(new BackgroundFill(mergedColor, new CornerRadii(3), new Insets(0))));
                                         continue;
                                     }
@@ -340,7 +343,7 @@ public class MatrixGuiHandler {
                     cell.getChildren().add(g);
                 } else if(item.getKey().equals("index_item")) {
                     TextField entry = new TextField(((Double)matrix.getItem((Integer)item.getValue()).getSortIndex()).toString());
-                    entry.setPrefColumnCount(5);  // set size to 5 characters fitting
+                    entry.setPrefColumnCount(3);  // set size to 5 characters fitting
 
                     // force the field to be numeric only TODO: this stopped working on 6/20
                     entry.textProperty().addListener(new ChangeListener<String>() {

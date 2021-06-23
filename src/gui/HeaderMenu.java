@@ -119,6 +119,22 @@ public class HeaderMenu {
             }
         });
 
+        Menu exportMenu = new Menu("Export");
+        MenuItem exportCSV = new MenuItem("CSV File (.csv)");
+        exportCSV.setOnAction(e -> {
+            if(tabView.getFocusedMatrixUid() == null) {
+                return;
+            }
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV File", "*.csv"));  // dsm is the only file type usable
+            File fileName = fileChooser.showSaveDialog(menuBar.getScene().getWindow());
+            if(fileName != null) {
+                int code = this.ioHandler.exportMatrixToCSV(tabView.getFocusedMatrixUid(), fileName);
+            }
+        });
+        exportMenu.getItems().add(exportCSV);
+
+
         MenuItem exit = new MenuItem("Exit");
         exit.setOnAction(e -> {
             menuBar.getScene().getWindow().fireEvent(
@@ -135,6 +151,8 @@ public class HeaderMenu {
         fileMenu.getItems().add(saveFileAs);
         fileMenu.getItems().add(new SeparatorMenuItem());
         fileMenu.getItems().add(new MenuItem("Settings..."));
+        fileMenu.getItems().add(new SeparatorMenuItem());
+        fileMenu.getItems().add(exportMenu);
         fileMenu.getItems().add(new SeparatorMenuItem());
         fileMenu.getItems().add(exit);
 

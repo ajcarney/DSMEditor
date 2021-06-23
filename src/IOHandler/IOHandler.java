@@ -6,6 +6,7 @@ import DSMData.DataHandler;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -21,6 +22,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.util.Pair;
 import org.jdom2.Attribute;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -137,6 +139,54 @@ public class IOHandler {
         }
     }
 
+    public int exportMatrixToCSV(int matrixUid, File file) {
+        try {
+            String contents = "Title," + getMatrix(matrixUid).getTitle() + "\n";
+            contents += "Project Name," + getMatrix(matrixUid).getProjectName() + "\n";
+            contents += "Customer," + getMatrix(matrixUid).getCustomer() + "\n";
+            contents += "Version," + getMatrix(matrixUid).getVersionNumber() + "\n";
+
+            ArrayList<ArrayList<Pair<String, Object>>> template = getMatrix(matrixUid).getGridArray();
+            int rows = template.size();
+            int columns = template.get(0).size();
+
+            for(int r=0; r<rows; r++) {
+                for (int c = 0; c < columns; c++) {
+                    Pair<String, Object> item = template.get(r).get(c);
+
+                    if (item.getKey().equals("plain_text") || item.getKey().equals("plain_text_v")) {
+                        contents += item.getValue() + ",";
+                    } else if (item.getKey().equals("item_name") || item.getKey().equals("item_name_v")) {
+                        contents += getMatrix(matrixUid).getItem((Integer) item.getValue()).getName() + ",";
+                    } else if (item.getKey().equals("grouping_item") || item.getKey().equals("grouping_item_v")) {
+                        contents += getMatrix(matrixUid).getItem((Integer) item.getValue()).getGroup() + ",";
+                    } else if (item.getKey().equals("index_item")) {
+                        contents += getMatrix(matrixUid).getItem((Integer) item.getValue()).getSortIndex() + ",";
+                    } else if (item.getKey().equals("uneditable_connection")) {
+                        contents += ",";
+                    } else if (item.getKey().equals("editable_connection")) {
+                        int rowUid = ((Pair<Integer, Integer>)item.getValue()).getKey();
+                        int colUid = ((Pair<Integer, Integer>)item.getValue()).getValue();
+                        if(getMatrix(matrixUid).getConnection(rowUid, colUid) != null) {
+                            contents += getMatrix(matrixUid).getConnection(rowUid, colUid).getConnectionName();
+                        }
+                        contents += ",";
+                    }
+                }
+                contents += "\n";
+            }
+
+            FileWriter writer = new FileWriter(file);
+            writer.write(contents);
+            writer.close();
+
+            return 1;
+        } catch(Exception e) {  // TODO: add better error handling and bring up an alert box
+            System.out.println(e);
+            return 0;  // 0 means there was an error somewhere
+        }
+    }
+
     public int saveMatrixToNewFile(int matrixUid, File fileName) {
         if(!fileName.getPath().equals("")) {  // TODO: add actual validation of path
             matrices.get(matrixUid).clearWasModifiedFlag();
@@ -176,6 +226,7 @@ public class IOHandler {
 
     public Integer promptSave(int matrixUid) {
         AtomicReference<Integer> code = new AtomicReference<>(); // 0 = close the tab, 1 = save and close, 2 = don't close
+        code.set(2);  // default value
         Stage window = new Stage();
 
         Label prompt = new Label("Would you like to save your changes to " + getMatrixSaveFile(matrixUid));
@@ -219,7 +270,7 @@ public class IOHandler {
 
 
         //Display window and wait for it to be closed before returning
-        Scene scene = new Scene(layout, 300, 75);
+        Scene scene = new Scene(layout, 500, 125);
         window.setScene(scene);
         window.showAndWait();
 
