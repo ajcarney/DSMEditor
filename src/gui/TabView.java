@@ -4,6 +4,7 @@ package gui;
 import DSMData.DSMItem;
 import DSMData.DataHandler;
 import IOHandler.IOHandler;
+import com.intellij.util.Matrix;
 import javafx.application.Platform;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tab;
@@ -14,24 +15,37 @@ import javafx.scene.layout.HBox;
 import javafx.util.Pair;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.Set;
-import java.util.Vector;
+import java.util.*;
 
 public class TabView {
     private static TabPane tabPane;
     private static HashMap<Tab, Integer> tabs;  // tab object, matrix uid
+    private static HashMap<Tab, MatrixGuiHandler> editors;
 
     private static IOHandler ioHandler;
     private static InfoHandler infoHandler;
+
+    private static final Double fontSizes[] = {
+        5.0, 6.0, 8.0, 9.0, 9.5, 10.0, 10.5, 11.0, 12.0, 12.5, 14.0, 16.0, 18.0, 24.0, 30.0, 36.0, 60.0
+    };
+    private static final double DEFAULT_FONT_SIZE = 12;
+    private static int currentFontSizeIndex;
 
     private Thread nameHandlerThread;
 
     public TabView(IOHandler ioHandler, InfoHandler infoHandler) {
         tabPane = new TabPane();
         tabs = new HashMap<>();
+        editors = new HashMap<>();
         this.ioHandler = ioHandler;
         this.infoHandler = infoHandler;
+
+        for(int i=0; i<fontSizes.length; i++) {
+            if(fontSizes[i] == DEFAULT_FONT_SIZE) {
+                currentFontSizeIndex = i;
+                break;
+            }
+        }
 
 
         // create current tabs
@@ -84,7 +98,7 @@ public class TabView {
         if(!ioHandler.isMatrixSaved(matrixUid)) {
             title += "*";
         }
-        MatrixGuiHandler editor = new MatrixGuiHandler(ioHandler.getMatrix(matrixUid));
+        MatrixGuiHandler editor = new MatrixGuiHandler(ioHandler.getMatrix(matrixUid), DEFAULT_FONT_SIZE);
         Tab tab = new Tab(title, editor.getMatrixEditor());
         tabPane.getScene().setOnKeyPressed(e -> {  // add keybinding to toggle cross-highlighting on the editor
             if (e.getCode() == KeyCode.F) {
@@ -116,6 +130,7 @@ public class TabView {
                 }
             }
             tabs.remove(thisTab);
+            editors.remove(thisTab);
             tabPane.getTabs().remove(thisTab);
             ioHandler.removeMatrix(matrixUid);
             infoHandler.setMatrix(null);
@@ -127,6 +142,7 @@ public class TabView {
         });
 
         tabs.put(tab, matrixUid);
+        editors.put(tab, editor);
         this.tabPane.getTabs().add(tab);
     }
 
@@ -169,8 +185,7 @@ public class TabView {
 
     public void refreshTab() {
         if(getFocusedMatrixUid() != null) {
-            MatrixGuiHandler editor = new MatrixGuiHandler(ioHandler.getMatrix(getFocusedMatrixUid()));
-            getFocusedTab().setContent(editor.getMatrixEditor());
+            getFocusedTab().setContent(editors.get(getFocusedTab()).getMatrixEditor());
         }
     }
 
@@ -181,4 +196,33 @@ public class TabView {
     public void closeTab(Tab tab) {
         tabPane.getTabs().remove(tab);
     }
+
+    public void increaseFontScaling() {
+        currentFontSizeIndex += 1;
+        if(currentFontSizeIndex > fontSizes.length - 1) currentFontSizeIndex = fontSizes.length - 1;
+
+        editors.get(getFocusedTab()).setFontSize(fontSizes[currentFontSizeIndex]);
+        refreshTab();
+    }
+
+    public void decreaseFontScaling() {
+        currentFontSizeIndex -= 1;
+        if(currentFontSizeIndex < 0) currentFontSizeIndex = 0;
+
+        editors.get(getFocusedTab()).setFontSize(fontSizes[currentFontSizeIndex]);
+        refreshTab();
+    }
+
+    public void resetFontScaling() {
+        for(int i=0; i<fontSizes.length; i++) {
+            if(fontSizes[i] == DEFAULT_FONT_SIZE) {
+                currentFontSizeIndex = i;
+                break;
+            }
+        }
+
+        editors.get(getFocusedTab()).setFontSize(DEFAULT_FONT_SIZE);
+        refreshTab();
+    }
+
 }

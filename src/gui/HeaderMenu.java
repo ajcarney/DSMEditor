@@ -18,18 +18,19 @@ public class HeaderMenu {
 
     private static Menu fileMenu;
     private static Menu editMenu;
+    private static Menu viewMenu;
 
     private static MenuBar menuBar;
     private static IOHandler ioHandler;
-    private static TabView tabView;
+    private static TabView editor;
 
-    public HeaderMenu(IOHandler ioHandler, TabView tabView) {
+    public HeaderMenu(IOHandler ioHandler, TabView editor) {
         menuBar = new MenuBar();
         this.ioHandler = ioHandler;
-        this.tabView = tabView;
+        this.editor = editor;
 
         //File menu
-        fileMenu = new Menu("File");
+        fileMenu = new Menu("_File");
 
         Menu newFileMenu = new Menu("New...");
 
@@ -44,7 +45,7 @@ public class HeaderMenu {
             }
 
             int uid = this.ioHandler.addMatrix(matrix, file);
-            this.tabView.addTab(uid);
+            this.editor.addTab(uid);
 
             defaultName += 1;
         });
@@ -59,7 +60,7 @@ public class HeaderMenu {
             }
 
             int uid = this.ioHandler.addMatrix(matrix, file);
-            this.tabView.addTab(uid);
+            this.editor.addTab(uid);
 
             defaultName += 1;
         });
@@ -80,56 +81,56 @@ public class HeaderMenu {
                     System.out.println("there was an error reading the file " + file.toString());
                 } else if(!ioHandler.getMatrixSaveNames().containsValue(file)) {
                     int uid = this.ioHandler.addMatrix(matrix, file);
-                    this.tabView.addTab(uid);
+                    this.editor.addTab(uid);
                 } else {
-                    tabView.focusTab(file);  // focus on that tab because it is already open
+                    editor.focusTab(file);  // focus on that tab because it is already open
                 }
             }
         });
 
         MenuItem saveFile = new MenuItem("Save...");
         saveFile.setOnAction( e -> {
-            if(tabView.getFocusedMatrixUid() == null) {
+            if(editor.getFocusedMatrixUid() == null) {
                 return;
             }
-            if(this.ioHandler.getMatrixSaveFile(tabView.getFocusedMatrixUid()).getName().contains("untitled")) {
+            if(this.ioHandler.getMatrixSaveFile(editor.getFocusedMatrixUid()).getName().contains("untitled")) {
                 FileChooser fileChooser = new FileChooser();
                 fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("DSM File", "*.dsm"));  // dsm is the only file type usable
                 File fileName = fileChooser.showSaveDialog(menuBar.getScene().getWindow());
                 if(fileName != null) {
-                    this.ioHandler.setMatrixSaveFile(tabView.getFocusedMatrixUid(), fileName);
+                    this.ioHandler.setMatrixSaveFile(editor.getFocusedMatrixUid(), fileName);
                 } else {  // user did not select a file, so do not save it
                     return;
                 }
             }
-            int code = this.ioHandler.saveMatrixToFile(tabView.getFocusedMatrixUid());  // TODO: add checking with the return code
+            int code = this.ioHandler.saveMatrixToFile(editor.getFocusedMatrixUid());  // TODO: add checking with the return code
 
         });
 
         MenuItem saveFileAs = new MenuItem("Save As...");
         saveFileAs.setOnAction(e -> {
-            if(tabView.getFocusedMatrixUid() == null) {
+            if(editor.getFocusedMatrixUid() == null) {
                 return;
             }
             FileChooser fileChooser = new FileChooser();
             fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("DSM File", "*.dsm"));  // dsm is the only file type usable
             File fileName = fileChooser.showSaveDialog(menuBar.getScene().getWindow());
             if(fileName != null) {
-                int code = this.ioHandler.saveMatrixToNewFile(tabView.getFocusedMatrixUid(), fileName);
+                int code = this.ioHandler.saveMatrixToNewFile(editor.getFocusedMatrixUid(), fileName);
             }
         });
 
         Menu exportMenu = new Menu("Export");
         MenuItem exportCSV = new MenuItem("CSV File (.csv)");
         exportCSV.setOnAction(e -> {
-            if(tabView.getFocusedMatrixUid() == null) {
+            if(editor.getFocusedMatrixUid() == null) {
                 return;
             }
             FileChooser fileChooser = new FileChooser();
             fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV File", "*.csv"));  // dsm is the only file type usable
             File fileName = fileChooser.showSaveDialog(menuBar.getScene().getWindow());
             if(fileName != null) {
-                int code = this.ioHandler.exportMatrixToCSV(tabView.getFocusedMatrixUid(), fileName);
+                int code = this.ioHandler.exportMatrixToCSV(editor.getFocusedMatrixUid(), fileName);
             }
         });
         exportMenu.getItems().add(exportCSV);
@@ -164,7 +165,30 @@ public class HeaderMenu {
         MenuItem paste = new MenuItem("Paste");
         editMenu.getItems().add(paste);
 
-        menuBar.getMenus().addAll(fileMenu, editMenu);
+
+        // View menu
+        viewMenu = new Menu("_View");
+
+        MenuItem zoomIn = new MenuItem("Zoom In");
+        zoomIn.setOnAction(e -> {
+            editor.increaseFontScaling();
+        });
+
+        MenuItem zoomOut = new MenuItem("Zoom Out");
+        zoomOut.setOnAction(e -> {
+            editor.decreaseFontScaling();
+        });
+
+        MenuItem zoomReset = new MenuItem("Reset Zoom");
+        zoomReset.setOnAction(e -> {
+            editor.resetFontScaling();
+        });
+
+        viewMenu.getItems().addAll(zoomIn, zoomOut, zoomReset);
+        
+
+
+        menuBar.getMenus().addAll(fileMenu, editMenu, viewMenu);
     }
 
 

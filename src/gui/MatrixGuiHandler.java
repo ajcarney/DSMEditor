@@ -4,6 +4,9 @@ import DSMData.DSMConnection;
 import DSMData.DSMItem;
 import DSMData.DataHandler;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
@@ -39,7 +42,9 @@ public class MatrixGuiHandler {
     private final Background CROSS_HIGHLIGHT_BACKGROUND = new Background(new BackgroundFill(Color.color(.2, 1, 0), new CornerRadii(3), new Insets(0)));
     private final Background ERROR_BACKGROUND = new Background(new BackgroundFill(Color.color(1, 0, 0), new CornerRadii(3), new Insets(0)));
 
-    private Thread highlightThread;
+    private DoubleProperty fontSize;
+
+    private VBox rootLayout = new VBox();
 
 
     private class Cell {
@@ -84,11 +89,9 @@ public class MatrixGuiHandler {
                 if (rowUid == null && colUid != null) {  // highlight with column color
                     mergedColor = matrix.getGroupingColors().get(matrix.getItem(colUid).getGroup());
                     setCellHighlight(mergedColor);
-                    return;
                 } else if (rowUid != null && colUid == null) {  // highlight with row color
                     mergedColor = matrix.getGroupingColors().get(matrix.getItem(rowUid).getGroup());
                     setCellHighlight(mergedColor);
-                    return;
                 } else if (rowUid != null && colUid != null) {  // highlight with merged color
                     Color rowColor = matrix.getGroupingColors().get(matrix.getItem(rowUid).getGroup());
                     if (rowColor == null) rowColor = Color.color(1.0, 1.0, 1.0);
@@ -103,10 +106,8 @@ public class MatrixGuiHandler {
 
                     if (matrix.isSymmetrical() && !rowUid.equals(matrix.getItem(colUid).getAliasUid()) && matrix.getItem(rowUid).getGroup().equals(matrix.getItem(colUid).getGroup())) {  // associated row and column are same group
                         setCellHighlight(mergedColor);
-                        return;
                     } else if (!matrix.isSymmetrical()) {
                         setCellHighlight(mergedColor);
-                        return;
                     }
                 }
 
@@ -166,12 +167,14 @@ public class MatrixGuiHandler {
     Vector<Cell> cells;  // contains information for highlighting
     HashMap<String, HashMap<Integer, Integer>> gridUidLookup;
 
-    MatrixGuiHandler(DataHandler matrix) {
+    MatrixGuiHandler(DataHandler matrix, double fontSize) {
         this.matrix = matrix;
         cells = new Vector<>();
         gridUidLookup = new HashMap<>();
         gridUidLookup.put("rows", new HashMap<Integer, Integer>());
         gridUidLookup.put("cols", new HashMap<Integer, Integer>());
+
+        this.fontSize = new SimpleDoubleProperty(fontSize);
     }
 
     private Cell getCellByLoc(Pair<Integer, Integer> cellLoc) {
@@ -267,9 +270,18 @@ public class MatrixGuiHandler {
         }
     }
 
-     VBox getMatrixEditor() {
-        VBox rootLayout = new VBox();
+     public VBox getMatrixEditor() {
+        cells = new Vector<>();
+        gridUidLookup = new HashMap<>();
+        gridUidLookup.put("rows", new HashMap<Integer, Integer>());
+        gridUidLookup.put("cols", new HashMap<Integer, Integer>());
+
+        rootLayout = new VBox();
         rootLayout.setAlignment(Pos.CENTER);
+        rootLayout.styleProperty().bind(Bindings.concat(
+                "-fx-font-size: ", fontSize.asString(), "};",
+                ".combo-box > .list-cell {-fx-padding: 0 0 0 0; -fx-border-insets: 0 0 0 0;}"
+        ));
 
         Label location = new Label("");
         GridPane grid = new GridPane();
@@ -307,6 +319,12 @@ public class MatrixGuiHandler {
                 } else if(item.getKey().equals("grouping_item")) {
                     ComboBox<String> groupings = new ComboBox<String>();
                     groupings.setMinWidth(Region.USE_PREF_SIZE);
+
+                    groupings.setStyle("""
+                            -fx-border-insets: -2, -2, -2, -2;
+                            -fx-padding: -5, -5, -5, -5;"""
+                    );
+
                     groupings.getItems().addAll(matrix.getGroupings());
                     groupings.getSelectionModel().select(matrix.getItem((Integer)item.getValue()).getGroup());
                     groupings.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal)->{
@@ -325,10 +343,10 @@ public class MatrixGuiHandler {
                     ComboBox<String> groupings = new ComboBox<String>();
                     groupings.getItems().addAll(matrix.getGroupings());
                     groupings.setStyle(  // remove border from button when selecting it because this causes weird resizing bugs in the grouping
-                            "-fx-focus-color: transparent;" +
-                            "-fx-background-color: -fx-outer-border, -fx-inner-border, -fx-body-color; \n" +
-                            "-fx-background-insets: 0, 0, 0;\n" +
-                            "-fx-background-radius: 0, 0, 0;"
+                            """
+                            -fx-focus-color: transparent;
+                            -fx-background-insets: 0, 0, 0;
+                            -fx-background-radius: 0, 0, 0;"""
                     );
                     groupings.setRotate(-90);
                     groupings.getSelectionModel().select(matrix.getItem((Integer)item.getValue()).getGroup());
@@ -343,7 +361,8 @@ public class MatrixGuiHandler {
                     cell.getChildren().add(g);
                 } else if(item.getKey().equals("index_item")) {
                     TextField entry = new TextField(((Double)matrix.getItem((Integer)item.getValue()).getSortIndex()).toString());
-                    entry.setPrefColumnCount(3);  // set size to 5 characters fitting
+                    entry.setPrefColumnCount(3);  // set size to 3 characters fitting
+                    entry.setPadding(new Insets(0));
 
                     // force the field to be numeric only TODO: this stopped working on 6/20
                     entry.textProperty().addListener(new ChangeListener<String>() {
@@ -355,6 +374,7 @@ public class MatrixGuiHandler {
                         }
                     });
                     cell.setMaxWidth(Region.USE_COMPUTED_SIZE);
+                    cell.setAlignment(Pos.CENTER);
 
                     int finalR = r;
                     int finalC = c;
@@ -520,7 +540,7 @@ public class MatrixGuiHandler {
                     cell.getChildren().add(label);
                 }
                 cell.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
-                cell.setPadding(new Insets(1, 1, 1, 1));
+                cell.setPadding(new Insets(0));
                 GridPane.setConstraints(cell, c, r);
                 grid.getChildren().add(cell);
 
@@ -538,7 +558,17 @@ public class MatrixGuiHandler {
         scrollPane.setFitToWidth(true);
         rootLayout.getChildren().addAll(scrollPane, location);
 
+//        rootLayout.setStyle(".combo-box > .list-cell {\n" +
+//                "    -fx-padding: 0 0 0 0;\n" +
+//                "    -fx-border-insets: 0 0 0 0;\n" +
+//                "}");
+
 
         return rootLayout;
+    }
+
+    public void setFontSize(Double newSize) {
+        System.out.println(newSize);
+        fontSize.setValue(newSize);
     }
 }
