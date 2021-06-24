@@ -1143,8 +1143,7 @@ public class ToolbarHandler {
             ScrollPane currentGroupingsPane = new ScrollPane(currentGroupings);
             currentGroupingsPane.setFitToWidth(true);
 
-            HashMap<String, Color> groupingColorsCopy = (HashMap<String, Color>) ioHandler.getMatrix(editor.getFocusedMatrixUid()).getGroupingColors().clone();
-            for(Map.Entry<String, Color> entry : groupingColorsCopy.entrySet()) {
+            for(Map.Entry<String, Color> entry : ioHandler.getMatrix(editor.getFocusedMatrixUid()).getGroupingColors().entrySet()) {
                 HBox display = new HBox();
 
                 Label groupingName = new Label(entry.getKey());
@@ -1180,24 +1179,23 @@ public class ToolbarHandler {
                 VBox.setVgrow(vSpacer, Priority.ALWAYS);
                 vSpacer.setMaxHeight(Double.MAX_VALUE);
 
-                // create HBox for user to close with our without changes
+                // create HBox for user to close with or without changes
                 HBox closeArea = new HBox();
                 Button applyAllButton = new Button("Ok");
                 applyAllButton.setOnAction(eee -> {
-                    if(!groupingColorsCopy.containsKey(newName.getText())) {
-                        groupingColorsCopy.put(newName.getText(), null);
+                    if(!ioHandler.getMatrix(editor.getFocusedMatrixUid()).getGroupingColors().containsKey(newName.getText())) {
+                        ioHandler.getMatrix(editor.getFocusedMatrixUid()).addGrouping(newName.getText(), null);
 
                         HBox display = new HBox();
                         Label groupingName = new Label(newName.getText());
                         Pane groupingSpacer = new Pane();
                         groupingSpacer.setMaxWidth(Double.MAX_VALUE);
                         HBox.setHgrow(groupingSpacer, Priority.ALWAYS);
-                        ColorPicker groupingColor = new ColorPicker(groupingColorsCopy.get(newName.getText()));
+                        ColorPicker groupingColor = new ColorPicker(ioHandler.getMatrix(editor.getFocusedMatrixUid()).getGroupingColors().get(newName.getText()));
                         display.getChildren().addAll(groupingName, groupingSpacer, groupingColor);
                         currentGroupings.getChildren().add(display);
                     }
                     addWindow.close();
-                    editor.refreshTab();
                 });
 
                 Pane spacer = new Pane();  // used as a spacer between buttons
@@ -1236,7 +1234,7 @@ public class ToolbarHandler {
 
                 HBox renameLayout = new HBox();
                 ComboBox<String> currentItems = new ComboBox();
-                Vector<String> groupings = new Vector<>(groupingColorsCopy.keySet());
+                Vector<String> groupings = new Vector<>(ioHandler.getMatrix(editor.getFocusedMatrixUid()).getGroupingColors().keySet());
                 groupings.remove("(None)");
                 currentItems.getItems().addAll(groupings);
                 currentItems.setMaxWidth(Double.MAX_VALUE);
@@ -1257,35 +1255,34 @@ public class ToolbarHandler {
                 Button applyAllButton = new Button("Ok");
                 applyAllButton.setOnAction(eee -> {
                     // key must not be empty and must not already exist
-                    if(currentItems.getValue() != "" && !groupingColorsCopy.containsKey(newName.getText())) {
+                    if(currentItems.getValue() != "" && !ioHandler.getMatrix(editor.getFocusedMatrixUid()).getGroupingColors().containsKey(newName.getText())) {
                         for(Node grouping : currentGroupings.getChildren()) {  // delete the old object
                             HBox area = (HBox)grouping;
                             for(Node item : area.getChildren()) {
                                 if(item.getClass().equals(Label.class)) {
                                     Label l = (Label)item;
-                                    if(l.getText().equals(currentItems.getValue())) {
+                                    if(l.getText().equals(currentItems.getValue())) {  // update the text of the label that was displayed in the drop down box
                                         Platform.runLater(new Runnable() {  // this allows a thread to update the gui
                                             @Override
                                             public void run() {
-                                                currentGroupings.getChildren().remove(area);
+                                                l.setText(newName.getText());
+//                                                currentGroupings.getChildren().remove(area);
                                         }});
                                         break;
                                     }
                                 }
                             }
                         }
-                        Color oldColor = groupingColorsCopy.get(currentItems.getValue());
-                        groupingColorsCopy.remove(currentItems.getValue());
-                        groupingColorsCopy.put(newName.getText(), oldColor);
+                        ioHandler.getMatrix(editor.getFocusedMatrixUid()).renameGrouping(currentItems.getValue(), newName.getText());
 
-                        HBox display = new HBox();
-                        Label groupingName = new Label(newName.getText());
-                        Pane groupingSpacer = new Pane();
-                        groupingSpacer.setMaxWidth(Double.MAX_VALUE);
-                        HBox.setHgrow(groupingSpacer, Priority.ALWAYS);
-                        ColorPicker groupingColor = new ColorPicker(null);
-                        display.getChildren().addAll(groupingName, groupingSpacer, groupingColor);
-                        currentGroupings.getChildren().add(display);
+//                        HBox display = new HBox();
+//                        Label groupingName = new Label(newName.getText());
+//                        Pane groupingSpacer = new Pane();
+//                        groupingSpacer.setMaxWidth(Double.MAX_VALUE);
+//                        HBox.setHgrow(groupingSpacer, Priority.ALWAYS);
+//                        ColorPicker groupingColor = new ColorPicker(null);
+//                        display.getChildren().addAll(groupingName, groupingSpacer, groupingColor);
+//                        currentGroupings.getChildren().add(display);
                     }  // TODO: add some kind of notification saying grouping cannot be empty or exist already
                     renameWindow.close();
                     editor.refreshTab();
@@ -1326,7 +1323,7 @@ public class ToolbarHandler {
                 deleteWindow.setTitle("Delete Grouping");
 
                 ComboBox<String> currentItems = new ComboBox();
-                Vector<String> groupings = new Vector<>(groupingColorsCopy.keySet());
+                Vector<String> groupings = new Vector<>(ioHandler.getMatrix(editor.getFocusedMatrixUid()).getGroupingColors().keySet());
                 groupings.remove("(None)");
                 currentItems.getItems().addAll(groupings);
                 currentItems.setMaxWidth(Double.MAX_VALUE);
@@ -1361,7 +1358,6 @@ public class ToolbarHandler {
                         ioHandler.getMatrix(editor.getFocusedMatrixUid()).removeGrouping(currentItems.getValue());
                     }  // TODO: add some kind of notification saying grouping cannot be empty or exist already
                     deleteWindow.close();
-                    editor.refreshTab();
                 });
 
                 Pane spacer = new Pane();  // used as a spacer between buttons
@@ -1395,10 +1391,10 @@ public class ToolbarHandler {
 
             // create HBox for user to close with our without changes
             HBox closeArea = new HBox();
-            Button applyAllButton = new Button("Apply All Changes");
+            Button applyAllButton = new Button("Ok");
+
             applyAllButton.setOnAction(ee -> {
-                ioHandler.getMatrix(editor.getFocusedMatrixUid()).clearGroupings();
-                for(Node grouping : currentGroupings.getChildren()) {  // delete the old object
+                for(Node grouping : currentGroupings.getChildren()) {  // update the colors
                     HBox area = (HBox) grouping;
                     String groupingName = null;
                     Color groupingColor = null;
@@ -1413,7 +1409,7 @@ public class ToolbarHandler {
                         }
                     }
                     assert(groupingName != null) : "could not find name on screen when configuring groupings";
-                    ioHandler.getMatrix(editor.getFocusedMatrixUid()).addGrouping(groupingName, groupingColor);
+                    ioHandler.getMatrix(editor.getFocusedMatrixUid()).updateGroupingColor(groupingName, groupingColor);
                 }
                 window.close();
                 editor.refreshTab();
@@ -1423,11 +1419,7 @@ public class ToolbarHandler {
             HBox.setHgrow(spacer, Priority.ALWAYS);
             spacer.setMaxWidth(Double.MAX_VALUE);
 
-            Button cancelButton = new Button("Cancel");
-            cancelButton.setOnAction(ee -> {
-                window.close();
-            });
-            closeArea.getChildren().addAll(cancelButton, spacer, applyAllButton);
+            closeArea.getChildren().addAll(spacer, applyAllButton);
 
 
             VBox layout = new VBox(10);
@@ -1440,6 +1432,26 @@ public class ToolbarHandler {
             //Display window and wait for it to be closed before returning
             Scene scene = new Scene(layout, 400, 200);
             window.setScene(scene);
+            scene.getWindow().setOnCloseRequest(ee -> {
+                for (Node grouping : currentGroupings.getChildren()) {  // update the colors
+                    HBox area = (HBox) grouping;
+                    String groupingName = null;
+                    Color groupingColor = null;
+                    for (Node item : area.getChildren()) {
+                        if (item.getClass().equals(Label.class)) {
+                            groupingName = ((Label) item).getText();
+                        } else if (item.getClass().equals(ColorPicker.class)) {
+                            ColorPicker c = (ColorPicker) item;
+                            if (c.getValue() != null) {  // if color is selected
+                                groupingColor = Color.color(c.getValue().getRed(), c.getValue().getGreen(), c.getValue().getBlue());
+                            }
+                        }
+                    }
+                    assert (groupingName != null) : "could not find name on screen when configuring groupings";
+                    ioHandler.getMatrix(editor.getFocusedMatrixUid()).updateGroupingColor(groupingName, groupingColor);
+                }
+                editor.refreshTab();
+            });
             window.showAndWait();
 
         });

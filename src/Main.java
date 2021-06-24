@@ -1,4 +1,5 @@
 import DSMData.DSMConnection;
+import DSMData.DSMItem;
 import DSMData.DataHandler;
 import IOHandler.IOHandler;
 import com.intellij.vcs.log.Hash;
@@ -50,9 +51,18 @@ public class Main extends Application {
 
 
         // start with a tab open
-        File file = new File("C:\\Users\\ajcar\\Documents\\DSMEditor\\test.dsm");
-        DataHandler matrix = ioHandler.readFile(file);
-        int uid = ioHandler.addMatrix(matrix, file);
+        File file = new File("C:\\Users\\ajcar\\Documents\\big matrix.dsm");
+        DataHandler matrix = new DataHandler();
+        matrix.setSymmetrical(true);
+        int uid = ioHandler.addMatrix(matrix, new File("C:\\Users\\ajcar\\Documents\\big matrix.dsm"));
+        for(int i=0; i<45; i++) {
+            matrix.addNewSymmetricItem("test" + i);
+        }
+        for(DSMItem row : matrix.getRows()) {
+            for(DSMItem col : matrix.getCols()) {
+                matrix.modifyConnection(row.getUid(), col.getUid(), "x", 1.0);
+            }
+        }
         editor.addTab(uid);
 
         // on close, iterate through each tab and run the close request to save it or not
@@ -64,9 +74,10 @@ public class Main extends Application {
 
                     if (editor.getTabs().get(entry.getKey()) != null) {
                         ev.consume();
-                        break;
+                        return;
                     }
                 }
+                System.exit(0);  // terminate the program once the window is closed
             }
         });
 

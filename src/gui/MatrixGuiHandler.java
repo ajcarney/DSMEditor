@@ -26,6 +26,7 @@ import javafx.util.Pair;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Vector;
@@ -39,63 +40,78 @@ public class MatrixGuiHandler {
     private final Background ERROR_BACKGROUND = new Background(new BackgroundFill(Color.color(1, 0, 0), new CornerRadii(3), new Insets(0)));
 
     private Thread highlightThread;
-    private static boolean crossHighlight = false;
 
-    private class HighlightScheme {
-        private Background defaultBG;
-        private Background userHighlightBG;
-        private Background crossHighlightBG;
-        private Background errorHighlightBG;
-
-        public HighlightScheme(Background defaultBG, Background userHighlightBG, Background crossHighlightBG, Background errorHighlightBG) {
-            this.defaultBG = defaultBG;
-            this.userHighlightBG = userHighlightBG;
-            this.crossHighlightBG = crossHighlightBG;
-            this.errorHighlightBG = errorHighlightBG;
-        }
-
-        public Background getDefaultBG() {
-            return defaultBG;
-        }
-
-        public void setDefaultBG(Background defaultBG) {
-            this.defaultBG = defaultBG;
-        }
-
-        public Background getUserHighlightBG() {
-            return userHighlightBG;
-        }
-
-        public void setUserHighlightBG(Background userHighlightBG) {
-            this.userHighlightBG = userHighlightBG;
-        }
-
-        public Background getCrossHighlightBG() {
-            return crossHighlightBG;
-        }
-
-        public void setCrossHighlightBG(Background crossHighlightBG) {
-            this.crossHighlightBG = crossHighlightBG;
-        }
-
-        public Background getErrorHighlightBG() {
-            return errorHighlightBG;
-        }
-
-        public void setErrorHighlightBG(Background errorHighlightBG) {
-            this.errorHighlightBG = errorHighlightBG;
-        }
-    }
 
     private class Cell {
         private Pair<Integer, Integer> gridLocation;
         private HBox guiCell;
-        private HighlightScheme highlightScheme;
 
-        public Cell(Pair<Integer, Integer> gridLocation, HBox guiCell, HighlightScheme highlightScheme) {
+        private static Boolean crossHighlightEnabled = false;
+
+        private Background defaultBG = null;
+        private Background userHighlightBG = null;
+        private Background crossHighlightBG = null;
+        private Background errorHighlightBG = null;
+
+        public Cell(Pair<Integer, Integer> gridLocation, HBox guiCell) {
             this.gridLocation = gridLocation;
             this.guiCell = guiCell;
-            this.highlightScheme = highlightScheme;
+        }
+
+        private void setCellHighlight(Color color) {
+            guiCell.setBackground(new Background(new BackgroundFill(color, new CornerRadii(3), new Insets(0))));
+        }
+
+        public static Boolean getCrossHighlightEnabled() {
+            return crossHighlightEnabled;
+        }
+
+        public static void setCrossHighlightEnabled(Boolean crossHighlightEnabled) {
+            Cell.crossHighlightEnabled = crossHighlightEnabled;
+        }
+
+        public void updateCellHighlight() {
+            if (getErrorHighlightBG() != null) {
+                guiCell.setBackground(getErrorHighlightBG());
+            } else if (getCrossHighlightBG() != null && crossHighlightEnabled) {
+                guiCell.setBackground(getCrossHighlightBG());
+            } else if (getUserHighlightBG() != null) {
+                guiCell.setBackground(getUserHighlightBG());
+            } else {  // default background determined by groupings
+                Integer rowUid = getUidsFromGridLoc(gridLocation).getKey();
+                Integer colUid = getUidsFromGridLoc(gridLocation).getValue();
+                Color mergedColor = null;
+                if (rowUid == null && colUid != null) {  // highlight with column color
+                    mergedColor = matrix.getGroupingColors().get(matrix.getItem(colUid).getGroup());
+                    setCellHighlight(mergedColor);
+                    return;
+                } else if (rowUid != null && colUid == null) {  // highlight with row color
+                    mergedColor = matrix.getGroupingColors().get(matrix.getItem(rowUid).getGroup());
+                    setCellHighlight(mergedColor);
+                    return;
+                } else if (rowUid != null && colUid != null) {  // highlight with merged color
+                    Color rowColor = matrix.getGroupingColors().get(matrix.getItem(rowUid).getGroup());
+                    if (rowColor == null) rowColor = Color.color(1.0, 1.0, 1.0);
+
+                    Color colColor = matrix.getGroupingColors().get(matrix.getItem(colUid).getGroup());
+                    if (colColor == null) colColor = Color.color(1.0, 1.0, 1.0);
+
+                    double r = (rowColor.getRed() + colColor.getRed()) / 2;
+                    double g = (rowColor.getGreen() + colColor.getGreen()) / 2;
+                    double b = (rowColor.getBlue() + colColor.getBlue()) / 2;
+                    mergedColor = Color.color(r, g, b);
+
+                    if (matrix.isSymmetrical() && !rowUid.equals(matrix.getItem(colUid).getAliasUid()) && matrix.getItem(rowUid).getGroup().equals(matrix.getItem(colUid).getGroup())) {  // associated row and column are same group
+                        setCellHighlight(mergedColor);
+                        return;
+                    } else if (!matrix.isSymmetrical()) {
+                        setCellHighlight(mergedColor);
+                        return;
+                    }
+                }
+
+                setCellHighlight((Color)getDefaultBG().getFills().get(0).getFill());
+            }
         }
 
         public Pair<Integer, Integer> getGridLocation() {
@@ -106,10 +122,46 @@ public class MatrixGuiHandler {
             return guiCell;
         }
 
-        public HighlightScheme getHighlightScheme() {
-            return highlightScheme;
+        public Background getDefaultBG() {
+            return defaultBG;
         }
+
+        public void setDefaultBG(Background defaultBG, boolean update) {
+            this.defaultBG = defaultBG;
+            updateCellHighlight();
+
+        }
+
+        public Background getUserHighlightBG() {
+            return userHighlightBG;
+        }
+
+        public void setUserHighlightBG(Background userHighlightBG) {
+            this.userHighlightBG = userHighlightBG;
+            updateCellHighlight();
+        }
+
+        public Background getCrossHighlightBG() {
+            return crossHighlightBG;
+        }
+
+        public void setCrossHighlightBG(Background crossHighlightBG) {
+            this.crossHighlightBG = crossHighlightBG;
+            updateCellHighlight();
+        }
+
+        public Background getErrorHighlightBG() {
+            return errorHighlightBG;
+        }
+
+        public void setErrorHighlightBG(Background errorHighlightBG) {
+            this.errorHighlightBG = errorHighlightBG;
+            updateCellHighlight();
+        }
+
+
     }
+
 
     Vector<Cell> cells;  // contains information for highlighting
     HashMap<String, HashMap<Integer, Integer>> gridUidLookup;
@@ -120,68 +172,6 @@ public class MatrixGuiHandler {
         gridUidLookup = new HashMap<>();
         gridUidLookup.put("rows", new HashMap<Integer, Integer>());
         gridUidLookup.put("cols", new HashMap<Integer, Integer>());
-
-        this.highlightThread = new Thread(() -> {
-            while(true) {
-                Platform.runLater(new Runnable() {  // this allows a thread to update the gui
-                    @Override
-                    public void run() {
-                        for (Cell cell : cells) {
-                            if (cell.getHighlightScheme().getErrorHighlightBG() != null) {
-                                cell.getGuiCell().setBackground(cell.getHighlightScheme().getErrorHighlightBG());
-                            } else if (cell.getHighlightScheme().getCrossHighlightBG() != null && crossHighlight) {
-                                cell.getGuiCell().setBackground(cell.getHighlightScheme().getCrossHighlightBG());
-                            } else if (cell.getHighlightScheme().getUserHighlightBG() != null) {
-                                cell.getGuiCell().setBackground(cell.getHighlightScheme().getUserHighlightBG());
-                            } else {  // default background determined by groupings
-                                Integer rowUid = getUidsFromGridLoc(cell.getGridLocation()).getKey();
-                                Integer colUid = getUidsFromGridLoc(cell.getGridLocation()).getValue();
-                                Color mergedColor = null;
-                                if(rowUid == null && colUid != null) {  // highlight with column color
-                                    mergedColor = matrix.getGroupingColors().get(matrix.getItem(colUid).getGroup());
-                                    cell.getGuiCell().setBackground(new Background(new BackgroundFill(mergedColor, new CornerRadii(3), new Insets(0))));
-                                    continue;
-                                } else if(rowUid != null && colUid == null) {  // highlight with row color
-                                    mergedColor = matrix.getGroupingColors().get(matrix.getItem(rowUid).getGroup());
-                                    cell.getGuiCell().setBackground(new Background(new BackgroundFill(mergedColor, new CornerRadii(3), new Insets(0))));
-                                    continue;
-                                } else if(rowUid != null && colUid != null) {  // highlight with merged color
-                                    Color rowColor = matrix.getGroupingColors().get(matrix.getItem(rowUid).getGroup());
-                                    if(rowColor == null) rowColor = Color.color(1.0, 1.0, 1.0);
-
-                                    Color colColor = matrix.getGroupingColors().get(matrix.getItem(colUid).getGroup());
-                                    if(colColor == null) colColor = Color.color(1.0, 1.0, 1.0);
-
-                                    double r = (rowColor.getRed() + colColor.getRed()) / 2;
-                                    double g = (rowColor.getGreen() + colColor.getGreen()) / 2;
-                                    double b = (rowColor.getBlue() + colColor.getBlue()) / 2;
-                                    mergedColor = Color.color(r, g, b);
-
-//                                    System.out.println(rowUid + " " + colUid + " " + matrix.getItem(colUid).getAliasUid() + " " + matrix.getItem(rowUid).getGroup() + " " + matrix.getItem(colUid).getGroup());
-                                    if(matrix.isSymmetrical() && !rowUid.equals(matrix.getItem(colUid).getAliasUid()) && matrix.getItem(rowUid).getGroup().equals(matrix.getItem(colUid).getGroup())) {  // associated row and column are same group
-                                        cell.getGuiCell().setBackground(new Background(new BackgroundFill(mergedColor, new CornerRadii(3), new Insets(0))));
-                                        continue;
-                                    } else if(!matrix.isSymmetrical()) {
-                                        cell.getGuiCell().setBackground(new Background(new BackgroundFill(mergedColor, new CornerRadii(3), new Insets(0))));
-                                        continue;
-                                    }
-                                }
-
-                                cell.getGuiCell().setBackground(cell.getHighlightScheme().getDefaultBG());
-                            }
-                        }
-                    }
-                });
-
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-        highlightThread.setDaemon(true);
-        highlightThread.start();
     }
 
     private Cell getCellByLoc(Pair<Integer, Integer> cellLoc) {
@@ -201,10 +191,10 @@ public class MatrixGuiHandler {
 
     private void toggleUserHighlightCell(Pair<Integer, Integer> cellLoc, Background bg) {
         Cell cell = getCellByLoc(cellLoc);
-        if(cell.getHighlightScheme().getUserHighlightBG() == null) {  // is highlighted, so unhighlight it
-            cell.getHighlightScheme().setUserHighlightBG(bg);
+        if(cell.getUserHighlightBG() == null) {  // is highlighted, so unhighlight it
+            cell.setUserHighlightBG(bg);
         } else {
-            cell.getHighlightScheme().setUserHighlightBG(null);
+            cell.setUserHighlightBG(null);
         }
     }
 
@@ -212,8 +202,8 @@ public class MatrixGuiHandler {
     private void setCellHighlight(Pair<Integer, Integer> cellLoc, Background bg, String highlightType) {
         Cell cell = getCellByLoc(cellLoc);
         HashMap<String, Runnable> functions = new HashMap<>();
-        functions.put("userHighlight", () -> cell.getHighlightScheme().setUserHighlightBG(bg));
-        functions.put("errorHighlight", () -> cell.getHighlightScheme().setErrorHighlightBG(bg));
+        functions.put("userHighlight", () -> cell.setUserHighlightBG(bg));
+        functions.put("errorHighlight", () -> cell.setErrorHighlightBG(bg));
         functions.get(highlightType).run();
     }
 
@@ -221,8 +211,8 @@ public class MatrixGuiHandler {
     private void clearCellHighlight(Pair<Integer, Integer> cellLoc, String highlightType) {
         Cell cell = getCellByLoc(cellLoc);
         HashMap<String, Runnable> functions = new HashMap<>();
-        functions.put("userHighlight", () -> cell.getHighlightScheme().setUserHighlightBG(null));
-        functions.put("errorHighlight", () -> cell.getHighlightScheme().setErrorHighlightBG(null));
+        functions.put("userHighlight", () -> cell.setUserHighlightBG(null));
+        functions.put("errorHighlight", () -> cell.setErrorHighlightBG(null));
         functions.get(highlightType).run();
     }
 
@@ -246,9 +236,9 @@ public class MatrixGuiHandler {
             for(Cell cell : cells) {  // find the cell to modify
                 if(cell.getGridLocation().getKey() == i && cell.getGridLocation().getValue() == endCol) {
                     if(shouldHighlight) {
-                        cell.getHighlightScheme().setCrossHighlightBG(CROSS_HIGHLIGHT_BACKGROUND);
+                        cell.setCrossHighlightBG(CROSS_HIGHLIGHT_BACKGROUND);
                     } else {
-                        cell.getHighlightScheme().setCrossHighlightBG(null);
+                        cell.setCrossHighlightBG(null);
                     }
                     break;
                 }
@@ -259,9 +249,9 @@ public class MatrixGuiHandler {
             for(Cell cell : cells) {  // find the cell to modify
                 if(cell.getGridLocation().getValue() == i && cell.getGridLocation().getKey() == endRow) {
                     if(shouldHighlight) {
-                        cell.getHighlightScheme().setCrossHighlightBG(CROSS_HIGHLIGHT_BACKGROUND);
+                        cell.setCrossHighlightBG(CROSS_HIGHLIGHT_BACKGROUND);
                     } else {
-                        cell.getHighlightScheme().setCrossHighlightBG(null);
+                        cell.setCrossHighlightBG(null);
                     }
                     break;
                 }
@@ -271,7 +261,10 @@ public class MatrixGuiHandler {
     }
 
     public void toggleCrossHighlighting() {
-        crossHighlight = !crossHighlight;
+        Cell.setCrossHighlightEnabled(!Cell.getCrossHighlightEnabled());
+        for(Cell cell : cells) {
+            cell.updateCellHighlight();
+        }
     }
 
      VBox getMatrixEditor() {
@@ -316,11 +309,15 @@ public class MatrixGuiHandler {
                     groupings.setMinWidth(Region.USE_PREF_SIZE);
                     groupings.getItems().addAll(matrix.getGroupings());
                     groupings.getSelectionModel().select(matrix.getItem((Integer)item.getValue()).getGroup());
-                    groupings.setOnAction(e -> {
+                    groupings.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal)->{
                         if(matrix.isSymmetrical()) {
                             matrix.setGroupSymmetric((Integer)item.getValue(), groupings.getValue());
                         } else {
                             matrix.setGroup((Integer)item.getValue(), groupings.getValue());
+                        }
+
+                        for(Cell c_ : cells) {
+                            c_.updateCellHighlight();
                         }
                     });
                     cell.getChildren().add(groupings);
@@ -337,6 +334,9 @@ public class MatrixGuiHandler {
                     groupings.getSelectionModel().select(matrix.getItem((Integer)item.getValue()).getGroup());
                     groupings.setOnAction(e -> {
                         matrix.setGroup((Integer)item.getValue(), groupings.getValue());
+                        for(Cell c_ : cells) {
+                            c_.updateCellHighlight();
+                        }
                     });
                     Group g = new Group();  // box will be added to a group so that it will be formatted correctly if it is vertical
                     g.getChildren().add(groupings);
@@ -524,13 +524,14 @@ public class MatrixGuiHandler {
                 GridPane.setConstraints(cell, c, r);
                 grid.getChildren().add(cell);
 
-                cells.add(new Cell(
-                        new Pair<>(r, c),
-                        cell,
-                        new HighlightScheme(defaultBackground, null, null, null)
-                ));
+                Cell cellData = new Cell(new Pair<>(r, c), cell);
+                cellData.setDefaultBG(defaultBackground, false);
+                cells.add(cellData);
 
             }
+        }
+        for(Cell cell : cells) {
+            cell.updateCellHighlight();
         }
 
         ScrollPane scrollPane = new ScrollPane(grid);

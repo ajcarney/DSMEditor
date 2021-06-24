@@ -110,6 +110,16 @@ public class DataHandler {
     public void removeGrouping(String name) {
         groupingColors.remove(name);
         groupings.remove(name);
+        for(DSMItem item : rows) {
+            if(item.getGroup().equals(name)) {
+                item.setGroup("(None)");
+            }
+        }
+        for(DSMItem item : cols) {
+            if(item.getGroup().equals(name)) {
+                item.setGroup("(None)");
+            }
+        }
         this.wasModified = true;
     }
 
@@ -125,8 +135,24 @@ public class DataHandler {
 
     public void renameGrouping(String oldName, String newName) {
         Color oldColor = groupingColors.get(oldName);
+        for(DSMItem item : rows) {
+            if(item.getGroup().equals(oldName)) {
+                item.setGroup(newName);
+            }
+        }
+        for(DSMItem item : cols) {
+            if(item.getGroup().equals(oldName)) {
+                item.setGroup(newName);
+            }
+        }
         removeGrouping(oldName);
         addGrouping(newName, oldColor);
+        this.wasModified = true;
+    }
+
+    public void updateGroupingColor(String name, Color newColor) {
+        groupingColors.remove(name);
+        groupingColors.put(name, newColor);
         this.wasModified = true;
     }
 
