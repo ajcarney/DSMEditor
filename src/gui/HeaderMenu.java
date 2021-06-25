@@ -150,8 +150,8 @@ public class HeaderMenu {
         fileMenu.getItems().add(openFile);
         fileMenu.getItems().add(saveFile);
         fileMenu.getItems().add(saveFileAs);
-        fileMenu.getItems().add(new SeparatorMenuItem());
-        fileMenu.getItems().add(new MenuItem("Settings..."));
+//        fileMenu.getItems().add(new SeparatorMenuItem());
+//        fileMenu.getItems().add(new MenuItem("Settings..."));
         fileMenu.getItems().add(new SeparatorMenuItem());
         fileMenu.getItems().add(exportMenu);
         fileMenu.getItems().add(new SeparatorMenuItem());
@@ -160,6 +160,7 @@ public class HeaderMenu {
 
         //Edit menu
         editMenu = new Menu("_Edit");
+        editMenu.setDisable(true);
         editMenu.getItems().add(new MenuItem("Cut"));
         editMenu.getItems().add(new MenuItem("Copy"));
         MenuItem paste = new MenuItem("Paste");
@@ -192,7 +193,7 @@ public class HeaderMenu {
     }
 
 
-    public static MenuBar getMenuBar() {
+    public MenuBar getMenuBar() {
         return menuBar;
     }
 

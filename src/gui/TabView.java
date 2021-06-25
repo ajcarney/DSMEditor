@@ -198,6 +198,7 @@ public class TabView {
     }
 
     public void increaseFontScaling() {
+        if(getFocusedMatrixUid() == null) return;
         currentFontSizeIndex += 1;
         if(currentFontSizeIndex > fontSizes.length - 1) currentFontSizeIndex = fontSizes.length - 1;
 
@@ -206,6 +207,7 @@ public class TabView {
     }
 
     public void decreaseFontScaling() {
+        if(getFocusedMatrixUid() == null) return;
         currentFontSizeIndex -= 1;
         if(currentFontSizeIndex < 0) currentFontSizeIndex = 0;
 
@@ -214,6 +216,7 @@ public class TabView {
     }
 
     public void resetFontScaling() {
+        if(getFocusedMatrixUid() == null) return;
         for(int i=0; i<fontSizes.length; i++) {
             if(fontSizes[i] == DEFAULT_FONT_SIZE) {
                 currentFontSizeIndex = i;

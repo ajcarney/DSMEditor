@@ -391,6 +391,21 @@ public class DataHandler {
         return connection;
     }
 
+    public Pair<Integer, Integer> getSymmetricConnectionUids(int rowUid, int colUid) {
+        Integer newRowUid = getItem(colUid).getAliasUid();
+        Integer newColUid = null;
+        for(DSMItem item : getCols()) {
+            if(item.getAliasUid() == rowUid) {
+                newColUid = item.getUid();
+            }
+        }
+
+        if(newColUid != null && newRowUid != null) {
+            return new Pair<Integer, Integer>(newRowUid, newColUid);
+        }
+        return null;
+    }
+
     public void modifyConnection(int rowUid, int colUid, String connectionName, double weight) {
         // check to see if the connection is in the list of connections already
         boolean connectionExists = false;
@@ -413,8 +428,9 @@ public class DataHandler {
     }
 
     public void modifyConnectionSymmetrically(int rowUid, int colUid, String connectionName, double weight) {
+        Pair<Integer, Integer> uids = getSymmetricConnectionUids(rowUid, colUid);
         modifyConnection(rowUid, colUid, connectionName, weight);
-        modifyConnection(getItem(colUid).getAliasUid(), colUid, connectionName, weight);
+        modifyConnection(uids.getKey(), uids.getValue(), connectionName, weight);
         this.wasModified = true;
     }
 

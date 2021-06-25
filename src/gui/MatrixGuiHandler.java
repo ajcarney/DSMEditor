@@ -89,9 +89,11 @@ public class MatrixGuiHandler {
                 if (rowUid == null && colUid != null) {  // highlight with column color
                     mergedColor = matrix.getGroupingColors().get(matrix.getItem(colUid).getGroup());
                     setCellHighlight(mergedColor);
+                    return;
                 } else if (rowUid != null && colUid == null) {  // highlight with row color
                     mergedColor = matrix.getGroupingColors().get(matrix.getItem(rowUid).getGroup());
                     setCellHighlight(mergedColor);
+                    return;
                 } else if (rowUid != null && colUid != null) {  // highlight with merged color
                     Color rowColor = matrix.getGroupingColors().get(matrix.getItem(rowUid).getGroup());
                     if (rowColor == null) rowColor = Color.color(1.0, 1.0, 1.0);
@@ -106,8 +108,10 @@ public class MatrixGuiHandler {
 
                     if (matrix.isSymmetrical() && !rowUid.equals(matrix.getItem(colUid).getAliasUid()) && matrix.getItem(rowUid).getGroup().equals(matrix.getItem(colUid).getGroup())) {  // associated row and column are same group
                         setCellHighlight(mergedColor);
+                        return;
                     } else if (!matrix.isSymmetrical()) {
                         setCellHighlight(mergedColor);
+                        return;
                     }
                 }
 
@@ -558,17 +562,11 @@ public class MatrixGuiHandler {
         scrollPane.setFitToWidth(true);
         rootLayout.getChildren().addAll(scrollPane, location);
 
-//        rootLayout.setStyle(".combo-box > .list-cell {\n" +
-//                "    -fx-padding: 0 0 0 0;\n" +
-//                "    -fx-border-insets: 0 0 0 0;\n" +
-//                "}");
-
 
         return rootLayout;
     }
 
     public void setFontSize(Double newSize) {
-        System.out.println(newSize);
         fontSize.setValue(newSize);
     }
 }

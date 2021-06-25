@@ -1,5 +1,6 @@
 package gui;
 
+import DSMData.DSMConnection;
 import DSMData.DSMItem;
 import IOHandler.IOHandler;
 import javafx.application.Platform;
@@ -14,6 +15,7 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.util.Callback;
 import javafx.util.Pair;
 
 import java.util.HashMap;
@@ -31,6 +33,7 @@ public class ToolbarHandler {
     private Button configureGroupings;
     private Button sort;
     private Button reDistributeIndexes;
+    private Button deleteConnections;
 
     private TabView editor;
     private IOHandler ioHandler;
@@ -927,7 +930,7 @@ public class ToolbarHandler {
 
             Button applyButton = new Button("Modify Connections");
             applyButton.setOnAction(ee -> {
-                if(itemSelector.getValue() == null || connectionName.getText().isEmpty() || weight.getText().isEmpty()) {  // ensure connection can be added
+                if(itemSelector.getValue() == null) {  // ensure connection can be added and allow empty connections because that means to delete them
                     // TODO: add popup window saying why it cannot make the changes
                     return;
                 }
@@ -977,7 +980,7 @@ public class ToolbarHandler {
 
             Button applySymmetricButton = new Button("Modify Connections Symmetrically");
             applySymmetricButton.setOnAction(ee -> {
-                if(itemSelector.getValue() == null || connectionName.getText().isEmpty() || weight.getText().isEmpty()) {  // ensure connection can be added
+                if(itemSelector.getValue() == null) {  // ensure connection can be added
                     return;
                 }
                 for (Map.Entry<CheckBox, DSMItem> entry : connections.entrySet()) {
@@ -1128,6 +1131,140 @@ public class ToolbarHandler {
         setConnections.setMaxWidth(Double.MAX_VALUE);
 
 
+        deleteConnections = new Button("Delete Connections");
+        deleteConnections.setOnAction(e -> {
+            if(editor.getFocusedMatrixUid() == null) {
+                return;
+            }
+            Stage window = new Stage();
+
+            // Create Root window
+            window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
+            window.setTitle("Delete Connections");
+
+
+            // Create changes view (does not have button to remove items from it
+            Label label = new Label("Changes to be made");
+            ListView< Pair<Integer, Integer> > changesToMakeView = new ListView<>();  // rowUid | colUid
+            changesToMakeView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+            changesToMakeView.setCellFactory(param -> new ListCell< Pair<Integer, Integer> >() {
+                @Override
+                protected void updateItem(Pair<Integer, Integer> item, boolean empty) {
+                    super.updateItem(item, empty);
+
+                    if (empty || item == null) {
+                        setText(null);
+                    } else {
+                        setText(
+                                "Delete " +
+                                ioHandler.getMatrix(editor.getFocusedMatrixUid()).getItem(item.getKey()).getName() + ":" +
+                                ioHandler.getMatrix(editor.getFocusedMatrixUid()).getItem(item.getValue()).getName()
+                        );
+                    }
+                }
+            });
+            Button deleteSelected = new Button("Delete Selected Item(s)");
+            deleteSelected.setOnAction(ee -> {
+                changesToMakeView.getItems().removeAll(changesToMakeView.getSelectionModel().getSelectedItems());
+            });
+
+
+            // Create area for the user to choose the connection they want to remove
+            HBox entryArea = new HBox();
+
+            // ComboBox to choose which row or column to modify connections of
+            ComboBox<Pair<Integer, Integer>> itemSelector = new ComboBox<>();
+            // function to set text of comboBox items
+            Callback<ListView<Pair<Integer, Integer>>, ListCell<Pair<Integer, Integer>>> cellFactory = new Callback<ListView<Pair<Integer, Integer>>, ListCell<Pair<Integer, Integer>>>() {
+                @Override
+                public ListCell<Pair<Integer, Integer>> call(ListView<Pair<Integer, Integer>> l) {
+                    return new ListCell<Pair<Integer, Integer>>() {
+
+                        @Override
+                        protected void updateItem(Pair<Integer, Integer> item, boolean empty) {
+                            super.updateItem(item, empty);
+                            if (item == null || empty) {
+                                setGraphic(null);
+                            } else {
+                                setText(
+                                    ioHandler.getMatrix(editor.getFocusedMatrixUid()).getItem(item.getKey()).getName() + ":" +
+                                    ioHandler.getMatrix(editor.getFocusedMatrixUid()).getItem(item.getValue()).getName()
+                                );
+                            }
+                        }
+                    };
+                }
+            };
+            itemSelector.setButtonCell(cellFactory.call(null));
+            itemSelector.setCellFactory(cellFactory);
+            Vector<Pair<Integer, Integer>> connections = new Vector<>();
+            for(DSMConnection connection : ioHandler.getMatrix(editor.getFocusedMatrixUid()).getConnections()) {
+                connections.add(new Pair<>(connection.getRowUid(), connection.getColUid()));
+            }
+            itemSelector.getItems().addAll(connections);
+            itemSelector.setMaxWidth(Double.MAX_VALUE);
+            HBox.setHgrow(itemSelector, Priority.ALWAYS);
+            itemSelector.setPromptText("Connection");
+
+            Button deleteConnection = new Button("Delete Connection");
+            Button deleteConnectionSymmetrically = new Button("Delete Connection Symmetrically");
+
+            entryArea.getChildren().addAll(itemSelector, deleteConnection);
+            if(ioHandler.getMatrix(editor.getFocusedMatrixUid()).isSymmetrical()) {
+                entryArea.getChildren().add(deleteConnectionSymmetrically);
+            }
+            entryArea.setPadding(new Insets(10, 10, 10, 10));
+            entryArea.setSpacing(20);
+
+            deleteConnection.setOnAction(ee -> {
+                if(itemSelector.getValue() == null) return;
+                changesToMakeView.getItems().add(new Pair<Integer, Integer>(itemSelector.getValue().getKey(), itemSelector.getValue().getValue()));
+            });
+            deleteConnectionSymmetrically.setOnAction(ee -> {
+                if(itemSelector.getValue() == null) return;
+                changesToMakeView.getItems().add(new Pair<Integer, Integer>(itemSelector.getValue().getKey(), itemSelector.getValue().getValue()));
+                Pair<Integer, Integer> uids = ioHandler.getMatrix(editor.getFocusedMatrixUid()).getSymmetricConnectionUids(itemSelector.getValue().getKey(), itemSelector.getValue().getValue());
+                changesToMakeView.getItems().add(uids);
+            });
+
+
+            // create HBox for user to close with our without changes
+            HBox closeArea = new HBox();
+            Button applyAllButton = new Button("Apply All Changes");
+            applyAllButton.setOnAction(ee -> {
+                for(Pair<Integer, Integer> item : changesToMakeView.getItems()) {  // rowUid | colUid
+                    ioHandler.getMatrix(editor.getFocusedMatrixUid()).clearConnection(item.getKey(), item.getValue());
+                }
+                window.close();
+                editor.refreshTab();
+            });
+
+            Pane spacer = new Pane();  // used as a spacer between buttons
+            HBox.setHgrow(spacer, Priority.ALWAYS);
+            spacer.setMaxWidth(Double.MAX_VALUE);
+
+            Button cancelButton = new Button("Cancel");
+            cancelButton.setOnAction(ee -> {
+                window.close();
+            });
+            closeArea.getChildren().addAll(cancelButton, spacer, applyAllButton);
+
+
+            VBox layout = new VBox(10);
+            layout.getChildren().addAll(label, changesToMakeView, deleteSelected, entryArea, closeArea);
+            layout.setAlignment(Pos.CENTER);
+            layout.setPadding(new Insets(10, 10, 10, 10));
+            layout.setSpacing(10);
+
+
+            //Display window and wait for it to be closed before returning
+            Scene scene = new Scene(layout, 700, 500);
+            window.setScene(scene);
+            window.showAndWait();
+        });
+        deleteConnections.setMaxWidth(Double.MAX_VALUE);
+
+
         configureGroupings = new Button("Configure Groupings");
         configureGroupings.setOnAction(e -> {
             if(editor.getFocusedMatrixUid() == null) {
@@ -1233,7 +1370,7 @@ public class ToolbarHandler {
                 renameWindow.setTitle("Rename Grouping");
 
                 HBox renameLayout = new HBox();
-                ComboBox<String> currentItems = new ComboBox();
+                ComboBox<String> currentItems = new ComboBox<>();
                 Vector<String> groupings = new Vector<>(ioHandler.getMatrix(editor.getFocusedMatrixUid()).getGroupingColors().keySet());
                 groupings.remove("(None)");
                 currentItems.getItems().addAll(groupings);
@@ -1266,7 +1403,6 @@ public class ToolbarHandler {
                                             @Override
                                             public void run() {
                                                 l.setText(newName.getText());
-//                                                currentGroupings.getChildren().remove(area);
                                         }});
                                         break;
                                     }
@@ -1275,14 +1411,6 @@ public class ToolbarHandler {
                         }
                         ioHandler.getMatrix(editor.getFocusedMatrixUid()).renameGrouping(currentItems.getValue(), newName.getText());
 
-//                        HBox display = new HBox();
-//                        Label groupingName = new Label(newName.getText());
-//                        Pane groupingSpacer = new Pane();
-//                        groupingSpacer.setMaxWidth(Double.MAX_VALUE);
-//                        HBox.setHgrow(groupingSpacer, Priority.ALWAYS);
-//                        ColorPicker groupingColor = new ColorPicker(null);
-//                        display.getChildren().addAll(groupingName, groupingSpacer, groupingColor);
-//                        currentGroupings.getChildren().add(display);
                     }  // TODO: add some kind of notification saying grouping cannot be empty or exist already
                     renameWindow.close();
                     editor.refreshTab();
@@ -1482,7 +1610,7 @@ public class ToolbarHandler {
 
 
 
-        layout.getChildren().addAll(addMatrixItem, deleteMatrixItem, renameMatrixItem, appendConnections, setConnections, configureGroupings, sort, reDistributeIndexes);
+        layout.getChildren().addAll(addMatrixItem, deleteMatrixItem, renameMatrixItem, appendConnections, setConnections, deleteConnections, configureGroupings, sort, reDistributeIndexes);
         layout.setPadding(new Insets(10, 10, 10, 10));
         layout.setSpacing(20);
         layout.setAlignment(Pos.CENTER);

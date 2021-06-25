@@ -51,19 +51,19 @@ public class Main extends Application {
 
 
         // start with a tab open
-        File file = new File("C:\\Users\\ajcar\\Documents\\big matrix.dsm");
-        DataHandler matrix = new DataHandler();
-        matrix.setSymmetrical(true);
-        int uid = ioHandler.addMatrix(matrix, new File("C:\\Users\\ajcar\\Documents\\big matrix.dsm"));
-        for(int i=0; i<45; i++) {
-            matrix.addNewSymmetricItem("test" + i);
-        }
-        for(DSMItem row : matrix.getRows()) {
-            for(DSMItem col : matrix.getCols()) {
-                matrix.modifyConnection(row.getUid(), col.getUid(), "x", 1.0);
-            }
-        }
-        editor.addTab(uid);
+//        File file = new File("C:\\Users\\ajcar\\Documents\\big matrix.dsm");
+//        DataHandler matrix = new DataHandler();
+//        matrix.setSymmetrical(true);
+//        int uid = ioHandler.addMatrix(matrix, new File("C:\\Users\\ajcar\\Documents\\big matrix.dsm"));
+//        for(int i=0; i<45; i++) {
+//            matrix.addNewSymmetricItem("test" + i);
+//        }
+//        for(DSMItem row : matrix.getRows()) {
+//            for(DSMItem col : matrix.getCols()) {
+//                matrix.modifyConnection(row.getUid(), col.getUid(), "x", 1.0);
+//            }
+//        }
+//        editor.addTab(uid);
 
         // on close, iterate through each tab and run the close request to save it or not
         scene.getWindow().setOnCloseRequest(new EventHandler<WindowEvent>() {
