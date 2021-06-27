@@ -18,9 +18,10 @@ if exist %~dp0\lib\javafx-sdk-11.0.1\ (  :: check to ensure library was download
     echo Successfully downloaded javafx library
 ) else (
     echo Failed to install javafx library
-    echo Exiting
+    echo If you already have a ./lib directory, delete it and try again
+    echo If the error continues to occur, download the library yourself from https://gluonhq.com/products/javafx/
+    echo Press Ctrl + C to quit, or any key to continue with the installation
     Pause
-    exit /b
 )
 
 :: find the version of java currently installed on the path
@@ -53,7 +54,7 @@ if defined CORRECT_JAVA_VER (
 )
 
 echo Creating batch file to run program
-echo java -jrc --module-path ".\lib\javafx-sdk-11.0.1\lib" --add-modules=javafx.controls .\DSMEditor.jar> %~dp0\DSMEditor.bat
+echo java -jar --module-path ".\lib\javafx-sdk-11.0.1\lib" --add-modules=javafx.controls .\DSMEditor.jar> %~dp0\DSMEditor.bat
 
 echo Cleaning up
 if not defined CORRECT_JAVA_VER (

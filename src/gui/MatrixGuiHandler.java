@@ -307,19 +307,24 @@ public class MatrixGuiHandler {
                     label.setMinWidth(Region.USE_PREF_SIZE);
                     cell.getChildren().add((Node) label);
                 } else if(item.getKey().equals("plain_text_v")) {
-                    VerticalLabel label = new VerticalLabel(VerticalDirection.UP);
-                    label.setText((String)item.getValue());
+                    Label label = new Label((String)item.getValue());
+                    label.setRotate(-90);
                     cell.setAlignment(Pos.BOTTOM_RIGHT);
-                    cell.getChildren().add((Node) label);
+                    Group g = new Group();  // label will be added to a group so that it will be formatted correctly if it is vertical
+                    g.getChildren().add(label);
+                    cell.getChildren().add(g);
                 } else if(item.getKey().equals("item_name")) {
                     Label label = new Label(matrix.getItem((Integer) item.getValue()).getName());
                     cell.setAlignment(Pos.BOTTOM_RIGHT);
                     label.setMinWidth(Region.USE_PREF_SIZE);
                     cell.getChildren().add(label);
                 } else if(item.getKey().equals("item_name_v")) {
-                    VerticalLabel label = new VerticalLabel(VerticalDirection.UP);
-                    label.setText(matrix.getItem((Integer)item.getValue()).getName());
-                    cell.getChildren().add(label);
+                    Label label = new Label(matrix.getItem((Integer)item.getValue()).getName());
+                    label.setRotate(-90);
+                    cell.setAlignment(Pos.BOTTOM_RIGHT);
+                    Group g = new Group();  // label will be added to a group so that it will be formatted correctly if it is vertical
+                    g.getChildren().add(label);
+                    cell.getChildren().add(g);
                 } else if(item.getKey().equals("grouping_item")) {
                     ComboBox<String> groupings = new ComboBox<String>();
                     groupings.setMinWidth(Region.USE_PREF_SIZE);

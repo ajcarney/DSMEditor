@@ -21,21 +21,22 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
-import java.io.File;
+import java.io.*;
+import java.text.SimpleDateFormat;
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Vector;
+import java.util.*;
 
 public class Main extends Application {
 
+    private static final IOHandler ioHandler = new IOHandler();
+    private static final InfoHandler infoHandler = new InfoHandler();
+    private static final TabView editor = new TabView(ioHandler, infoHandler);
+    private static final HeaderMenu menu = new HeaderMenu(ioHandler, editor);
+    private static final ToolbarHandler toolbarHandler = new ToolbarHandler(ioHandler, editor);
+
     @Override
     public void start(Stage primaryStage) {
-        IOHandler ioHandler = new IOHandler();
-        InfoHandler infoHandler = new InfoHandler();
-        TabView editor = new TabView(ioHandler, infoHandler);
-        HeaderMenu menu = new HeaderMenu(ioHandler, editor);
-        ToolbarHandler toolbarHandler = new ToolbarHandler(ioHandler, editor);
+        Thread.setDefaultUncaughtExceptionHandler(Main::handleError);
 
         BorderPane root = new BorderPane();
         root.setTop(menu.getMenuBar());
@@ -80,6 +81,44 @@ public class Main extends Application {
                 System.exit(0);  // terminate the program once the window is closed
             }
         });
+
+    }
+
+    private static void handleError(Thread t, Throwable e) {
+        System.err.println("***An unhandled exception was thrown***");
+        System.err.println("An unexpected error occurred in " + t);
+        System.err.println(e.getMessage());
+        System.err.println("Check the log file for more information");
+        System.err.println("Saving files to .recovery");
+
+        File logDir = new File("./.log");
+        File logFile = new File("./.log/log");
+        if(!logDir.exists()) logDir.mkdir();
+
+       try {
+           Writer w = new FileWriter(logFile, true);  // open file in append mode
+
+           Date date = new Date();  // write time stamp
+           SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy h:mm:ss a");
+           String formattedDate = sdf.format(date);
+           w.write("[" + formattedDate + "]\n");
+           w.write(e.getMessage() + "\n");
+
+           StringWriter sw = new StringWriter();
+           e.printStackTrace(new PrintWriter(sw));
+           w.write(sw.toString() + "\n");
+
+           w.close();
+       } catch (IOException ioException) {
+           ioException.printStackTrace();
+       }
+
+       File recoveryDir = new File("./.recovery");
+       if(!recoveryDir.exists()) recoveryDir.mkdir();
+       for(Map.Entry<Integer, DataHandler> matrix : ioHandler.getMatrices().entrySet()) {
+           File f = new File("./.recovery/" + ioHandler.getMatrixSaveFile(matrix.getKey()).getName());
+           ioHandler.saveMatrixToFile(matrix.getKey(), f);
+       }
 
     }
 

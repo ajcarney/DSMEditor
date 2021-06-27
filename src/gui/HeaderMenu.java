@@ -103,7 +103,7 @@ public class HeaderMenu {
                     return;
                 }
             }
-            int code = this.ioHandler.saveMatrixToFile(editor.getFocusedMatrixUid());  // TODO: add checking with the return code
+            int code = this.ioHandler.saveMatrix(editor.getFocusedMatrixUid());  // TODO: add checking with the return code
 
         });
 

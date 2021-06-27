@@ -51,7 +51,7 @@ public class IOHandler {
     }
 
 
-    public int saveMatrixToFile(int matrixUid) {
+    public int saveMatrixToFile(int matrixUid, File f) {
         try {
             // create xml
             Element rootElement = new Element("dsm");
@@ -127,16 +127,21 @@ public class IOHandler {
 
             XMLOutputter xmlOutput = new XMLOutputter();
             xmlOutput.setFormat(Format.getPrettyFormat());  // TODO: change this to getCompactFormat() for release
-            xmlOutput.output(doc, new FileOutputStream(getMatrixSaveFile(matrixUid)));
+            xmlOutput.output(doc, new FileOutputStream(f));
 
-            matrices.get(matrixUid).clearWasModifiedFlag();
-            System.out.println("Saving file " + getMatrixSaveFile(matrixUid));
+            System.out.println("Saving file " + f);
 
             return 1;  // file was successfully saved
         } catch(Exception e) {  // TODO: add better error handling and bring up an alert box
             System.out.println(e);
             return 0;  // 0 means there was an error somewhere
         }
+    }
+
+    public int saveMatrix(int matrixUid) {
+        int code = saveMatrixToFile(matrixUid, getMatrixSaveFile(matrixUid));
+        matrices.get(matrixUid).clearWasModifiedFlag();
+        return code;
     }
 
     public int exportMatrixToCSV(int matrixUid, File file) {
@@ -191,7 +196,7 @@ public class IOHandler {
         if(!fileName.getPath().equals("")) {  // TODO: add actual validation of path
             matrices.get(matrixUid).clearWasModifiedFlag();
             setMatrixSaveFile(matrixUid, fileName);  // update the location that the file will be saved to
-            this.saveMatrixToFile(matrixUid);  // perform save like normal
+            this.saveMatrix(matrixUid);  // perform save like normal
 
             return 1;  // file was successfully saved
         }

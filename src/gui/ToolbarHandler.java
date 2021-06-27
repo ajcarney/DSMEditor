@@ -118,6 +118,10 @@ public class ToolbarHandler {
             }
 
             // create HBox for user to close with our without changes
+            Pane vSpacer = new Pane();  // used as a spacer to move HBox to the bottom
+            VBox.setVgrow(vSpacer, Priority.ALWAYS);
+            vSpacer.setMaxHeight(Double.MAX_VALUE);
+
             HBox closeArea = new HBox();
             Button applyButton = new Button("Apply Changes");
             applyButton.setOnAction(ee -> {
@@ -145,7 +149,7 @@ public class ToolbarHandler {
             closeArea.getChildren().addAll(cancelButton, spacer, applyButton);
 
             VBox layout = new VBox(10);
-            layout.getChildren().addAll(label, changesToMakeView, deleteSelected, entryArea, closeArea);
+            layout.getChildren().addAll(label, changesToMakeView, deleteSelected, entryArea, vSpacer, closeArea);
             layout.setAlignment(Pos.CENTER);
             layout.setPadding(new Insets(10, 10, 10, 10));
             layout.setSpacing(10);
@@ -242,6 +246,10 @@ public class ToolbarHandler {
             }
 
             // create HBox for user to close with our without changes
+            Pane vSpacer = new Pane();  // used as a spacer to move HBox to the bottom
+            VBox.setVgrow(vSpacer, Priority.ALWAYS);
+            vSpacer.setMaxHeight(Double.MAX_VALUE);
+
             HBox closeArea = new HBox();
             Button applyButton = new Button("Apply Changes");
             applyButton.setOnAction(ee -> {
@@ -267,7 +275,7 @@ public class ToolbarHandler {
             closeArea.getChildren().addAll(cancelButton, spacer, applyButton);
 
             VBox layout = new VBox(10);
-            layout.getChildren().addAll(label, changesToMakeView, deleteSelected, entryArea, closeArea);
+            layout.getChildren().addAll(label, changesToMakeView, deleteSelected, entryArea, vSpacer, closeArea);
             layout.setAlignment(Pos.CENTER);
             layout.setPadding(new Insets(10, 10, 10, 10));
             layout.setSpacing(10);
@@ -359,6 +367,10 @@ public class ToolbarHandler {
             }
 
             // create HBox for user to close with our without changes
+            Pane vSpacer = new Pane();  // used as a spacer to move HBox to the bottom
+            VBox.setVgrow(vSpacer, Priority.ALWAYS);
+            vSpacer.setMaxHeight(Double.MAX_VALUE);
+
             HBox closeArea = new HBox();
             Button applyButton = new Button("Apply Changes");
             applyButton.setOnAction(ee -> {
@@ -384,7 +396,7 @@ public class ToolbarHandler {
             closeArea.getChildren().addAll(cancelButton, spacer, applyButton);
 
             VBox layout = new VBox(10);
-            layout.getChildren().addAll(label, changesToMakeView, deleteSelected, entryArea, closeArea);
+            layout.getChildren().addAll(label, changesToMakeView, deleteSelected, entryArea, vSpacer, closeArea);
             layout.setAlignment(Pos.CENTER);
             layout.setPadding(new Insets(10, 10, 10, 10));
             layout.setSpacing(10);
@@ -681,6 +693,10 @@ public class ToolbarHandler {
 
 
             // create HBox for user to close with our without changes
+            Pane vSpacer = new Pane();  // used as a spacer between buttons
+            VBox.setVgrow(vSpacer, Priority.ALWAYS);
+            vSpacer.setMaxHeight(Double.MAX_VALUE);
+
             HBox closeArea = new HBox();
             Button applyAllButton = new Button("Apply All Changes");
             applyAllButton.setOnAction(ee -> {
@@ -703,7 +719,7 @@ public class ToolbarHandler {
 
 
             VBox layout = new VBox(10);
-            layout.getChildren().addAll(label, changesToMakeView, deleteSelected, connectionsArea, modifyPane, closeArea);
+            layout.getChildren().addAll(label, changesToMakeView, deleteSelected, connectionsArea, modifyPane, vSpacer, closeArea);
             layout.setAlignment(Pos.CENTER);
             layout.setPadding(new Insets(10, 10, 10, 10));
             layout.setSpacing(10);
@@ -1089,8 +1105,11 @@ public class ToolbarHandler {
             }
             modifyPane.getChildren().addAll(applyButton, applySymmetricButton);
 
-
             // create HBox for user to close with our without changes
+            Pane vSpacer = new Pane();  // used as a spacer to move HBox to the bottom
+            VBox.setVgrow(vSpacer, Priority.ALWAYS);
+            vSpacer.setMaxHeight(Double.MAX_VALUE);
+
             HBox closeArea = new HBox();
             Button applyAllButton = new Button("Apply All Changes");
             applyAllButton.setOnAction(ee -> {
@@ -1117,7 +1136,7 @@ public class ToolbarHandler {
 
 
             VBox layout = new VBox(10);
-            layout.getChildren().addAll(label, changesToMakeView, deleteSelected, connectionsArea, modifyPane, closeArea);
+            layout.getChildren().addAll(label, changesToMakeView, deleteSelected, connectionsArea, modifyPane, vSpacer, closeArea);
             layout.setAlignment(Pos.CENTER);
             layout.setPadding(new Insets(10, 10, 10, 10));
             layout.setSpacing(10);
@@ -1229,6 +1248,10 @@ public class ToolbarHandler {
 
 
             // create HBox for user to close with our without changes
+            Pane vSpacer = new Pane();  // used as a spacer to move HBox to the bottom
+            VBox.setVgrow(vSpacer, Priority.ALWAYS);
+            vSpacer.setMaxHeight(Double.MAX_VALUE);
+
             HBox closeArea = new HBox();
             Button applyAllButton = new Button("Apply All Changes");
             applyAllButton.setOnAction(ee -> {
@@ -1251,7 +1274,7 @@ public class ToolbarHandler {
 
 
             VBox layout = new VBox(10);
-            layout.getChildren().addAll(label, changesToMakeView, deleteSelected, entryArea, closeArea);
+            layout.getChildren().addAll(label, changesToMakeView, deleteSelected, entryArea, vSpacer, closeArea);
             layout.setAlignment(Pos.CENTER);
             layout.setPadding(new Insets(10, 10, 10, 10));
             layout.setSpacing(10);
@@ -1513,11 +1536,11 @@ public class ToolbarHandler {
 
             modifyArea.getChildren().addAll(addButton, renameButton, deleteButton);
 
-            Pane vSpacer = new Pane();  // used as a spacer between buttons
+            // create HBox for user to close with our without changes
+            Pane vSpacer = new Pane();  // used as a spacer to move HBox to the bottom
             VBox.setVgrow(vSpacer, Priority.ALWAYS);
             vSpacer.setMaxHeight(Double.MAX_VALUE);
 
-            // create HBox for user to close with our without changes
             HBox closeArea = new HBox();
             Button applyAllButton = new Button("Ok");
 

@@ -19,8 +19,8 @@ import java.util.*;
 
 public class TabView {
     private static TabPane tabPane;
-    private static HashMap<Tab, Integer> tabs;  // tab object, matrix uid
-    private static HashMap<Tab, MatrixGuiHandler> editors;
+    private static HashMap<DraggableTab, Integer> tabs;  // tab object, matrix uid
+    private static HashMap<DraggableTab, MatrixGuiHandler> editors;
 
     private static IOHandler ioHandler;
     private static InfoHandler infoHandler;
@@ -58,7 +58,7 @@ public class TabView {
 
         this.nameHandlerThread = new Thread(() -> {
             while(true) {  // go through and update names
-                for(HashMap.Entry<Tab, Integer> entry : tabs.entrySet()) {
+                for(HashMap.Entry<DraggableTab, Integer> entry : tabs.entrySet()) {
                     String title = ioHandler.getMatrixSaveFile(entry.getValue()).getName();
                     if(!ioHandler.isMatrixSaved(entry.getValue())) {
                         title += "*";
@@ -68,7 +68,7 @@ public class TabView {
                         Platform.runLater(new Runnable(){  // this allows a thread to update the gui
                             @Override
                             public void run() {
-                                entry.getKey().setText(finalTitle);
+                                entry.getKey().setLabelText(finalTitle);
                             }
                         });
                     }
@@ -99,7 +99,9 @@ public class TabView {
             title += "*";
         }
         MatrixGuiHandler editor = new MatrixGuiHandler(ioHandler.getMatrix(matrixUid), DEFAULT_FONT_SIZE);
-        Tab tab = new Tab(title, editor.getMatrixEditor());
+        DraggableTab tab = new DraggableTab(title);
+        tab.setContent(editor.getMatrixEditor());
+        tab.setDetachable(false);
         tabPane.getScene().setOnKeyPressed(e -> {  // add keybinding to toggle cross-highlighting on the editor
             if (e.getCode() == KeyCode.F) {
                 editor.toggleCrossHighlighting();
@@ -119,11 +121,11 @@ public class TabView {
                     }
                     return;
                 } else if(selection == 1) {  // user wants to save before closing the pane
-                    ioHandler.saveMatrixToFile(matrixUid);  // TODO: if there is an error saving, then display a message and don't close the file
+                    ioHandler.saveMatrix(matrixUid);  // TODO: if there is an error saving, then display a message and don't close the file
                 }
             }
-            Tab thisTab = null;
-            for (HashMap.Entry<Tab, Integer> m : tabs.entrySet()) {  // remove from HashMap by uid
+            DraggableTab thisTab = null;
+            for (HashMap.Entry<DraggableTab, Integer> m : tabs.entrySet()) {  // remove from HashMap by uid
                 if(m.getValue() == matrixUid) {
                     thisTab = m.getKey();
                     break;
@@ -156,7 +158,7 @@ public class TabView {
 
     public Tab getFocusedTab() {
         Tab tab = null;
-        for (HashMap.Entry<Tab, Integer> m : tabs.entrySet()) {  // remove from HashMap by uid
+        for (HashMap.Entry<DraggableTab, Integer> m : tabs.entrySet()) {  // remove from HashMap by uid
             if(m.getValue().equals(getFocusedMatrixUid())) {
                 tab = m.getKey();
                 break;
@@ -168,7 +170,7 @@ public class TabView {
 
     public void focusTab(File file) {
         Tab tab = null;
-        for (HashMap.Entry<Tab, Integer> e : tabs.entrySet()) {
+        for (HashMap.Entry<DraggableTab, Integer> e : tabs.entrySet()) {
             if(ioHandler.getMatrixSaveFile(e.getValue()).getAbsolutePath().equals(file.getAbsolutePath())) {
                 tab = e.getKey();
                 break;
@@ -189,7 +191,7 @@ public class TabView {
         }
     }
 
-    public static HashMap<Tab, Integer> getTabs() {
+    public static HashMap<DraggableTab, Integer> getTabs() {
         return tabs;
     }
 
