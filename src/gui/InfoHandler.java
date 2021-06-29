@@ -10,10 +10,14 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.*;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import org.w3c.dom.Text;
 
-import java.util.Vector;
 
+/**
+ * Class for creating the part of the gui that allows users to view and edit
+ * the metadata for a matrix
+ *
+ * @author Aiden Carney
+ */
 public class InfoHandler {
     private Label titleLabel;
     private Label projectNameLabel;
@@ -27,6 +31,10 @@ public class InfoHandler {
 
     private DataHandler matrix;
 
+
+    /**
+     * Creates a new object and instantiates widgets on the gui.
+     */
     public InfoHandler() {
         layout = new VBox();
         detailsLayout = new GridPane();
@@ -152,6 +160,12 @@ public class InfoHandler {
         layout.setAlignment(Pos.CENTER);
     }
 
+
+    /**
+     * Changes which matrix the gui will display the metadata of. Updates the gui as well
+     *
+     * @param newMatrix the new DataHandler object to use
+     */
     public void setMatrix(DataHandler newMatrix) {
         matrix = newMatrix;
         if(matrix != null) {
@@ -167,6 +181,12 @@ public class InfoHandler {
         }
     }
 
+
+    /**
+     * Returns the VBox layout that contains all the widgets so that it can be added to a main layout
+     *
+     * @return VBox of the gui that displays the metadata
+     */
     public VBox getLayout() {
         return layout;
     }

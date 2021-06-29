@@ -30,6 +30,11 @@ public class DataHandler {
 
     private boolean wasModified = true;
 
+
+    /**
+     * Creates a new DataHandler object. Creates no row or column items and metadata are empty strings.
+     * There is one grouping, which is the default: "(None)"
+     */
     public DataHandler() {
         rows = new Vector<>();
         cols = new Vector<>();

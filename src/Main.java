@@ -20,6 +20,12 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+
+/**
+ * Main application class for the DSMEditor. Starts gui and manages exceptions
+ *
+ * @author Aiden Carney
+ */
 public class Main extends Application {
 
     private static final IOHandler ioHandler = new IOHandler();
@@ -28,6 +34,12 @@ public class Main extends Application {
     private static final HeaderMenu menu = new HeaderMenu(ioHandler, editor);
     private static final ToolbarHandler toolbarHandler = new ToolbarHandler(ioHandler, editor);
 
+
+    /**
+     * Starts the gui application
+     *
+     * @param primaryStage the Stage object which acts as the main window
+     */
     @Override
     public void start(Stage primaryStage) {
         Thread.setDefaultUncaughtExceptionHandler(Main::handleError);
@@ -45,7 +57,7 @@ public class Main extends Application {
         Platform.setImplicitExit(true);
 
 
-        // start with a tab open
+        // start with a tab open (used for debugging, remove or comment out for release)
 //        File file = new File("C:\\Users\\ajcar\\Documents\\big matrix.dsm");
 //        DataHandler matrix = new DataHandler();
 //        matrix.setSymmetrical(true);
@@ -78,6 +90,15 @@ public class Main extends Application {
 
     }
 
+
+    /**
+     * Default error handler. Called by java whenever there is an error that is not handled. Prints a message
+     * to the terminal, logs the info about the error including the stacktrace,
+     * and saves all open files to a recovery spot in case it is a bad error
+     *
+     * @param t the current thread
+     * @param e the unhandled error
+     */
     private static void handleError(Thread t, Throwable e) {
         System.err.println("***An unhandled exception was thrown***");
         System.err.println("An unexpected error occurred in " + t);
@@ -116,19 +137,13 @@ public class Main extends Application {
 
     }
 
+
+    /**
+     * starts the application
+     *
+     * @param args any command line args used by javafx (probably not used anywhere and will be ignored)
+     */
     public static void main(String[] args) {
-//        String name = "Row x";
-//        for(int i=0; i < 10; i++) {
-//            int hash1 = name.hashCode();
-//            int hash2 = Instant.now().toString().hashCode();
-//            int uid = hash1 + hash2;
-//            try {
-//                Thread.sleep(1);
-//            } catch (InterruptedException e) {
-//                e.printStackTrace();
-//            }
-//            System.out.println(uid);
-//        }
         launch(args);  // starts gui application
     }
 }

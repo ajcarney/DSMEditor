@@ -1,9 +1,11 @@
 # DSMEditor
 An open-source application for editing, designing, and analyzing Design Structure Matrices
 ### Dependencies
-<http://www.jdom.org/downloads/> (XML Parser - NOTE: this is only needed to build the project from source)
+[jdom 2.0.6 - XML Parser](http://www.jdom.org/downloads/)
 
-<https://gluonhq.com/products/javafx/> (Graphics Library)
+[apache poi 5.0.0 - Excel Parser](https://poi.apache.org/download.html#POI-5.0.0)
+
+[javafx 11.0.2 - Graphics Library](https://gluonhq.com/products/javafx/) (Note: this is needed as a runtime dependency as well as compile time)
 
 ### To Install
 Download the latest .jar file and run the installer

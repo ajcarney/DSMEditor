@@ -2,17 +2,20 @@ package gui;
 
 import DSMData.DataHandler;
 import IOHandler.IOHandler;
-import javafx.application.Application;
-import javafx.application.Platform;
-import javafx.scene.Scene;
-import javafx.scene.control.*;
-import javafx.scene.layout.BorderPane;
+import javafx.scene.control.Menu;
+import javafx.scene.control.MenuBar;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.SeparatorMenuItem;
 import javafx.stage.FileChooser;
-import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
 import java.io.File;
 
+/**
+ * Class to create the header of the gui. Includes file menu, edit menu, and view menu
+ *
+ * @author Aiden Carney
+ */
 public class HeaderMenu {
     private static int defaultName = 0;
 
@@ -24,6 +27,13 @@ public class HeaderMenu {
     private static IOHandler ioHandler;
     private static TabView editor;
 
+
+    /**
+     * Creates a new instance of the header menu and instantiate widgets on it
+     *
+     * @param ioHandler the IOHandler instance
+     * @param editor    the TabView instance
+     */
     public HeaderMenu(IOHandler ioHandler, TabView editor) {
         menuBar = new MenuBar();
         this.ioHandler = ioHandler;
@@ -205,6 +215,11 @@ public class HeaderMenu {
     }
 
 
+    /**
+     * Returns the MenuBar so that it can be added to a layout
+     *
+     * @return the MenuBar object created by the constructor
+     */
     public MenuBar getMenuBar() {
         return menuBar;
     }

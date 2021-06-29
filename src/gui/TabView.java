@@ -1,21 +1,22 @@
-// TODO: maybe think about switching to these tabs so that the application is more "IDE-like": https://berry120.blogspot.com/2014/01/draggable-and-detachable-tabs-in-javafx.html
 package gui;
 
 import DSMData.DSMItem;
-import DSMData.DataHandler;
 import IOHandler.IOHandler;
 import javafx.application.Platform;
-import javafx.scene.control.Label;
-import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.input.KeyCode;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.HBox;
-import javafx.util.Pair;
 
 import java.io.File;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Set;
+import java.util.Vector;
 
+
+/**
+ * Class to manage the tabs in the gui
+ *
+ * @author Aiden Carney
+ */
 public class TabView {
     private static TabPane tabPane;
     private static HashMap<DraggableTab, Integer> tabs;  // tab object, matrix uid
@@ -27,11 +28,21 @@ public class TabView {
     private static final Double[] fontSizes = {
         5.0, 6.0, 8.0, 9.0, 9.5, 10.0, 10.5, 11.0, 12.0, 12.5, 14.0, 16.0, 18.0, 24.0, 30.0, 36.0, 60.0
     };
-    private static final double DEFAULT_FONT_SIZE = 12;
+    private static final double DEFAULT_FONT_SIZE = 12.0;
     private static int currentFontSizeIndex;
 
     private Thread nameHandlerThread;
 
+
+    /**
+     * Creates a new TabView object where each pane is a different matrix. Needs an IOHandler instance to determine
+     * which matrices to display and an InfoHandler instance to set the matrix in use. Creates and starts a daemon thread
+     * that manages the saved/unsaved name of the matrices in the tabview. Matrices already in the IOHandler instance
+     * will be added to the tab.
+     *
+     * @param ioHandler   the IOHandler instance
+     * @param infoHandler the InfoHandler instance
+     */
     public TabView(IOHandler ioHandler, InfoHandler infoHandler) {
         tabPane = new TabPane();
         tabs = new HashMap<>();
@@ -86,6 +97,14 @@ public class TabView {
 
     }
 
+
+    /**
+     * Creates and adds a matrix tab to the TabPane from a matrix in the IOHandler. This function
+     * must be called when creating or adding a matrix to the IOHandler instance or else the matrix
+     * will not be displayed in the TabPane
+     *
+     * @param matrixUid the uid of the matrix in the IOHandler instance
+     */
     public void addTab(int matrixUid) {
         Vector<DSMItem> rows = this.ioHandler.getMatrix(matrixUid).getRows();
         String label = "";
@@ -147,6 +166,13 @@ public class TabView {
         this.tabPane.getTabs().add(tab);
     }
 
+
+    /**
+     * Finds the matrix the user is focused on by using a lookup table
+     * TODO: this function and getFocusedTab() are implemented really stupidly and inefficiently
+     *
+     * @return the uid of the matrix that is focused
+     */
     public Integer getFocusedMatrixUid() {
         try {
             return tabs.get(this.tabPane.getSelectionModel().getSelectedItem());
@@ -155,8 +181,14 @@ public class TabView {
         }
     }
 
-    public Tab getFocusedTab() {
-        Tab tab = null;
+
+    /**
+     * Finds the tab that is currently focused on by the user
+     *
+     * @return the DraggableTab object that is selected
+     */
+    public DraggableTab getFocusedTab() {
+        DraggableTab tab = null;
         for (HashMap.Entry<DraggableTab, Integer> m : tabs.entrySet()) {  // remove from HashMap by uid
             if(m.getValue().equals(getFocusedMatrixUid())) {
                 tab = m.getKey();
@@ -167,8 +199,13 @@ public class TabView {
     }
 
 
+    /**
+     * Focuses a tab by a matrices save file
+     *
+     * @param file the matrix with this file path will be focused
+     */
     public void focusTab(File file) {
-        Tab tab = null;
+        DraggableTab tab = null;
         for (HashMap.Entry<DraggableTab, Integer> e : tabs.entrySet()) {
             if(ioHandler.getMatrixSaveFile(e.getValue()).getAbsolutePath().equals(file.getAbsolutePath())) {
                 tab = e.getKey();
@@ -180,24 +217,51 @@ public class TabView {
         }
     }
 
+
+    /**
+     * Returns the TabPane object so it can be added to a scene
+     *
+     * @return the TabPane object with all its widgets
+     */
     public static TabPane getTabPane() {
         return tabPane;
     }
 
+
+    /**
+     * Refreshes a tabs content by redrawing the content
+     */
     public void refreshTab() {
         if(getFocusedMatrixUid() != null) {
             getFocusedTab().setContent(editors.get(getFocusedTab()).getMatrixEditor());
         }
     }
 
+
+    /**
+     * Returns that HashMap that contains the tab objects and matrix uids
+     *
+     * @return the tabs HashMap
+     */
     public static HashMap<DraggableTab, Integer> getTabs() {
         return tabs;
     }
 
-    public void closeTab(Tab tab) {
-        tabPane.getTabs().remove(tab);
+
+    /**
+     * Closes a tab. It will be removed from the HashMaps as well because each tab has a closing policy that
+     * does this
+     *
+     * @param tab the DraggableTab object
+     */
+    public void closeTab(DraggableTab tab) {
+        tabPane.getTabs().remove(tab);  // TODO: this probably needs error handling
     }
 
+
+    /**
+     * Increases the font size of the current tab's matrix content. Updates the matrix content by refreshing the tab.
+     */
     public void increaseFontScaling() {
         if(getFocusedMatrixUid() == null) return;
         currentFontSizeIndex += 1;
@@ -207,6 +271,10 @@ public class TabView {
         refreshTab();
     }
 
+
+    /**
+     * Decreases the font size of the current tab's matrix content. Updates the matrix content by refreshing the tab.
+     */
     public void decreaseFontScaling() {
         if(getFocusedMatrixUid() == null) return;
         currentFontSizeIndex -= 1;
@@ -216,6 +284,10 @@ public class TabView {
         refreshTab();
     }
 
+
+    /**
+     * Sets the font size of the current tab's matrix content to the default. Updates the matrix content by refreshing the tab
+     */
     public void resetFontScaling() {
         if(getFocusedMatrixUid() == null) return;
         for(int i=0; i<fontSizes.length; i++) {

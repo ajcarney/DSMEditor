@@ -34,6 +34,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * Class to manage DataHandler classes and read and write to different file formats
  * TODO: add validation of file paths when they are passed as parameters
+ *
  * @author: Aiden Carney
  */
 public class IOHandler {
@@ -42,6 +43,10 @@ public class IOHandler {
     private HashMap< Integer, File> matrixSaveNames;
     private static int currentMatrixUid = 0;
 
+
+    /**
+     * creates a new IOHandler object
+     */
     public IOHandler() {
         matrices = new HashMap<>();
         matrixSaveNames = new HashMap<>();

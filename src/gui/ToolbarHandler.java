@@ -22,6 +22,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
 
+
+/**
+ * Class that creates and manages a VBox that contains gui functions to modify a matrix
+ *
+ * @author Aiden Carney
+ */
 public class ToolbarHandler {
     private VBox layout;
 
@@ -38,6 +44,15 @@ public class ToolbarHandler {
     private TabView editor;
     private IOHandler ioHandler;
 
+
+    /**
+     * Creates a new ToolBar Handler object. Sets up the gui and all its widgets and puts them in the layout field.
+     * Requires an IOHandler object to get the matrix and a TabView object to get the current focused tab
+     * and call updates to it.
+     *
+     * @param ioHandler the IOHandler instance
+     * @param editor    the TabView instance
+     */
     public ToolbarHandler(IOHandler ioHandler, TabView editor) {
         layout = new VBox();
         this.editor = editor;
@@ -953,12 +968,12 @@ public class ToolbarHandler {
                 for (Map.Entry<CheckBox, DSMItem> entry : connections.entrySet()) {
                     if(entry.getKey().isSelected()) {
                         // rowUid | colUid | name | weight | add/del
-                        Vector<String> data = new Vector<String>();
+                        Vector<String> data = new Vector<>();
 
-                        if(((RadioButton)tg.getSelectedToggle()).equals(selectByRow)) {  // selecting by row
+                        if((tg.getSelectedToggle()).equals(selectByRow)) {  // selecting by row
                             data.add(Integer.toString(itemSelector.getValue().getUid()));  // row uid
                             data.add(Integer.toString(entry.getValue().getUid()));  // col uid
-                        } else if(((RadioButton)tg.getSelectedToggle()).equals(selectByCol)) {  // selecting by column
+                        } else if((tg.getSelectedToggle()).equals(selectByCol)) {  // selecting by column
                             data.add(Integer.toString(entry.getValue().getUid()));  // row uid
                             data.add(Integer.toString(itemSelector.getValue().getUid()));  // col uid
                         }
@@ -1415,7 +1430,7 @@ public class ToolbarHandler {
                 Button applyAllButton = new Button("Ok");
                 applyAllButton.setOnAction(eee -> {
                     // key must not be empty and must not already exist
-                    if(currentItems.getValue() != "" && !ioHandler.getMatrix(editor.getFocusedMatrixUid()).getGroupingColors().containsKey(newName.getText())) {
+                    if(!currentItems.getValue().equals("") && !ioHandler.getMatrix(editor.getFocusedMatrixUid()).getGroupingColors().containsKey(newName.getText())) {
                         for(Node grouping : currentGroupings.getChildren()) {  // delete the old object
                             HBox area = (HBox)grouping;
                             for(Node item : area.getChildren()) {
@@ -1473,7 +1488,7 @@ public class ToolbarHandler {
                 deleteWindow.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
                 deleteWindow.setTitle("Delete Grouping");
 
-                ComboBox<String> currentItems = new ComboBox();
+                ComboBox<String> currentItems = new ComboBox<>();
                 Vector<String> groupings = new Vector<>(ioHandler.getMatrix(editor.getFocusedMatrixUid()).getGroupingColors().keySet());
                 groupings.remove("(None)");
                 currentItems.getItems().addAll(groupings);
@@ -1639,6 +1654,12 @@ public class ToolbarHandler {
         layout.setAlignment(Pos.CENTER);
     }
 
+
+    /**
+     * Returns the VBox of the layout so that it can be added to a scene
+     *
+     * @return the VBox layout of the toolbar
+     */
     public VBox getLayout() {
         return layout;
     }

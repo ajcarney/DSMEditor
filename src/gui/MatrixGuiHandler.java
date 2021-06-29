@@ -1,50 +1,40 @@
 package gui;
 
 import DSMData.DSMConnection;
-import DSMData.DSMItem;
 import DSMData.DataHandler;
-import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.ObservableList;
-import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.geometry.VerticalDirection;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.scene.text.TextAlignment;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Pair;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Vector;
 
+
+/**
+ * Creates a new class that manages the gui for a matrix.
+ *
+ * @author Aiden Carney
+ */
 public class MatrixGuiHandler {
-    DataHandler matrix;
-    public static final Background DEFAULT_BACKGROUND = new Background(new BackgroundFill(Color.color(1, 1, 1), new CornerRadii(3), new Insets(0)));
-    public static final Background UNEDITABLE_CONNECTION_BACKGROUND = new Background(new BackgroundFill(Color.color(0, 0, 0), new CornerRadii(3), new Insets(0)));
-    public static final Background HIGHLIGHT_BACKGROUND = new Background(new BackgroundFill(Color.color(.9, 1, 0), new CornerRadii(3), new Insets(0)));
-    public static final Background CROSS_HIGHLIGHT_BACKGROUND = new Background(new BackgroundFill(Color.color(.2, 1, 0), new CornerRadii(3), new Insets(0)));
-    public static final Background ERROR_BACKGROUND = new Background(new BackgroundFill(Color.color(1, 0, 0), new CornerRadii(3), new Insets(0)));
 
-    private DoubleProperty fontSize;
-
-    private VBox rootLayout = new VBox();
-
-
+    /**
+     * A data class for a cell displayed in the gui. Contains the HBox object and location in the grid
+     */
     private class Cell {
         private Pair<Integer, Integer> gridLocation;
         private HBox guiCell;
@@ -56,23 +46,145 @@ public class MatrixGuiHandler {
         private Background crossHighlightBG = null;
         private Background errorHighlightBG = null;
 
+        /**
+         * Creates a new cell object
+         *
+         * @param gridLocation a pair of row, column of the location of the cell in the grid layout
+         * @param guiCell      the HBox object of the cell
+         */
         public Cell(Pair<Integer, Integer> gridLocation, HBox guiCell) {
             this.gridLocation = gridLocation;
             this.guiCell = guiCell;
         }
 
+        /**
+         * Sets the background color of a cell in the grid
+         *
+         * @param color the color to set the background to
+         */
         private void setCellHighlight(Color color) {
             guiCell.setBackground(new Background(new BackgroundFill(color, new CornerRadii(3), new Insets(0))));
         }
 
+        /**
+         * Getter function for the crossHighlightEnabled field
+         *
+         * @return if cross highlighting is enabled
+         */
         public static Boolean getCrossHighlightEnabled() {
             return crossHighlightEnabled;
         }
 
+        /**
+         * Getter function for the gridLocation field of the class
+         *
+         * @return gridLocation of the instance
+         */
+        public Pair<Integer, Integer> getGridLocation() {
+            return gridLocation;
+        }
+
+        /**
+         * Getter function for the guiCell field of the class
+         *
+         * @return the guiCell of the instance
+         */
+        public HBox getGuiCell() {
+            return guiCell;
+        }
+
+        /**
+         * Getter function for the default background
+         *
+         * @return the default background
+         */
+        public Background getDefaultBG() {
+            return defaultBG;
+        }
+
+        /**
+         * Getter function for the user highlight background
+         *
+         * @return the user highlight background
+         */
+        public Background getUserHighlightBG() {
+            return userHighlightBG;
+        }
+
+        /**
+         * Getter function for the cross highlight background
+         *
+         * @return the cross highlight background
+         */
+        public Background getCrossHighlightBG() {
+            return crossHighlightBG;
+        }
+
+        /**
+         * Getter function for the error background
+         *
+         * @return the error background
+         */
+        public Background getErrorHighlightBG() {
+            return errorHighlightBG;
+        }
+
+        /**
+         * Setter function for the crossHighlightEnabled field
+         *
+         * @param crossHighlightEnabled the new value for the crossHighlightField
+         */
         public static void setCrossHighlightEnabled(Boolean crossHighlightEnabled) {
             Cell.crossHighlightEnabled = crossHighlightEnabled;
         }
 
+        /**
+         * Setter function for the default background
+         *
+         * @param defaultBG the new default background of the cell
+         */
+        public void setDefaultBG(Background defaultBG) {
+            this.defaultBG = defaultBG;
+            updateCellHighlight();
+
+        }
+
+        /**
+         * Setter function for the user highlight background
+         *
+         * @param userHighlightBG the new user highlight background of the cell
+         */
+        public void setUserHighlightBG(Background userHighlightBG) {
+            this.userHighlightBG = userHighlightBG;
+            updateCellHighlight();
+        }
+
+        /**
+         * Setter function for the cross highlight background
+         *
+         * @param crossHighlightBG the new cross highlight background of the cell
+         */
+        public void setCrossHighlightBG(Background crossHighlightBG) {
+            this.crossHighlightBG = crossHighlightBG;
+            updateCellHighlight();
+        }
+
+        /**
+         * Setter function for the error background
+         *
+         * @param errorHighlightBG the new error background of the cell
+         */
+        public void setErrorHighlightBG(Background errorHighlightBG) {
+            this.errorHighlightBG = errorHighlightBG;
+            updateCellHighlight();
+        }
+
+
+        /**
+         * updates the background color of a cell based on the backgrounds set for it. Error highlight
+         * is given the highest priority, then cross highlighting, then user highlighting, and lastly the grouping
+         * color of the cell or the default color
+         */
         public void updateCellHighlight() {
             if (getErrorHighlightBG() != null) {
                 guiCell.setBackground(getErrorHighlightBG());
@@ -117,58 +229,29 @@ public class MatrixGuiHandler {
             }
         }
 
-        public Pair<Integer, Integer> getGridLocation() {
-            return gridLocation;
-        }
-
-        public HBox getGuiCell() {
-            return guiCell;
-        }
-
-        public Background getDefaultBG() {
-            return defaultBG;
-        }
-
-        public void setDefaultBG(Background defaultBG, boolean update) {
-            this.defaultBG = defaultBG;
-            updateCellHighlight();
-
-        }
-
-        public Background getUserHighlightBG() {
-            return userHighlightBG;
-        }
-
-        public void setUserHighlightBG(Background userHighlightBG) {
-            this.userHighlightBG = userHighlightBG;
-            updateCellHighlight();
-        }
-
-        public Background getCrossHighlightBG() {
-            return crossHighlightBG;
-        }
-
-        public void setCrossHighlightBG(Background crossHighlightBG) {
-            this.crossHighlightBG = crossHighlightBG;
-            updateCellHighlight();
-        }
-
-        public Background getErrorHighlightBG() {
-            return errorHighlightBG;
-        }
-
-        public void setErrorHighlightBG(Background errorHighlightBG) {
-            this.errorHighlightBG = errorHighlightBG;
-            updateCellHighlight();
-        }
-
-
     }
 
+    DataHandler matrix;
+    public static final Background DEFAULT_BACKGROUND = new Background(new BackgroundFill(Color.color(1, 1, 1), new CornerRadii(3), new Insets(0)));
+    public static final Background UNEDITABLE_CONNECTION_BACKGROUND = new Background(new BackgroundFill(Color.color(0, 0, 0), new CornerRadii(3), new Insets(0)));
+    public static final Background HIGHLIGHT_BACKGROUND = new Background(new BackgroundFill(Color.color(.9, 1, 0), new CornerRadii(3), new Insets(0)));
+    public static final Background CROSS_HIGHLIGHT_BACKGROUND = new Background(new BackgroundFill(Color.color(.2, 1, 0), new CornerRadii(3), new Insets(0)));
+    public static final Background ERROR_BACKGROUND = new Background(new BackgroundFill(Color.color(1, 0, 0), new CornerRadii(3), new Insets(0)));
+
+    private DoubleProperty fontSize;
+
+    private VBox rootLayout = new VBox();
 
     Vector<Cell> cells;  // contains information for highlighting
     HashMap<String, HashMap<Integer, Integer>> gridUidLookup;
 
+
+    /**
+     * Returns a MatrixGuiHandler object for a given matrix
+     *
+     * @param matrix   the DataHandler object to display
+     * @param fontSize the default font size to display the matrix with
+     */
     MatrixGuiHandler(DataHandler matrix, double fontSize) {
         this.matrix = matrix;
         cells = new Vector<>();
@@ -179,8 +262,16 @@ public class MatrixGuiHandler {
         this.fontSize = new SimpleDoubleProperty(fontSize);
     }
 
+
+    /**
+     * Finds a cell by a location by iterating over all cells and determining if the grid location is the
+     * specified grid location
+     *
+     * @param cellLoc the grid location to get the cell of (row, column)
+     * @return        the cell object with the specified grid location
+     */
     private Cell getCellByLoc(Pair<Integer, Integer> cellLoc) {
-        for(Cell cell : cells) {  // determine the value to decrease to
+        for(Cell cell : cells) {
             if(cell.getGridLocation().getKey() == cellLoc.getKey() && cell.getGridLocation().getValue() == cellLoc.getValue()) {
                 return cell;
             }
@@ -188,12 +279,28 @@ public class MatrixGuiHandler {
         return null;
     }
 
+
+    /**
+     * Finds the row and column uid associated with a grid item. Connections will have both a row and column uid.
+     * Names and other fields associated with a row or column will only have a row or column uid.
+     * If a field does not exist, then null is returned for that uid
+     *
+     * @param cellLoc the grid location of the cell (row, column)
+     * @return        the uids associated with the cell (row uid, column uid)
+     */
     private Pair<Integer, Integer> getUidsFromGridLoc(Pair<Integer, Integer> cellLoc) {
         Integer rowUid = gridUidLookup.get("rows").get(cellLoc.getKey());;
         Integer colUid = gridUidLookup.get("cols").get(cellLoc.getValue());;
         return new Pair<>(rowUid, colUid);
     }
 
+
+    /**
+     * Toggles user highlight for a cell
+     *
+     * @param cellLoc the grid location of the cell (row, column)
+     * @param bg      the background to set the highlight to
+     */
     private void toggleUserHighlightCell(Pair<Integer, Integer> cellLoc, Background bg) {
         Cell cell = getCellByLoc(cellLoc);
         if(cell.getUserHighlightBG() == null) {  // is highlighted, so unhighlight it
@@ -204,6 +311,13 @@ public class MatrixGuiHandler {
     }
 
 
+    /**
+     * Function to set several different types of highlight for a cell given its grid location
+     *
+     * @param cellLoc       the grid location of a cell (row, column)
+     * @param bg            the color to assign to a cell
+     * @param highlightType the highlight type to assign to (userHighlight, errorHighlight)
+     */
     private void setCellHighlight(Pair<Integer, Integer> cellLoc, Background bg, String highlightType) {
         Cell cell = getCellByLoc(cellLoc);
         HashMap<String, Runnable> functions = new HashMap<>();
@@ -213,6 +327,13 @@ public class MatrixGuiHandler {
     }
 
 
+    /**
+     * Function to remove several different highlight types of a cell given its grid location by assigning
+     * null to that highlight field
+     *
+     * @param cellLoc       the grid location of a cell (row, column)
+     * @param highlightType the highlight type to assign to (userHighlight, errorHighlight)
+     */
     private void clearCellHighlight(Pair<Integer, Integer> cellLoc, String highlightType) {
         Cell cell = getCellByLoc(cellLoc);
         HashMap<String, Runnable> functions = new HashMap<>();
@@ -222,11 +343,19 @@ public class MatrixGuiHandler {
     }
 
 
+    /**
+     * Sets whether or not a cell should be cross highlighted. Cross highlights by taking grid location
+     * and keeping row constant and decrementing column location to minimum and then keeping column
+     * constant and decrementing the row location to minimum.
+     *
+     * @param endLocation     the cell passed by location (row, column) to cross highlight to, no cells will be highlighted past this cell
+     * @param shouldHighlight whether or not to cross highlight the cell
+     */
     private void crossHighlightCell(Pair<Integer, Integer> endLocation, boolean shouldHighlight) {
         int endRow = endLocation.getKey();
         int endCol = endLocation.getValue();
 
-        int minRow = Integer.MAX_VALUE;
+        int minRow = Integer.MAX_VALUE;  // TODO: shouldn't this just be 0? This would save a linear search
         int minCol = Integer.MAX_VALUE;
         for(Cell cell : cells) {  // determine the value to decrease to
             if(cell.getGridLocation().getKey() < minRow) {
@@ -265,6 +394,11 @@ public class MatrixGuiHandler {
 
     }
 
+
+    /**
+     * enables or disables cross-highlighting for a cell and then updates all cells to either remove or
+     * add cross highlighting
+     */
     public void toggleCrossHighlighting() {
         Cell.setCrossHighlightEnabled(!Cell.getCrossHighlightEnabled());
         for(Cell cell : cells) {
@@ -272,7 +406,15 @@ public class MatrixGuiHandler {
         }
     }
 
-     public VBox getMatrixEditor() {
+
+    /**
+     * Creates the gui that displays a matrix. Uses the DataHandler's getGridArray() method to create the grid.
+     * Puts grid in a scroll pane and adds a location label (displays connection row, column) at the bottom of the VBox.
+     * Returns the VBox so that it can be added to a layout
+     *
+     * @return VBox that contains all the gui widgets
+     */
+    public VBox getMatrixEditor() {
         cells = new Vector<>();
         gridUidLookup = new HashMap<>();
         gridUidLookup.put("rows", new HashMap<Integer, Integer>());
@@ -552,7 +694,7 @@ public class MatrixGuiHandler {
                 grid.getChildren().add(cell);
 
                 Cell cellData = new Cell(new Pair<>(r, c), cell);
-                cellData.setDefaultBG(defaultBackground, false);
+                cellData.setDefaultBG(defaultBackground);
                 cells.add(cellData);
 
             }
@@ -569,6 +711,12 @@ public class MatrixGuiHandler {
         return rootLayout;
     }
 
+
+    /**
+     * Sets the font size to a new value. This value is bound to in the gui so it will be auto updated
+     *
+     * @param newSize the new font size to use in the gui
+     */
     public void setFontSize(Double newSize) {
         fontSize.setValue(newSize);
     }
