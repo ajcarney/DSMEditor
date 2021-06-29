@@ -4,7 +4,6 @@ package gui;
 import DSMData.DSMItem;
 import DSMData.DataHandler;
 import IOHandler.IOHandler;
-import com.intellij.util.Matrix;
 import javafx.application.Platform;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tab;
@@ -25,7 +24,7 @@ public class TabView {
     private static IOHandler ioHandler;
     private static InfoHandler infoHandler;
 
-    private static final Double fontSizes[] = {
+    private static final Double[] fontSizes = {
         5.0, 6.0, 8.0, 9.0, 9.5, 10.0, 10.5, 11.0, 12.0, 12.5, 14.0, 16.0, 18.0, 24.0, 30.0, 36.0, 60.0
     };
     private static final double DEFAULT_FONT_SIZE = 12;

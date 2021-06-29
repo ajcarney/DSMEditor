@@ -1,30 +1,24 @@
-import DSMData.DSMConnection;
-import DSMData.DSMItem;
 import DSMData.DataHandler;
 import IOHandler.IOHandler;
-import com.intellij.vcs.log.Hash;
 import gui.HeaderMenu;
 import gui.InfoHandler;
 import gui.TabView;
 import gui.ToolbarHandler;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
 import javafx.scene.control.Tab;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.StackPane;
-import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
 import java.io.*;
 import java.text.SimpleDateFormat;
-import java.time.Instant;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Main extends Application {
 

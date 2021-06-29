@@ -133,7 +133,19 @@ public class HeaderMenu {
                 int code = this.ioHandler.exportMatrixToCSV(editor.getFocusedMatrixUid(), fileName);
             }
         });
-        exportMenu.getItems().add(exportCSV);
+        MenuItem exportXLSX = new MenuItem("Micro$oft Excel File (.xlsx)");
+        exportXLSX.setOnAction(e -> {
+            if(editor.getFocusedMatrixUid() == null) {
+                return;
+            }
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Microsoft Excel File", "*.xlsx"));  // dsm is the only file type usable
+            File fileName = fileChooser.showSaveDialog(menuBar.getScene().getWindow());
+            if(fileName != null) {
+                int code = this.ioHandler.exportMatrixToXLSX(editor.getFocusedMatrixUid(), fileName);
+            }
+        });
+        exportMenu.getItems().addAll(exportCSV, exportXLSX);
 
 
         MenuItem exit = new MenuItem("Exit");
