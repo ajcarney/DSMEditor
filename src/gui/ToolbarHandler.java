@@ -170,7 +170,7 @@ public class ToolbarHandler {
             layout.setSpacing(10);
 
             //Display window and wait for it to be closed before returning
-            Scene scene = new Scene(layout, 500, 300);
+            Scene scene = new Scene(layout, 700, 350);
             window.setScene(scene);
             window.showAndWait();
         });
@@ -296,7 +296,7 @@ public class ToolbarHandler {
             layout.setSpacing(10);
 
             //Display window and wait for it to be closed before returning
-            Scene scene = new Scene(layout, 500, 300);
+            Scene scene = new Scene(layout, 700, 350);
             window.setScene(scene);
             window.showAndWait();
         });
@@ -417,7 +417,7 @@ public class ToolbarHandler {
             layout.setSpacing(10);
 
             //Display window and wait for it to be closed before returning
-            Scene scene = new Scene(layout, 500, 300);
+            Scene scene = new Scene(layout, 700, 350);
             window.setScene(scene);
             window.showAndWait();
         });
@@ -603,7 +603,7 @@ public class ToolbarHandler {
             connectionDetailsLayout.setMinWidth(Region.USE_PREF_SIZE);
 
             TextField connectionName = new TextField();
-            TextField weight = new TextField();
+            NumericTextField weight = new NumericTextField(null);
             connectionName.setPromptText("Connection Name");
             weight.setPromptText("Connection Weight");
             connectionName.setMinWidth(connectionName.getPrefWidth());
@@ -687,9 +687,14 @@ public class ToolbarHandler {
                             }
                         }
                         data1.add(connectionName.getText());
-                        data1.add(weight.getText());
                         data2.add(connectionName.getText());
-                        data2.add(weight.getText());
+                        if(weight.getNumericValue() != null) {
+                            data1.add(weight.getNumericValue().toString());
+                            data2.add(weight.getNumericValue().toString());
+                        } else {
+                            data1.add("1.0");
+                            data2.add("1.0");
+                        }
 
                         if(!changesToMakeView.getItems().contains(data1)) {  // ensure no duplicates
                             changesToMakeView.getItems().add(data1);
@@ -741,7 +746,7 @@ public class ToolbarHandler {
 
 
             //Display window and wait for it to be closed before returning
-            Scene scene = new Scene(layout, 700, 500);
+            Scene scene = new Scene(layout, 900, 500);
             window.setScene(scene);
             window.showAndWait();
         });
@@ -944,7 +949,7 @@ public class ToolbarHandler {
             connectionDetailsLayout.setMinWidth(Region.USE_PREF_SIZE);
 
             TextField connectionName = new TextField();
-            TextField weight = new TextField();
+            NumericTextField weight = new NumericTextField(null);
             connectionName.setPromptText("Connection Name");
             weight.setPromptText("Connection Weight");
             connectionName.setMinWidth(connectionName.getPrefWidth());
@@ -978,7 +983,11 @@ public class ToolbarHandler {
                             data.add(Integer.toString(itemSelector.getValue().getUid()));  // col uid
                         }
                         data.add(connectionName.getText());
-                        data.add(weight.getText());
+                        if(weight.getNumericValue() != null) {
+                            data.add(weight.getNumericValue().toString());
+                        } else {
+                            data.add("1.0");
+                        }
 
                         data.add("add");
 
@@ -1158,7 +1167,7 @@ public class ToolbarHandler {
 
 
             //Display window and wait for it to be closed before returning
-            Scene scene = new Scene(layout, 700, 500);
+            Scene scene = new Scene(layout, 900, 500);
             window.setScene(scene);
             window.showAndWait();
         });
@@ -1296,7 +1305,7 @@ public class ToolbarHandler {
 
 
             //Display window and wait for it to be closed before returning
-            Scene scene = new Scene(layout, 700, 500);
+            Scene scene = new Scene(layout, 1000, 500);
             window.setScene(scene);
             window.showAndWait();
         });
@@ -1596,7 +1605,7 @@ public class ToolbarHandler {
 
 
             //Display window and wait for it to be closed before returning
-            Scene scene = new Scene(layout, 400, 200);
+            Scene scene = new Scene(layout, 500, 300);
             window.setScene(scene);
             scene.getWindow().setOnCloseRequest(ee -> {
                 for (Node grouping : currentGroupings.getChildren()) {  // update the colors

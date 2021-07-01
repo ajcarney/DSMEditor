@@ -509,19 +509,10 @@ public class MatrixGuiHandler {
                     g.getChildren().add(groupings);
                     cell.getChildren().add(g);
                 } else if(item.getKey().equals("index_item")) {
-                    TextField entry = new TextField(((Double)matrix.getItem((Integer)item.getValue()).getSortIndex()).toString());
+                    NumericTextField entry = new NumericTextField(matrix.getItem((Integer)item.getValue()).getSortIndex());
                     entry.setPrefColumnCount(3);  // set size to 3 characters fitting
                     entry.setPadding(new Insets(0));
 
-                    // force the field to be numeric only TODO: this stopped working on 6/20
-                    entry.textProperty().addListener(new ChangeListener<String>() {
-                        @Override
-                        public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
-                            if (!newValue.matches("\\d*+\\.")) {
-                                entry.setText(newValue.replaceAll("[^\\d]+[.]", ""));
-                            }
-                        }
-                    });
                     cell.setMaxWidth(Region.USE_COMPUTED_SIZE);
                     cell.setAlignment(Pos.CENTER);
 
@@ -532,15 +523,15 @@ public class MatrixGuiHandler {
                     });
                     entry.focusedProperty().addListener((obs, oldVal, newVal) -> {
                         if(!newVal) {  // if changing to not focused
-                            try {
-                                Double newSortIndex = Double.parseDouble(entry.getText());
+                            if(entry.getNumericValue() != null) {
+                                Double newSortIndex = entry.getNumericValue();
                                 if(matrix.isSymmetrical()) {
                                     matrix.setSortIndexSymmetric((Integer)item.getValue(), newSortIndex);
                                 } else {
                                     matrix.setSortIndex((Integer)item.getValue(), newSortIndex);
                                 }
                                 clearCellHighlight(new Pair<Integer, Integer>(finalR, finalC), "errorHighlight");
-                            } catch(NumberFormatException ee) {
+                            } else {
                                 setCellHighlight(new Pair<Integer, Integer>(finalR, finalC), ERROR_BACKGROUND, "errorHighlight");
                             }
                         }
@@ -613,24 +604,15 @@ public class MatrixGuiHandler {
                             row2.setPadding(new Insets(10, 10, 10, 10));
                             row2.setSpacing(10);
 
-                            String currentWeight = null;
+                            Double currentWeight = null;
                             if(matrix.getConnection(rowUid, colUid) != null) {
-                                currentWeight = ((Double)matrix.getConnection(rowUid, colUid).getWeight()).toString();
+                                currentWeight = matrix.getConnection(rowUid, colUid).getWeight();
                             } else {
-                                currentWeight = "1.0";
+                                currentWeight = 1.0;
                             }
-                            TextField weightField = new TextField(currentWeight);
+                            NumericTextField weightField = new NumericTextField(currentWeight);
                             weightField.setMaxWidth(Double.MAX_VALUE);
                             HBox.setHgrow(weightField, Priority.ALWAYS);
-                            // force the field to be numeric only
-                            weightField.textProperty().addListener(new ChangeListener<String>() {
-                                @Override
-                                public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
-                                    if (!newValue.matches("\\d*+\\.")) {
-                                        weightField.setText(newValue.replaceAll("[^\\d]+[.]", ""));
-                                    }
-                                }
-                            });
                             row2.getChildren().addAll(weightLabel, weightField);
 
                             // row 3
