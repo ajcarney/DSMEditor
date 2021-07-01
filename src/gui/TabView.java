@@ -20,7 +20,6 @@ import java.util.Vector;
 public class TabView {
     private static TabPane tabPane;
     private static HashMap<DraggableTab, Integer> tabs;  // tab object, matrix uid
-    private static HashMap<DraggableTab, MatrixGuiHandler> editors;
 
     private static IOHandler ioHandler;
     private static InfoHandler infoHandler;
@@ -46,7 +45,6 @@ public class TabView {
     public TabView(IOHandler ioHandler, InfoHandler infoHandler) {
         tabPane = new TabPane();
         tabs = new HashMap<>();
-        editors = new HashMap<>();
         this.ioHandler = ioHandler;
         this.infoHandler = infoHandler;
 
@@ -116,13 +114,12 @@ public class TabView {
         if(!ioHandler.isMatrixSaved(matrixUid)) {
             title += "*";
         }
-        MatrixGuiHandler editor = new MatrixGuiHandler(ioHandler.getMatrix(matrixUid), DEFAULT_FONT_SIZE);
         DraggableTab tab = new DraggableTab(title);
-        tab.setContent(editor.getMatrixEditor());
+        tab.setContent(ioHandler.getMatrixGuiHandler(matrixUid).getMatrixEditor());
         tab.setDetachable(false);
         tabPane.getScene().setOnKeyPressed(e -> {  // add keybinding to toggle cross-highlighting on the editor
             if (e.getCode() == KeyCode.F) {
-                editor.toggleCrossHighlighting();
+                ioHandler.getMatrixGuiHandler(matrixUid).toggleCrossHighlighting();
             }
         });
 
@@ -150,7 +147,6 @@ public class TabView {
                 }
             }
             tabs.remove(thisTab);
-            editors.remove(thisTab);
             tabPane.getTabs().remove(thisTab);
             ioHandler.removeMatrix(matrixUid);
             infoHandler.setMatrix(null);
@@ -162,7 +158,6 @@ public class TabView {
         });
 
         tabs.put(tab, matrixUid);
-        editors.put(tab, editor);
         this.tabPane.getTabs().add(tab);
     }
 
@@ -233,7 +228,7 @@ public class TabView {
      */
     public void refreshTab() {
         if(getFocusedMatrixUid() != null) {
-            getFocusedTab().setContent(editors.get(getFocusedTab()).getMatrixEditor());
+            getFocusedTab().setContent(ioHandler.getMatrixGuiHandler(getFocusedMatrixUid()).getMatrixEditor());
         }
     }
 
@@ -267,7 +262,7 @@ public class TabView {
         currentFontSizeIndex += 1;
         if(currentFontSizeIndex > fontSizes.length - 1) currentFontSizeIndex = fontSizes.length - 1;
 
-        editors.get(getFocusedTab()).setFontSize(fontSizes[currentFontSizeIndex]);
+        ioHandler.getMatrixGuiHandler(getFocusedMatrixUid()).setFontSize(fontSizes[currentFontSizeIndex]);
         refreshTab();
     }
 
@@ -280,7 +275,7 @@ public class TabView {
         currentFontSizeIndex -= 1;
         if(currentFontSizeIndex < 0) currentFontSizeIndex = 0;
 
-        editors.get(getFocusedTab()).setFontSize(fontSizes[currentFontSizeIndex]);
+        ioHandler.getMatrixGuiHandler(getFocusedMatrixUid()).setFontSize(fontSizes[currentFontSizeIndex]);
         refreshTab();
     }
 
@@ -297,7 +292,7 @@ public class TabView {
             }
         }
 
-        editors.get(getFocusedTab()).setFontSize(DEFAULT_FONT_SIZE);
+        ioHandler.getMatrixGuiHandler(getFocusedMatrixUid()).setFontSize(DEFAULT_FONT_SIZE);
         refreshTab();
     }
 

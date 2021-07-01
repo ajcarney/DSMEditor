@@ -2,14 +2,15 @@ package gui;
 
 import DSMData.DataHandler;
 import IOHandler.IOHandler;
-import javafx.scene.control.Menu;
-import javafx.scene.control.MenuBar;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.SeparatorMenuItem;
+import javafx.application.Platform;
+import javafx.scene.control.*;
 import javafx.stage.FileChooser;
 import javafx.stage.WindowEvent;
+import javafx.util.Pair;
 
 import java.io.File;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Class to create the header of the gui. Includes file menu, edit menu, and view menu
@@ -22,10 +23,14 @@ public class HeaderMenu {
     private static Menu fileMenu;
     private static Menu editMenu;
     private static Menu viewMenu;
+    private static Menu toolsMenu;
 
     private static MenuBar menuBar;
     private static IOHandler ioHandler;
     private static TabView editor;
+
+    private Thread symmetryErrorHandlerThread;
+    private Boolean runSymmetryValidationThread;
 
 
     /**
@@ -210,8 +215,69 @@ public class HeaderMenu {
         viewMenu.getItems().addAll(zoomIn, zoomOut, zoomReset);
         
 
+        // tools menu
+        runSymmetryValidationThread = false;
+        toolsMenu = new Menu("_Tools");
 
-        menuBar.getMenus().addAll(fileMenu, editMenu, viewMenu);
+        RadioMenuItem validateSymmetry = new RadioMenuItem("Validate Symmetry");
+        validateSymmetry.setOnAction(e -> {
+            runSymmetryValidationThread = validateSymmetry.isSelected();
+        });
+
+        symmetryErrorHandlerThread = new Thread(() -> {
+            ArrayList<Pair<Integer, Integer>> errors = new ArrayList<>();
+            ArrayList<Pair<Integer, Integer>> prevErrors = new ArrayList<>();
+
+            while(true) {  // go through and update names
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+                if(editor.getFocusedMatrixUid() == null) {
+                    continue;
+                }
+
+                MatrixGuiHandler m = ioHandler.getMatrixGuiHandler(editor.getFocusedMatrixUid());
+
+                errors = ioHandler.getMatrix(editor.getFocusedMatrixUid()).findSymmetryErrors();
+                Set<Pair<Integer, Integer>> prevAndCurrentErrors = prevErrors.stream().collect(Collectors.toSet());
+                prevAndCurrentErrors.addAll(errors);
+
+                if(!runSymmetryValidationThread) {
+                    for(Pair<Integer, Integer> pair : prevAndCurrentErrors) {
+                        m.clearCellHighlight(m.getGridLocFromUids(pair), "symmetryErrorHighlight");
+                    }
+                    continue;
+                } else {
+                    for(Pair<Integer, Integer> pair : prevAndCurrentErrors) {
+                        if(!errors.contains(pair) && prevErrors.contains(pair)) {  // old error that has been fixed, unhighlight it
+                            m.clearCellHighlight(m.getGridLocFromUids(pair), "symmetryErrorHighlight");
+                        } else {
+                            m.setCellHighlight(m.getGridLocFromUids(pair), MatrixGuiHandler.SYMMETRY_ERROR_BACKGROUND, "symmetryErrorHighlight");
+                        }
+                    }
+                }
+
+                prevErrors = errors;
+
+            }
+        });
+        symmetryErrorHandlerThread.setDaemon(true);
+        symmetryErrorHandlerThread.start();
+
+        toolsMenu.setOnShown(e -> {  // disable validate symmetry for non-symmetrical matrices
+            if(editor.getFocusedMatrixUid() == null) {
+                return;
+            }
+            validateSymmetry.setDisable(!ioHandler.getMatrix(editor.getFocusedMatrixUid()).isSymmetrical());
+        });
+
+        toolsMenu.getItems().add(validateSymmetry);
+
+
+        menuBar.getMenus().addAll(fileMenu, editMenu, viewMenu, toolsMenu);
     }
 
 

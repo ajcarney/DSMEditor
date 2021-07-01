@@ -3,6 +3,7 @@ package IOHandler;
 import DSMData.DSMConnection;
 import DSMData.DSMItem;
 import DSMData.DataHandler;
+import gui.MatrixGuiHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -41,6 +42,7 @@ public class IOHandler {
 
     private HashMap< Integer, DataHandler > matrices;
     private HashMap< Integer, File> matrixSaveNames;
+    private HashMap<Integer, MatrixGuiHandler> matrixGuiHandlers;
     private static int currentMatrixUid = 0;
 
 
@@ -50,6 +52,7 @@ public class IOHandler {
     public IOHandler() {
         matrices = new HashMap<>();
         matrixSaveNames = new HashMap<>();
+        matrixGuiHandlers = new HashMap<>();
     }
 
 
@@ -65,6 +68,7 @@ public class IOHandler {
 
         this.matrices.put(currentMatrixUid, matrix);
         this.matrixSaveNames.put(currentMatrixUid, file);
+        this.matrixGuiHandlers.put(currentMatrixUid, new MatrixGuiHandler(matrix, 12));
 
         return currentMatrixUid;
     }
@@ -462,6 +466,17 @@ public class IOHandler {
 
 
     /**
+     * Returns the gui handler object associated with the matrix
+     *
+     * @param matrixUid the save path for matrix with uid matrixUid
+     * @return          MatrixGuiHandler object of the matrix
+     */
+    public MatrixGuiHandler getMatrixGuiHandler(int matrixUid) {
+        return matrixGuiHandlers.get(matrixUid);
+    }
+
+
+    /**
      * Updates the default save location of a matrix
      *
      * @param matrixUid the matrix to update the save path of
@@ -659,6 +674,7 @@ public class IOHandler {
     public void removeMatrix(int matrixUid) {
         matrices.remove(matrixUid);
         matrixSaveNames.remove(matrixUid);
+        matrixGuiHandlers.remove(matrixUid);
     }
 
 }

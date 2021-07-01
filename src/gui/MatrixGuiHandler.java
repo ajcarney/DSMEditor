@@ -45,6 +45,7 @@ public class MatrixGuiHandler {
         private Background userHighlightBG = null;
         private Background crossHighlightBG = null;
         private Background errorHighlightBG = null;
+        private Background symmetryErrorHighlightBG = null;
 
         /**
          * Creates a new cell object
@@ -130,6 +131,15 @@ public class MatrixGuiHandler {
         }
 
         /**
+         * Getter function for the symmetry error background
+         *
+         * @return the symmetry error background
+         */
+        public Background getSymmetryErrorHighlightBG() {
+            return symmetryErrorHighlightBG;
+        }
+
+        /**
          * Setter function for the crossHighlightEnabled field
          *
          * @param crossHighlightEnabled the new value for the crossHighlightField
@@ -179,6 +189,16 @@ public class MatrixGuiHandler {
             updateCellHighlight();
         }
 
+        /**
+         * Setter function for the symmetry error background
+         *
+         * @param bg the new symmetry error background of the cell
+         */
+        public void setSymmetryErrorHighlightBG(Background bg) {
+            this.symmetryErrorHighlightBG = bg;
+            updateCellHighlight();
+        }
+
 
         /**
          * updates the background color of a cell based on the backgrounds set for it. Error highlight
@@ -188,6 +208,8 @@ public class MatrixGuiHandler {
         public void updateCellHighlight() {
             if (getErrorHighlightBG() != null) {
                 guiCell.setBackground(getErrorHighlightBG());
+            } else if(getSymmetryErrorHighlightBG() != null) {
+                guiCell.setBackground(getSymmetryErrorHighlightBG());
             } else if (getCrossHighlightBG() != null && crossHighlightEnabled) {
                 guiCell.setBackground(getCrossHighlightBG());
             } else if (getUserHighlightBG() != null) {
@@ -237,6 +259,8 @@ public class MatrixGuiHandler {
     public static final Background HIGHLIGHT_BACKGROUND = new Background(new BackgroundFill(Color.color(.9, 1, 0), new CornerRadii(3), new Insets(0)));
     public static final Background CROSS_HIGHLIGHT_BACKGROUND = new Background(new BackgroundFill(Color.color(.2, 1, 0), new CornerRadii(3), new Insets(0)));
     public static final Background ERROR_BACKGROUND = new Background(new BackgroundFill(Color.color(1, 0, 0), new CornerRadii(3), new Insets(0)));
+    public static final Background SYMMETRY_ERROR_BACKGROUND = new Background(new BackgroundFill(Color.color(1, .5, .2), new CornerRadii(3), new Insets(0)));
+
 
     private DoubleProperty fontSize;
 
@@ -252,7 +276,7 @@ public class MatrixGuiHandler {
      * @param matrix   the DataHandler object to display
      * @param fontSize the default font size to display the matrix with
      */
-    MatrixGuiHandler(DataHandler matrix, double fontSize) {
+    public MatrixGuiHandler(DataHandler matrix, double fontSize) {
         this.matrix = matrix;
         cells = new Vector<>();
         gridUidLookup = new HashMap<>();
@@ -289,9 +313,30 @@ public class MatrixGuiHandler {
      * @return        the uids associated with the cell (row uid, column uid)
      */
     private Pair<Integer, Integer> getUidsFromGridLoc(Pair<Integer, Integer> cellLoc) {
-        Integer rowUid = gridUidLookup.get("rows").get(cellLoc.getKey());;
-        Integer colUid = gridUidLookup.get("cols").get(cellLoc.getValue());;
+        Integer rowUid = gridUidLookup.get("rows").get(cellLoc.getKey());
+        Integer colUid = gridUidLookup.get("cols").get(cellLoc.getValue());
         return new Pair<>(rowUid, colUid);
+    }
+
+
+    /**
+     * Finds a cell given its rowUid and colUid by doing a linear search
+     *
+     * @param uids pair of row uid, column uid of the cell to find
+     * @return     pair of row location, column location of the cell
+     */
+    public Pair<Integer, Integer> getGridLocFromUids(Pair<Integer, Integer> uids) {
+        Integer rowLoc = null;
+        Integer colLoc = null;
+
+        for(Cell cell : cells) {
+            if(getUidsFromGridLoc(cell.getGridLocation()).equals(uids)) {
+                rowLoc = cell.getGridLocation().getKey();
+                colLoc = cell.getGridLocation().getValue();
+            }
+        }
+
+        return new Pair<>(rowLoc, colLoc);
     }
 
 
@@ -316,13 +361,14 @@ public class MatrixGuiHandler {
      *
      * @param cellLoc       the grid location of a cell (row, column)
      * @param bg            the color to assign to a cell
-     * @param highlightType the highlight type to assign to (userHighlight, errorHighlight)
+     * @param highlightType the highlight type to assign to (userHighlight, errorHighlight, symmetryErrorHighlight)
      */
-    private void setCellHighlight(Pair<Integer, Integer> cellLoc, Background bg, String highlightType) {
+    public void setCellHighlight(Pair<Integer, Integer> cellLoc, Background bg, String highlightType) {
         Cell cell = getCellByLoc(cellLoc);
         HashMap<String, Runnable> functions = new HashMap<>();
         functions.put("userHighlight", () -> cell.setUserHighlightBG(bg));
         functions.put("errorHighlight", () -> cell.setErrorHighlightBG(bg));
+        functions.put("symmetryErrorHighlight", () -> cell.setSymmetryErrorHighlightBG(bg));
         functions.get(highlightType).run();
     }
 
@@ -332,13 +378,14 @@ public class MatrixGuiHandler {
      * null to that highlight field
      *
      * @param cellLoc       the grid location of a cell (row, column)
-     * @param highlightType the highlight type to assign to (userHighlight, errorHighlight)
+     * @param highlightType the highlight type to assign to (userHighlight, errorHighlight, symmetryErrorHighlight)
      */
-    private void clearCellHighlight(Pair<Integer, Integer> cellLoc, String highlightType) {
+    public void clearCellHighlight(Pair<Integer, Integer> cellLoc, String highlightType) {
         Cell cell = getCellByLoc(cellLoc);
         HashMap<String, Runnable> functions = new HashMap<>();
         functions.put("userHighlight", () -> cell.setUserHighlightBG(null));
         functions.put("errorHighlight", () -> cell.setErrorHighlightBG(null));
+        functions.put("symmetryErrorHighlight", () -> cell.setSymmetryErrorHighlightBG(null));
         functions.get(highlightType).run();
     }
 

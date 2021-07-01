@@ -1,5 +1,6 @@
 package DSMData;
 
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableSet;
 import javafx.scene.paint.Color;
@@ -134,7 +135,7 @@ public class DataHandler {
      *
      * @return true is symmetrical, false otherwise
      */
-    public boolean isSymmetrical() {
+    public Boolean isSymmetrical() {
         return symmetrical;
     }
 
@@ -581,6 +582,7 @@ public class DataHandler {
         for(DSMItem item : getCols()) {
             if(item.getAliasUid() == rowUid) {
                 newColUid = item.getUid();
+                break;
             }
         }
 
@@ -671,6 +673,31 @@ public class DataHandler {
         for(int i=0; i<cols.size(); i++) {  // reset col sort indexes 1 -> n
             cols.elementAt(i).setSortIndex(i + 1);
         }
+    }
+
+
+    /**
+     * Checks to make sure that connections have a symmetrical counterpart that has an equal name and an equal weight
+     *
+     * @return list of row uid, column uid of the connections that have issues. Will always be an even length.
+     */
+    public ArrayList<Pair<Integer, Integer>> findSymmetryErrors() {
+        assert isSymmetrical() : "cannot call symmetrical function on non symmetrical dataset";
+
+        ArrayList<Pair<Integer, Integer>> errors = new ArrayList<>();
+        for(DSMConnection connection : connections) {
+            Pair<Integer, Integer> symmetricUids = getSymmetricConnectionUids(connection.getRowUid(), connection.getColUid());
+            DSMConnection symmetricConnection = getConnection(symmetricUids.getKey(), symmetricUids.getValue());
+            if(symmetricConnection == null) {
+                errors.add(new Pair<Integer, Integer>(connection.getRowUid(), connection.getColUid()));
+                errors.add(new Pair<Integer, Integer>(symmetricUids.getKey(), symmetricUids.getValue()));
+            } else if(!symmetricConnection.getConnectionName().equals(connection.getConnectionName()) || symmetricConnection.getWeight() != connection.getWeight()) {
+                errors.add(new Pair<Integer, Integer>(connection.getRowUid(), connection.getColUid()));
+                errors.add(new Pair<Integer, Integer>(symmetricUids.getKey(), symmetricUids.getValue()));
+            }
+        }
+
+        return errors;
     }
 
 
