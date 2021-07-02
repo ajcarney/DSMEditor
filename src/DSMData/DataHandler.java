@@ -1,6 +1,5 @@
 package DSMData;
 
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableSet;
 import javafx.scene.paint.Color;

@@ -1,9 +1,6 @@
 import DSMData.DataHandler;
 import IOHandler.IOHandler;
-import gui.HeaderMenu;
-import gui.InfoHandler;
-import gui.TabView;
-import gui.ToolbarHandler;
+import gui.*;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.event.Event;
@@ -31,7 +28,8 @@ public class Main extends Application {
     private static final IOHandler ioHandler = new IOHandler();
     private static final InfoHandler infoHandler = new InfoHandler();
     private static final TabView editor = new TabView(ioHandler, infoHandler);
-    private static final HeaderMenu menu = new HeaderMenu(ioHandler, editor);
+    private static final ConnectionSearchWidget searchWidget = new ConnectionSearchWidget(ioHandler, editor);
+    private static final HeaderMenu menu = new HeaderMenu(ioHandler, editor, searchWidget);
     private static final ToolbarHandler toolbarHandler = new ToolbarHandler(ioHandler, editor);
 
 
@@ -49,6 +47,7 @@ public class Main extends Application {
         root.setCenter(editor.getTabPane());
         root.setRight(infoHandler.getLayout());
         root.setLeft(toolbarHandler.getLayout());
+        root.setBottom(searchWidget.getMainLayout());
 
         Scene scene = new Scene(root, 1000, 600);
         primaryStage.setTitle("DSM Editor");

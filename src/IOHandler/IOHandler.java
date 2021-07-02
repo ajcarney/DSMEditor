@@ -288,9 +288,14 @@ public class IOHandler {
                     if (item.getKey().equals("plain_text")) {
                         Cell cell = row.createCell(c + COL_START);
                         cell.setCellValue(item.getValue().toString());
+
+                        CellStyle cellStyle = workbook.createCellStyle();
+                        cellStyle.setRotation((short)0);
+                        cell.setCellStyle(cellStyle);
                     } else if(item.getKey().equals("plain_text_v")) {
                         Cell cell = row.createCell(c + COL_START);
                         cell.setCellValue(item.getValue().toString());
+
                         CellStyle cellStyle = workbook.createCellStyle();
                         cellStyle.setAlignment(HorizontalAlignment.RIGHT);
                         cellStyle.setVerticalAlignment(VerticalAlignment.BOTTOM);
@@ -304,6 +309,7 @@ public class IOHandler {
                         XSSFCellStyle style = workbook.createCellStyle();
                         style.setFillForegroundColor(new XSSFColor(new java.awt.Color((float) (cellColor.getRed()), (float) (cellColor.getGreen()), (float) (cellColor.getBlue())), new DefaultIndexedColorMap()));
                         style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+                        style.setRotation((short)0);
                         cell.setCellStyle(style);
                     } else if(item.getKey().equals("item_name_v")) {
                         Cell cell = row.createCell(c + COL_START);
@@ -323,6 +329,7 @@ public class IOHandler {
                         XSSFCellStyle style = workbook.createCellStyle();
                         style.setFillForegroundColor(new XSSFColor(new java.awt.Color((float) (cellColor.getRed()), (float) (cellColor.getGreen()), (float) (cellColor.getBlue())), new DefaultIndexedColorMap()));
                         style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+                        style.setRotation((short)0);
                         cell.setCellStyle(style);
                     } else if (item.getKey().equals("grouping_item_v")) {
                         Cell cell = row.createCell(c + COL_START);
@@ -333,6 +340,7 @@ public class IOHandler {
                         style.setRotation((short)90);
                         style.setFillForegroundColor(new XSSFColor(new java.awt.Color((float) (cellColor.getRed()), (float) (cellColor.getGreen()), (float) (cellColor.getBlue())), new DefaultIndexedColorMap()));
                         style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+                        style.setRotation((short)0);
                         cell.setCellStyle(style);
                     } else if (item.getKey().equals("index_item")) {
                         Cell cell = row.createCell(c + COL_START);
@@ -342,6 +350,7 @@ public class IOHandler {
                         XSSFCellStyle style = workbook.createCellStyle();
                         style.setFillForegroundColor(new XSSFColor(new java.awt.Color((float) (cellColor.getRed()), (float) (cellColor.getGreen()), (float) (cellColor.getBlue())), new DefaultIndexedColorMap()));
                         style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+                        style.setRotation((short)0);
                         cell.setCellStyle(style);
                     } else if (item.getKey().equals("uneditable_connection")) {
                         Cell cell = row.createCell(c + COL_START);
@@ -375,9 +384,11 @@ public class IOHandler {
                         if (getMatrix(matrixUid).isSymmetrical() && !rowUid.equals(getMatrix(matrixUid).getItem(colUid).getAliasUid()) && getMatrix(matrixUid).getItem(rowUid).getGroup().equals(getMatrix(matrixUid).getItem(colUid).getGroup())) {  // associated row and column are same group
                             style.setFillForegroundColor(new XSSFColor(new java.awt.Color((float)(red), (float)(green), (float)(blue)), new DefaultIndexedColorMap()));
                             style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+                            style.setRotation((short)0);
                         } else if (!getMatrix(matrixUid).isSymmetrical()) {
                             style.setFillForegroundColor(new XSSFColor(new java.awt.Color((float)(red), (float)(green), (float)(blue)), new DefaultIndexedColorMap()));
                             style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+                            style.setRotation((short)0);
                         }
                         cell.setCellStyle(style);
                     }
@@ -474,6 +485,17 @@ public class IOHandler {
     public MatrixGuiHandler getMatrixGuiHandler(int matrixUid) {
         return matrixGuiHandlers.get(matrixUid);
     }
+
+
+    /**
+     * Returns all gui handler objects
+     *
+     * @return          MatrixGuiHandler HashMap
+     */
+    public HashMap<Integer, MatrixGuiHandler> getMatrixGuiHandlers() {
+        return matrixGuiHandlers;
+    }
+
 
 
     /**

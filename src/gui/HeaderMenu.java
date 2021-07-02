@@ -2,14 +2,14 @@ package gui;
 
 import DSMData.DataHandler;
 import IOHandler.IOHandler;
-import javafx.application.Platform;
 import javafx.scene.control.*;
 import javafx.stage.FileChooser;
 import javafx.stage.WindowEvent;
 import javafx.util.Pair;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -28,6 +28,7 @@ public class HeaderMenu {
     private static MenuBar menuBar;
     private static IOHandler ioHandler;
     private static TabView editor;
+    private static ConnectionSearchWidget searchWidget;
 
     private Thread symmetryErrorHandlerThread;
     private Boolean runSymmetryValidationThread;
@@ -39,10 +40,11 @@ public class HeaderMenu {
      * @param ioHandler the IOHandler instance
      * @param editor    the TabView instance
      */
-    public HeaderMenu(IOHandler ioHandler, TabView editor) {
+    public HeaderMenu(IOHandler ioHandler, TabView editor, ConnectionSearchWidget searchWidget) {
         menuBar = new MenuBar();
         this.ioHandler = ioHandler;
         this.editor = editor;
+        this.searchWidget = searchWidget;
 
         //File menu
         fileMenu = new Menu("_File");
@@ -234,38 +236,50 @@ public class HeaderMenu {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-
-                if(editor.getFocusedMatrixUid() == null) {
+                if (editor.getFocusedMatrixUid() == null || !ioHandler.getMatrix(editor.getFocusedMatrixUid()).isSymmetrical()) {
                     continue;
                 }
 
-                MatrixGuiHandler m = ioHandler.getMatrixGuiHandler(editor.getFocusedMatrixUid());
-
-                errors = ioHandler.getMatrix(editor.getFocusedMatrixUid()).findSymmetryErrors();
-                Set<Pair<Integer, Integer>> prevAndCurrentErrors = prevErrors.stream().collect(Collectors.toSet());
-                prevAndCurrentErrors.addAll(errors);
-
-                if(!runSymmetryValidationThread) {
-                    for(Pair<Integer, Integer> pair : prevAndCurrentErrors) {
-                        m.clearCellHighlight(m.getGridLocFromUids(pair), "symmetryErrorHighlight");
+                synchronized (ioHandler.getMatrix(editor.getFocusedMatrixUid())) {  // TODO: maybe this synchronization call can be removed. Idk, i was too scared to check
+                    if (editor.getFocusedMatrixUid() == null || !ioHandler.getMatrix(editor.getFocusedMatrixUid()).isSymmetrical()) {
+                        continue;
                     }
-                    continue;
-                } else {
-                    for(Pair<Integer, Integer> pair : prevAndCurrentErrors) {
-                        if(!errors.contains(pair) && prevErrors.contains(pair)) {  // old error that has been fixed, unhighlight it
-                            m.clearCellHighlight(m.getGridLocFromUids(pair), "symmetryErrorHighlight");
-                        } else {
-                            m.setCellHighlight(m.getGridLocFromUids(pair), MatrixGuiHandler.SYMMETRY_ERROR_BACKGROUND, "symmetryErrorHighlight");
+
+                    MatrixGuiHandler m = ioHandler.getMatrixGuiHandler(editor.getFocusedMatrixUid());
+
+                    errors = ioHandler.getMatrix(editor.getFocusedMatrixUid()).findSymmetryErrors();
+                    Set<Pair<Integer, Integer>> prevAndCurrentErrors = prevErrors.stream().collect(Collectors.toSet());
+                    prevAndCurrentErrors.addAll(errors);
+
+                    if (!runSymmetryValidationThread) {
+                        for (Pair<Integer, Integer> pair : prevAndCurrentErrors) {
+                            m.clearCellHighlight(m.getGridLocFromUids(pair), "symmetryError");
+                        }
+                        continue;
+                    } else {
+                        for (Pair<Integer, Integer> pair : prevAndCurrentErrors) {
+                            if (!errors.contains(pair) && prevErrors.contains(pair)) {  // old error that has been fixed, unhighlight it
+                                m.clearCellHighlight(m.getGridLocFromUids(pair), "symmetryError");
+                            } else {
+                                m.setCellHighlight(m.getGridLocFromUids(pair), MatrixGuiHandler.SYMMETRY_ERROR_BACKGROUND, "symmetryError");
+                            }
                         }
                     }
+
+                    prevErrors = errors;
+
                 }
-
-                prevErrors = errors;
-
             }
         });
         symmetryErrorHandlerThread.setDaemon(true);
         symmetryErrorHandlerThread.start();
+
+        MenuItem search = new MenuItem("Find Connections");
+        search.setOnAction(e -> {
+            searchWidget.open();
+        });
+
+
 
         toolsMenu.setOnShown(e -> {  // disable validate symmetry for non-symmetrical matrices
             if(editor.getFocusedMatrixUid() == null) {
@@ -274,7 +288,7 @@ public class HeaderMenu {
             validateSymmetry.setDisable(!ioHandler.getMatrix(editor.getFocusedMatrixUid()).isSymmetrical());
         });
 
-        toolsMenu.getItems().add(validateSymmetry);
+        toolsMenu.getItems().addAll(validateSymmetry, search);
 
 
         menuBar.getMenus().addAll(fileMenu, editMenu, viewMenu, toolsMenu);

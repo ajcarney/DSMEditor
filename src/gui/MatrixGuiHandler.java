@@ -5,8 +5,6 @@ import DSMData.DataHandler;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
@@ -41,11 +39,14 @@ public class MatrixGuiHandler {
 
         private static Boolean crossHighlightEnabled = false;
 
-        private Background defaultBG = null;
-        private Background userHighlightBG = null;
-        private Background crossHighlightBG = null;
-        private Background errorHighlightBG = null;
-        private Background symmetryErrorHighlightBG = null;
+        private HashMap<String, Background> highlightBGs = new HashMap<String, Background>() {{
+            put("default", null);
+            put("user", null);
+            put("cross", null);
+            put("error", null);
+            put("symmetryError", null);
+            put("search", null);
+        }};
 
         /**
          * Creates a new cell object
@@ -95,48 +96,27 @@ public class MatrixGuiHandler {
         }
 
         /**
-         * Getter function for the default background
+         * Getter function for background of type
          *
-         * @return the default background
+         * @param type which background to get the version of
+         * @return     the background
          */
-        public Background getDefaultBG() {
-            return defaultBG;
-        }
+        public Background getHighlightBG(String type) {
+            if(type.equals("default")) {
+                return highlightBGs.get("default");
+            } else if(type.equals("user")) {
+                return highlightBGs.get("user");
+            } else if(type.equals("cross")) {
+                return highlightBGs.get("cross");
+            } else if(type.equals("error")) {
+                return highlightBGs.get("error");
+            } else if(type.equals("symmetryError")) {
+                return highlightBGs.get("symmetryError");
+            } else if(type.equals("search")) {
+                return highlightBGs.get("search");
+            }
 
-        /**
-         * Getter function for the user highlight background
-         *
-         * @return the user highlight background
-         */
-        public Background getUserHighlightBG() {
-            return userHighlightBG;
-        }
-
-        /**
-         * Getter function for the cross highlight background
-         *
-         * @return the cross highlight background
-         */
-        public Background getCrossHighlightBG() {
-            return crossHighlightBG;
-        }
-
-        /**
-         * Getter function for the error background
-         *
-         * @return the error background
-         */
-        public Background getErrorHighlightBG() {
-            return errorHighlightBG;
-        }
-
-        /**
-         * Getter function for the symmetry error background
-         *
-         * @return the symmetry error background
-         */
-        public Background getSymmetryErrorHighlightBG() {
-            return symmetryErrorHighlightBG;
+            return null;
         }
 
         /**
@@ -149,53 +129,24 @@ public class MatrixGuiHandler {
         }
 
         /**
-         * Setter function for the default background
+         * Setter function for backgrounds
          *
-         * @param defaultBG the new default background of the cell
+         * @param bg the new background of the cell
          */
-        public void setDefaultBG(Background defaultBG) {
-            this.defaultBG = defaultBG;
-            updateCellHighlight();
-
-        }
-
-        /**
-         * Setter function for the user highlight background
-         *
-         * @param userHighlightBG the new user highlight background of the cell
-         */
-        public void setUserHighlightBG(Background userHighlightBG) {
-            this.userHighlightBG = userHighlightBG;
-            updateCellHighlight();
-        }
-
-        /**
-         * Setter function for the cross highlight background
-         *
-         * @param crossHighlightBG the new cross highlight background of the cell
-         */
-        public void setCrossHighlightBG(Background crossHighlightBG) {
-            this.crossHighlightBG = crossHighlightBG;
-            updateCellHighlight();
-        }
-
-        /**
-         * Setter function for the error background
-         *
-         * @param errorHighlightBG the new error background of the cell
-         */
-        public void setErrorHighlightBG(Background errorHighlightBG) {
-            this.errorHighlightBG = errorHighlightBG;
-            updateCellHighlight();
-        }
-
-        /**
-         * Setter function for the symmetry error background
-         *
-         * @param bg the new symmetry error background of the cell
-         */
-        public void setSymmetryErrorHighlightBG(Background bg) {
-            this.symmetryErrorHighlightBG = bg;
+        public void setHighlightBG(Background bg, String type) {
+            if(type.equals("default")) {
+                highlightBGs.put("default", bg);
+            } else if(type.equals("user")) {
+                highlightBGs.put("user", bg);
+            } else if(type.equals("cross")) {
+                highlightBGs.put("cross", bg);
+            } else if(type.equals("error")) {
+                highlightBGs.put("error", bg);
+            } else if(type.equals("symmetryError")) {
+                highlightBGs.put("symmetryError", bg);
+            } else if(type.equals("search")) {
+                highlightBGs.put("search", bg);
+            }
             updateCellHighlight();
         }
 
@@ -206,14 +157,16 @@ public class MatrixGuiHandler {
          * color of the cell or the default color
          */
         public void updateCellHighlight() {
-            if (getErrorHighlightBG() != null) {
-                guiCell.setBackground(getErrorHighlightBG());
-            } else if(getSymmetryErrorHighlightBG() != null) {
-                guiCell.setBackground(getSymmetryErrorHighlightBG());
-            } else if (getCrossHighlightBG() != null && crossHighlightEnabled) {
-                guiCell.setBackground(getCrossHighlightBG());
-            } else if (getUserHighlightBG() != null) {
-                guiCell.setBackground(getUserHighlightBG());
+            if (getHighlightBG("error") != null) {
+                guiCell.setBackground(getHighlightBG("error"));
+            } else if(getHighlightBG("symmetryError") != null) {
+                guiCell.setBackground(getHighlightBG("symmetryError"));
+            } else if(getHighlightBG("search") != null) {
+                guiCell.setBackground(getHighlightBG("search"));
+            }else if (getHighlightBG("cross") != null && crossHighlightEnabled) {
+                guiCell.setBackground(getHighlightBG("cross"));
+            } else if (getHighlightBG("user") != null) {
+                guiCell.setBackground(getHighlightBG("user"));
             } else {  // default background determined by groupings
                 Integer rowUid = getUidsFromGridLoc(gridLocation).getKey();
                 Integer colUid = getUidsFromGridLoc(gridLocation).getValue();
@@ -247,7 +200,7 @@ public class MatrixGuiHandler {
                     }
                 }
 
-                setCellHighlight((Color)getDefaultBG().getFills().get(0).getFill());
+                setCellHighlight((Color)getHighlightBG("default").getFills().get(0).getFill());
             }
         }
 
@@ -260,6 +213,7 @@ public class MatrixGuiHandler {
     public static final Background CROSS_HIGHLIGHT_BACKGROUND = new Background(new BackgroundFill(Color.color(.2, 1, 0), new CornerRadii(3), new Insets(0)));
     public static final Background ERROR_BACKGROUND = new Background(new BackgroundFill(Color.color(1, 0, 0), new CornerRadii(3), new Insets(0)));
     public static final Background SYMMETRY_ERROR_BACKGROUND = new Background(new BackgroundFill(Color.color(1, .5, .2), new CornerRadii(3), new Insets(0)));
+    public static final Background SEARCH_BACKGROUND = new Background(new BackgroundFill(Color.color(0, 1, 1), new CornerRadii(3), new Insets(0)));
 
 
     private DoubleProperty fontSize;
@@ -295,7 +249,7 @@ public class MatrixGuiHandler {
      * @return        the cell object with the specified grid location
      */
     private Cell getCellByLoc(Pair<Integer, Integer> cellLoc) {
-        for(Cell cell : cells) {
+        for(Cell cell : (Vector<Cell>)cells.clone()) {  // use a clone so we don't run into concurrent modification exceptions
             if(cell.getGridLocation().getKey() == cellLoc.getKey() && cell.getGridLocation().getValue() == cellLoc.getValue()) {
                 return cell;
             }
@@ -329,7 +283,7 @@ public class MatrixGuiHandler {
         Integer rowLoc = null;
         Integer colLoc = null;
 
-        for(Cell cell : cells) {
+        for(Cell cell : (Vector<Cell>)cells.clone()) {  // use a clone so we don't run into concurrent modification exceptions
             if(getUidsFromGridLoc(cell.getGridLocation()).equals(uids)) {
                 rowLoc = cell.getGridLocation().getKey();
                 colLoc = cell.getGridLocation().getValue();
@@ -348,10 +302,12 @@ public class MatrixGuiHandler {
      */
     private void toggleUserHighlightCell(Pair<Integer, Integer> cellLoc, Background bg) {
         Cell cell = getCellByLoc(cellLoc);
-        if(cell.getUserHighlightBG() == null) {  // is highlighted, so unhighlight it
-            cell.setUserHighlightBG(bg);
+        if(cell == null) return;
+
+        if(cell.getHighlightBG("user") == null) {  // is not highlighted, so highlight it
+            cell.setHighlightBG(bg, "user");
         } else {
-            cell.setUserHighlightBG(null);
+            cell.setHighlightBG(null, "user");
         }
     }
 
@@ -361,15 +317,13 @@ public class MatrixGuiHandler {
      *
      * @param cellLoc       the grid location of a cell (row, column)
      * @param bg            the color to assign to a cell
-     * @param highlightType the highlight type to assign to (userHighlight, errorHighlight, symmetryErrorHighlight)
+     * @param highlightType the highlight type to assign to
      */
     public void setCellHighlight(Pair<Integer, Integer> cellLoc, Background bg, String highlightType) {
         Cell cell = getCellByLoc(cellLoc);
-        HashMap<String, Runnable> functions = new HashMap<>();
-        functions.put("userHighlight", () -> cell.setUserHighlightBG(bg));
-        functions.put("errorHighlight", () -> cell.setErrorHighlightBG(bg));
-        functions.put("symmetryErrorHighlight", () -> cell.setSymmetryErrorHighlightBG(bg));
-        functions.get(highlightType).run();
+        if(cell == null) return;
+
+        cell.setHighlightBG(bg, highlightType);
     }
 
 
@@ -382,11 +336,22 @@ public class MatrixGuiHandler {
      */
     public void clearCellHighlight(Pair<Integer, Integer> cellLoc, String highlightType) {
         Cell cell = getCellByLoc(cellLoc);
-        HashMap<String, Runnable> functions = new HashMap<>();
-        functions.put("userHighlight", () -> cell.setUserHighlightBG(null));
-        functions.put("errorHighlight", () -> cell.setErrorHighlightBG(null));
-        functions.put("symmetryErrorHighlight", () -> cell.setSymmetryErrorHighlightBG(null));
-        functions.get(highlightType).run();
+        if(cell == null) return;
+
+        cell.setHighlightBG(null, highlightType);
+    }
+
+
+    /**
+     * Function to remove several different highlight types of all cells by assigning
+     * null to that highlight field
+     *
+     * @param highlightType the highlight type to assign to (userHighlight, errorHighlight, symmetryErrorHighlight)
+     */
+    public void clearAllCellsHighlight(String highlightType) {
+        for(Cell cell : (Vector<Cell>)cells.clone()) {  // use a clone so we don't run into concurrent modification exceptions
+            cell.setHighlightBG(null, highlightType);
+        }
     }
 
 
@@ -417,9 +382,9 @@ public class MatrixGuiHandler {
             for(Cell cell : cells) {  // find the cell to modify
                 if(cell.getGridLocation().getKey() == i && cell.getGridLocation().getValue() == endCol) {
                     if(shouldHighlight) {
-                        cell.setCrossHighlightBG(CROSS_HIGHLIGHT_BACKGROUND);
+                        cell.setHighlightBG(CROSS_HIGHLIGHT_BACKGROUND, "cross");
                     } else {
-                        cell.setCrossHighlightBG(null);
+                        cell.setHighlightBG(null, "cross");
                     }
                     break;
                 }
@@ -430,9 +395,9 @@ public class MatrixGuiHandler {
             for(Cell cell : cells) {  // find the cell to modify
                 if(cell.getGridLocation().getValue() == i && cell.getGridLocation().getKey() == endRow) {
                     if(shouldHighlight) {
-                        cell.setCrossHighlightBG(CROSS_HIGHLIGHT_BACKGROUND);
+                        cell.setHighlightBG(CROSS_HIGHLIGHT_BACKGROUND, "cross");
                     } else {
-                        cell.setCrossHighlightBG(null);
+                        cell.setHighlightBG(null, "cross");
                     }
                     break;
                 }
@@ -723,7 +688,7 @@ public class MatrixGuiHandler {
                 grid.getChildren().add(cell);
 
                 Cell cellData = new Cell(new Pair<>(r, c), cell);
-                cellData.setDefaultBG(defaultBackground);
+                cellData.setHighlightBG(defaultBackground, "default");
                 cells.add(cellData);
 
             }
