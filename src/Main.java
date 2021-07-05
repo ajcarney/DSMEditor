@@ -57,10 +57,10 @@ public class Main extends Application {
 
 
         // start with a tab open (used for debugging, remove or comment out for release)
-//        File file = new File("C:\\Users\\ajcar\\Documents\\big matrix.dsm");
-//        DataHandler matrix = new DataHandler();
+        File file = new File("/home/aiden/Documents/DSMEditor/vpas3.dsm");
+        DataHandler matrix = ioHandler.readFile(file);
 //        matrix.setSymmetrical(true);
-//        int uid = ioHandler.addMatrix(matrix, new File("C:\\Users\\ajcar\\Documents\\big matrix.dsm"));
+        int uid = ioHandler.addMatrix(matrix, file);
 //        for(int i=0; i<45; i++) {
 //            matrix.addNewSymmetricItem("test" + i);
 //        }
@@ -69,7 +69,8 @@ public class Main extends Application {
 //                matrix.modifyConnection(row.getUid(), col.getUid(), "x", 1.0);
 //            }
 //        }
-//        editor.addTab(uid);
+        editor.addTab(uid);
+
 
         // on close, iterate through each tab and run the close request to save it or not
         scene.getWindow().setOnCloseRequest(new EventHandler<WindowEvent>() {

@@ -46,7 +46,7 @@ public class HeaderMenu {
         this.editor = editor;
         this.searchWidget = searchWidget;
 
-        //File menu
+    //File menu
         fileMenu = new Menu("_File");
 
         Menu newFileMenu = new Menu("New...");
@@ -196,7 +196,7 @@ public class HeaderMenu {
         editMenu.getItems().add(paste);
 
 
-        // View menu
+    // View menu
         viewMenu = new Menu("_View");
 
         MenuItem zoomIn = new MenuItem("Zoom In");
@@ -217,7 +217,7 @@ public class HeaderMenu {
         viewMenu.getItems().addAll(zoomIn, zoomOut, zoomReset);
         
 
-        // tools menu
+    // tools menu
         runSymmetryValidationThread = false;
         toolsMenu = new Menu("_Tools");
 
@@ -280,6 +280,16 @@ public class HeaderMenu {
         });
 
 
+        MenuItem propagationAnalysis = new MenuItem("Propagation Analysis");
+        propagationAnalysis.setOnAction(e -> {
+            if(editor.getFocusedMatrixUid() == null) {
+                return;
+            }
+
+            PropagationAnalysis p = new PropagationAnalysis(ioHandler.getMatrix(editor.getFocusedMatrixUid()));
+        });
+
+
 
         toolsMenu.setOnShown(e -> {  // disable validate symmetry for non-symmetrical matrices
             if(editor.getFocusedMatrixUid() == null) {
@@ -288,7 +298,7 @@ public class HeaderMenu {
             validateSymmetry.setDisable(!ioHandler.getMatrix(editor.getFocusedMatrixUid()).isSymmetrical());
         });
 
-        toolsMenu.getItems().addAll(validateSymmetry, search);
+        toolsMenu.getItems().addAll(validateSymmetry, search, propagationAnalysis);
 
 
         menuBar.getMenus().addAll(fileMenu, editMenu, viewMenu, toolsMenu);

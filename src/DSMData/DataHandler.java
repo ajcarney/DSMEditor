@@ -781,6 +781,90 @@ public class DataHandler {
     }
 
 
+    public HashMap<Integer, HashMap<Integer, Double>> propagationAnalysis(Integer startItem, int numLevels, ArrayList<Integer> exclusions, double minWeight, boolean countByWeight) {
+        int currentLevel = 1;
+        HashMap<Integer, HashMap<Integer, Double>> results = new HashMap<>();
+        ArrayList<Integer> dependentConnections = new ArrayList<>();
+        dependentConnections.add(startItem);
+
+        // check if start item is a row or column item
+        boolean startIsRow;
+        if(rows.contains(startItem)) {
+            startIsRow = true;
+        } else {
+            startIsRow = false;
+        }
+
+        while(currentLevel <= numLevels) {
+            ArrayList<Integer> newDependentConnections = new ArrayList<>();
+            results.put(currentLevel, new HashMap<>());  // add default item
+
+            if((currentLevel % 2 == 1 && startIsRow) || (currentLevel % 2 == 0 && !startIsRow)) {  // currentLevel is odd so choose row
+                for(Integer uid : dependentConnections) {  // find dependent connections of each item from the previous level
+                    results.get(currentLevel).put(uid, 0.0);
+
+                    // find connections with uid as the row item
+                    for(DSMItem col : cols) {  // iterate over column items finding the ones that match the row
+                        DSMConnection conn = getConnection(uid, col.getUid());
+
+                        // define exit conditions
+                        if(conn == null) continue;
+                        if(conn.getWeight() < minWeight) continue;
+
+                        Integer itemUid = null;
+                        if(isSymmetrical()) {
+                            itemUid = col.getAliasUid();
+                        } else {
+                            itemUid = col.getUid();
+                        }
+
+                        if(countByWeight) {
+                            results.get(currentLevel).put(uid, results.get(currentLevel).get(itemUid) + conn.getWeight());
+                        } else {
+                            results.get(currentLevel).put(uid, results.get(currentLevel).get(itemUid) + 1.0);
+                        }
+
+                        if(!exclusions.contains(itemUid) && !newDependentConnections.contains(itemUid)) {  // add to next level if not present and not excluded
+                            newDependentConnections.add(itemUid);
+                        }
+                    }
+                }
+            } else {  // currentLevel is even so choose column
+                for(Integer uid : dependentConnections) {  // find dependent connections of each item from the previous level
+                    results.get(currentLevel).put(uid, 0.0);
+
+                    // find connections with uid as the row item
+                    for(DSMItem row : rows) {  // iterate over row items finding the ones that match the column
+                        DSMConnection conn = getConnection(uid, row.getUid());
+
+                        // define exit conditions
+                        if(conn == null) continue;
+                        if(conn.getWeight() < minWeight) continue;
+
+                        Integer itemUid = row.getUid();
+
+                        if(countByWeight) {
+                            results.get(currentLevel).put(uid, results.get(currentLevel).get(itemUid) + conn.getWeight());
+                        } else {
+                            results.get(currentLevel).put(uid, results.get(currentLevel).get(itemUid) + 1.0);
+                        }
+
+                        if(!exclusions.contains(itemUid) && !newDependentConnections.contains(itemUid)) {  // add to next level if not present and not excluded
+                            newDependentConnections.add(itemUid);
+                        }
+                    }
+                }
+            }
+
+            dependentConnections.clear();
+            dependentConnections = newDependentConnections;
+            currentLevel += 1;
+        }
+
+        return results;
+    }
+
+
     /**
      * Clears the wasModified flag. Used for when matrix has been saved to a file
      */
