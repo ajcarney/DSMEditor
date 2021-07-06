@@ -2,23 +2,32 @@ package gui;
 
 import DSMData.DSMItem;
 import DSMData.DataHandler;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.*;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
+import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.chart.BarChart;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Callback;
+import javafx.util.Pair;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class PropagationAnalysis {
     DataHandler matrix;
@@ -27,10 +36,12 @@ public class PropagationAnalysis {
     private BorderPane rootLayout;
 
     // layouts in the border pane
-    private VBox configLayout;  // side bar
+    private MenuBar menuBar;        // top bar
+    private VBox configLayout;      // side bar
+    private SplitPane mainContent;  // center
 
     // config pane widgets
-    private ComboBox startItemEntry;
+    private ComboBox<Integer> startItemEntry;
 
     private IntegerProperty numLevels;
     private DoubleProperty minWeight;
@@ -38,6 +49,10 @@ public class PropagationAnalysis {
     private ToggleGroup tg;
     private RadioButton countByWeight;
     private RadioButton countByOccurrence;
+
+    // main content widgets
+    private VBox graphLayout;
+    private VBox rawOutputLayout;
 
     ListView<Integer> itemExclusions;
 
@@ -50,12 +65,45 @@ public class PropagationAnalysis {
 //        window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
         window.setTitle(matrix.getTitle() + " - Propagation Analysis");
 
+    // side bar
         updateConfigWidgets();
 
+    // menu
+        menuBar = new MenuBar();
+
+        // run menu
+        Menu runMenu = new Menu("Run");
+        MenuItem run = new MenuItem("Run Propagation Analysis");
+        run.setOnAction(e -> {
+            runPropagationAnalysis();
+        });
+        runMenu.getItems().addAll(run);
+
+        menuBar.getMenus().addAll(runMenu);
+
+    // main content
+        mainContent = new SplitPane();
+        mainContent.setOrientation(Orientation.VERTICAL);
+
+        graphLayout = new VBox();
+        ScrollPane graphScrollPane = new ScrollPane(graphLayout);
+        graphScrollPane.setFitToWidth(true);
+        graphScrollPane.setFitToHeight(true);
+
+        rawOutputLayout = new VBox();
+        ScrollPane rawOutputScrollPane = new ScrollPane(rawOutputLayout);
+        rawOutputScrollPane.setFitToWidth(true);
+        rawOutputScrollPane.setFitToHeight(true);
+
+        mainContent.getItems().addAll(graphScrollPane, rawOutputScrollPane);
+
+    // set up main layout
         rootLayout = new BorderPane();
         rootLayout.setLeft(configLayout);
+        rootLayout.setTop(menuBar);
+        rootLayout.setCenter(mainContent);
 
-        Scene scene = new Scene(rootLayout, 800, 800);
+        Scene scene = new Scene(rootLayout, 1200, 800);
         window.setScene(scene);
         window.show();
     }
@@ -237,4 +285,107 @@ public class PropagationAnalysis {
         configLayout.setSpacing(15);
         configLayout.setAlignment(Pos.CENTER);
     }
+
+    private void runPropagationAnalysis() {
+        // set up parameters
+        Integer startItem = startItemEntry.getValue();
+        Integer numberLevels = numLevels.getValue();
+
+        Double minimumWeight = minWeight.getValue();
+        if(minimumWeight == null) {
+            minimumWeight = -Double.MAX_VALUE;
+        }
+
+        ArrayList<Integer> exclusions = new ArrayList();
+        for(Integer i : itemExclusions.getItems()) {
+            exclusions.add(i);
+        }
+
+        Boolean byWeight = true;
+        if(countByOccurrence.isSelected()) {
+            byWeight = false;
+        }
+
+        HashMap<Integer, HashMap<Integer, Double>> results = matrix.propagationAnalysis(startItem, numberLevels, exclusions, minimumWeight, byWeight);
+
+        // combine results by level into one map
+        HashMap<Integer, Double> scores = new HashMap<>();
+        for(Map.Entry<Integer, HashMap<Integer, Double>> levelEntry : results.entrySet()) {
+            for(Map.Entry<Integer, Double> entry : levelEntry.getValue().entrySet()) {
+                if(scores.get(entry.getKey()) == null) {
+                    scores.put(entry.getKey(), entry.getValue());
+                } else {
+                    scores.put(entry.getKey(), scores.get(entry.getKey()) + entry.getValue());
+                }
+            }
+        }
+
+        // update graph layout
+        final CategoryAxis xAxis = new CategoryAxis();
+        final NumberAxis yAxis = new NumberAxis();
+        final BarChart<String,Number> graph = new BarChart<>(xAxis,yAxis);
+        graph.setTitle("Country Summary");
+        xAxis.setLabel("Item Name");
+        yAxis.setLabel("Value");
+
+        XYChart.Series series1 = new XYChart.Series();
+        if(byWeight) {
+            series1.setName("Value by Weight");
+        } else {
+            series1.setName("Value by Occurrence");
+        }
+
+        for(Map.Entry<Integer, Double> entry : scores.entrySet()) {
+            series1.getData().add(new XYChart.Data(matrix.getItem(entry.getKey()).getName(), entry.getValue()));
+        }
+
+        graph.getData().addAll(series1);
+        graphLayout.getChildren().removeAll(graphLayout.getChildren());
+        graphLayout.getChildren().add(graph);
+
+
+        // update raw data layout
+        ObservableList<Pair<String, Double>> tableItems = FXCollections.observableArrayList();
+        for(Map.Entry<Integer, Double> entry : scores.entrySet()) {
+            tableItems.add(new Pair(matrix.getItem(entry.getKey()).getName(), entry.getValue()));
+        }
+
+        TableView<Pair<String, Double>> table = new TableView<>();
+
+        TableColumn<Pair<String, Double>, String> nameColumn = new TableColumn<>("Item Name");
+        nameColumn.setCellValueFactory(new PropertyValueFactory<>("key"));
+
+        TableColumn<Pair<String, Double>, String> scoreColumn = new TableColumn<>("Value");
+        scoreColumn.setCellValueFactory(new PropertyValueFactory<>("value"));
+
+        table.setItems(tableItems);
+        table.getColumns().addAll(nameColumn, scoreColumn);
+
+        Button copyButton = new Button("Copy Table");
+        copyButton.setOnAction(e -> {
+            String copyString = "";
+            for (Object row : table.getItems()) {
+                for (TableColumn column : table.getColumns()) {
+                    if(column.getCellObservableValue(row).getValue().getClass().equals(Integer.class)) {
+                        copyString += matrix.getItem((Integer)column.getCellObservableValue(row).getValue()).getName() + ",";
+                    } else {
+                        copyString += column.getCellObservableValue(row).getValue() + ",";
+                    }
+                }
+                copyString += "\n";
+            }
+
+            final ClipboardContent content = new ClipboardContent();
+            content.putString(copyString);
+            Clipboard.getSystemClipboard().setContent(content);
+        });
+
+        rawOutputLayout.getChildren().removeAll(rawOutputLayout.getChildren());
+        rawOutputLayout.getChildren().addAll(table, copyButton);
+        rawOutputLayout.setAlignment(Pos.CENTER);
+        rawOutputLayout.setPadding(new Insets(10));
+        rawOutputLayout.setSpacing(5);
+
+    }
+
 }

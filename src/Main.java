@@ -49,7 +49,7 @@ public class Main extends Application {
         root.setLeft(toolbarHandler.getLayout());
         root.setBottom(searchWidget.getMainLayout());
 
-        Scene scene = new Scene(root, 1000, 600);
+        Scene scene = new Scene(root, 1400, 800);
         primaryStage.setTitle("DSM Editor");
         primaryStage.setScene(scene);
         primaryStage.show();
@@ -57,19 +57,10 @@ public class Main extends Application {
 
 
         // start with a tab open (used for debugging, remove or comment out for release)
-        File file = new File("/home/aiden/Documents/DSMEditor/vpas3.dsm");
-        DataHandler matrix = ioHandler.readFile(file);
-//        matrix.setSymmetrical(true);
-        int uid = ioHandler.addMatrix(matrix, file);
-//        for(int i=0; i<45; i++) {
-//            matrix.addNewSymmetricItem("test" + i);
-//        }
-//        for(DSMItem row : matrix.getRows()) {
-//            for(DSMItem col : matrix.getCols()) {
-//                matrix.modifyConnection(row.getUid(), col.getUid(), "x", 1.0);
-//            }
-//        }
-        editor.addTab(uid);
+//        File file = new File("/home/aiden/Documents/DSMEditor/vpas3.dsm");
+//        DataHandler matrix = ioHandler.readFile(file);
+//        int uid = ioHandler.addMatrix(matrix, file);
+//        editor.addTab(uid);
 
 
         // on close, iterate through each tab and run the close request to save it or not

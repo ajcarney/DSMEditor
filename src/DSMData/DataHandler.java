@@ -789,7 +789,7 @@ public class DataHandler {
 
         // check if start item is a row or column item
         boolean startIsRow;
-        if(rows.contains(startItem)) {
+        if(rows.contains(getItem(startItem))) {
             startIsRow = true;
         } else {
             startIsRow = false;
@@ -801,7 +801,6 @@ public class DataHandler {
 
             if((currentLevel % 2 == 1 && startIsRow) || (currentLevel % 2 == 0 && !startIsRow)) {  // currentLevel is odd so choose row
                 for(Integer uid : dependentConnections) {  // find dependent connections of each item from the previous level
-                    results.get(currentLevel).put(uid, 0.0);
 
                     // find connections with uid as the row item
                     for(DSMItem col : cols) {  // iterate over column items finding the ones that match the row
@@ -811,17 +810,16 @@ public class DataHandler {
                         if(conn == null) continue;
                         if(conn.getWeight() < minWeight) continue;
 
-                        Integer itemUid = null;
-                        if(isSymmetrical()) {
-                            itemUid = col.getAliasUid();
-                        } else {
-                            itemUid = col.getUid();
+                        Integer itemUid = col.getUid();
+
+                        if(results.get(currentLevel).get(itemUid) == null) {
+                            results.get(currentLevel).put(itemUid, 0.0);
                         }
 
                         if(countByWeight) {
-                            results.get(currentLevel).put(uid, results.get(currentLevel).get(itemUid) + conn.getWeight());
+                            results.get(currentLevel).put(itemUid, results.get(currentLevel).get(itemUid) + conn.getWeight());
                         } else {
-                            results.get(currentLevel).put(uid, results.get(currentLevel).get(itemUid) + 1.0);
+                            results.get(currentLevel).put(itemUid, results.get(currentLevel).get(itemUid) + 1.0);
                         }
 
                         if(!exclusions.contains(itemUid) && !newDependentConnections.contains(itemUid)) {  // add to next level if not present and not excluded
@@ -831,11 +829,10 @@ public class DataHandler {
                 }
             } else {  // currentLevel is even so choose column
                 for(Integer uid : dependentConnections) {  // find dependent connections of each item from the previous level
-                    results.get(currentLevel).put(uid, 0.0);
 
                     // find connections with uid as the row item
                     for(DSMItem row : rows) {  // iterate over row items finding the ones that match the column
-                        DSMConnection conn = getConnection(uid, row.getUid());
+                        DSMConnection conn = getConnection(row.getUid(), uid);
 
                         // define exit conditions
                         if(conn == null) continue;
@@ -843,10 +840,15 @@ public class DataHandler {
 
                         Integer itemUid = row.getUid();
 
+
+                        if(results.get(currentLevel).get(itemUid) == null) {
+                            results.get(currentLevel).put(itemUid, 0.0);
+                        }
+
                         if(countByWeight) {
-                            results.get(currentLevel).put(uid, results.get(currentLevel).get(itemUid) + conn.getWeight());
+                            results.get(currentLevel).put(itemUid, results.get(currentLevel).get(itemUid) + conn.getWeight());
                         } else {
-                            results.get(currentLevel).put(uid, results.get(currentLevel).get(itemUid) + 1.0);
+                            results.get(currentLevel).put(itemUid, results.get(currentLevel).get(itemUid) + 1.0);
                         }
 
                         if(!exclusions.contains(itemUid) && !newDependentConnections.contains(itemUid)) {  // add to next level if not present and not excluded
