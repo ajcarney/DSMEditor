@@ -113,6 +113,10 @@ public class InfoHandler {
             editLayout.setAlignment(Pos.CENTER);
 
             // create HBox for user to close with our without changes
+            Pane vSpacer = new Pane();  // used as a spacer between buttons
+            VBox.setVgrow(vSpacer, Priority.ALWAYS);
+            vSpacer.setMaxHeight(Double.MAX_VALUE);
+
             HBox closeArea = new HBox();
             Button applyAllButton = new Button("Apply");
             applyAllButton.setOnAction(ee -> {
@@ -122,7 +126,7 @@ public class InfoHandler {
                 versionNumberLabel.setText(version.getText());
 
                 matrix.setTitle(title.getText());
-                matrix.setProjectName(title.getText());
+                matrix.setProjectName(project.getText());
                 matrix.setCustomer(customer.getText());
                 matrix.setVersionNumber(version.getText());
 
@@ -140,7 +144,7 @@ public class InfoHandler {
             closeArea.getChildren().addAll(cancelButton, spacer, applyAllButton);
 
             VBox rootLayout = new VBox(10);
-            rootLayout.getChildren().addAll(editLayout, closeArea);
+            rootLayout.getChildren().addAll(editLayout, vSpacer, closeArea);
             rootLayout.setAlignment(Pos.CENTER);
             rootLayout.setPadding(new Insets(10, 10, 10, 10));
             rootLayout.setSpacing(10);
