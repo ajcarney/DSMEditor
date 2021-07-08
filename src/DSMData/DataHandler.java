@@ -786,6 +786,7 @@ public class DataHandler {
         HashMap<Integer, HashMap<Integer, Double>> results = new HashMap<>();
         ArrayList<Integer> dependentConnections = new ArrayList<>();
         dependentConnections.add(startItem);
+        exclusions.add(startItem);
 
         // check if start item is a row or column item
         boolean startIsRow;
