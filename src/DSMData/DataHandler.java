@@ -787,6 +787,9 @@ public class DataHandler {
         ArrayList<Integer> dependentConnections = new ArrayList<>();
         dependentConnections.add(startItem);
         exclusions.add(startItem);
+        for(Integer i : exclusions) {
+            System.out.println(i);
+        }
 
         // check if start item is a row or column item
         boolean startIsRow;
@@ -811,20 +814,25 @@ public class DataHandler {
                         if(conn == null) continue;
                         if(conn.getWeight() < minWeight) continue;
 
-                        Integer itemUid = col.getUid();
+                        Integer resultEntryUid;
+                        if(isSymmetrical()) {
+                            resultEntryUid = col.getAliasUid();
+                        } else {
+                            resultEntryUid = col.getUid();
+                        }
 
-                        if(results.get(currentLevel).get(itemUid) == null) {
-                            results.get(currentLevel).put(itemUid, 0.0);
+                        if(results.get(currentLevel).get(resultEntryUid) == null) {
+                            results.get(currentLevel).put(resultEntryUid, 0.0);
                         }
 
                         if(countByWeight) {
-                            results.get(currentLevel).put(itemUid, results.get(currentLevel).get(itemUid) + conn.getWeight());
+                            results.get(currentLevel).put(resultEntryUid, results.get(currentLevel).get(resultEntryUid) + conn.getWeight());
                         } else {
-                            results.get(currentLevel).put(itemUid, results.get(currentLevel).get(itemUid) + 1.0);
+                            results.get(currentLevel).put(resultEntryUid, results.get(currentLevel).get(resultEntryUid) + 1.0);
                         }
 
-                        if(!exclusions.contains(itemUid) && !newDependentConnections.contains(itemUid)) {  // add to next level if not present and not excluded
-                            newDependentConnections.add(itemUid);
+                        if(!exclusions.contains(resultEntryUid) && !newDependentConnections.contains(resultEntryUid)) {  // add to next level if not present and not excluded
+                            newDependentConnections.add(col.getUid());  // add the actual item uid
                         }
                     }
                 }
