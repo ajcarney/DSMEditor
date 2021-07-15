@@ -287,6 +287,17 @@ public class HeaderMenu {
             }
 
             PropagationAnalysis p = new PropagationAnalysis(ioHandler.getMatrix(editor.getFocusedMatrixUid()));
+            p.start();
+        });
+
+        MenuItem coordinationScore = new MenuItem("Thebeau Cluster Analysis");
+        coordinationScore.setOnAction(e -> {
+            if(editor.getFocusedMatrixUid() == null) {
+                return;
+            }
+
+            ClusterAnalysis c = new ClusterAnalysis(ioHandler.getMatrix(editor.getFocusedMatrixUid()));
+            c.start();
         });
 
 
@@ -296,9 +307,10 @@ public class HeaderMenu {
                 return;
             }
             validateSymmetry.setDisable(!ioHandler.getMatrix(editor.getFocusedMatrixUid()).isSymmetrical());
+            coordinationScore.setDisable(!ioHandler.getMatrix(editor.getFocusedMatrixUid()).isSymmetrical());
         });
 
-        toolsMenu.getItems().addAll(validateSymmetry, search, propagationAnalysis);
+        toolsMenu.getItems().addAll(validateSymmetry, search, propagationAnalysis, coordinationScore);
 
 
         menuBar.getMenus().addAll(fileMenu, editMenu, viewMenu, toolsMenu);

@@ -103,9 +103,6 @@ public class PropagationAnalysis {
         rootLayout.setTop(menuBar);
         rootLayout.setCenter(mainContent);
 
-        Scene scene = new Scene(rootLayout, 1200, 800);
-        window.setScene(scene);
-        window.show();
     }
 
 
@@ -386,6 +383,12 @@ public class PropagationAnalysis {
         rawOutputLayout.setPadding(new Insets(10));
         rawOutputLayout.setSpacing(5);
 
+    }
+
+    void start() {
+        Scene scene = new Scene(rootLayout, 1200, 800);
+        window.setScene(scene);
+        window.show();
     }
 
 }

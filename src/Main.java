@@ -57,10 +57,10 @@ public class Main extends Application {
 
 
         // start with a tab open (used for debugging, remove or comment out for release)
-//        File file = new File("/home/aiden/Documents/DSMEditor/vpas3.dsm");
-//        DataHandler matrix = ioHandler.readFile(file);
-//        int uid = ioHandler.addMatrix(matrix, file);
-//        editor.addTab(uid);
+        File file = new File("/home/aiden/Documents/DSMEditor/vpas3.dsm");
+        DataHandler matrix = ioHandler.readFile(file);
+        int uid = ioHandler.addMatrix(matrix, file);
+        editor.addTab(uid);
 
 
         // on close, iterate through each tab and run the close request to save it or not

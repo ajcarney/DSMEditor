@@ -716,8 +716,8 @@ public class DataHandler {
      *
      * @return 2d ArrayList of matrix
      */
-    public ArrayList< ArrayList<Pair< String, Object> > > getGridArray() {
-        ArrayList< ArrayList<Pair< String, Object> > > grid = new ArrayList<>();
+    public ArrayList<ArrayList<Pair<String, Object>>> getGridArray() {
+        ArrayList<ArrayList<Pair<String, Object>>> grid = new ArrayList<>();
 
         // sort row and columns by sortIndex
         Collections.sort(rows, Comparator.comparing(r -> r.getSortIndex()));
@@ -873,6 +873,116 @@ public class DataHandler {
         }
 
         return results;
+    }
+
+
+    /**
+     * Function to calculate the coordination score of a DSM using Fernandez's thesis (https://dsmweborg.files.wordpress.com/2019/05/msc_thebeau.pdf p28-29)
+     *
+     * @param matrix             The matrix object to calculate the coordination score of
+     * @param optimalSizeCluster The optimal size of a cluster, will penalize the IntraClusterCost score if it is not this value
+     * @param powcc              A constant to penalize the size of clusters
+     * @param calculateByWeight  Calculate the score using the weight of a connection or a default value of 1
+     *
+     * @return HashMap of the results with keys:
+     *     IntraBreakdown
+     *     TotalIntraCost
+     *     TotalExtraCost
+     *     TotalCost
+     */
+    static public HashMap<String, Object> getCoordinationScore(DataHandler matrix, Integer optimalSizeCluster, Double powcc, Boolean calculateByWeight) {
+        assert matrix.isSymmetrical() : "cannot call symmetrical function on non symmetrical dataset";
+
+        HashMap<String, Object> results = new HashMap<>();
+
+        HashMap<String, Double> intraCostBreakdown = new HashMap<>();
+        Double totalIntraCost = 0.0;
+        Double totalExtraCost = 0.0;
+        for(DSMConnection conn : matrix.getConnections()) {
+            if(matrix.getItem(conn.getRowUid()).getGroup().equals(matrix.getItem(conn.getColUid()).getGroup())) {  // row and col groups are the same so add to intra cluster
+                Integer clusterSize = 0;  // calculate cluster size
+                for(DSMItem row : matrix.getRows()) {
+                    if(row.getGroup().equals(matrix.getItem(conn.getRowUid()).getGroup())) {
+                        clusterSize += 1;
+                    }
+                }
+
+                Double intraCost;
+                if(calculateByWeight) {
+                    intraCost = conn.getWeight() * Math.pow(Math.abs(optimalSizeCluster - clusterSize), powcc);
+                } else {
+                    intraCost = Math.pow(Math.abs(optimalSizeCluster - clusterSize), powcc);
+                }
+
+                if(intraCostBreakdown.get(matrix.getItem(conn.getRowUid()).getGroup()) != null) {
+                    intraCostBreakdown.put(matrix.getItem(conn.getRowUid()).getGroup(), intraCostBreakdown.get(matrix.getItem(conn.getRowUid()).getGroup()) + intraCost);
+                } else {
+                    intraCostBreakdown.put(matrix.getItem(conn.getRowUid()).getGroup(), intraCost);
+                }
+
+                totalIntraCost += intraCost;
+            } else {
+                Integer dsmSize = matrix.getRows().size();
+                if(calculateByWeight) {
+                    totalExtraCost += conn.getWeight() * Math.pow(dsmSize, powcc);
+                } else {
+                    totalExtraCost += Math.pow(dsmSize, powcc);
+                }
+            }
+        }
+
+        results.put("IntraBreakdown", intraCostBreakdown);
+        results.put("TotalIntraCost", totalIntraCost);
+        results.put("TotalExtraCost", totalExtraCost);
+        results.put("TotalCost", totalIntraCost + totalExtraCost);
+
+        return results;
+    }
+
+
+    /**
+     * Calculates the bids of each item in a given group based on the Thebeau algorithm
+     *
+     * @param matrix             the matrix to use
+     * @param group              the group in the matrix to use
+     * @param optimalSizeCluster optimal cluster size that will receive no penalty
+     * @param powdep             exponential to emphasize connections
+     * @param powbid             exponential to penalize non-optimal cluster size
+     * @param calculateByWeight  calculate bid by weight or occurrence
+     *
+     * @return HashMap of rowUid and bid for the given group
+     */
+    static public HashMap<Integer, Double> calculateClusterBids(DataHandler matrix, String group, Integer optimalSizeCluster, Double powdep, Double powbid, Boolean calculateByWeight) {
+        assert matrix.isSymmetrical() : "cannot call symmetrical function on non symmetrical dataset";
+
+        HashMap<Integer, Double> bids = new HashMap<>();
+
+        Integer clusterSize = 0;
+        for(DSMItem row : matrix.getRows()) {
+            if(row.getGroup().equals(group)) {
+                clusterSize += 1;
+            }
+        }
+
+        for(DSMItem row : matrix.getRows()) {  // calculate bid of each item in the matrix for the given cluster
+            Double inout = 0.0;  // sum of DSM interactions of the item with each of the items in the cluster
+
+            for(DSMItem col : matrix.getCols()) {
+                if(col.getGroup().equals(group) && col.getAliasUid() != row.getUid()) {  // make connection a part of inout score
+                    DSMConnection conn = matrix.getConnection(row.getUid(), col.getUid());
+                    if(calculateByWeight && conn != null) {
+                        inout += conn.getWeight();
+                    } else if(conn != null) {
+                        inout += 1;
+                    }
+                }
+            }
+
+            Double clusterBid = Math.pow(inout, powdep) / Math.pow(Math.abs(optimalSizeCluster - clusterSize), powbid);
+            bids.put(row.getUid(), clusterBid);
+        }
+
+        return bids;
     }
 
 
