@@ -55,6 +55,20 @@ public class DSMItem {
 
 
     /**
+     * Copy constructor for DSMItem
+     *
+     * @param copy DSMItem object that will be copied
+     */
+    public DSMItem(DSMItem copy) {
+        uid = copy.getUid();
+        aliasUid = copy.getAliasUid();
+        name = copy.getName();
+        sortIndex = copy.getSortIndex();
+        group = copy.getGroup();
+    }
+
+
+    /**
      * Getter function for the uid of the item
      *
      * @return the uid of the item

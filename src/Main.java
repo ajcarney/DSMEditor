@@ -94,8 +94,10 @@ public class Main extends Application {
         System.err.println("***An unhandled exception was thrown***");
         System.err.println("An unexpected error occurred in " + t);
         System.err.println(e.getMessage());
-        System.err.println("Check the log file for more information");
-        System.err.println("Saving files to .recovery");
+        System.err.println("Check the log file for information");
+        System.err.println("Saving files to .recovery\n\n");
+        System.err.println(e.getStackTrace());
+        e.printStackTrace();
 
         File logDir = new File("./.log");
         File logFile = new File("./.log/log");

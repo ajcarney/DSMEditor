@@ -5,6 +5,8 @@ import javafx.collections.ObservableSet;
 import javafx.scene.paint.Color;
 import javafx.util.Pair;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 
 /**
@@ -46,6 +48,45 @@ public class DataHandler {
 
         this.wasModified = true;
     }
+
+
+    /**
+     * Copy constructor for DataHandler class. Performs a deep copy
+     *
+     * @param copy DataHandler object to copy
+     */
+    public DataHandler(DataHandler copy) {
+        rows = new Vector<>();
+        for(DSMItem row : copy.getRows()) {
+            rows.add(new DSMItem(row));
+        }
+
+        cols = new Vector<>();
+        for(DSMItem col : copy.getCols()) {
+            cols.add(new DSMItem(col));
+        }
+
+        connections = new Vector<>();
+        for(DSMConnection conn : copy.getConnections()) {
+            connections.add(new DSMConnection(conn));
+        }
+
+        groupingColors = (HashMap<String, Color>) copy.getGroupingColors().clone();
+
+        groupings = FXCollections.observableSet();
+        for(String group : groupingColors.keySet()) {
+            groupings.add(group);
+        }
+
+        title = copy.getTitle();
+        projectName = copy.getProjectName();
+        customer = copy.getCustomer();
+        versionNumber = copy.getVersionNumber();
+
+        symmetrical = copy.isSymmetrical();
+        this.wasModified = true;
+    }
+
 
     /**
      * Returns the rows in a mutable way  TODO: this should be immutable
@@ -505,6 +546,10 @@ public class DataHandler {
     public void setGroupSymmetric(int rowUid, String newGroup) {
         assert isSymmetrical() : "cannot call symmetrical function on non symmetrical dataset";
 
+        if(!groupingColors.containsKey(newGroup)) {
+            addGrouping(newGroup, null);
+        }
+
         int r_index = -1;
         int c_index = -1;
         for (int i = 0; i < this.rows.size(); i++) {
@@ -528,6 +573,9 @@ public class DataHandler {
      * @param uid the uid of the item to be modified
      */
     public void setGroup(int uid, String newGroup) {
+        if(!groupingColors.containsKey(newGroup)) {
+            addGrouping(newGroup, null);
+        }
         for(int i=0; i<this.rows.size(); i++) {     // check to see if uid is in the rows
             if(rows.elementAt(i).getUid() == uid) {
                 rows.elementAt(i).setGroup(newGroup);
@@ -675,6 +723,19 @@ public class DataHandler {
     }
 
 
+    public void reDistributeSortIndexByGroup() {
+        Collections.sort(rows, Comparator.comparing(DSMItem::getGroup).thenComparing(DSMItem::getSortIndex));
+        Collections.sort(cols, Comparator.comparing(DSMItem::getGroup).thenComparing(DSMItem::getSortIndex));
+
+        for(int i=0; i<rows.size(); i++) {  // reset row sort indexes 1 -> n
+            rows.elementAt(i).setSortIndex(i + 1);
+        }
+        for(int i=0; i<cols.size(); i++) {  // reset col sort indexes 1 -> n
+            cols.elementAt(i).setSortIndex(i + 1);
+        }
+    }
+
+
     /**
      * Checks to make sure that connections have a symmetrical counterpart that has an equal name and an equal weight
      *
@@ -787,9 +848,6 @@ public class DataHandler {
         ArrayList<Integer> dependentConnections = new ArrayList<>();
         dependentConnections.add(startItem);
         exclusions.add(startItem);
-        for(Integer i : exclusions) {
-            System.out.println(i);
-        }
 
         // check if start item is a row or column item
         boolean startIsRow;
@@ -983,6 +1041,102 @@ public class DataHandler {
         }
 
         return bids;
+    }
+
+    static public DataHandler thebeauAlgorithm(DataHandler inputMatrix, Integer optimalSizeCluster, Double powdep, Double powbid, Double powcc, Double randBid, Double randAccept, Boolean calculateByWeight, int numLevels, long randSeed, boolean debug) {
+        assert inputMatrix.isSymmetrical() : "cannot call symmetrical function on non symmetrical dataset";
+        Random generator = new Random(randSeed);
+
+        // place each element in the matrix in its own cluster
+        DataHandler matrix = new DataHandler(inputMatrix);
+        assert matrix != inputMatrix && !matrix.equals(inputMatrix): "matrices are equal and they should not be";
+        matrix.clearGroupings();  // groups will be re-distributed
+
+        double h = 0.2423353;  // use random start value for color generation
+        for(int i = 0; i < matrix.getRows().size(); i++) {
+            matrix.setGroupSymmetric(matrix.getRows().elementAt(i).getUid(), "G" + i);
+            h += 0.618033988749895;  // golden_ratio_conjugate, this is a part of the golden ratio method for generating unique colors
+            h %= 1;
+            java.awt.Color hsvColor = java.awt.Color.getHSBColor((float)h, (float)0.5, (float)0.95);
+
+            double r = hsvColor.getRed() / 255.0;
+            double g = hsvColor.getGreen() / 255.0;
+            double b = hsvColor.getBlue() / 255.0;
+            matrix.updateGroupingColor("G" + i, Color.color(r, g, b));
+        }
+
+        // save the best solution
+        DataHandler bestSolution = new DataHandler(matrix);
+
+        // calculate initial coordination cost
+        double coordinationCost = (Double)getCoordinationScore(matrix, optimalSizeCluster, powcc, calculateByWeight).get("TotalCost");
+
+        String debugString = "";
+        Instant absStart = Instant.now();
+
+        for(int i=0; i < numLevels; i++) {  // iterate numLevels times
+            Instant start = Instant.now();
+
+            // choose an element from the matrix
+            int n = (int)(generator.nextDouble() * (matrix.getRows().size() - 1));  // double from 0 to 1.0 multiplied by max index cast to integer
+            DSMItem item = matrix.getRows().elementAt(n);
+
+            // calculate bids
+            HashMap<String, Double> bids = new HashMap<>();
+            for (String group : matrix.getGroupings()) {
+                double bid = matrix.calculateClusterBids(matrix, group, optimalSizeCluster, powdep, powbid, calculateByWeight).get(item.getUid());
+                bids.put(group, bid);
+            }
+
+            // choose a number between 0 and randBid to determine if it should make a suboptimal change
+            DataHandler tempMatrix = new DataHandler(matrix);
+            int nBid = (int) (generator.nextDouble() * randBid);
+
+            // find if the change is optimal
+            String highestBidder = bids.entrySet().iterator().next().getKey();  // start with a default value so comparison doesn't throw NullPointerException
+            if (nBid == randBid) {  // assign item group to second highest bidder
+                String secondHighestBidder = "";
+                for (Map.Entry<String, Double> entry : bids.entrySet()) {
+                    if (Double.compare(entry.getValue(), bids.get(highestBidder)) >= 0) {
+                        highestBidder = entry.getKey();
+                        secondHighestBidder = highestBidder;
+                    } else if (Double.compare(entry.getValue(), bids.get(secondHighestBidder)) >= 0) {
+                        secondHighestBidder = entry.getKey();
+                    }
+                }
+                tempMatrix.setGroupSymmetric(item.getUid(), secondHighestBidder);
+            } else {  // assign to highest bidder
+                for (Map.Entry<String, Double> entry : bids.entrySet()) {
+                    if (Double.compare(entry.getValue(), bids.get(highestBidder)) >= 0) {
+                        highestBidder = entry.getKey();
+                    }
+                }
+                tempMatrix.setGroupSymmetric(item.getUid(), highestBidder);
+            }
+
+            // choose a number between 0 and randAccept to determine if change is permanent regardless of it being optimal
+            int nAccept = (int) (generator.nextDouble() * randAccept);
+            Double newCoordinationScore = (Double) getCoordinationScore(tempMatrix, optimalSizeCluster, powcc, calculateByWeight).get("TotalCost");
+
+            if (nAccept == randAccept || newCoordinationScore < coordinationCost) {  // make the change permanent
+                coordinationCost = newCoordinationScore;
+                matrix = tempMatrix;
+
+                if (coordinationCost < (Double) getCoordinationScore(bestSolution, optimalSizeCluster, powcc, calculateByWeight).get("TotalCost")) {  // save the new solution as the best one
+                    bestSolution = matrix;
+                }
+            }
+
+            String startTime = String.valueOf(Duration.between(absStart, start).toMillis());
+            String elapsedTime = String.valueOf(Duration.between(start, Instant.now()).toMillis());
+            debugString += i + "," + startTime + "," + elapsedTime + "," + newCoordinationScore + "\n";
+        }
+
+        if(debug) {
+            System.out.println(debugString);
+        }
+
+        return bestSolution;
     }
 
 

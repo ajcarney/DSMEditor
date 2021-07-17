@@ -300,7 +300,15 @@ public class HeaderMenu {
             c.start();
         });
 
+        MenuItem thebeau = new MenuItem("Thebeau Algorithm");
+        thebeau.setOnAction(e -> {
+            if(editor.getFocusedMatrixUid() == null) {
+                return;
+            }
 
+            ClusterAlgorithm c = new ClusterAlgorithm(ioHandler.getMatrix(editor.getFocusedMatrixUid()));
+            c.start();
+        });
 
         toolsMenu.setOnShown(e -> {  // disable validate symmetry for non-symmetrical matrices
             if(editor.getFocusedMatrixUid() == null) {
@@ -308,9 +316,10 @@ public class HeaderMenu {
             }
             validateSymmetry.setDisable(!ioHandler.getMatrix(editor.getFocusedMatrixUid()).isSymmetrical());
             coordinationScore.setDisable(!ioHandler.getMatrix(editor.getFocusedMatrixUid()).isSymmetrical());
+            thebeau.setDisable(!ioHandler.getMatrix(editor.getFocusedMatrixUid()).isSymmetrical());
         });
 
-        toolsMenu.getItems().addAll(validateSymmetry, search, propagationAnalysis, coordinationScore);
+        toolsMenu.getItems().addAll(validateSymmetry, search, propagationAnalysis, coordinationScore, thebeau);
 
 
         menuBar.getMenus().addAll(fileMenu, editMenu, viewMenu, toolsMenu);

@@ -27,6 +27,19 @@ public class DSMConnection {
         this.rowUid = rowUid;
     }
 
+
+    /**
+     * Copy constructor for DSMConnection
+     *
+     * @param copy DSMConnection object to copy
+     */
+    public DSMConnection(DSMConnection copy) {
+        connectionName = copy.getConnectionName();
+        weight = copy.getWeight();
+        colUid = copy.getColUid();
+        rowUid = copy.getRowUid();
+    }
+
     /**
      * returns the current name of the connection
      *
