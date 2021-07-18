@@ -47,6 +47,7 @@ public class ClusterAlgorithm {
     private VBox outputMatrixLayout;
 
     private CheckBox countByWeight;
+    private CheckBox debug;
 
 
     public ClusterAlgorithm(DataHandler matrix) {
@@ -69,8 +70,8 @@ public class ClusterAlgorithm {
         Menu runMenu = new Menu("Run");
         MenuItem run = new MenuItem("Run Algorithm");
         run.setOnAction(e -> {
-            runThebeauAlgorithm();
-            runCoordinationScore();
+            DataHandler outputMatrix = runThebeauAlgorithm();
+            runCoordinationScore(outputMatrix);
         });
         runMenu.getItems().addAll(run);
 
@@ -108,7 +109,7 @@ public class ClusterAlgorithm {
 
         Label optimalClusterSizeLabel = new Label("Optimal Cluster Size");
 
-        optimalSizeCluster = new SimpleDoubleProperty(7.0);
+        optimalSizeCluster = new SimpleDoubleProperty(4.5);
         NumericTextField optimalSizeEntry = new NumericTextField(optimalSizeCluster.getValue());
         optimalSizeEntry.textProperty().addListener((obs, oldText, newText) -> {
             optimalSizeCluster.setValue(optimalSizeEntry.getNumericValue());
@@ -144,7 +145,7 @@ public class ClusterAlgorithm {
         Label powdepLabel = new Label("powdep constant");
         powdepLabel.setTooltip(new Tooltip("Exponential to emphasize connections when calculating bids"));
 
-        powdep = new SimpleDoubleProperty(1.0);
+        powdep = new SimpleDoubleProperty(4.0);
         NumericTextField powdepEntry = new NumericTextField(powdep.getValue());
         powdepEntry.textProperty().addListener((obs, oldText, newText) -> {
             powdep.setValue(powdepEntry.getNumericValue());
@@ -180,7 +181,7 @@ public class ClusterAlgorithm {
         Label randBidLabel = new Label("rand_bid constant");
         randBidLabel.setTooltip(new Tooltip("Constant to determine how often to make slightly suboptimal change"));
 
-        randBid = new SimpleDoubleProperty(30);
+        randBid = new SimpleDoubleProperty(122);
         NumericTextField randBidEntry = new NumericTextField(randBid.getValue());
         randBidEntry.textProperty().addListener((obs, oldText, newText) -> {
             randBid.setValue(randBidEntry.getNumericValue());
@@ -198,7 +199,7 @@ public class ClusterAlgorithm {
         Label randAcceptLabel = new Label("rand_accept constant");
         randAcceptLabel.setTooltip(new Tooltip("Constant to determine how often to make a suboptimal change"));
 
-        randAccept = new SimpleDoubleProperty(30);
+        randAccept = new SimpleDoubleProperty(122);
         NumericTextField randAcceptEntry = new NumericTextField(randAccept.getValue());
         randAcceptEntry.textProperty().addListener((obs, oldText, newText) -> {
             randAccept.setValue(randAcceptEntry.getNumericValue());
@@ -218,7 +219,7 @@ public class ClusterAlgorithm {
         countByWeight.setSelected(true);
         countByWeight.setMaxWidth(Double.MAX_VALUE);
 
-        countMethodLayout.getChildren().addAll(optimalSizeLayout, countByWeight);
+        countMethodLayout.getChildren().addAll(countByWeight);
         countMethodLayout.setAlignment(Pos.CENTER);
         countMethodLayout.setPadding(new Insets(10));
 
@@ -228,7 +229,7 @@ public class ClusterAlgorithm {
 
         Label levelsLabel = new Label("Number of Iterations");
         
-        numLevels = new SimpleDoubleProperty(50);
+        numLevels = new SimpleDoubleProperty(1000);
         NumericTextField levelsEntry = new NumericTextField(numLevels.getValue());
         levelsEntry.textProperty().addListener((obs, oldText, newText) -> {
             numLevels.setValue(levelsEntry.getNumericValue());
@@ -257,16 +258,28 @@ public class ClusterAlgorithm {
         randSeedArea.setAlignment(Pos.CENTER);
 
 
+        // debug checkbox
+        VBox debugLayout = new VBox();
+        debugLayout.setSpacing(10);
+
+        debug = new CheckBox("Debug to stdout");
+        debug.setMaxWidth(Double.MAX_VALUE);
+
+        debugLayout.getChildren().addAll(debug);
+        debugLayout.setAlignment(Pos.CENTER);
+        debugLayout.setPadding(new Insets(10));
+
         // config layout
         configLayout = new VBox();
-        configLayout.getChildren().addAll(optimalSizeLayout, powccArea, powdepArea, powbidArea, randBidArea, randAcceptArea, countMethodLayout, randSeedArea, levelsArea);
+        configLayout.getChildren().addAll(optimalSizeLayout, powccArea, powdepArea, powbidArea, randBidArea, randAcceptArea, countMethodLayout, randSeedArea, levelsArea, debugLayout);
         configLayout.setSpacing(15);
         configLayout.setAlignment(Pos.TOP_CENTER);
     }
 
 
-    private void runCoordinationScore() {
-        HashMap<String, Object> coordinationScore = DataHandler.getCoordinationScore(matrix, optimalSizeCluster.intValue(), powcc.doubleValue(), countByWeight.isSelected());
+    private void runCoordinationScore(DataHandler matrix) {
+        HashMap<String, Object> coordinationScore = DataHandler.getCoordinationScore(matrix, optimalSizeCluster.doubleValue(), powcc.doubleValue(), countByWeight.isSelected());
+        HashMap<String, Object> currentScores = DataHandler.getCoordinationScore(this.matrix, optimalSizeCluster.doubleValue(), powcc.doubleValue(), countByWeight.isSelected());
 
         Label titleLabel = new Label("Cluster Cost Analysis");
         titleLabel.setStyle(titleLabel.getStyle() + "-fx-font-weight: bold;");
@@ -305,22 +318,28 @@ public class ClusterAlgorithm {
         total.getChildren().addAll(new Label("Total Cost:"), v3);
         total.setSpacing(10);
 
+        HBox comparison = new HBox();
+        Label v4 = new Label(currentScores.get("TotalCost").toString());
+        v4.setStyle(v1.getStyle() + "-fx-font-weight: bold;");
+        comparison.getChildren().addAll(new Label("Total Cost of User-Defined Groupings:"), v4);
+        comparison.setSpacing(10);
+
         coordinationLayout.getChildren().removeAll(coordinationLayout.getChildren());
-        coordinationLayout.getChildren().addAll(titleLabel, intraTotal, new Label("Intra Cost Breakdown:"), intraScroll, extraTotal, total);
+        coordinationLayout.getChildren().addAll(titleLabel, intraTotal, new Label("Intra Cost Breakdown:"), intraScroll, extraTotal, total, comparison);
         coordinationLayout.setAlignment(Pos.TOP_LEFT);
         coordinationLayout.setPadding(new Insets(10));
         coordinationLayout.setSpacing(15);
     }
 
 
-    private void runThebeauAlgorithm() {
+    private DataHandler runThebeauAlgorithm() {
         BooleanProperty completedProperty = new SimpleBooleanProperty();  // used to know when to close popup
         completedProperty.set(false);
 
         Thread t = new Thread(() -> {  // thread to perform the function
             outputMatrix = DataHandler.thebeauAlgorithm(
                     matrix,
-                    optimalSizeCluster.intValue(),
+                    optimalSizeCluster.doubleValue(),
                     powdep.doubleValue(),
                     powbid.doubleValue(),
                     powcc.doubleValue(),
@@ -329,7 +348,7 @@ public class ClusterAlgorithm {
                     countByWeight.isSelected(),
                     numLevels.intValue(),
                     randSeed.longValue(),
-                    true
+                    debug.isSelected()
             );
             outputMatrix.reDistributeSortIndexByGroup();
             completedProperty.set(true);
@@ -392,6 +411,8 @@ public class ClusterAlgorithm {
 
         outputMatrixLayout.getChildren().removeAll(outputMatrixLayout.getChildren());
         outputMatrixLayout.getChildren().addAll(gui.getMatrixEditor());
+
+        return outputMatrix;
     }
 
 

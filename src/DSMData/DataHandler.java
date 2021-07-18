@@ -948,7 +948,7 @@ public class DataHandler {
      *     TotalExtraCost
      *     TotalCost
      */
-    static public HashMap<String, Object> getCoordinationScore(DataHandler matrix, Integer optimalSizeCluster, Double powcc, Boolean calculateByWeight) {
+    static public HashMap<String, Object> getCoordinationScore(DataHandler matrix, Double optimalSizeCluster, Double powcc, Boolean calculateByWeight) {
         assert matrix.isSymmetrical() : "cannot call symmetrical function on non symmetrical dataset";
 
         HashMap<String, Object> results = new HashMap<>();
@@ -1010,7 +1010,7 @@ public class DataHandler {
      *
      * @return HashMap of rowUid and bid for the given group
      */
-    static public HashMap<Integer, Double> calculateClusterBids(DataHandler matrix, String group, Integer optimalSizeCluster, Double powdep, Double powbid, Boolean calculateByWeight) {
+    static public HashMap<Integer, Double> calculateClusterBids(DataHandler matrix, String group, Double optimalSizeCluster, Double powdep, Double powbid, Boolean calculateByWeight) {
         assert matrix.isSymmetrical() : "cannot call symmetrical function on non symmetrical dataset";
 
         HashMap<Integer, Double> bids = new HashMap<>();
@@ -1043,7 +1043,35 @@ public class DataHandler {
         return bids;
     }
 
-    static public DataHandler thebeauAlgorithm(DataHandler inputMatrix, Integer optimalSizeCluster, Double powdep, Double powbid, Double powcc, Double randBid, Double randAccept, Boolean calculateByWeight, int numLevels, long randSeed, boolean debug) {
+
+    /**
+     * Runs Thebeau's matrix clustering algorithm based on his 2001 research paper (https://dsmweborg.files.wordpress.com/2019/05/msc_thebeau.pdf)
+     *
+     * Original Algorithm Steps (Directly from the paper):
+     * 1. Each element is initially placed in its own cluster
+     * 2. Calculate the Coordination Cost of the Cluster Matrix
+     * 3. Randomly choose an element
+     * 4. Calculate bid from all clusters for the selected element
+     * 5. Randomly choose a number between 1 and rand_bid (algorithm parameter)
+     * 6. Calculate the total Coordination Cost if the selected element becomes a member of the cluster with highest bid (use second highest bid if step 5 is equal to rand_bid)
+     * 7. Randomly choose a number between I and rand_accept (algorithm parameter)
+     * 8. If new Coordination Cost is lower than the old coordination cost or the number chosen in step 7 is equal to rand_accept, make the change permanent otherwise make no changes
+     * 9. Go back to Step 3 until repeated a set number of times
+     *
+     * @param inputMatrix        matrix to run the algorithm on
+     * @param optimalSizeCluster a constant to penalize clusters not of this size
+     * @param powdep             constant to emphasize interactions
+     * @param powbid             constant to penalize cluster size when bidding
+     * @param powcc              constant to penalize size of cluster in cost calculation
+     * @param randBid            constant to determine how often to perform an action based on the second highest bid
+     * @param randAccept         constant to determine how often to perform a not necessarily optimal action
+     * @param calculateByWeight  calculate scores and bidding by weight or by number of occurrences
+     * @param numLevels          number of iterations
+     * @param randSeed           seed for random number generator
+     * @param debug              debug to stdout
+     * @return                   DataHandler object of the new clustered matrix
+     */
+    static public DataHandler thebeauAlgorithm(DataHandler inputMatrix, Double optimalSizeCluster, Double powdep, Double powbid, Double powcc, Double randBid, Double randAccept, Boolean calculateByWeight, int numLevels, long randSeed, boolean debug) {
         assert inputMatrix.isSymmetrical() : "cannot call symmetrical function on non symmetrical dataset";
         Random generator = new Random(randSeed);
 
@@ -1071,7 +1099,7 @@ public class DataHandler {
         // calculate initial coordination cost
         double coordinationCost = (Double)getCoordinationScore(matrix, optimalSizeCluster, powcc, calculateByWeight).get("TotalCost");
 
-        String debugString = "";
+        String debugString = "iteration,start time, elapsed time,coordination score\n";
         Instant absStart = Instant.now();
 
         for(int i=0; i < numLevels; i++) {  // iterate numLevels times

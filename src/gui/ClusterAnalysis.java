@@ -184,7 +184,7 @@ public class ClusterAnalysis {
 
 
     private void runCoordinationScore() {
-        HashMap<String, Object> coordinationScore = DataHandler.getCoordinationScore(matrix, optimalSizeCluster.intValue(), powcc.doubleValue(), countByWeight.isSelected());
+        HashMap<String, Object> coordinationScore = DataHandler.getCoordinationScore(matrix, optimalSizeCluster.doubleValue(), powcc.doubleValue(), countByWeight.isSelected());
 
         Label titleLabel = new Label("Cluster Cost Analysis");
         titleLabel.setStyle(titleLabel.getStyle() + "-fx-font-weight: bold;");
@@ -312,7 +312,7 @@ public class ClusterAnalysis {
         for(String group : groupOrder) {
             currentRow = 1;
 
-            HashMap<Integer, Double> groupBids = DataHandler.calculateClusterBids(matrix, group, optimalSizeCluster.intValue(), powdep.doubleValue(), powbid.doubleValue(), countByWeight.isSelected());
+            HashMap<Integer, Double> groupBids = DataHandler.calculateClusterBids(matrix, group, optimalSizeCluster.doubleValue(), powdep.doubleValue(), powbid.doubleValue(), countByWeight.isSelected());
             for (DSMItem item : items) {
                 HBox cell = new HBox();
                 DecimalFormat df = new DecimalFormat("#.##");
