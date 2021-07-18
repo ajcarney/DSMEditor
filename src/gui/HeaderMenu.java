@@ -2,6 +2,7 @@ package gui;
 
 import DSMData.DataHandler;
 import IOHandler.IOHandler;
+import IOHandler.ImportHandler;
 import javafx.scene.control.*;
 import javafx.stage.FileChooser;
 import javafx.stage.WindowEvent;
@@ -105,8 +106,31 @@ public class HeaderMenu {
             }
         });
 
+        Menu importMenu = new Menu("Import...");
+        MenuItem importThebeau = new MenuItem("Thebeau Matlab File");
+        importThebeau.setOnAction(e -> {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Matlab File", "*.m"));  // matlab is the only file type usable
+            File file = fileChooser.showOpenDialog(menuBar.getScene().getWindow());
+            if(file != null) {  // make sure user did not just close out of the file chooser window
+                DataHandler matrix = ImportHandler.importThebeauMatlabFile(file);
+                if(matrix == null) {
+                    // TODO: open window saying there was an error parsing the document
+                    System.out.println("there was an error reading the file " + file.toString());
+                } else if(!ioHandler.getMatrixSaveNames().containsValue(file)) {
+                    File importedFile = new File(file.getParent(), file.getName().substring(0, file.getName().lastIndexOf('.')) + ".dsm");
+                    int uid = this.ioHandler.addMatrix(matrix, importedFile);
+                    this.editor.addTab(uid);
+                } else {
+                    editor.focusTab(file);  // focus on that tab because it is already open
+                }
+            }
+        });
+
+        importMenu.getItems().add(importThebeau);
+
         MenuItem saveFile = new MenuItem("Save...");
-        saveFile.setOnAction( e -> {
+        saveFile.setOnAction(e -> {
             if(editor.getFocusedMatrixUid() == null) {
                 return;
             }
@@ -162,7 +186,20 @@ public class HeaderMenu {
                 int code = this.ioHandler.exportMatrixToXLSX(editor.getFocusedMatrixUid(), fileName);
             }
         });
-        exportMenu.getItems().addAll(exportCSV, exportXLSX);
+        MenuItem exportThebeau = new MenuItem("Thebeau Matlab File (.m)");
+        exportThebeau.setOnAction(e -> {
+            if(editor.getFocusedMatrixUid() == null) {
+                return;
+            }
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Matlab File", "*.m"));  // dsm is the only file type usable
+            File fileName = fileChooser.showSaveDialog(menuBar.getScene().getWindow());
+            if(fileName != null) {
+                int code = this.ioHandler.exportMatrixToThebeauMatlabFile(editor.getFocusedMatrixUid(), fileName);
+            }
+        });
+
+        exportMenu.getItems().addAll(exportCSV, exportXLSX, exportThebeau);
 
 
         MenuItem exit = new MenuItem("Exit");
@@ -182,6 +219,7 @@ public class HeaderMenu {
 //        fileMenu.getItems().add(new SeparatorMenuItem());
 //        fileMenu.getItems().add(new MenuItem("Settings..."));
         fileMenu.getItems().add(new SeparatorMenuItem());
+        fileMenu.getItems().add(importMenu);
         fileMenu.getItems().add(exportMenu);
         fileMenu.getItems().add(new SeparatorMenuItem());
         fileMenu.getItems().add(exit);

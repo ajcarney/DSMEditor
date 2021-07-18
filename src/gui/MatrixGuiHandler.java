@@ -267,9 +267,14 @@ public class MatrixGuiHandler {
      * @return        the uids associated with the cell (row uid, column uid)
      */
     private Pair<Integer, Integer> getUidsFromGridLoc(Pair<Integer, Integer> cellLoc) {
-        Integer rowUid = gridUidLookup.get("rows").get(cellLoc.getKey());
-        Integer colUid = gridUidLookup.get("cols").get(cellLoc.getValue());
-        return new Pair<>(rowUid, colUid);
+        try {
+            Integer rowUid = gridUidLookup.get("rows").get(cellLoc.getKey());
+            Integer colUid = gridUidLookup.get("cols").get(cellLoc.getValue());
+            return new Pair<>(rowUid, colUid);
+        } catch(NullPointerException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
 

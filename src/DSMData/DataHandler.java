@@ -656,7 +656,7 @@ public class DataHandler {
             if(rowUid == conn.getRowUid() && colUid == conn.getColUid()) {
                 connectionExists = true;
                 // connection exists, so modify it
-                conn.setConnectionName(connectionName);  // TODO: make sure this actually modifies the object and not just a copy of it
+                conn.setConnectionName(connectionName);
                 conn.setWeight(weight);
                 break;
             }

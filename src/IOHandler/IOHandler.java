@@ -25,10 +25,7 @@ import org.jdom2.input.SAXBuilder;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -401,6 +398,52 @@ public class IOHandler {
             OutputStream fileOut = new FileOutputStream(file);
             workbook.write(fileOut);
             fileOut.close();
+
+            return 1;
+        } catch(Exception e) {  // TODO: add better error handling and bring up an alert box
+            System.out.println(e);
+            e.printStackTrace();
+            return 0;  // 0 means there was an error somewhere
+        }
+    }
+
+
+    public int exportMatrixToThebeauMatlabFile(int matrixUid, File file) {
+        try {
+            getMatrix(matrixUid).reDistributeSortIndexes();  // re-number 0 -> n
+
+            String connectionsString = "";
+            for(DSMConnection conn: getMatrix(matrixUid).getConnections()) {
+                String c = "DSM("
+                    + (int)getMatrix(matrixUid).getItem(conn.getRowUid()).getSortIndex()  // add one because matlab is 1 indexed
+                    + ","
+                    + (int)getMatrix(matrixUid).getItem(conn.getRowUid()).getSortIndex()  // add one because matlab is 1 indexed
+                    + ") = "
+                    + conn.getWeight()
+                    + ";\n";
+                connectionsString += c;
+            }
+
+            String labelsString = "";
+            for(DSMItem row : getMatrix(matrixUid).getRows()) {
+                String l = "DSMLABEL{"
+                    + (int)row.getSortIndex()
+                    + ",1} = '"
+                    + row.getName()
+                    + "';\n";
+                labelsString += l;
+            }
+
+            String matlabString = "DSM_size = "
+                    + getMatrix(matrixUid).getRows().size()  // add one because of how the matlab script works
+                    + ";\nDSM = zeros(DSM_size);\n\n\n"
+                    + connectionsString
+                    + "\n\nDSMLABEL = cell(DSM_size,1);\n"
+                    + labelsString;
+
+            PrintWriter out = new PrintWriter(file);
+            out.println(matlabString);
+            out.close();
 
             return 1;
         } catch(Exception e) {  // TODO: add better error handling and bring up an alert box
