@@ -241,18 +241,28 @@ public class HeaderMenu {
         zoomIn.setOnAction(e -> {
             editor.increaseFontScaling();
         });
-
         MenuItem zoomOut = new MenuItem("Zoom Out");
         zoomOut.setOnAction(e -> {
             editor.decreaseFontScaling();
         });
-
         MenuItem zoomReset = new MenuItem("Reset Zoom");
         zoomReset.setOnAction(e -> {
             editor.resetFontScaling();
         });
 
+        RadioMenuItem showNames = new RadioMenuItem("Show Connection Names");
+        showNames.setSelected(true);
+        showNames.setOnAction(e -> {
+            if(editor.getFocusedMatrixUid() == null) {
+                return;
+            }
+            ioHandler.getMatrixGuiHandler(editor.getFocusedMatrixUid()).setShowNames(showNames.isSelected());
+        });
+
         viewMenu.getItems().addAll(zoomIn, zoomOut, zoomReset);
+        viewMenu.getItems().add(new SeparatorMenuItem());
+        viewMenu.getItems().addAll(showNames);
+
         
 
     // tools menu

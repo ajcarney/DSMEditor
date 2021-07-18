@@ -408,6 +408,13 @@ public class IOHandler {
     }
 
 
+    /**
+     * Exports a matrix to a matlab file that can be used with Thebeau's source code
+     *
+     * @param matrixUid the matrix to export
+     * @param file      the file to export the matrix to
+     * @return          1 on success, 0 on error
+     */
     public int exportMatrixToThebeauMatlabFile(int matrixUid, File file) {
         try {
             getMatrix(matrixUid).reDistributeSortIndexes();  // re-number 0 -> n

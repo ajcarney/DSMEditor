@@ -31,8 +31,9 @@ public class ConnectionSearchWidget {
     private TextField searchInput = new TextField();
 
     private ToggleGroup tg = new ToggleGroup();
-    private RadioButton exactRadio = new RadioButton("Exact Match");
-    private RadioButton containsRadio = new RadioButton("Contains");
+    private RadioButton exactRadio = new RadioButton("Name - Exact Match");
+    private RadioButton containsRadio = new RadioButton("Name - Contains");
+    private RadioButton weightRadio = new RadioButton("Weight");
 
     private IntegerProperty numResults = new SimpleIntegerProperty(0);
     private Label numResultsLabel = new Label("0 Results");
@@ -56,16 +57,21 @@ public class ConnectionSearchWidget {
         this.editor = editor;
         close();  // default to hidden
 
-        searchInput.setPromptText("Connection Name");
+        searchInput.setPromptText("Connection Name/Weight");
         searchInput.setMinWidth(Region.USE_PREF_SIZE);
 
         exactRadio.setSelected(true);
+
         exactRadio.setMinWidth(Region.USE_PREF_SIZE);
         containsRadio.setMinWidth(Region.USE_PREF_SIZE);
+        weightRadio.setMinWidth(Region.USE_PREF_SIZE);
+
         exactRadio.setToggleGroup(tg);
         containsRadio.setToggleGroup(tg);
+        weightRadio.setToggleGroup(tg);
+
         VBox searchTypeLayout = new VBox();
-        searchTypeLayout.getChildren().addAll(exactRadio, containsRadio);
+        searchTypeLayout.getChildren().addAll(exactRadio, containsRadio, weightRadio);
 
         numResultsLabel.textProperty().bind(
             Bindings.createStringBinding(() -> {
@@ -144,9 +150,22 @@ public class ConnectionSearchWidget {
                     matches.add(new Pair<>(connection.getRowUid(), connection.getColUid()));
                 }
             }
-        } else {
+        } else if(tg.getSelectedToggle().equals(containsRadio)){
             for(DSMConnection connection : ioHandler.getMatrix(editor.getFocusedMatrixUid()).getConnections()) {
                 if(connection.getConnectionName().contains(text)) {
+                    matches.add(new Pair<>(connection.getRowUid(), connection.getColUid()));
+                }
+            }
+        } else {
+            for(DSMConnection connection : ioHandler.getMatrix(editor.getFocusedMatrixUid()).getConnections()) {
+                Double searchWeight;
+                try{
+                    searchWeight = Double.parseDouble(text);
+                } catch(NumberFormatException e) {
+                    continue;
+                }
+
+                if(connection.getWeight() == searchWeight) {
                     matches.add(new Pair<>(connection.getRowUid(), connection.getColUid()));
                 }
             }
@@ -163,6 +182,7 @@ public class ConnectionSearchWidget {
         isOpen = false;
         mainLayout.setVisible(false);
         mainLayout.setManaged(false);  // so that the layout will not take up space on the application
+        searchInput.setText("");
 
         for(MatrixGuiHandler m : ioHandler.getMatrixGuiHandlers().values()) {  // clear all search highlight for all matrices for better flow when switching tabs
             m.clearAllCellsHighlight("search");

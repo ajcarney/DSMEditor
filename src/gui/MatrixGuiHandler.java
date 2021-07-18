@@ -3,7 +3,9 @@ package gui;
 import DSMData.DSMConnection;
 import DSMData.DataHandler;
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -217,6 +219,7 @@ public class MatrixGuiHandler {
 
 
     private DoubleProperty fontSize;
+    private BooleanProperty showNames;
 
     private VBox rootLayout = new VBox();
 
@@ -238,6 +241,7 @@ public class MatrixGuiHandler {
         gridUidLookup.put("cols", new HashMap<Integer, Integer>());
 
         this.fontSize = new SimpleDoubleProperty(fontSize);
+        showNames = new SimpleBooleanProperty(true);  // default to showing names instead of weights
     }
 
 
@@ -562,13 +566,24 @@ public class MatrixGuiHandler {
                     int rowUid = ((Pair<Integer, Integer>)item.getValue()).getKey();
                     int colUid = ((Pair<Integer, Integer>)item.getValue()).getValue();
                     DSMConnection conn = matrix.getConnection(rowUid, colUid);
-                    final Label label;
-                    if(conn == null) {
-                        label = new Label("");
-                    } else {
-                        label = new Label(conn.getConnectionName());
-                    }
+                    final Label label = new Label();
+                    label.textProperty().bind(Bindings.createStringBinding(() -> {
+                        if(conn == null) {
+                            return "";
+                        } else if(showNames.getValue()) {
+                            return conn.getConnectionName();
+                        } else{
+                            return String.valueOf(conn.getWeight());
+                        }
+                    }, showNames));
+
+//                    if(conn == null) {
+//                        label.setText("");
+//                    } else {
+//                        label.setText(conn.getConnectionName());
+//                    }
                     cell.setAlignment(Pos.CENTER);  // center the text
+                    cell.setMinWidth(Region.USE_PREF_SIZE);
 
                     // this item type will be used to create the lookup table for finding associated uid from grid location
                     if(!gridUidLookup.get("rows").containsKey(r)) {
@@ -582,6 +597,7 @@ public class MatrixGuiHandler {
                     // set up callback functions
                     int finalR = r;
                     int finalC = c;
+
                     cell.setOnMouseClicked(e -> {
                         if(e.getButton().equals(MouseButton.PRIMARY)) {
 
@@ -718,5 +734,15 @@ public class MatrixGuiHandler {
      */
     public void setFontSize(Double newSize) {
         fontSize.setValue(newSize);
+    }
+
+
+    /**
+     * Sets the value of showNames. This value is bound to in the gui so that either the connection names or weights will be shown
+     *
+     * @param newValue show the names of the connections or the weights if false
+     */
+    public void setShowNames(Boolean newValue) {
+        showNames.set(newValue);
     }
 }
