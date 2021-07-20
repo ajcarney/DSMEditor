@@ -15,14 +15,32 @@ import javafx.scene.control.TextField;
 public class NumericTextField extends TextField {
     private DoubleProperty numericValue;
 
+    /**
+     * Getter function for the current numeric number in the TextField
+     *
+     * @return the number in the TextField
+     */
     public Double getNumericValue() {
         return numericValue.getValue();
     }
 
+
+    /**
+     * Setter value for the current number in the TextField
+     *
+     * @param newValue the number to display in the TextField
+     */
     public void setNumericValue(Double newValue) {
         numericValue.setValue(newValue);
     }
 
+
+    /**
+     * Creates the NumericTextField object and sets up callbacks to ensure only
+     * numbers are entered in the area
+     *
+     * @param initialValue default text to display
+     */
     NumericTextField(Double initialValue) {
         if(initialValue != null) {
             numericValue = new SimpleDoubleProperty(initialValue);
@@ -32,7 +50,6 @@ public class NumericTextField extends TextField {
             setText("");
         }
 
-        // ensure any entered values lie inside the required range.
         final NumericTextField numericTextField = this;
         this.textProperty().addListener(new ChangeListener<String>() {
             @Override

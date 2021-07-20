@@ -29,6 +29,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+
+/**
+ * Class for performing propagation analysis on a given matrix
+ */
 public class PropagationAnalysis {
     DSMData matrix;
 
@@ -57,7 +61,11 @@ public class PropagationAnalysis {
     ListView<Integer> itemExclusions;
 
 
-
+    /**
+     * Creates the gui object but does not open it. Initializes all widgets
+     *
+     * @param matrix the matrix to analyze
+     */
     public PropagationAnalysis(DSMData matrix) {
         this.matrix = matrix;
 
@@ -106,6 +114,9 @@ public class PropagationAnalysis {
     }
 
 
+    /**
+     * Updates the widgets on the side panel for parameter setting. Called from constructor.
+     */
     private void updateConfigWidgets() {
         // function to set text of comboBox items, used for all ComboBoxes
         Callback<ListView<Integer>, ListCell<Integer>> cellFactory = new Callback<ListView<Integer>, ListCell<Integer>>() {
@@ -283,6 +294,11 @@ public class PropagationAnalysis {
         configLayout.setAlignment(Pos.CENTER);
     }
 
+
+    /**
+     * Runs the propagation analysis algorithm and displays the output in graphical and table format on the main
+     * gui screen
+     */
     private void runPropagationAnalysis() {
         // set up parameters
         Integer startItem = startItemEntry.getValue();
@@ -385,6 +401,10 @@ public class PropagationAnalysis {
 
     }
 
+
+    /**
+     * Opens and starts the gui so users can interact with it.
+     */
     void start() {
         Scene scene = new Scene(rootLayout, 1200, 800);
         window.setScene(scene);

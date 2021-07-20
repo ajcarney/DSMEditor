@@ -17,6 +17,11 @@ import javafx.stage.Stage;
 import java.text.DecimalFormat;
 import java.util.*;
 
+
+/**
+ * Graphically displays the analysis for a given matrix according the Thebeau's algorithm. Useful for
+ * debugging of Thebeau's clustering algorithm.
+ */
 public class ClusterAnalysis {
     DSMData matrix;
 
@@ -41,6 +46,11 @@ public class ClusterAnalysis {
     private CheckBox countByWeight;
 
 
+    /**
+     * Initializes all the widgets but does not open the gui window
+     *
+     * @param matrix The matrix to be analyzed
+     */
     public ClusterAnalysis(DSMData matrix) {
         this.matrix = matrix;
 
@@ -91,6 +101,9 @@ public class ClusterAnalysis {
     }
 
 
+    /**
+     * initializes the widgets on the side panel of the gui. Called from the constructor
+     */
     private void updateConfigWidgets() {
     // optimal size layout
         VBox optimalSizeLayout = new VBox();
@@ -183,6 +196,9 @@ public class ClusterAnalysis {
     }
 
 
+    /**
+     * runs the algorithm that determines the coordination score of a matrix. Updates content on the main window of the gui
+     */
     private void runCoordinationScore() {
         HashMap<String, Object> coordinationScore = DSMData.getCoordinationScore(matrix, optimalSizeCluster.doubleValue(), powcc.doubleValue(), countByWeight.isSelected());
 
@@ -231,6 +247,9 @@ public class ClusterAnalysis {
     }
 
 
+    /**
+     * Runs the bidding analysis algorithm for the input matrix. Updates content on the main window of the gui
+     */
     private void runClusterBidsAnalysis() {
         GridPane grid = new GridPane();
         grid.setAlignment(Pos.CENTER);
@@ -393,6 +412,9 @@ public class ClusterAnalysis {
     }
 
 
+    /**
+     * Opens the gui window for user interaction
+     */
     public void start() {
         Scene scene = new Scene(rootLayout, 800, 600);
         window.setScene(scene);

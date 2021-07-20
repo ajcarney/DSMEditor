@@ -169,36 +169,21 @@ public class HeaderMenu {
             if(editor.getFocusedMatrixUid() == null) {
                 return;
             }
-            FileChooser fileChooser = new FileChooser();
-            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV File", "*.csv"));  // dsm is the only file type usable
-            File fileName = fileChooser.showSaveDialog(menuBar.getScene().getWindow());
-            if(fileName != null) {
-                int code = ExportHandler.exportMatrixToCSV(matrixHandler.getMatrix(editor.getFocusedMatrixUid()), fileName);
-            }
+            ExportHandler.promptExportToCSV(matrixHandler.getMatrix(editor.getFocusedMatrixUid()), menuBar.getScene().getWindow());
         });
         MenuItem exportXLSX = new MenuItem("Micro$oft Excel File (.xlsx)");
         exportXLSX.setOnAction(e -> {
             if(editor.getFocusedMatrixUid() == null) {
                 return;
             }
-            FileChooser fileChooser = new FileChooser();
-            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Microsoft Excel File", "*.xlsx"));  // dsm is the only file type usable
-            File fileName = fileChooser.showSaveDialog(menuBar.getScene().getWindow());
-            if(fileName != null) {
-                int code = ExportHandler.exportMatrixToXLSX(matrixHandler.getMatrix(editor.getFocusedMatrixUid()), fileName);
-            }
+            ExportHandler.promptExportToExcel(matrixHandler.getMatrix(editor.getFocusedMatrixUid()), menuBar.getScene().getWindow());
         });
         MenuItem exportThebeau = new MenuItem("Thebeau Matlab File (.m)");
         exportThebeau.setOnAction(e -> {
             if(editor.getFocusedMatrixUid() == null) {
                 return;
             }
-            FileChooser fileChooser = new FileChooser();
-            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Matlab File", "*.m"));  // dsm is the only file type usable
-            File fileName = fileChooser.showSaveDialog(menuBar.getScene().getWindow());
-            if(fileName != null) {
-                int code = ExportHandler.exportMatrixToThebeauMatlabFile(matrixHandler.getMatrix(editor.getFocusedMatrixUid()), fileName);
-            }
+            ExportHandler.promptExportToThebeau(matrixHandler.getMatrix(editor.getFocusedMatrixUid()), menuBar.getScene().getWindow());
         });
 
         exportMenu.getItems().addAll(exportCSV, exportXLSX, exportThebeau);

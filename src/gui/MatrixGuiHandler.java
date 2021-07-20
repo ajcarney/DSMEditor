@@ -567,7 +567,7 @@ public class MatrixGuiHandler {
                     int colUid = ((Pair<Integer, Integer>)item.getValue()).getValue();
                     DSMConnection conn = matrix.getConnection(rowUid, colUid);
                     final Label label = new Label();
-                    label.textProperty().bind(Bindings.createStringBinding(() -> {
+                    label.textProperty().bind(Bindings.createStringBinding(() -> {  // bind so that either weights or name can be shown
                         if(conn == null) {
                             return "";
                         } else if(showNames.getValue()) {
@@ -577,11 +577,6 @@ public class MatrixGuiHandler {
                         }
                     }, showNames));
 
-//                    if(conn == null) {
-//                        label.setText("");
-//                    } else {
-//                        label.setText(conn.getConnectionName());
-//                    }
                     cell.setAlignment(Pos.CENTER);  // center the text
                     cell.setMinWidth(Region.USE_PREF_SIZE);
 
@@ -665,7 +660,18 @@ public class MatrixGuiHandler {
                                     matrix.clearConnection(rowUid, colUid);
                                 }
                                 window.close();
+
+                                label.textProperty().unbind();  // reset binding to update text (Bound values cannot be set)
                                 label.setText(nameField.getText());
+                                label.textProperty().bind(Bindings.createStringBinding(() -> {
+                                    if(matrix.getConnection(rowUid, colUid) == null) {
+                                        return "";
+                                    } else if(showNames.getValue()) {
+                                        return matrix.getConnection(rowUid, colUid).getConnectionName();
+                                    } else{
+                                        return String.valueOf(matrix.getConnection(rowUid, colUid).getWeight());
+                                    }
+                                }, showNames));
                             });
 
                             Pane spacer = new Pane();  // used as a spacer between buttons

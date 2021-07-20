@@ -11,8 +11,10 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.Window;
 import javafx.util.Pair;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.WorkbookUtil;
@@ -28,8 +30,13 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class ExportHandler {
 
+/**
+ * A class with methods that handle exporting or saving a DSMData matrix object
+ * Currently supports DSM file (.dsm), CSV file (.csv), Excel spreadsheet (.xlsx), and Thebeau
+ * Matlab files (.m)
+ */
+public class ExportHandler {
     /**
      * Saves a matrix to a csv file that includes the matrix metadata
      *
@@ -121,6 +128,9 @@ public class ExportHandler {
             final int ROW_START = 6;  // start row and col so that matrix data is shifted
             final int COL_START = 3;
 
+            short HORIZONTAL_ROTATION = 0;
+            short VERTICAL_ROTATION = 90;
+
             ArrayList<ArrayList<Pair<String, Object>>> template = matrix.getGridArray();
             int rows = template.size();
             int columns = template.get(0).size();
@@ -135,7 +145,7 @@ public class ExportHandler {
                         cell.setCellValue(item.getValue().toString());
 
                         CellStyle cellStyle = workbook.createCellStyle();
-                        cellStyle.setRotation((short)0);
+                        cellStyle.setRotation(HORIZONTAL_ROTATION);
                         cell.setCellStyle(cellStyle);
                     } else if(item.getKey().equals("plain_text_v")) {
                         Cell cell = row.createCell(c + COL_START);
@@ -144,7 +154,7 @@ public class ExportHandler {
                         CellStyle cellStyle = workbook.createCellStyle();
                         cellStyle.setAlignment(HorizontalAlignment.RIGHT);
                         cellStyle.setVerticalAlignment(VerticalAlignment.BOTTOM);
-                        cellStyle.setRotation((short)90);
+                        cellStyle.setRotation(VERTICAL_ROTATION);
                         cell.setCellStyle(cellStyle);
                     } else if (item.getKey().equals("item_name")) {
                         Cell cell = row.createCell(c + COL_START);
@@ -154,7 +164,7 @@ public class ExportHandler {
                         XSSFCellStyle style = workbook.createCellStyle();
                         style.setFillForegroundColor(new XSSFColor(new java.awt.Color((float) (cellColor.getRed()), (float) (cellColor.getGreen()), (float) (cellColor.getBlue())), new DefaultIndexedColorMap()));
                         style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-                        style.setRotation((short)0);
+                        style.setRotation(HORIZONTAL_ROTATION);
                         cell.setCellStyle(style);
                     } else if(item.getKey().equals("item_name_v")) {
                         Cell cell = row.createCell(c + COL_START);
@@ -162,7 +172,7 @@ public class ExportHandler {
 
                         javafx.scene.paint.Color cellColor = matrix.getGroupingColors().get(matrix.getItem((Integer)item.getValue()).getGroup());
                         XSSFCellStyle style = workbook.createCellStyle();
-                        style.setRotation((short)90);
+                        style.setRotation(VERTICAL_ROTATION);
                         style.setFillForegroundColor(new XSSFColor(new java.awt.Color((float) (cellColor.getRed()), (float) (cellColor.getGreen()), (float) (cellColor.getBlue())), new DefaultIndexedColorMap()));
                         style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
                         cell.setCellStyle(style);
@@ -174,7 +184,7 @@ public class ExportHandler {
                         XSSFCellStyle style = workbook.createCellStyle();
                         style.setFillForegroundColor(new XSSFColor(new java.awt.Color((float) (cellColor.getRed()), (float) (cellColor.getGreen()), (float) (cellColor.getBlue())), new DefaultIndexedColorMap()));
                         style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-                        style.setRotation((short)0);
+                        style.setRotation(HORIZONTAL_ROTATION);
                         cell.setCellStyle(style);
                     } else if (item.getKey().equals("grouping_item_v")) {
                         Cell cell = row.createCell(c + COL_START);
@@ -182,10 +192,9 @@ public class ExportHandler {
 
                         javafx.scene.paint.Color cellColor = matrix.getGroupingColors().get(matrix.getItem((Integer)item.getValue()).getGroup());
                         XSSFCellStyle style = workbook.createCellStyle();
-                        style.setRotation((short)90);
                         style.setFillForegroundColor(new XSSFColor(new java.awt.Color((float) (cellColor.getRed()), (float) (cellColor.getGreen()), (float) (cellColor.getBlue())), new DefaultIndexedColorMap()));
                         style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-                        style.setRotation((short)0);
+                        style.setRotation(VERTICAL_ROTATION);
                         cell.setCellStyle(style);
                     } else if (item.getKey().equals("index_item")) {
                         Cell cell = row.createCell(c + COL_START);
@@ -195,7 +204,7 @@ public class ExportHandler {
                         XSSFCellStyle style = workbook.createCellStyle();
                         style.setFillForegroundColor(new XSSFColor(new java.awt.Color((float) (cellColor.getRed()), (float) (cellColor.getGreen()), (float) (cellColor.getBlue())), new DefaultIndexedColorMap()));
                         style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-                        style.setRotation((short)0);
+                        style.setRotation(HORIZONTAL_ROTATION);
                         cell.setCellStyle(style);
                     } else if (item.getKey().equals("uneditable_connection")) {
                         Cell cell = row.createCell(c + COL_START);
@@ -204,6 +213,7 @@ public class ExportHandler {
                         XSSFCellStyle style = workbook.createCellStyle();
                         style.setFillForegroundColor(new XSSFColor(new java.awt.Color(0, 0, 0), new DefaultIndexedColorMap()));  // TODO: set this to the color defined in MatrixGuiHandler
                         style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+                        style.setRotation(HORIZONTAL_ROTATION);
                         cell.setCellStyle(style);
                     } else if (item.getKey().equals("editable_connection")) {
                         Integer rowUid = ((Pair<Integer, Integer>)item.getValue()).getKey();
@@ -229,11 +239,13 @@ public class ExportHandler {
                         if (matrix.isSymmetrical() && !rowUid.equals(matrix.getItem(colUid).getAliasUid()) && matrix.getItem(rowUid).getGroup().equals(matrix.getItem(colUid).getGroup())) {  // associated row and column are same group
                             style.setFillForegroundColor(new XSSFColor(new java.awt.Color((float)(red), (float)(green), (float)(blue)), new DefaultIndexedColorMap()));
                             style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-                            style.setRotation((short)0);
+                            style.setRotation(HORIZONTAL_ROTATION);
                         } else if (!matrix.isSymmetrical()) {
                             style.setFillForegroundColor(new XSSFColor(new java.awt.Color((float)(red), (float)(green), (float)(blue)), new DefaultIndexedColorMap()));
                             style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-                            style.setRotation((short)0);
+                            style.setRotation(HORIZONTAL_ROTATION);
+                        } else {
+                            style.setRotation(HORIZONTAL_ROTATION);
                         }
                         cell.setCellStyle(style);
                     }
@@ -468,6 +480,70 @@ public class ExportHandler {
         window.showAndWait();
 
         return code.get();
+    }
+
+
+    /**
+     * Opens a file chooser window to choose a location to save a matrix to
+     *
+     * @param matrix the matrix to save
+     * @param window the window associated with the file chooser
+     */
+    static public void promptSaveToFile(DSMData matrix, Window window) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("DSM File", "*.dsm"));  // dsm is the only file type usable
+        File fileName = fileChooser.showSaveDialog(window);
+        if(fileName != null) {
+            int code = ExportHandler.saveMatrixToFile(matrix, fileName);
+        }
+    }
+
+
+    /**
+     * Opens a file chooser window to choose a location to export a matrix to csv
+     *
+     * @param matrix the matrix to save
+     * @param window the window associated with the file chooser
+     */
+    static public void promptExportToCSV(DSMData matrix, Window window) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV File", "*.csv"));  // dsm is the only file type usable
+        File fileName = fileChooser.showSaveDialog(window);
+        if(fileName != null) {
+            int code = ExportHandler.exportMatrixToCSV(matrix, fileName);
+        }
+    }
+
+
+    /**
+     * Opens a file chooser window to choose a location to export a matrix to excel
+     *
+     * @param matrix the matrix to save
+     * @param window the window associated with the file chooser
+     */
+    static public void promptExportToExcel(DSMData matrix, Window window) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Microsoft Excel File", "*.xlsx"));  // dsm is the only file type usable
+        File fileName = fileChooser.showSaveDialog(window);
+        if(fileName != null) {
+            int code = exportMatrixToXLSX(matrix, fileName);
+        }
+    }
+
+
+    /**
+     * Opens a file chooser window to choose a location to export a matrix to the thebeau matlab format
+     *
+     * @param matrix the matrix to save
+     * @param window the window associated with the file chooser
+     */
+    static public void promptExportToThebeau(DSMData matrix, Window window) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Matlab File", "*.m"));  // dsm is the only file type usable
+        File fileName = fileChooser.showSaveDialog(window);
+        if(fileName != null) {
+            int code = ExportHandler.exportMatrixToThebeauMatlabFile(matrix, fileName);
+        }
     }
 
 }

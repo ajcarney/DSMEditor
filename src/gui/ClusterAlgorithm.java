@@ -1,6 +1,7 @@
 package gui;
 
 import DSMData.DSMData;
+import IOHandler.ExportHandler;
 import javafx.application.Platform;
 import javafx.beans.property.*;
 import javafx.geometry.Insets;
@@ -19,6 +20,10 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
+
+/**
+ * A class that graphically runs Thebeau's dsm clustering algorithm
+ */
 public class ClusterAlgorithm {
     DSMData matrix;
 
@@ -30,7 +35,7 @@ public class ClusterAlgorithm {
     private VBox configLayout;      // side bar
     private SplitPane mainContent;  // center
 
-    // config parameters
+    // config parameters for the algorithm
     private DoubleProperty optimalSizeCluster;
     private DoubleProperty powcc;
     private DoubleProperty powdep;
@@ -50,6 +55,12 @@ public class ClusterAlgorithm {
     private CheckBox debug;
 
 
+    /**
+     * Creates a ClusterAlgorithm object and initializes all the widgets. Does not open
+     * the gui
+     *
+     * @param matrix the input matrix to perform the algorithm on
+     */
     public ClusterAlgorithm(DSMData matrix) {
         this.matrix = matrix;
 
@@ -66,6 +77,57 @@ public class ClusterAlgorithm {
         // menu
         menuBar = new MenuBar();
 
+
+        // file menu
+        Menu fileMenu = new Menu("File");
+
+        Menu exportMenu = new Menu("Export Results");
+        MenuItem dsm = new MenuItem("DSM File");
+        dsm.setOnAction(e -> {
+           if(outputMatrix == null) {
+               return;
+           }
+           ExportHandler.promptSaveToFile(outputMatrix, menuBar.getScene().getWindow());
+        });
+        MenuItem csv = new MenuItem("CSV File");
+        csv.setOnAction(e -> {
+            if(outputMatrix == null) {
+                return;
+            }
+            ExportHandler.promptExportToCSV(outputMatrix, menuBar.getScene().getWindow());
+        });
+        MenuItem excel = new MenuItem("Excel File");
+        excel.setOnAction(e -> {
+            if(outputMatrix == null) {
+                return;
+            }
+            ExportHandler.promptExportToExcel(outputMatrix, menuBar.getScene().getWindow());
+        });
+        MenuItem thebeau = new MenuItem("Thebeau Matlab File");
+        thebeau.setOnAction(e -> {
+            if(outputMatrix == null) {
+                return;
+            }
+            ExportHandler.promptExportToThebeau(outputMatrix, menuBar.getScene().getWindow());
+        });
+
+        exportMenu.getItems().addAll(dsm, csv, excel, thebeau);
+        exportMenu.setOnShown(e -> {  // disable validate symmetry for non-symmetrical matrices
+            if(outputMatrix == null) {
+                dsm.setDisable(true);
+                csv.setDisable(true);
+                excel.setDisable(true);
+                thebeau.setDisable(true);
+            } else {
+                dsm.setDisable(false);
+                csv.setDisable(false);
+                excel.setDisable(false);
+                thebeau.setDisable(false);
+            }
+        });
+
+        fileMenu.getItems().add(exportMenu);
+
         // run menu
         Menu runMenu = new Menu("Run");
         MenuItem run = new MenuItem("Run Algorithm");
@@ -75,7 +137,8 @@ public class ClusterAlgorithm {
         });
         runMenu.getItems().addAll(run);
 
-        menuBar.getMenus().addAll(runMenu);
+
+        menuBar.getMenus().addAll(fileMenu, runMenu);
 
 
         // main content
@@ -103,6 +166,9 @@ public class ClusterAlgorithm {
     }
 
 
+    /**
+     * Function to initialize the widgets on the side pane. Called from constructor
+     */
     private void updateConfigWidgets() {
         // optimal size layout
         VBox optimalSizeLayout = new VBox();
@@ -277,6 +343,12 @@ public class ClusterAlgorithm {
     }
 
 
+    /**
+     * Function to run and display the coordination score and breakdown of the output matrix from the algorithm
+     * and the total coordination score of the input matrix with the given parameters
+     *
+     * @param matrix the matrix output from the algorithm
+     */
     private void runCoordinationScore(DSMData matrix) {
         HashMap<String, Object> coordinationScore = DSMData.getCoordinationScore(matrix, optimalSizeCluster.doubleValue(), powcc.doubleValue(), countByWeight.isSelected());
         HashMap<String, Object> currentScores = DSMData.getCoordinationScore(this.matrix, optimalSizeCluster.doubleValue(), powcc.doubleValue(), countByWeight.isSelected());
@@ -332,6 +404,12 @@ public class ClusterAlgorithm {
     }
 
 
+    /**
+     * Runs the algorithm with the parameters from the gui and returns the output matrix object. Displays the
+     * matrix in the main window of the gui
+     *
+     * @return the new clustered matrix
+     */
     private DSMData runThebeauAlgorithm() {
         BooleanProperty completedProperty = new SimpleBooleanProperty();  // used to know when to close popup
         completedProperty.set(false);
@@ -416,6 +494,9 @@ public class ClusterAlgorithm {
     }
 
 
+    /**
+     * opens the gui window
+     */
     public void start() {
         Scene scene = new Scene(rootLayout, 800, 600);
         window.setScene(scene);

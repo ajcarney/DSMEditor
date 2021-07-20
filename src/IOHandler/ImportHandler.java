@@ -12,7 +12,19 @@ import java.io.FileNotFoundException;
 import java.util.*;
 import java.util.regex.Pattern;
 
+
+/**
+ * Class with methods for reading and importing files to the DSMData type.
+ * Currently supports DSM (.dsm) and Thebeau matlab file (.m)
+ */
 public class ImportHandler {
+    /**
+     * Reads a matlab file in Thebeau's format and parses it as a DSMData object. Returns the DSMData object,
+     * but does not automatically add it to be handled.
+     *
+     * @param file the file location to read from
+     * @return     DSMData object of the parsed in matrix
+     */
     public static DSMData importThebeauMatlabFile(File file) {
         DSMData matrix = new DSMData();
         matrix.setSymmetrical(true);  // all of thebeau's matrices are symmetrical
