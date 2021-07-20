@@ -31,16 +31,25 @@ Connections can be created using either the toolbar or clicking directly on a ce
 
 ### Sample Usage
 <p style="border-width: 2px; border-color: black; border-style:solid;" align="center">
-  <img src="gallery/modify_connection.png" width=1000>
-  Editing DSM connections
+    <img src="gallery/modify_connection.png" width=1000>
+    Editing DSM connections
 </p>
 <p style="border-width: 2px; border-color: black; border-style:solid;" align="center">
-  <img src="gallery/sample.png" width=1000>
-  Sample symmetric DSM of a clock
+    <img src="gallery/sample.png" width=1000>
+    Sample symmetric DSM of a clock
 </p>
 <p style="border-width: 2px; border-color: black; border-style:solid;" align="center">
-  <img src="gallery/propagation_analysis.png" width=1000>
-  Propagation analysis for the sample matrix
+    <img src="gallery/propagation_analysis.png" width=1000>
+    Propagation analysis for the sample matrix
+</p>
+<p style="border-width: 2px; border-color: black; border-style:solid;" align="center">
+    <img src="gallery/cluster_algorithm.png" width=1000>
+    <div>
+        Automatic clustering for the sample matrix based on 
+        <a href="https://dsmweb.org/matlab-macro-for-clustering-dsms/">
+          Ronnie Thebeau's clustering algorithm
+        </a>
+    </div>
 </p>
 
 ### Feedback?

@@ -23,6 +23,8 @@ import java.util.Map;
 
 /**
  * A class that graphically runs Thebeau's dsm clustering algorithm
+ *
+ * @author Aiden Carney
  */
 public class ClusterAlgorithm {
     DSMData matrix;

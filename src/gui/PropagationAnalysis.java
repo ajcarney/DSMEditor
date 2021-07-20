@@ -32,6 +32,8 @@ import java.util.Map;
 
 /**
  * Class for performing propagation analysis on a given matrix
+ *
+ * @author Aiden Carney
  */
 public class PropagationAnalysis {
     DSMData matrix;

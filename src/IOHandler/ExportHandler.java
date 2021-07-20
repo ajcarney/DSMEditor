@@ -35,6 +35,8 @@ import java.util.concurrent.atomic.AtomicReference;
  * A class with methods that handle exporting or saving a DSMData matrix object
  * Currently supports DSM file (.dsm), CSV file (.csv), Excel spreadsheet (.xlsx), and Thebeau
  * Matlab files (.m)
+ *
+ * @author Aiden Carney
  */
 public class ExportHandler {
     /**

@@ -21,6 +21,8 @@ import java.util.*;
 /**
  * Graphically displays the analysis for a given matrix according the Thebeau's algorithm. Useful for
  * debugging of Thebeau's clustering algorithm.
+ *
+ * @author Aiden Carney
  */
 public class ClusterAnalysis {
     DSMData matrix;

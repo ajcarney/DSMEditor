@@ -16,6 +16,8 @@ import java.util.regex.Pattern;
 /**
  * Class with methods for reading and importing files to the DSMData type.
  * Currently supports DSM (.dsm) and Thebeau matlab file (.m)
+ *
+ * @author Aiden Carney
  */
 public class ImportHandler {
     /**
