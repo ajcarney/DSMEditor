@@ -1,6 +1,6 @@
 package gui;
 
-import DSMData.DataHandler;
+import DSMData.DSMData;
 import javafx.application.Platform;
 import javafx.beans.property.*;
 import javafx.geometry.Insets;
@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ClusterAlgorithm {
-    DataHandler matrix;
+    DSMData matrix;
 
     Stage window;
     private BorderPane rootLayout;
@@ -40,7 +40,7 @@ public class ClusterAlgorithm {
     private DoubleProperty numLevels;
     private DoubleProperty randSeed;
 
-    DataHandler outputMatrix = null;
+    DSMData outputMatrix = null;
 
     // main content panes
     private VBox coordinationLayout;
@@ -50,7 +50,7 @@ public class ClusterAlgorithm {
     private CheckBox debug;
 
 
-    public ClusterAlgorithm(DataHandler matrix) {
+    public ClusterAlgorithm(DSMData matrix) {
         this.matrix = matrix;
 
         window = new Stage();
@@ -70,7 +70,7 @@ public class ClusterAlgorithm {
         Menu runMenu = new Menu("Run");
         MenuItem run = new MenuItem("Run Algorithm");
         run.setOnAction(e -> {
-            DataHandler outputMatrix = runThebeauAlgorithm();
+            DSMData outputMatrix = runThebeauAlgorithm();
             runCoordinationScore(outputMatrix);
         });
         runMenu.getItems().addAll(run);
@@ -277,9 +277,9 @@ public class ClusterAlgorithm {
     }
 
 
-    private void runCoordinationScore(DataHandler matrix) {
-        HashMap<String, Object> coordinationScore = DataHandler.getCoordinationScore(matrix, optimalSizeCluster.doubleValue(), powcc.doubleValue(), countByWeight.isSelected());
-        HashMap<String, Object> currentScores = DataHandler.getCoordinationScore(this.matrix, optimalSizeCluster.doubleValue(), powcc.doubleValue(), countByWeight.isSelected());
+    private void runCoordinationScore(DSMData matrix) {
+        HashMap<String, Object> coordinationScore = DSMData.getCoordinationScore(matrix, optimalSizeCluster.doubleValue(), powcc.doubleValue(), countByWeight.isSelected());
+        HashMap<String, Object> currentScores = DSMData.getCoordinationScore(this.matrix, optimalSizeCluster.doubleValue(), powcc.doubleValue(), countByWeight.isSelected());
 
         Label titleLabel = new Label("Cluster Cost Analysis");
         titleLabel.setStyle(titleLabel.getStyle() + "-fx-font-weight: bold;");
@@ -332,12 +332,12 @@ public class ClusterAlgorithm {
     }
 
 
-    private DataHandler runThebeauAlgorithm() {
+    private DSMData runThebeauAlgorithm() {
         BooleanProperty completedProperty = new SimpleBooleanProperty();  // used to know when to close popup
         completedProperty.set(false);
 
         Thread t = new Thread(() -> {  // thread to perform the function
-            outputMatrix = DataHandler.thebeauAlgorithm(
+            outputMatrix = DSMData.thebeauAlgorithm(
                     matrix,
                     optimalSizeCluster.doubleValue(),
                     powdep.doubleValue(),

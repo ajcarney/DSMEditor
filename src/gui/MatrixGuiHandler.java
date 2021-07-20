@@ -1,7 +1,7 @@
 package gui;
 
 import DSMData.DSMConnection;
-import DSMData.DataHandler;
+import DSMData.DSMData;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
@@ -208,7 +208,7 @@ public class MatrixGuiHandler {
 
     }
 
-    DataHandler matrix;
+    DSMData matrix;
     public static final Background DEFAULT_BACKGROUND = new Background(new BackgroundFill(Color.color(1, 1, 1), new CornerRadii(3), new Insets(0)));
     public static final Background UNEDITABLE_CONNECTION_BACKGROUND = new Background(new BackgroundFill(Color.color(0, 0, 0), new CornerRadii(3), new Insets(0)));
     public static final Background HIGHLIGHT_BACKGROUND = new Background(new BackgroundFill(Color.color(.9, 1, 0), new CornerRadii(3), new Insets(0)));
@@ -230,10 +230,10 @@ public class MatrixGuiHandler {
     /**
      * Returns a MatrixGuiHandler object for a given matrix
      *
-     * @param matrix   the DataHandler object to display
+     * @param matrix   the DSMData object to display
      * @param fontSize the default font size to display the matrix with
      */
-    public MatrixGuiHandler(DataHandler matrix, double fontSize) {
+    public MatrixGuiHandler(DSMData matrix, double fontSize) {
         this.matrix = matrix;
         cells = new Vector<>();
         gridUidLookup = new HashMap<>();
@@ -429,7 +429,7 @@ public class MatrixGuiHandler {
 
 
     /**
-     * Creates the gui that displays a matrix. Uses the DataHandler's getGridArray() method to create the grid.
+     * Creates the gui that displays a matrix. Uses the DSMData's getGridArray() method to create the grid.
      * Puts grid in a scroll pane and adds a location label (displays connection row, column) at the bottom of the VBox.
      * Returns the VBox so that it can be added to a layout
      *

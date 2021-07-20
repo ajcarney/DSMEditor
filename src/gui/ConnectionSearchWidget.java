@@ -1,7 +1,7 @@
 package gui;
 
 import DSMData.DSMConnection;
-import IOHandler.IOHandler;
+import DSMData.MatrixHandler;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.IntegerProperty;
@@ -41,7 +41,7 @@ public class ConnectionSearchWidget {
     private Button closeButton = new Button("Close");
 
     private Boolean isOpen = false;
-    private static IOHandler ioHandler;
+    private static MatrixHandler matrixHandler;
     private static TabView editor;
     private Thread searchHighlightThread;
 
@@ -49,11 +49,11 @@ public class ConnectionSearchWidget {
     /**
      * Creates the object and formats all the widgets on the HBox pane
      *
-     * @param ioHandler the IOHandler object to access the gui handler to highlight cells
+     * @param matrixHandler the MatrixHandler object to access the gui handler to highlight cells
      * @param editor    the TabView object to determine which matrix is open
      */
-    public ConnectionSearchWidget(IOHandler ioHandler, TabView editor) {
-        this.ioHandler = ioHandler;
+    public ConnectionSearchWidget(MatrixHandler matrixHandler, TabView editor) {
+        this.matrixHandler = matrixHandler;
         this.editor = editor;
         close();  // default to hidden
 
@@ -107,8 +107,8 @@ public class ConnectionSearchWidget {
                     continue;
                 }
 
-                synchronized (ioHandler.getMatrix(editor.getFocusedMatrixUid())) {  // TODO: maybe this synchronization call can be removed. Idk, i was too scared to check
-                    MatrixGuiHandler m = ioHandler.getMatrixGuiHandler(editor.getFocusedMatrixUid());
+                synchronized (matrixHandler.getMatrix(editor.getFocusedMatrixUid())) {  // TODO: maybe this synchronization call can be removed. Idk, i was too scared to check
+                    MatrixGuiHandler m = matrixHandler.getMatrixGuiHandler(editor.getFocusedMatrixUid());
 
                     matches = getMatches(searchInput.getText());
                     Set<Pair<Integer, Integer>> prevAndCurrentErrors = prevMatches.stream().collect(Collectors.toSet());
@@ -145,19 +145,19 @@ public class ConnectionSearchWidget {
     private ArrayList<Pair<Integer, Integer>> getMatches(String text) {
         ArrayList<Pair<Integer, Integer>> matches = new ArrayList<>();  // find the connection cells to highlight
         if(tg.getSelectedToggle().equals(exactRadio)) {
-            for(DSMConnection connection : ioHandler.getMatrix(editor.getFocusedMatrixUid()).getConnections()) {
+            for(DSMConnection connection : matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getConnections()) {
                 if(connection.getConnectionName().equals(text)) {
                     matches.add(new Pair<>(connection.getRowUid(), connection.getColUid()));
                 }
             }
         } else if(tg.getSelectedToggle().equals(containsRadio)){
-            for(DSMConnection connection : ioHandler.getMatrix(editor.getFocusedMatrixUid()).getConnections()) {
+            for(DSMConnection connection : matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getConnections()) {
                 if(connection.getConnectionName().contains(text)) {
                     matches.add(new Pair<>(connection.getRowUid(), connection.getColUid()));
                 }
             }
         } else {
-            for(DSMConnection connection : ioHandler.getMatrix(editor.getFocusedMatrixUid()).getConnections()) {
+            for(DSMConnection connection : matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getConnections()) {
                 Double searchWeight;
                 try{
                     searchWeight = Double.parseDouble(text);
@@ -184,7 +184,7 @@ public class ConnectionSearchWidget {
         mainLayout.setManaged(false);  // so that the layout will not take up space on the application
         searchInput.setText("");
 
-        for(MatrixGuiHandler m : ioHandler.getMatrixGuiHandlers().values()) {  // clear all search highlight for all matrices for better flow when switching tabs
+        for(MatrixGuiHandler m : matrixHandler.getMatrixGuiHandlers().values()) {  // clear all search highlight for all matrices for better flow when switching tabs
             m.clearAllCellsHighlight("search");
         }
     }

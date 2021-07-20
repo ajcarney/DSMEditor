@@ -2,7 +2,7 @@ package gui;
 
 import DSMData.DSMConnection;
 import DSMData.DSMItem;
-import IOHandler.IOHandler;
+import DSMData.MatrixHandler;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -42,21 +42,21 @@ public class ToolbarHandler {
     private Button deleteConnections;
 
     private TabView editor;
-    private IOHandler ioHandler;
+    private MatrixHandler matrixHandler;
 
 
     /**
      * Creates a new ToolBar Handler object. Sets up the gui and all its widgets and puts them in the layout field.
-     * Requires an IOHandler object to get the matrix and a TabView object to get the current focused tab
+     * Requires an MatrixHandler object to get the matrix and a TabView object to get the current focused tab
      * and call updates to it.
      *
-     * @param ioHandler the IOHandler instance
+     * @param matrixHandler the MatrixHandler instance
      * @param editor    the TabView instance
      */
-    public ToolbarHandler(IOHandler ioHandler, TabView editor) {
+    public ToolbarHandler(MatrixHandler matrixHandler, TabView editor) {
         layout = new VBox();
         this.editor = editor;
-        this.ioHandler = ioHandler;
+        this.matrixHandler = matrixHandler;
 
         addMatrixItem = new Button("Add Rows/Columns");
         addMatrixItem.setOnAction(e -> {
@@ -105,7 +105,7 @@ public class ToolbarHandler {
             textField.setPromptText("Row/Column Name");
             HBox.setHgrow(textField, Priority.ALWAYS);
 
-            if(ioHandler.getMatrix(editor.getFocusedMatrixUid()).isSymmetrical()) {
+            if(matrixHandler.getMatrix(editor.getFocusedMatrixUid()).isSymmetrical()) {
                 Button addItem = new Button("Add Item");
                 addItem.setOnAction(ee -> {
                     String itemName = textField.getText();
@@ -142,11 +142,11 @@ public class ToolbarHandler {
             applyButton.setOnAction(ee -> {
                 for(Pair<String, String> item : changesToMakeView.getItems()) {
                     if(item.getKey().equals("row")) {
-                        ioHandler.getMatrix(editor.getFocusedMatrixUid()).addNewItem(item.getValue(), true);
+                        matrixHandler.getMatrix(editor.getFocusedMatrixUid()).addNewItem(item.getValue(), true);
                     } else if(item.getKey().equals("col")) {
-                        ioHandler.getMatrix(editor.getFocusedMatrixUid()).addNewItem(item.getValue(), false);
+                        matrixHandler.getMatrix(editor.getFocusedMatrixUid()).addNewItem(item.getValue(), false);
                     } else {
-                        ioHandler.getMatrix(editor.getFocusedMatrixUid()).addNewSymmetricItem(item.getValue());
+                        matrixHandler.getMatrix(editor.getFocusedMatrixUid()).addNewSymmetricItem(item.getValue());
                     }
                 }
                 window.close();
@@ -201,9 +201,9 @@ public class ToolbarHandler {
                         setText(null);
                     } else {
                         if(item.getKey().equals("symmetric")) {
-                            setText(ioHandler.getMatrix(editor.getFocusedMatrixUid()).getItem(item.getValue()).getName() + " (Row/Column)");
+                            setText(matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getItem(item.getValue()).getName() + " (Row/Column)");
                         } else {
-                            setText(ioHandler.getMatrix(editor.getFocusedMatrixUid()).getItem(item.getValue()).getName());
+                            setText(matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getItem(item.getValue()).getName());
                         }
                     }
                 }
@@ -240,9 +240,9 @@ public class ToolbarHandler {
             entryArea.setPadding(new Insets(10, 10, 10, 10));
             entryArea.setSpacing(20);
 
-            if(ioHandler.getMatrix(editor.getFocusedMatrixUid()).isSymmetrical()) {
+            if(matrixHandler.getMatrix(editor.getFocusedMatrixUid()).isSymmetrical()) {
                 itemSelector.setPromptText("Item Name");
-                itemSelector.getItems().addAll(ioHandler.getMatrix(editor.getFocusedMatrixUid()).getRows());
+                itemSelector.getItems().addAll(matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getRows());
 
                 deleteItem.setOnAction(ee -> {
                     Integer itemUid = itemSelector.getValue().getUid();
@@ -250,8 +250,8 @@ public class ToolbarHandler {
                 });
             } else {
                 itemSelector.setPromptText("Row/Column Name");
-                itemSelector.getItems().addAll(ioHandler.getMatrix(editor.getFocusedMatrixUid()).getRows());
-                itemSelector.getItems().addAll(ioHandler.getMatrix(editor.getFocusedMatrixUid()).getCols());
+                itemSelector.getItems().addAll(matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getRows());
+                itemSelector.getItems().addAll(matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getCols());
 
                 deleteItem.setOnAction(ee -> {
                     Integer itemUid = itemSelector.getValue().getUid();
@@ -270,9 +270,9 @@ public class ToolbarHandler {
             applyButton.setOnAction(ee -> {
                 for(Pair<String, Integer> item : changesToMakeView.getItems()) {
                     if(item.getKey().equals("symmetric")) {
-                        ioHandler.getMatrix(editor.getFocusedMatrixUid()).deleteSymmetricItem(item.getValue());
+                        matrixHandler.getMatrix(editor.getFocusedMatrixUid()).deleteSymmetricItem(item.getValue());
                     } else {
-                        ioHandler.getMatrix(editor.getFocusedMatrixUid()).deleteItem(item.getValue());
+                        matrixHandler.getMatrix(editor.getFocusedMatrixUid()).deleteItem(item.getValue());
                     }
                 }
                 window.close();
@@ -326,7 +326,7 @@ public class ToolbarHandler {
                     if (empty || item == null || item.getKey() == null) {
                         setText(null);
                     } else {
-                        setText(ioHandler.getMatrix(editor.getFocusedMatrixUid()).getItem(item.getKey()).getName() + "->" + item.getValue());
+                        setText(matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getItem(item.getKey()).getName() + "->" + item.getValue());
                     }
                 }
             });
@@ -374,11 +374,11 @@ public class ToolbarHandler {
                 changesToMakeView.getItems().add(new Pair<Integer, String>(itemUid, textField.getText()));
             });
 
-            if(ioHandler.getMatrix(editor.getFocusedMatrixUid()).isSymmetrical()) {  // add either just rows or rows and columns if it is symmetric or not
-                itemSelector.getItems().addAll(ioHandler.getMatrix(editor.getFocusedMatrixUid()).getRows());
+            if(matrixHandler.getMatrix(editor.getFocusedMatrixUid()).isSymmetrical()) {  // add either just rows or rows and columns if it is symmetric or not
+                itemSelector.getItems().addAll(matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getRows());
             } else {
-                itemSelector.getItems().addAll(ioHandler.getMatrix(editor.getFocusedMatrixUid()).getRows());
-                itemSelector.getItems().addAll(ioHandler.getMatrix(editor.getFocusedMatrixUid()).getCols());
+                itemSelector.getItems().addAll(matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getRows());
+                itemSelector.getItems().addAll(matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getCols());
             }
 
             // create HBox for user to close with our without changes
@@ -390,10 +390,10 @@ public class ToolbarHandler {
             Button applyButton = new Button("Apply Changes");
             applyButton.setOnAction(ee -> {
                 for(Pair<Integer, String> item : changesToMakeView.getItems()) {
-                    if(ioHandler.getMatrix(editor.getFocusedMatrixUid()).isSymmetrical()) {
-                        ioHandler.getMatrix(editor.getFocusedMatrixUid()).setItemNameSymmetric(item.getKey(), item.getValue());
+                    if(matrixHandler.getMatrix(editor.getFocusedMatrixUid()).isSymmetrical()) {
+                        matrixHandler.getMatrix(editor.getFocusedMatrixUid()).setItemNameSymmetric(item.getKey(), item.getValue());
                     } else {
-                        ioHandler.getMatrix(editor.getFocusedMatrixUid()).setItemName(item.getKey(), item.getValue());
+                        matrixHandler.getMatrix(editor.getFocusedMatrixUid()).setItemName(item.getKey(), item.getValue());
                     }
                 }
                 window.close();
@@ -451,8 +451,8 @@ public class ToolbarHandler {
                         setText(null);
                     } else {
                         setText(
-                                ioHandler.getMatrix(editor.getFocusedMatrixUid()).getItem(Integer.parseInt(item.get(0))).getName() + " (Row):" +
-                                ioHandler.getMatrix(editor.getFocusedMatrixUid()).getItem(Integer.parseInt(item.get(1))).getName() + " (Col)" +
+                                matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getItem(Integer.parseInt(item.get(0))).getName() + " (Row):" +
+                                matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getItem(Integer.parseInt(item.get(1))).getName() + " (Col)" +
                                 "  {" + item.get(2) + ", " + item.get(3) + "}"
                         );
                     }
@@ -475,7 +475,7 @@ public class ToolbarHandler {
             connectionsModifier.setPadding(new Insets(10, 10, 10, 10));
             HashMap<CheckBox, DSMItem> connections = new HashMap<>();
 
-            for(DSMItem conn : ioHandler.getMatrix(editor.getFocusedMatrixUid()).getCols()) {
+            for(DSMItem conn : matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getCols()) {
                 VBox connectionVBox = new VBox();
                 connectionVBox.setAlignment(Pos.CENTER);
 
@@ -512,7 +512,7 @@ public class ToolbarHandler {
                 }
             });
 
-            itemSelector.getItems().addAll(ioHandler.getMatrix(editor.getFocusedMatrixUid()).getRows());  // default to choosing a row item
+            itemSelector.getItems().addAll(matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getRows());  // default to choosing a row item
 
             Label l = new Label("Create connections by row or column?");
             l.setWrapText(true);
@@ -546,12 +546,12 @@ public class ToolbarHandler {
                     RadioButton rb = (RadioButton)tg.getSelectedToggle();
                     if(rb.equals(selectByRow)) {  // clear all items and add rows to it
                         itemSelector.getItems().removeAll(itemSelector.getItems());
-                        itemSelector.getItems().addAll(ioHandler.getMatrix(editor.getFocusedMatrixUid()).getRows());
+                        itemSelector.getItems().addAll(matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getRows());
 
                         connectionsModifier.getChildren().removeAll(connectionsModifier.getChildren());
                         connections.clear();
 
-                        for(DSMItem conn : ioHandler.getMatrix(editor.getFocusedMatrixUid()).getCols()) {
+                        for(DSMItem conn : matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getCols()) {
                             VBox connectionVBox = new VBox();
                             connectionVBox.setAlignment(Pos.CENTER);
 
@@ -563,12 +563,12 @@ public class ToolbarHandler {
                         }
                     } else if(rb.equals(selectByCol)) {  // clear all items and add cols to it
                         itemSelector.getItems().removeAll(itemSelector.getItems());
-                        itemSelector.getItems().addAll(ioHandler.getMatrix(editor.getFocusedMatrixUid()).getCols());
+                        itemSelector.getItems().addAll(matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getCols());
 
                         connectionsModifier.getChildren().removeAll(connectionsModifier.getChildren());
                         connections.clear();
 
-                        for(DSMItem conn : ioHandler.getMatrix(editor.getFocusedMatrixUid()).getRows()) {
+                        for(DSMItem conn : matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getRows()) {
                             VBox connectionVBox = new VBox();
                             connectionVBox.setAlignment(Pos.CENTER);
 
@@ -663,7 +663,7 @@ public class ToolbarHandler {
 
                             data2.add(Integer.toString(entry.getValue().getAliasUid()));  // row uid for symmetric connection
                             // iterate over columns and find the one that corresponds to the selected row
-                            for(DSMItem item : ioHandler.getMatrix(editor.getFocusedMatrixUid()).getCols()) {
+                            for(DSMItem item : matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getCols()) {
                                 if(item.getAliasUid() == itemSelector.getValue().getUid()) {
                                     data2.add(Integer.toString(item.getUid()));
                                 }
@@ -673,14 +673,14 @@ public class ToolbarHandler {
                             data1.add(Integer.toString(itemSelector.getValue().getUid()));  // col uid
 
                             data2.add(Integer.toString(itemSelector.getValue().getAliasUid()));  // row uid for symmetric connection
-                            for(DSMItem item : ioHandler.getMatrix(editor.getFocusedMatrixUid()).getCols()) {
+                            for(DSMItem item : matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getCols()) {
                                 if(item.getAliasUid() == entry.getValue().getUid()) {
                                     data2.add(Integer.toString(item.getUid()));
                                 }
                             }
 
                             // iterate over columns to find the column that corresponds to the row
-                            for(DSMItem item : ioHandler.getMatrix(editor.getFocusedMatrixUid()).getCols()) {
+                            for(DSMItem item : matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getCols()) {
                                 if(item.getAliasUid() == itemSelector.getValue().getUid()) {
                                     data2.add(Integer.toString(item.getUid()));
                                 }
@@ -705,7 +705,7 @@ public class ToolbarHandler {
                     }
                 }
             });
-            if(!ioHandler.getMatrix(editor.getFocusedMatrixUid()).isSymmetrical()) {  // hide button if not a symmetric matrix
+            if(!matrixHandler.getMatrix(editor.getFocusedMatrixUid()).isSymmetrical()) {  // hide button if not a symmetric matrix
                 applySymmetricButton.setManaged(false);
                 applySymmetricButton.setVisible(false);
             }
@@ -721,7 +721,7 @@ public class ToolbarHandler {
             Button applyAllButton = new Button("Apply All Changes");
             applyAllButton.setOnAction(ee -> {
                 for(Vector<String> item : changesToMakeView.getItems()) {  // rowUid | colUid | name | weight
-                    ioHandler.getMatrix(editor.getFocusedMatrixUid()).modifyConnection(Integer.parseInt(item.get(0)), Integer.parseInt(item.get(1)), item.get(2), Double.parseDouble(item.get(3)));
+                    matrixHandler.getMatrix(editor.getFocusedMatrixUid()).modifyConnection(Integer.parseInt(item.get(0)), Integer.parseInt(item.get(1)), item.get(2), Double.parseDouble(item.get(3)));
                 }
                 window.close();
                 editor.refreshTab();
@@ -778,8 +778,8 @@ public class ToolbarHandler {
                         setText(null);
                     } else {
                         setText(
-                                ioHandler.getMatrix(editor.getFocusedMatrixUid()).getItem(Integer.parseInt(item.get(0))).getName() + " (Row):" +
-                                        ioHandler.getMatrix(editor.getFocusedMatrixUid()).getItem(Integer.parseInt(item.get(1))).getName() + " (Col)" +
+                                matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getItem(Integer.parseInt(item.get(0))).getName() + " (Row):" +
+                                        matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getItem(Integer.parseInt(item.get(1))).getName() + " (Col)" +
                                         "  {" + item.get(2) + ", " + item.get(3) + "}"
                         );
                     }
@@ -802,7 +802,7 @@ public class ToolbarHandler {
             connectionsModifier.setPadding(new Insets(10, 10, 10, 10));
             HashMap<CheckBox, DSMItem> connections = new HashMap<>();
 
-            for(DSMItem item : ioHandler.getMatrix(editor.getFocusedMatrixUid()).getCols()) {
+            for(DSMItem item : matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getCols()) {
                 VBox connectionVBox = new VBox();
                 connectionVBox.setAlignment(Pos.CENTER);
 
@@ -838,7 +838,7 @@ public class ToolbarHandler {
                     }
                 }
             });
-            itemSelector.getItems().addAll(ioHandler.getMatrix(editor.getFocusedMatrixUid()).getRows());  // default to choosing a row item
+            itemSelector.getItems().addAll(matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getRows());  // default to choosing a row item
 
             Label l = new Label("Create connections by row or column?");
             l.setWrapText(true);
@@ -872,12 +872,12 @@ public class ToolbarHandler {
                     RadioButton rb = (RadioButton)tg.getSelectedToggle();
                     if(rb.equals(selectByRow)) {  // clear all items and add rows to it
                         itemSelector.getItems().removeAll(itemSelector.getItems());
-                        itemSelector.getItems().addAll(ioHandler.getMatrix(editor.getFocusedMatrixUid()).getRows());
+                        itemSelector.getItems().addAll(matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getRows());
 
                         connectionsModifier.getChildren().removeAll(connectionsModifier.getChildren());
                         connections.clear();
 
-                        for(DSMItem row : ioHandler.getMatrix(editor.getFocusedMatrixUid()).getCols()) {
+                        for(DSMItem row : matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getCols()) {
                             VBox connectionVBox = new VBox();
                             connectionVBox.setAlignment(Pos.CENTER);
 
@@ -891,12 +891,12 @@ public class ToolbarHandler {
                         }
                     } else if(rb.equals(selectByCol)) {  // clear all items and add cols to it
                         itemSelector.getItems().removeAll(itemSelector.getItems());
-                        itemSelector.getItems().addAll(ioHandler.getMatrix(editor.getFocusedMatrixUid()).getCols());
+                        itemSelector.getItems().addAll(matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getCols());
 
                         connectionsModifier.getChildren().removeAll(connectionsModifier.getChildren());
                         connections.clear();
 
-                        for(DSMItem col : ioHandler.getMatrix(editor.getFocusedMatrixUid()).getRows()) {
+                        for(DSMItem col : matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getRows()) {
                             VBox connectionVBox = new VBox();
                             connectionVBox.setAlignment(Pos.CENTER);
 
@@ -926,9 +926,9 @@ public class ToolbarHandler {
                 }
                 for (Map.Entry<CheckBox, DSMItem> entry : connections.entrySet()) {
                     RadioButton rb = (RadioButton)tg.getSelectedToggle();
-                    if(rb.equals(selectByRow) && ioHandler.getMatrix(editor.getFocusedMatrixUid()).getConnection(itemSelector.getValue().getUid(), entry.getValue().getUid()) != null) {
+                    if(rb.equals(selectByRow) && matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getConnection(itemSelector.getValue().getUid(), entry.getValue().getUid()) != null) {
                         entry.getKey().setSelected(true);
-                    } else if(rb.equals(selectByCol) && ioHandler.getMatrix(editor.getFocusedMatrixUid()).getConnection(entry.getValue().getUid(), itemSelector.getValue().getUid()) != null) {
+                    } else if(rb.equals(selectByCol) && matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getConnection(entry.getValue().getUid(), itemSelector.getValue().getUid()) != null) {
                         entry.getKey().setSelected(true);
                     } else {
                         entry.getKey().setSelected(false);
@@ -1035,7 +1035,7 @@ public class ToolbarHandler {
 
                             data2.add(Integer.toString(entry.getValue().getAliasUid()));  // row uid for symmetric connection
                             // iterate over columns and find the one that corresponds to the selected row
-                            for(DSMItem item : ioHandler.getMatrix(editor.getFocusedMatrixUid()).getCols()) {
+                            for(DSMItem item : matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getCols()) {
                                 if(item.getAliasUid() == itemSelector.getValue().getUid()) {
                                     data2.add(Integer.toString(item.getUid()));
                                 }
@@ -1045,14 +1045,14 @@ public class ToolbarHandler {
                             data1.add(Integer.toString(itemSelector.getValue().getUid()));  // col uid
 
                             data2.add(Integer.toString(itemSelector.getValue().getAliasUid()));  // row uid for symmetric connection
-                            for(DSMItem item : ioHandler.getMatrix(editor.getFocusedMatrixUid()).getCols()) {
+                            for(DSMItem item : matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getCols()) {
                                 if(item.getAliasUid() == entry.getValue().getUid()) {
                                     data2.add(Integer.toString(item.getUid()));
                                 }
                             }
 
                             // iterate over columns to find the column that corresponds to the row
-                            for(DSMItem item : ioHandler.getMatrix(editor.getFocusedMatrixUid()).getCols()) {
+                            for(DSMItem item : matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getCols()) {
                                 if(item.getAliasUid() == itemSelector.getValue().getUid()) {
                                     data2.add(Integer.toString(item.getUid()));
                                 }
@@ -1083,7 +1083,7 @@ public class ToolbarHandler {
 
                             data2.add(Integer.toString(entry.getValue().getAliasUid()));  // row uid for symmetric connection
                             // iterate over columns and find the one that corresponds to the selected row
-                            for(DSMItem item : ioHandler.getMatrix(editor.getFocusedMatrixUid()).getCols()) {
+                            for(DSMItem item : matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getCols()) {
                                 if(item.getAliasUid() == itemSelector.getValue().getUid()) {
                                     data2.add(Integer.toString(item.getUid()));
                                 }
@@ -1093,14 +1093,14 @@ public class ToolbarHandler {
                             data1.add(Integer.toString(itemSelector.getValue().getUid()));  // col uid
 
                             data2.add(Integer.toString(itemSelector.getValue().getAliasUid()));  // row uid for symmetric connection
-                            for(DSMItem item : ioHandler.getMatrix(editor.getFocusedMatrixUid()).getCols()) {
+                            for(DSMItem item : matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getCols()) {
                                 if(item.getAliasUid() == entry.getValue().getUid()) {
                                     data2.add(Integer.toString(item.getUid()));
                                 }
                             }
 
                             // iterate over columns to find the column that corresponds to the row
-                            for(DSMItem item : ioHandler.getMatrix(editor.getFocusedMatrixUid()).getCols()) {
+                            for(DSMItem item : matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getCols()) {
                                 if(item.getAliasUid() == itemSelector.getValue().getUid()) {
                                     data2.add(Integer.toString(item.getUid()));
                                 }
@@ -1123,7 +1123,7 @@ public class ToolbarHandler {
                     }
                 }
             });
-            if(!ioHandler.getMatrix(editor.getFocusedMatrixUid()).isSymmetrical()) {  // hide button if not a symmetric matrix
+            if(!matrixHandler.getMatrix(editor.getFocusedMatrixUid()).isSymmetrical()) {  // hide button if not a symmetric matrix
                 applySymmetricButton.setManaged(false);
                 applySymmetricButton.setVisible(false);
             }
@@ -1139,9 +1139,9 @@ public class ToolbarHandler {
             applyAllButton.setOnAction(ee -> {
                 for(Vector<String> item : changesToMakeView.getItems()) {  // rowUid | colUid | name | weight | add/del
                     if(item.get(4).equals("add")) {
-                        ioHandler.getMatrix(editor.getFocusedMatrixUid()).modifyConnection(Integer.parseInt(item.get(0)), Integer.parseInt(item.get(1)), item.get(2), Double.parseDouble(item.get(3)));
+                        matrixHandler.getMatrix(editor.getFocusedMatrixUid()).modifyConnection(Integer.parseInt(item.get(0)), Integer.parseInt(item.get(1)), item.get(2), Double.parseDouble(item.get(3)));
                     } else {
-                        ioHandler.getMatrix(editor.getFocusedMatrixUid()).clearConnection(Integer.parseInt(item.get(0)), Integer.parseInt(item.get(1)));
+                        matrixHandler.getMatrix(editor.getFocusedMatrixUid()).clearConnection(Integer.parseInt(item.get(0)), Integer.parseInt(item.get(1)));
                     }
                 }
                 window.close();
@@ -1200,8 +1200,8 @@ public class ToolbarHandler {
                     } else {
                         setText(
                                 "Delete " +
-                                ioHandler.getMatrix(editor.getFocusedMatrixUid()).getItem(item.getKey()).getName() + ":" +
-                                ioHandler.getMatrix(editor.getFocusedMatrixUid()).getItem(item.getValue()).getName()
+                                matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getItem(item.getKey()).getName() + ":" +
+                                matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getItem(item.getValue()).getName()
                         );
                     }
                 }
@@ -1230,8 +1230,8 @@ public class ToolbarHandler {
                                 setGraphic(null);
                             } else {
                                 setText(
-                                    ioHandler.getMatrix(editor.getFocusedMatrixUid()).getItem(item.getKey()).getName() + ":" +
-                                    ioHandler.getMatrix(editor.getFocusedMatrixUid()).getItem(item.getValue()).getName()
+                                    matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getItem(item.getKey()).getName() + ":" +
+                                    matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getItem(item.getValue()).getName()
                                 );
                             }
                         }
@@ -1241,7 +1241,7 @@ public class ToolbarHandler {
             itemSelector.setButtonCell(cellFactory.call(null));
             itemSelector.setCellFactory(cellFactory);
             Vector<Pair<Integer, Integer>> connections = new Vector<>();
-            for(DSMConnection connection : ioHandler.getMatrix(editor.getFocusedMatrixUid()).getConnections()) {
+            for(DSMConnection connection : matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getConnections()) {
                 connections.add(new Pair<>(connection.getRowUid(), connection.getColUid()));
             }
             itemSelector.getItems().addAll(connections);
@@ -1253,7 +1253,7 @@ public class ToolbarHandler {
             Button deleteConnectionSymmetrically = new Button("Delete Connection Symmetrically");
 
             entryArea.getChildren().addAll(itemSelector, deleteConnection);
-            if(ioHandler.getMatrix(editor.getFocusedMatrixUid()).isSymmetrical()) {
+            if(matrixHandler.getMatrix(editor.getFocusedMatrixUid()).isSymmetrical()) {
                 entryArea.getChildren().add(deleteConnectionSymmetrically);
             }
             entryArea.setPadding(new Insets(10, 10, 10, 10));
@@ -1266,7 +1266,7 @@ public class ToolbarHandler {
             deleteConnectionSymmetrically.setOnAction(ee -> {
                 if(itemSelector.getValue() == null) return;
                 changesToMakeView.getItems().add(new Pair<Integer, Integer>(itemSelector.getValue().getKey(), itemSelector.getValue().getValue()));
-                Pair<Integer, Integer> uids = ioHandler.getMatrix(editor.getFocusedMatrixUid()).getSymmetricConnectionUids(itemSelector.getValue().getKey(), itemSelector.getValue().getValue());
+                Pair<Integer, Integer> uids = matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getSymmetricConnectionUids(itemSelector.getValue().getKey(), itemSelector.getValue().getValue());
                 changesToMakeView.getItems().add(uids);
             });
 
@@ -1280,7 +1280,7 @@ public class ToolbarHandler {
             Button applyAllButton = new Button("Apply All Changes");
             applyAllButton.setOnAction(ee -> {
                 for(Pair<Integer, Integer> item : changesToMakeView.getItems()) {  // rowUid | colUid
-                    ioHandler.getMatrix(editor.getFocusedMatrixUid()).clearConnection(item.getKey(), item.getValue());
+                    matrixHandler.getMatrix(editor.getFocusedMatrixUid()).clearConnection(item.getKey(), item.getValue());
                 }
                 window.close();
                 editor.refreshTab();
@@ -1327,7 +1327,7 @@ public class ToolbarHandler {
             ScrollPane currentGroupingsPane = new ScrollPane(currentGroupings);
             currentGroupingsPane.setFitToWidth(true);
 
-            for(Map.Entry<String, Color> entry : ioHandler.getMatrix(editor.getFocusedMatrixUid()).getGroupingColors().entrySet()) {
+            for(Map.Entry<String, Color> entry : matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getGroupingColors().entrySet()) {
                 HBox display = new HBox();
 
                 Label groupingName = new Label(entry.getKey());
@@ -1367,15 +1367,15 @@ public class ToolbarHandler {
                 HBox closeArea = new HBox();
                 Button applyAllButton = new Button("Ok");
                 applyAllButton.setOnAction(eee -> {
-                    if(!ioHandler.getMatrix(editor.getFocusedMatrixUid()).getGroupingColors().containsKey(newName.getText())) {
-                        ioHandler.getMatrix(editor.getFocusedMatrixUid()).addGrouping(newName.getText(), null);
+                    if(!matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getGroupingColors().containsKey(newName.getText())) {
+                        matrixHandler.getMatrix(editor.getFocusedMatrixUid()).addGrouping(newName.getText(), null);
 
                         HBox display = new HBox();
                         Label groupingName = new Label(newName.getText());
                         Pane groupingSpacer = new Pane();
                         groupingSpacer.setMaxWidth(Double.MAX_VALUE);
                         HBox.setHgrow(groupingSpacer, Priority.ALWAYS);
-                        ColorPicker groupingColor = new ColorPicker(ioHandler.getMatrix(editor.getFocusedMatrixUid()).getGroupingColors().get(newName.getText()));
+                        ColorPicker groupingColor = new ColorPicker(matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getGroupingColors().get(newName.getText()));
                         display.getChildren().addAll(groupingName, groupingSpacer, groupingColor);
                         currentGroupings.getChildren().add(display);
                     }
@@ -1418,7 +1418,7 @@ public class ToolbarHandler {
 
                 HBox renameLayout = new HBox();
                 ComboBox<String> currentItems = new ComboBox<>();
-                Vector<String> groupings = new Vector<>(ioHandler.getMatrix(editor.getFocusedMatrixUid()).getGroupingColors().keySet());
+                Vector<String> groupings = new Vector<>(matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getGroupingColors().keySet());
                 groupings.remove("(None)");
                 currentItems.getItems().addAll(groupings);
                 currentItems.setMaxWidth(Double.MAX_VALUE);
@@ -1439,7 +1439,7 @@ public class ToolbarHandler {
                 Button applyAllButton = new Button("Ok");
                 applyAllButton.setOnAction(eee -> {
                     // key must not be empty and must not already exist
-                    if(!currentItems.getValue().equals("") && !ioHandler.getMatrix(editor.getFocusedMatrixUid()).getGroupingColors().containsKey(newName.getText())) {
+                    if(!currentItems.getValue().equals("") && !matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getGroupingColors().containsKey(newName.getText())) {
                         for(Node grouping : currentGroupings.getChildren()) {  // delete the old object
                             HBox area = (HBox)grouping;
                             for(Node item : area.getChildren()) {
@@ -1456,7 +1456,7 @@ public class ToolbarHandler {
                                 }
                             }
                         }
-                        ioHandler.getMatrix(editor.getFocusedMatrixUid()).renameGrouping(currentItems.getValue(), newName.getText());
+                        matrixHandler.getMatrix(editor.getFocusedMatrixUid()).renameGrouping(currentItems.getValue(), newName.getText());
 
                     }  // TODO: add some kind of notification saying grouping cannot be empty or exist already
                     renameWindow.close();
@@ -1498,7 +1498,7 @@ public class ToolbarHandler {
                 deleteWindow.setTitle("Delete Grouping");
 
                 ComboBox<String> currentItems = new ComboBox<>();
-                Vector<String> groupings = new Vector<>(ioHandler.getMatrix(editor.getFocusedMatrixUid()).getGroupingColors().keySet());
+                Vector<String> groupings = new Vector<>(matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getGroupingColors().keySet());
                 groupings.remove("(None)");
                 currentItems.getItems().addAll(groupings);
                 currentItems.setMaxWidth(Double.MAX_VALUE);
@@ -1530,7 +1530,7 @@ public class ToolbarHandler {
                                 }
                             }
                         }
-                        ioHandler.getMatrix(editor.getFocusedMatrixUid()).removeGrouping(currentItems.getValue());
+                        matrixHandler.getMatrix(editor.getFocusedMatrixUid()).removeGrouping(currentItems.getValue());
                     }  // TODO: add some kind of notification saying grouping cannot be empty or exist already
                     deleteWindow.close();
                 });
@@ -1584,7 +1584,7 @@ public class ToolbarHandler {
                         }
                     }
                     assert(groupingName != null) : "could not find name on screen when configuring groupings";
-                    ioHandler.getMatrix(editor.getFocusedMatrixUid()).updateGroupingColor(groupingName, groupingColor);
+                    matrixHandler.getMatrix(editor.getFocusedMatrixUid()).updateGroupingColor(groupingName, groupingColor);
                 }
                 window.close();
                 editor.refreshTab();
@@ -1623,7 +1623,7 @@ public class ToolbarHandler {
                         }
                     }
                     assert (groupingName != null) : "could not find name on screen when configuring groupings";
-                    ioHandler.getMatrix(editor.getFocusedMatrixUid()).updateGroupingColor(groupingName, groupingColor);
+                    matrixHandler.getMatrix(editor.getFocusedMatrixUid()).updateGroupingColor(groupingName, groupingColor);
                 }
                 editor.refreshTab();
             });
@@ -1649,7 +1649,7 @@ public class ToolbarHandler {
             if(editor.getFocusedMatrixUid() == null) {
                 return;
             }
-            ioHandler.getMatrix(editor.getFocusedMatrixUid()).reDistributeSortIndexes();
+            matrixHandler.getMatrix(editor.getFocusedMatrixUid()).reDistributeSortIndexes();
             editor.refreshTab();
         });
         reDistributeIndexes.setMaxWidth(Double.MAX_VALUE);

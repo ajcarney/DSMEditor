@@ -15,7 +15,7 @@ import java.util.*;
  *
  * @author: Aiden Carney
  */
-public class DataHandler {
+public class DSMData {
     private Vector<DSMItem> rows;
     private Vector<DSMItem> cols;
     private Vector<DSMConnection> connections;
@@ -34,10 +34,10 @@ public class DataHandler {
 
 
     /**
-     * Creates a new DataHandler object. Creates no row or column items and metadata are empty strings.
+     * Creates a new DSMData object. Creates no row or column items and metadata are empty strings.
      * There is one grouping, which is the default: "(None)"
      */
-    public DataHandler() {
+    public DSMData() {
         rows = new Vector<>();
         cols = new Vector<>();
         connections = new Vector<>();
@@ -51,11 +51,11 @@ public class DataHandler {
 
 
     /**
-     * Copy constructor for DataHandler class. Performs a deep copy
+     * Copy constructor for DSMData class. Performs a deep copy
      *
-     * @param copy DataHandler object to copy
+     * @param copy DSMData object to copy
      */
-    public DataHandler(DataHandler copy) {
+    public DSMData(DSMData copy) {
         rows = new Vector<>();
         for(DSMItem row : copy.getRows()) {
             rows.add(new DSMItem(row));
@@ -948,7 +948,7 @@ public class DataHandler {
      *     TotalExtraCost
      *     TotalCost
      */
-    static public HashMap<String, Object> getCoordinationScore(DataHandler matrix, Double optimalSizeCluster, Double powcc, Boolean calculateByWeight) {
+    static public HashMap<String, Object> getCoordinationScore(DSMData matrix, Double optimalSizeCluster, Double powcc, Boolean calculateByWeight) {
         assert matrix.isSymmetrical() : "cannot call symmetrical function on non symmetrical dataset";
 
         HashMap<String, Object> results = new HashMap<>();
@@ -1010,7 +1010,7 @@ public class DataHandler {
      *
      * @return HashMap of rowUid and bid for the given group
      */
-    static public HashMap<Integer, Double> calculateClusterBids(DataHandler matrix, String group, Double optimalSizeCluster, Double powdep, Double powbid, Boolean calculateByWeight) {
+    static public HashMap<Integer, Double> calculateClusterBids(DSMData matrix, String group, Double optimalSizeCluster, Double powdep, Double powbid, Boolean calculateByWeight) {
         assert matrix.isSymmetrical() : "cannot call symmetrical function on non symmetrical dataset";
 
         HashMap<Integer, Double> bids = new HashMap<>();
@@ -1069,14 +1069,14 @@ public class DataHandler {
      * @param numLevels          number of iterations
      * @param randSeed           seed for random number generator
      * @param debug              debug to stdout
-     * @return                   DataHandler object of the new clustered matrix
+     * @return                   DSMData object of the new clustered matrix
      */
-    static public DataHandler thebeauAlgorithm(DataHandler inputMatrix, Double optimalSizeCluster, Double powdep, Double powbid, Double powcc, Double randBid, Double randAccept, Boolean calculateByWeight, int numLevels, long randSeed, boolean debug) {
+    static public DSMData thebeauAlgorithm(DSMData inputMatrix, Double optimalSizeCluster, Double powdep, Double powbid, Double powcc, Double randBid, Double randAccept, Boolean calculateByWeight, int numLevels, long randSeed, boolean debug) {
         assert inputMatrix.isSymmetrical() : "cannot call symmetrical function on non symmetrical dataset";
         Random generator = new Random(randSeed);
 
         // place each element in the matrix in its own cluster
-        DataHandler matrix = new DataHandler(inputMatrix);
+        DSMData matrix = new DSMData(inputMatrix);
         assert matrix != inputMatrix && !matrix.equals(inputMatrix): "matrices are equal and they should not be";
         matrix.clearGroupings();  // groups will be re-distributed
 
@@ -1094,7 +1094,7 @@ public class DataHandler {
         }
 
         // save the best solution
-        DataHandler bestSolution = new DataHandler(matrix);
+        DSMData bestSolution = new DSMData(matrix);
 
         // calculate initial coordination cost
         double coordinationCost = (Double)getCoordinationScore(matrix, optimalSizeCluster, powcc, calculateByWeight).get("TotalCost");
@@ -1117,7 +1117,7 @@ public class DataHandler {
             }
 
             // choose a number between 0 and randBid to determine if it should make a suboptimal change
-            DataHandler tempMatrix = new DataHandler(matrix);
+            DSMData tempMatrix = new DSMData(matrix);
             int nBid = (int) (generator.nextDouble() * randBid);
 
             // find if the change is optimal
@@ -1173,6 +1173,14 @@ public class DataHandler {
      */
     public void clearWasModifiedFlag() {
         this.wasModified = false;
+    }
+
+
+    /**
+     * Sets the was modified flag
+     */
+    public void setWasModified() {
+        wasModified = true;
     }
 
 

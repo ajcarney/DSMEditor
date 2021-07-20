@@ -1,7 +1,7 @@
 package gui;
 
+import DSMData.DSMData;
 import DSMData.DSMItem;
-import DSMData.DataHandler;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.Insets;
@@ -18,7 +18,7 @@ import java.text.DecimalFormat;
 import java.util.*;
 
 public class ClusterAnalysis {
-    DataHandler matrix;
+    DSMData matrix;
 
     Stage window;
     private BorderPane rootLayout;
@@ -41,7 +41,7 @@ public class ClusterAnalysis {
     private CheckBox countByWeight;
 
 
-    public ClusterAnalysis(DataHandler matrix) {
+    public ClusterAnalysis(DSMData matrix) {
         this.matrix = matrix;
 
         window = new Stage();
@@ -184,7 +184,7 @@ public class ClusterAnalysis {
 
 
     private void runCoordinationScore() {
-        HashMap<String, Object> coordinationScore = DataHandler.getCoordinationScore(matrix, optimalSizeCluster.doubleValue(), powcc.doubleValue(), countByWeight.isSelected());
+        HashMap<String, Object> coordinationScore = DSMData.getCoordinationScore(matrix, optimalSizeCluster.doubleValue(), powcc.doubleValue(), countByWeight.isSelected());
 
         Label titleLabel = new Label("Cluster Cost Analysis");
         titleLabel.setStyle(titleLabel.getStyle() + "-fx-font-weight: bold;");
@@ -312,7 +312,7 @@ public class ClusterAnalysis {
         for(String group : groupOrder) {
             currentRow = 1;
 
-            HashMap<Integer, Double> groupBids = DataHandler.calculateClusterBids(matrix, group, optimalSizeCluster.doubleValue(), powdep.doubleValue(), powbid.doubleValue(), countByWeight.isSelected());
+            HashMap<Integer, Double> groupBids = DSMData.calculateClusterBids(matrix, group, optimalSizeCluster.doubleValue(), powdep.doubleValue(), powbid.doubleValue(), countByWeight.isSelected());
             for (DSMItem item : items) {
                 HBox cell = new HBox();
                 DecimalFormat df = new DecimalFormat("#.##");

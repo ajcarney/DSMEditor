@@ -1,5 +1,7 @@
-import DSMData.DataHandler;
-import IOHandler.IOHandler;
+import DSMData.DSMData;
+import DSMData.MatrixHandler;
+import IOHandler.ExportHandler;
+import IOHandler.ImportHandler;
 import gui.*;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -25,12 +27,12 @@ import java.util.Map;
  */
 public class Main extends Application {
 
-    private static final IOHandler ioHandler = new IOHandler();
+    private static final MatrixHandler matrixHandler = new MatrixHandler();
     private static final InfoHandler infoHandler = new InfoHandler();
-    private static final TabView editor = new TabView(ioHandler, infoHandler);
-    private static final ConnectionSearchWidget searchWidget = new ConnectionSearchWidget(ioHandler, editor);
-    private static final HeaderMenu menu = new HeaderMenu(ioHandler, editor, searchWidget);
-    private static final ToolbarHandler toolbarHandler = new ToolbarHandler(ioHandler, editor);
+    private static final TabView editor = new TabView(matrixHandler, infoHandler);
+    private static final ConnectionSearchWidget searchWidget = new ConnectionSearchWidget(matrixHandler, editor);
+    private static final HeaderMenu menu = new HeaderMenu(matrixHandler, editor, searchWidget);
+    private static final ToolbarHandler toolbarHandler = new ToolbarHandler(matrixHandler, editor);
 
 
     /**
@@ -58,8 +60,8 @@ public class Main extends Application {
 
         // start with a tab open (used for debugging, remove or comment out for release)
         File file = new File("/home/aiden/Documents/DSMEditor/vpas3.dsm");
-        DataHandler matrix = ioHandler.readFile(file);
-        int uid = ioHandler.addMatrix(matrix, file);
+        DSMData matrix = ImportHandler.readFile(file);
+        int uid = matrixHandler.addMatrix(matrix, file);
         editor.addTab(uid);
 
 
@@ -123,9 +125,10 @@ public class Main extends Application {
 
        File recoveryDir = new File("./.recovery");
        if(!recoveryDir.exists()) recoveryDir.mkdir();
-       for(Map.Entry<Integer, DataHandler> matrix : ioHandler.getMatrices().entrySet()) {
-           File f = new File("./.recovery/" + ioHandler.getMatrixSaveFile(matrix.getKey()).getName());
-           ioHandler.saveMatrixToFile(matrix.getKey(), f);
+       for(Map.Entry<Integer, DSMData> matrix : matrixHandler.getMatrices().entrySet()) {
+           File f = new File("./.recovery/" + matrixHandler.getMatrixSaveFile(matrix.getKey()).getName());
+           ExportHandler.saveMatrixToFile(matrix.getValue(), f);
+           matrix.getValue().setWasModified();  // matrix is not saved to known location, so don't display it as saved to the user
        }
 
     }
