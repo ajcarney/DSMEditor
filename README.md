@@ -1,11 +1,16 @@
 # DSMEditor
 An open-source application for editing, designing, and analyzing Design Structure Matrices
+
+---
+
 ### Dependencies
 [jdom 2.0.6 - XML Parser](http://www.jdom.org/downloads/)
 
 [apache poi 5.0.0 - Excel Parser](https://poi.apache.org/download.html#POI-5.0.0)
 
 [javafx 11.0.2 - Graphics Library](https://gluonhq.com/products/javafx/) (Note: this is needed as a runtime dependency as well as compile time)
+
+---
 
 ### To Install
 Download the latest .jar file and the installer. Run the installer and a batch script titled <code>DSMEditor.bat</code> will be created in the current directory and is used to run the program.
@@ -28,6 +33,7 @@ To modify row items, use the toolbar on the left-hand side of the screen
 
 Connections can be created using either the toolbar or clicking directly on a cell. To make searching for connections easier, you can use the "F" key as a toggle for enabling cross highlighting of the cell you are hovering over.
 
+---
 
 ### Sample Usage
 <p style="border-width: 2px; border-color: black; border-style:solid;" align="center">
@@ -44,13 +50,15 @@ Connections can be created using either the toolbar or clicking directly on a ce
 </p>
 <p style="border-width: 2px; border-color: black; border-style:solid;" align="center">
     <img src="gallery/cluster_algorithm.png" width=1000>
-    <div>
+    <div align="center">
         Automatic clustering for the sample matrix based on 
         <a href="https://dsmweb.org/matlab-macro-for-clustering-dsms/">
           Ronnie Thebeau's clustering algorithm
         </a>
     </div>
 </p>
+
+---
 
 ### Feedback?
 If you encounter any bugs or would like to submit a feature request, feel free to raise an issue, and I will work on it as soon as possible.
