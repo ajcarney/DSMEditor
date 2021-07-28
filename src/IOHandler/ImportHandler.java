@@ -79,6 +79,8 @@ public class ImportHandler {
             matrix.modifyConnection(rowUid, colUid, "x", conn.get(2));
         }
 
+        matrix.clearStacks();  // make sure there are no changes when it is opened
+
         return matrix;
     }
 
@@ -174,13 +176,16 @@ public class ImportHandler {
                 return null;
             } else {
                 matrix.clearWasModifiedFlag();  // clear flag because no write operations were performed to the file
+                matrix.clearStacks();  // make sure there are no changes when it is opened
+
                 return matrix;
             }
 
         } catch(Exception e) {
             // TODO: add alert box that says the file was corrupted in some way and could not be read in
-
+            System.out.println("Error reading file");
             System.out.println(e);
+            e.printStackTrace();
             return null;
         }
     }

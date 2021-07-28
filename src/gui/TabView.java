@@ -230,6 +230,7 @@ public class TabView {
     public void refreshTab() {
         if(getFocusedMatrixUid() != null) {
             getFocusedTab().setContent(matrixHandler.getMatrixGuiHandler(getFocusedMatrixUid()).getMatrixEditor());
+            infoHandler.setMatrix(matrixHandler.getMatrix(getFocusedMatrixUid()));
         }
     }
 

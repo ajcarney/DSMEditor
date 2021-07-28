@@ -142,13 +142,14 @@ public class ToolbarHandler {
             applyButton.setOnAction(ee -> {
                 for(Pair<String, String> item : changesToMakeView.getItems()) {
                     if(item.getKey().equals("row")) {
-                        matrixHandler.getMatrix(editor.getFocusedMatrixUid()).addNewItem(item.getValue(), true);
+                        matrixHandler.getMatrix(editor.getFocusedMatrixUid()).addItem(item.getValue(), true);
                     } else if(item.getKey().equals("col")) {
-                        matrixHandler.getMatrix(editor.getFocusedMatrixUid()).addNewItem(item.getValue(), false);
+                        matrixHandler.getMatrix(editor.getFocusedMatrixUid()).addItem(item.getValue(), false);
                     } else {
-                        matrixHandler.getMatrix(editor.getFocusedMatrixUid()).addNewSymmetricItem(item.getValue());
+                        matrixHandler.getMatrix(editor.getFocusedMatrixUid()).addSymmetricItem(item.getValue());
                     }
                 }
+                matrixHandler.getMatrix(editor.getFocusedMatrixUid()).setCurrentStateAsCheckpoint();
                 window.close();
                 editor.refreshTab();
             });
@@ -270,13 +271,14 @@ public class ToolbarHandler {
             applyButton.setOnAction(ee -> {
                 for(Pair<String, Integer> item : changesToMakeView.getItems()) {
                     if(item.getKey().equals("symmetric")) {
-                        matrixHandler.getMatrix(editor.getFocusedMatrixUid()).deleteSymmetricItem(item.getValue());
+                        matrixHandler.getMatrix(editor.getFocusedMatrixUid()).deleteSymmetricItem(matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getItem(item.getValue()));
                     } else {
-                        matrixHandler.getMatrix(editor.getFocusedMatrixUid()).deleteItem(item.getValue());
+                        matrixHandler.getMatrix(editor.getFocusedMatrixUid()).deleteItem(matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getItem(item.getValue()));
                     }
                 }
                 window.close();
                 editor.refreshTab();
+                matrixHandler.getMatrix(editor.getFocusedMatrixUid()).setCurrentStateAsCheckpoint();
             });
 
             Pane spacer = new Pane();  // used as a spacer between buttons
@@ -391,13 +393,14 @@ public class ToolbarHandler {
             applyButton.setOnAction(ee -> {
                 for(Pair<Integer, String> item : changesToMakeView.getItems()) {
                     if(matrixHandler.getMatrix(editor.getFocusedMatrixUid()).isSymmetrical()) {
-                        matrixHandler.getMatrix(editor.getFocusedMatrixUid()).setItemNameSymmetric(item.getKey(), item.getValue());
+                        matrixHandler.getMatrix(editor.getFocusedMatrixUid()).setItemNameSymmetric(matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getItem(item.getKey()), item.getValue());
                     } else {
-                        matrixHandler.getMatrix(editor.getFocusedMatrixUid()).setItemName(item.getKey(), item.getValue());
+                        matrixHandler.getMatrix(editor.getFocusedMatrixUid()).setItemName(matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getItem(item.getKey()), item.getValue());
                     }
                 }
                 window.close();
                 editor.refreshTab();
+                matrixHandler.getMatrix(editor.getFocusedMatrixUid()).setCurrentStateAsCheckpoint();
             });
 
             Pane spacer = new Pane();  // used as a spacer between buttons
@@ -725,6 +728,7 @@ public class ToolbarHandler {
                 }
                 window.close();
                 editor.refreshTab();
+                matrixHandler.getMatrix(editor.getFocusedMatrixUid()).setCurrentStateAsCheckpoint();
             });
 
             Pane spacer = new Pane();  // used as a spacer between buttons
@@ -1141,11 +1145,12 @@ public class ToolbarHandler {
                     if(item.get(4).equals("add")) {
                         matrixHandler.getMatrix(editor.getFocusedMatrixUid()).modifyConnection(Integer.parseInt(item.get(0)), Integer.parseInt(item.get(1)), item.get(2), Double.parseDouble(item.get(3)));
                     } else {
-                        matrixHandler.getMatrix(editor.getFocusedMatrixUid()).clearConnection(Integer.parseInt(item.get(0)), Integer.parseInt(item.get(1)));
+                        matrixHandler.getMatrix(editor.getFocusedMatrixUid()).deleteConnection(Integer.parseInt(item.get(0)), Integer.parseInt(item.get(1)));
                     }
                 }
                 window.close();
                 editor.refreshTab();
+                matrixHandler.getMatrix(editor.getFocusedMatrixUid()).setCurrentStateAsCheckpoint();
             });
 
             Pane spacer = new Pane();  // used as a spacer between buttons
@@ -1280,10 +1285,11 @@ public class ToolbarHandler {
             Button applyAllButton = new Button("Apply All Changes");
             applyAllButton.setOnAction(ee -> {
                 for(Pair<Integer, Integer> item : changesToMakeView.getItems()) {  // rowUid | colUid
-                    matrixHandler.getMatrix(editor.getFocusedMatrixUid()).clearConnection(item.getKey(), item.getValue());
+                    matrixHandler.getMatrix(editor.getFocusedMatrixUid()).deleteConnection(item.getKey(), item.getValue());
                 }
                 window.close();
                 editor.refreshTab();
+                matrixHandler.getMatrix(editor.getFocusedMatrixUid()).setCurrentStateAsCheckpoint();
             });
 
             Pane spacer = new Pane();  // used as a spacer between buttons
@@ -1626,6 +1632,7 @@ public class ToolbarHandler {
                     matrixHandler.getMatrix(editor.getFocusedMatrixUid()).updateGroupingColor(groupingName, groupingColor);
                 }
                 editor.refreshTab();
+                matrixHandler.getMatrix(editor.getFocusedMatrixUid()).setCurrentStateAsCheckpoint();
             });
             window.showAndWait();
 
@@ -1651,6 +1658,7 @@ public class ToolbarHandler {
             }
             matrixHandler.getMatrix(editor.getFocusedMatrixUid()).reDistributeSortIndexes();
             editor.refreshTab();
+            matrixHandler.getMatrix(editor.getFocusedMatrixUid()).setCurrentStateAsCheckpoint();
         });
         reDistributeIndexes.setMaxWidth(Double.MAX_VALUE);
 

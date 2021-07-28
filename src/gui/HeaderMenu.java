@@ -214,11 +214,36 @@ public class HeaderMenu {
 
         //Edit menu
         editMenu = new Menu("_Edit");
-        editMenu.setDisable(true);
-        editMenu.getItems().add(new MenuItem("Cut"));
-        editMenu.getItems().add(new MenuItem("Copy"));
-        MenuItem paste = new MenuItem("Paste");
-        editMenu.getItems().add(paste);
+
+        MenuItem undo = new MenuItem("Undo");
+        undo.setOnAction(e -> {
+            if(editor.getFocusedMatrixUid() == null) {
+                return;
+            }
+            matrixHandler.getMatrix(editor.getFocusedMatrixUid()).undoToCheckpoint();
+            editor.refreshTab();
+        });
+
+        MenuItem redo = new MenuItem("Redo");
+        redo.setOnAction(e -> {
+            if(editor.getFocusedMatrixUid() == null) {
+                return;
+            }
+            matrixHandler.getMatrix(editor.getFocusedMatrixUid()).redoToCheckpoint();
+            editor.refreshTab();
+        });
+
+        editMenu.setOnShown(e -> {  // disable validate symmetry for non-symmetrical matrices
+            if(editor.getFocusedMatrixUid() == null) {
+                return;
+            }
+            undo.setDisable(!matrixHandler.getMatrix(editor.getFocusedMatrixUid()).canUndo());
+            redo.setDisable(!matrixHandler.getMatrix(editor.getFocusedMatrixUid()).canRedo());
+        });
+
+
+        editMenu.getItems().add(undo);
+        editMenu.getItems().add(redo);
 
 
     // View menu

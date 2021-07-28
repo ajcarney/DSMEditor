@@ -1,6 +1,7 @@
 package gui;
 
 import DSMData.DSMConnection;
+import DSMData.DSMItem;
 import DSMData.DSMData;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
@@ -475,19 +476,19 @@ public class MatrixGuiHandler {
                     g.getChildren().add(label);
                     cell.getChildren().add(g);
                 } else if(item.getKey().equals("item_name")) {
-                    Label label = new Label(matrix.getItem((Integer) item.getValue()).getName());
+                    Label label = new Label(((DSMItem)item.getValue()).getName());
                     cell.setAlignment(Pos.BOTTOM_RIGHT);
                     label.setMinWidth(Region.USE_PREF_SIZE);
                     cell.getChildren().add(label);
                 } else if(item.getKey().equals("item_name_v")) {
-                    Label label = new Label(matrix.getItem((Integer)item.getValue()).getName());
+                    Label label = new Label(((DSMItem)item.getValue()).getName());
                     label.setRotate(-90);
                     cell.setAlignment(Pos.BOTTOM_RIGHT);
                     Group g = new Group();  // label will be added to a group so that it will be formatted correctly if it is vertical
                     g.getChildren().add(label);
                     cell.getChildren().add(g);
                 } else if(item.getKey().equals("grouping_item")) {
-                    ComboBox<String> groupings = new ComboBox<String>();
+                    ComboBox<String> groupings = new ComboBox<>();
                     groupings.setMinWidth(Region.USE_PREF_SIZE);
 
                     groupings.setStyle("""
@@ -496,13 +497,14 @@ public class MatrixGuiHandler {
                     );
 
                     groupings.getItems().addAll(matrix.getGroupings());
-                    groupings.getSelectionModel().select(matrix.getItem((Integer)item.getValue()).getGroup());
+                    groupings.getSelectionModel().select(((DSMItem)item.getValue()).getGroup());
                     groupings.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal)->{
                         if(matrix.isSymmetrical()) {
-                            matrix.setGroupSymmetric((Integer)item.getValue(), groupings.getValue());
+                            matrix.setItemGroupSymmetric((DSMItem)item.getValue(), groupings.getValue());
                         } else {
-                            matrix.setGroup((Integer)item.getValue(), groupings.getValue());
+                            matrix.setItemGroup((DSMItem)item.getValue(), groupings.getValue());
                         }
+                        matrix.setCurrentStateAsCheckpoint();
 
                         for(Cell c_ : cells) {
                             c_.updateCellHighlight();
@@ -519,9 +521,10 @@ public class MatrixGuiHandler {
                             -fx-background-radius: 0, 0, 0;"""
                     );
                     groupings.setRotate(-90);
-                    groupings.getSelectionModel().select(matrix.getItem((Integer)item.getValue()).getGroup());
+                    groupings.getSelectionModel().select(((DSMItem)item.getValue()).getGroup());
                     groupings.setOnAction(e -> {
-                        matrix.setGroup((Integer)item.getValue(), groupings.getValue());
+                        matrix.setItemGroup((DSMItem)item.getValue(), groupings.getValue());
+                        matrix.setCurrentStateAsCheckpoint();
                         for(Cell c_ : cells) {
                             c_.updateCellHighlight();
                         }
@@ -530,7 +533,7 @@ public class MatrixGuiHandler {
                     g.getChildren().add(groupings);
                     cell.getChildren().add(g);
                 } else if(item.getKey().equals("index_item")) {
-                    NumericTextField entry = new NumericTextField(matrix.getItem((Integer)item.getValue()).getSortIndex());
+                    NumericTextField entry = new NumericTextField(((DSMItem)item.getValue()).getSortIndex());
                     entry.setPrefColumnCount(3);  // set size to 3 characters fitting
                     entry.setPadding(new Insets(0));
 
@@ -547,10 +550,11 @@ public class MatrixGuiHandler {
                             if(entry.getNumericValue() != null) {
                                 Double newSortIndex = entry.getNumericValue();
                                 if(matrix.isSymmetrical()) {
-                                    matrix.setSortIndexSymmetric((Integer)item.getValue(), newSortIndex);
+                                    matrix.setItemSortIndexSymmetric((DSMItem)item.getValue(), newSortIndex);
                                 } else {
-                                    matrix.setSortIndex((Integer)item.getValue(), newSortIndex);
+                                    matrix.setItemSortIndex((DSMItem)item.getValue(), newSortIndex);
                                 }
+                                matrix.setCurrentStateAsCheckpoint();
                                 clearCellHighlight(new Pair<Integer, Integer>(finalR, finalC), "errorHighlight");
                             } else {
                                 setCellHighlight(new Pair<Integer, Integer>(finalR, finalC), ERROR_BACKGROUND, "errorHighlight");
@@ -563,8 +567,8 @@ public class MatrixGuiHandler {
                     HBox label = new HBox();  // use an HBox object because then background color is not tied to the text
                     defaultBackground = UNEDITABLE_CONNECTION_BACKGROUND;
                 } else if(item.getKey().equals("editable_connection")) {
-                    int rowUid = ((Pair<Integer, Integer>)item.getValue()).getKey();
-                    int colUid = ((Pair<Integer, Integer>)item.getValue()).getValue();
+                    int rowUid = ((Pair<DSMItem, DSMItem>)item.getValue()).getKey().getUid();
+                    int colUid = ((Pair<DSMItem, DSMItem>)item.getValue()).getValue().getUid();
                     DSMConnection conn = matrix.getConnection(rowUid, colUid);
                     final Label label = new Label();
                     label.textProperty().bind(Bindings.createStringBinding(() -> {  // bind so that either weights or name can be shown
@@ -657,8 +661,9 @@ public class MatrixGuiHandler {
                                     }
                                     matrix.modifyConnection(rowUid, colUid, nameField.getText(), weight);
                                 } else {
-                                    matrix.clearConnection(rowUid, colUid);
+                                    matrix.deleteConnection(rowUid, colUid);
                                 }
+                                matrix.setCurrentStateAsCheckpoint();
                                 window.close();
 
                                 label.textProperty().unbind();  // reset binding to update text (Bound values cannot be set)

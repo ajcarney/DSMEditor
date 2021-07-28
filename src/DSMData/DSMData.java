@@ -16,6 +16,39 @@ import java.util.*;
  * @author: Aiden Carney
  */
 public class DSMData {
+    private class MatrixChange {
+        private Runnable doFunction;
+        private Runnable undoFunction;
+        private boolean checkpoint;
+
+        public MatrixChange(Runnable doFunction, Runnable undoFunction, boolean checkpoint) {
+            this.doFunction = doFunction;
+            this.undoFunction = undoFunction;
+            this.checkpoint = checkpoint;
+        }
+
+        public void runFunction() {
+            doFunction.run();
+        }
+
+        public void runUndoFunction() {
+            undoFunction.run();
+        }
+
+        public void setCheckpoint(boolean isCheckpoint) {
+            checkpoint = isCheckpoint;
+        }
+
+        public boolean isCheckpoint() {
+            return checkpoint;
+        }
+
+        public String debug() {
+            return undoFunction + " " + doFunction + " " + checkpoint;
+        }
+    }
+
+
     private Vector<DSMItem> rows;
     private Vector<DSMItem> cols;
     private Vector<DSMConnection> connections;
@@ -32,12 +65,19 @@ public class DSMData {
 
     private boolean wasModified = true;
 
+    private Stack<MatrixChange> undoStack;
+    private Stack<MatrixChange> redoStack;
+    private static final int MAX_UNDO_HISTORY = Integer.MAX_VALUE;  // TODO: undo history should be based on checkpoints
+
 
     /**
      * Creates a new DSMData object. Creates no row or column items and metadata are empty strings.
      * There is one grouping, which is the default: "(None)"
      */
     public DSMData() {
+        undoStack = new Stack<>();
+        redoStack = new Stack<>();
+
         rows = new Vector<>();
         cols = new Vector<>();
         connections = new Vector<>();
@@ -47,6 +87,8 @@ public class DSMData {
         addGrouping("(None)", Color.color(1.0, 1.0, 1.0));  // add default group
 
         this.wasModified = true;
+
+        clearStacks();
     }
 
 
@@ -56,6 +98,9 @@ public class DSMData {
      * @param copy DSMData object to copy
      */
     public DSMData(DSMData copy) {
+        undoStack = new Stack<>();
+        redoStack = new Stack<>();
+
         rows = new Vector<>();
         for(DSMItem row : copy.getRows()) {
             rows.add(new DSMItem(row));
@@ -85,6 +130,115 @@ public class DSMData {
 
         symmetrical = copy.isSymmetrical();
         this.wasModified = true;
+
+        clearStacks();
+    }
+
+
+    /**
+     * Adds a change to the undo stack so that it can be handled
+     *
+     * @param change the change object to handle
+     */
+    private void addChangeToStack(MatrixChange change) {
+        change.runFunction();
+        undoStack.push(change);
+
+        if(undoStack.size() > MAX_UNDO_HISTORY) {  // remove bottom item from stack
+            undoStack.remove(0);
+        }
+
+        this.wasModified = true;
+    }
+
+
+    /**
+     * Undoes changes until the last checkpoint (checkpoint is not included). Pops changes from the undo stack and pushes them
+     * to the redo stack
+     */
+    public void undoToCheckpoint() {
+        int iter = 0;
+        while(true) {  // undo state until the last checkpoint
+            if(undoStack.size() > 0) {  // make sure stack is not empty
+                MatrixChange change = undoStack.peek();
+                if(change.isCheckpoint() && iter > 0) {  // stop before the checkpoint unless it is the first item
+                    break;
+                }
+                undoStack.pop();  // add change to the redo stack
+
+                change.runUndoFunction();
+                redoStack.push(change);
+
+                iter += 1;
+            } else {
+                break;
+            }
+        }
+
+        this.wasModified = true;
+    }
+
+
+    /**
+     * Redoes changes that are on the redo stack to the next checkpoint (checkpoint is included).
+     */
+    public void redoToCheckpoint() {
+        while(true) {
+            if(redoStack.size() > 0) {  // make sure stack is not empty
+                MatrixChange change = redoStack.peek();
+                redoStack.pop();  // add change to the redo stack
+
+                change.runFunction();
+                undoStack.push(change);
+
+                if(change.isCheckpoint()) {  // stop after the checkpoint
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+
+        this.wasModified = true;
+    }
+
+
+    /**
+     * Sets the top of the undo stack as a checkpoint and clears the redo stack because redoing after an operation
+     * could go horribly wrong
+     */
+    public void setCurrentStateAsCheckpoint() {
+        undoStack.peek().setCheckpoint(true);
+        redoStack.clear();
+    }
+
+
+    /**
+     * Returns whether there are changes to be undone
+     *
+     * @return if changes are on the undo stack
+     */
+    public boolean canUndo() {
+        return undoStack.size() > 0;
+    }
+
+
+    /**
+     * Returns whether there are changes to be redone
+     *
+     * @return if changes are on the redo stack
+     */
+    public boolean canRedo() {
+        return redoStack.size() > 0;
+    }
+
+
+    /**
+     * clears both undo and redo stacks (useful for instantiation of the class)
+     */
+    public void clearStacks() {
+        undoStack.clear();
+        redoStack.clear();
     }
 
 
@@ -181,12 +335,17 @@ public class DSMData {
 
 
     /**
-     * changes whether or not the matrix is symmetrical
+     * changes whether or not the matrix is symmetrical. Puts the change on the stack but does not set a checkpoint
      *
      * @param isSymmetrical boolean of if the matrix should be symmetrical or not
      */
     public void setSymmetrical(boolean isSymmetrical) {
-        this.symmetrical = isSymmetrical;
+        boolean currentState = this.symmetrical;
+        addChangeToStack(new MatrixChange(
+            () -> symmetrical = isSymmetrical,
+            () -> symmetrical = currentState,
+            false
+        ));
     }
 
 
@@ -201,51 +360,97 @@ public class DSMData {
 
 
     /**
-     * Adds a new grouping to the matrix
+     * Adds a new grouping to the matrix. Puts the change on the stack but does not set a checkpoint
      *
      * @param name  the names of the groupings
      * @param color the color associated with the grouping
      */
     public void addGrouping(String name, Color color) {
-        if(color != null) {
-            groupingColors.put(name, color);
-        } else {
-            groupingColors.put(name, Color.color(1.0, 1.0, 1.0));
-        }
-        groupings.add(name);
-        this.wasModified = true;
+        addChangeToStack(new MatrixChange(
+            () -> {  // do function
+                if(color != null) {
+                    groupingColors.put(name, color);
+                } else {
+                    groupingColors.put(name, Color.color(1.0, 1.0, 1.0));
+                }
+                groupings.add(name);
+            },
+            () -> {  // undo function
+                groupingColors.remove(name);
+                groupings.remove(name);
+                for(DSMItem item : rows) {
+                    if(item.getGroup().equals(name)) {
+                        item.setGroup("(None)");
+                    }
+                }
+                for(DSMItem item : cols) {
+                    if(item.getGroup().equals(name)) {
+                        item.setGroup("(None)");
+                    }
+                }
+            },
+            false
+        ));
     }
 
 
     /**
-     * Removes a grouping from the matrix
+     * Removes a grouping from the matrix. Puts the change on the stack but does not set a checkpoint
      *
      * @param name the name of the grouping to remove
      */
     public void removeGrouping(String name) {
-        groupingColors.remove(name);
-        groupings.remove(name);
-        for(DSMItem item : rows) {
-            if(item.getGroup().equals(name)) {
-                item.setGroup("(None)");
-            }
-        }
-        for(DSMItem item : cols) {
-            if(item.getGroup().equals(name)) {
-                item.setGroup("(None)");
-            }
-        }
-        this.wasModified = true;
+        Color color = groupingColors.get(name);
+        addChangeToStack(new MatrixChange(
+            () -> {  // do function
+                if(color != null) {
+                    groupingColors.put(name, color);
+                } else {
+                    groupingColors.put(name, Color.color(1.0, 1.0, 1.0));
+                }
+                groupings.add(name);
+            },
+            () -> {  // undo function
+                groupingColors.remove(name);
+                groupings.remove(name);
+                for(DSMItem item : rows) {
+                    if(item.getGroup().equals(name)) {
+                        item.setGroup("(None)");
+                    }
+                }
+                for(DSMItem item : cols) {
+                    if(item.getGroup().equals(name)) {
+                        item.setGroup("(None)");
+                    }
+                }
+            },
+            false
+        ));
     }
 
 
     /**
-     * Removes all groupings from the matrix
+     * Removes all groupings from the matrix. Puts the change on the stack but does not set a checkpoint
      */
     public void clearGroupings() {
-        groupingColors.clear();
-        groupings.clear();
-        this.wasModified = true;
+        HashMap<String, Color> oldGroupingColors = (HashMap<String, Color>) getGroupingColors().clone();
+
+        ObservableSet<String> oldGroupings = FXCollections.observableSet();
+        for(String group : groupingColors.keySet()) {
+            oldGroupings.add(group);
+        }
+
+        addChangeToStack(new MatrixChange(
+            () -> {  // do function
+                groupingColors.clear();
+                groupings.clear();
+            },
+            () -> {  // undo function
+                groupingColors = oldGroupingColors;
+                groupings = oldGroupings;
+            },
+            false
+        ));
     }
 
 
@@ -261,107 +466,252 @@ public class DSMData {
 
 
     /**
-     * Renames a grouping and updates all DSMItem objects with the new grouping name
+     * Renames a grouping and updates all DSMItem objects with the new grouping name. Puts the change on the stack
+     * but does not set a checkpoint
      *
      * @param oldName the old name to be changed
      * @param newName the new name of the grouping
      */
     public void renameGrouping(String oldName, String newName) {
-        Color oldColor = groupingColors.get(oldName);
-        for(DSMItem item : rows) {
-            if(item.getGroup().equals(oldName)) {
-                item.setGroup(newName);
-            }
-        }
-        for(DSMItem item : cols) {
-            if(item.getGroup().equals(oldName)) {
-                item.setGroup(newName);
-            }
-        }
-        removeGrouping(oldName);
-        addGrouping(newName, oldColor);
-        this.wasModified = true;
+        addChangeToStack(new MatrixChange(
+            () -> {  // do function
+                Color oldColor = groupingColors.get(oldName);
+                for(DSMItem item : rows) {
+                    if(item.getGroup().equals(oldName)) {
+                        item.setGroup(newName);
+                    }
+                }
+                for(DSMItem item : cols) {
+                    if(item.getGroup().equals(oldName)) {
+                        item.setGroup(newName);
+                    }
+                }
+                removeGrouping(oldName);
+                addGrouping(newName, oldColor);
+            },
+            () -> {  // undo function
+                Color oldColor = groupingColors.get(newName);
+                for(DSMItem item : rows) {
+                    if(item.getGroup().equals(newName)) {
+                        item.setGroup(oldName);
+                    }
+                }
+                for(DSMItem item : cols) {
+                    if(item.getGroup().equals(newName)) {
+                        item.setGroup(oldName);
+                    }
+                }
+                removeGrouping(newName);
+                addGrouping(oldName, oldColor);
+            },
+            false
+        ));
     }
 
 
     /**
-     * Changes a color of a grouping
+     * Changes a color of a grouping. Puts the change on the stack but does not set a checkpoint
      *
      * @param name     the name of the grouping to change the color of
      * @param newColor the new color of the grouping
      */
     public void updateGroupingColor(String name, Color newColor) {
-        groupingColors.remove(name);
-        groupingColors.put(name, newColor);
-        this.wasModified = true;
+        Color oldColor = groupingColors.get(name);
+        addChangeToStack(new MatrixChange(
+            () -> {  // do function
+                groupingColors.remove(name);
+                groupingColors.put(name, newColor);
+            },
+            () -> {  // undo function
+                groupingColors.remove(name);
+                groupingColors.put(name, oldColor);
+            },
+            false
+        ));
     }
 
 
     /**
-     * Adds an item to the matrix symmetrically. The symmetrical flag must be set in order to use
-     * this function. This function adds both the row and column and creates the alias for the column
+     * creates and returns a new symmetric item based on the name passed to it. Does not add the change to the stack
+     * or add the items to the matrix
      *
-     * @param name the name of the item to be added
+     * @param name the name of the item
+     * @return     pair of row, column of the created items
      */
-    public void addNewSymmetricItem(String name) {
+    private Pair<DSMItem, DSMItem> createSymmetricItem(String name) {
         assert isSymmetrical() : "cannot call symmetrical function on non symmetrical dataset";
 
         double index = (int)getRowMaxSortIndex() + 1;  // cast to int to remove the decimal place so that the index will be a whole number
         DSMItem rowItem = new DSMItem(index, name);
         DSMItem colItem = new DSMItem(index, name);
         colItem.setAliasUid(rowItem.getUid());
-        this.rows.add(rowItem);  // object is the same for row and column because matrix is symmetrical
-        this.cols.add(colItem);
 
-        this.wasModified = true;
+        return new Pair<>(rowItem, colItem);
     }
 
 
     /**
-     * Creates a new item and adds it to the matrix as either a row or a column. This function should
-     * be used only for non-symmetrical datasets.
+     * creates and returns a new item based on the name passed to it. Does not add the change to the stack
+     * or add the item to the matrix
      *
-     * @param name  the name of the item to create
-     * @param isRow boolean flag of whether the item is a row or not
+     * @param name the name of the item
+     * @return     the created item
      */
-    public void addNewItem(String name, boolean isRow) {
-        if(isRow) {
-            DSMItem row = new DSMItem((int)getRowMaxSortIndex() + 1.0, name);
-            this.rows.add(row);
-        } else {
-            double index = cols.size();
-            DSMItem col = new DSMItem((int)getColMaxSortIndex() + 1.0, name);
-            this.cols.add(col);
-        }
+    private DSMItem createItem(String name) {
+        double index = (int)getRowMaxSortIndex() + 1;  // cast to int to remove the decimal place so that the index will be a whole number
+        DSMItem item = new DSMItem(index, name);
 
-        this.wasModified = true;
+        return item;
     }
 
 
     /**
-     * Adds an existing item to the matrix as either a row or a column. This function should
-     * be used only for non-symmetrical datasets.
+     * Removes an item from the matrix and clears its connections. This change is not added to the stack, however the call
+     * to clear connections does make a change to the stack
+     *
+     * @param item the item to delete
+     */
+    private void removeItem(DSMItem item) {
+        int index = -1;
+        for(int i=0; i<this.rows.size(); i++) {     // check to see if uid is in the rows
+            if(rows.elementAt(i).getUid() == item.getUid()) {
+                index = i;
+                break;
+            }
+        }
+        if (index != -1) {
+            rows.remove(index);
+        } else {                                   // uid was not in a row, must be in a column
+            for(int i=0; i<this.cols.size(); i++) {
+                if(cols.elementAt(i).getUid() == item.getUid()) {
+                    index = i;
+                    break;
+                }
+            }
+            if (index != -1) {
+                cols.remove(index);
+            }
+        }
+        clearItemConnections(item.getUid());
+    }
+
+
+    /**
+     * Creates a connection and adds it to the matrix, but does not add the change to the stack
+     *
+     * @param rowUid         the row item uid
+     * @param colUid         the column item uid
+     * @param connectionName the name of the connection
+     * @param weight         the weight of the connection
+     */
+    private void createConnection(int rowUid, int colUid, String connectionName, double weight) {
+        DSMConnection connection = new DSMConnection(connectionName, weight, rowUid, colUid);
+        connections.add(connection);
+    }
+
+    private void removeConnection(int rowUid, int colUid) {
+        for(DSMConnection connection : connections) {     // check to see if uid is in the rows
+            if(connection.getRowUid() == rowUid && connection.getColUid() == colUid) {
+                connections.remove(connection);
+                break;
+            }
+        }
+    }
+
+    
+    /**
+     * Adds an existing item to the matrix as either a row or a column. Puts the change on the stack but does not
+     * set a checkpoint
      *
      * @param item  DSMItem object of the item to add
      * @param isRow boolean flag of whether the item is a row or not
      */
     public void addItem(DSMItem item, boolean isRow) {
-        if(isRow) {
-            this.rows.add(item);
-        } else {
-            this.cols.add(item);
-        }
-        if(!groupingColors.containsKey(item.getGroup())) {
-            addGrouping(item.getGroup(), null);
-        }
+        addChangeToStack(new MatrixChange(
+            () -> {  // do function
+                if(isRow) {
+                    this.rows.add(item);
+                } else {
+                    this.cols.add(item);
+                }
+                if(!groupingColors.containsKey(item.getGroup())) {
+                    addGrouping(item.getGroup(), null);
+                }
+            },
+            () -> {  // undo function
+                removeItem(item);
+            },
+            false
+        ));
+    }
 
-        this.wasModified = true;
+
+    /**
+     * Creates a new item and adds it to the matrix and the stack
+     *
+     * @param name  the name of the item to create and add
+     * @param isRow is the item a row
+     */
+    public void addItem(String name, boolean isRow) {
+        DSMItem item = createItem(name);
+        addItem(item, isRow);
+    }
+
+    /**
+     * Adds an item to the matrix symmetrically. The symmetrical flag must be set in order to use
+     * this function. This function adds both the row and column and creates the alias for the column. Changes
+     * to the stack will be made because of this call.
+     *
+     * @param name the name of the item to be added
+     */
+    public void addSymmetricItem(String name) {
+        Pair<DSMItem, DSMItem> items = createSymmetricItem(name);
+        addItem(items.getKey(), true);
+        addItem(items.getValue(), false);
+    }
+
+
+    /**
+     * Deletes an item from the matrix. Puts the change on the stack but does not set a checkpoint
+     *
+     * @param item the item to delete
+     */
+    public void deleteItem(DSMItem item) {
+        boolean isRow = false;  // check if the item was a row in case it needs to be added again
+        if(rows.contains(item)) isRow = true;
+        boolean finalIsRow = isRow;
+        
+        addChangeToStack(new MatrixChange(
+            () -> {  // do function
+                removeItem(item);
+            },
+            () -> {  // undo function
+                addItem(item, finalIsRow);
+            },
+            false
+        ));
+    }
+
+
+    /**
+     * Deletes an item from the matrix. Puts the change on the stack but does not set a checkpoint
+     *
+     * @param rowItem the row item of the symmetrical items to delete
+     */
+    public void deleteSymmetricItem(DSMItem rowItem) {
+        deleteItem(rowItem);
+        for(DSMItem col : cols) {
+            if(col.getAliasUid() == rowItem.getUid()) {
+                deleteItem(col);
+                break;
+            }
+        }
     }
 
 
     /**
      * Removes all connections associated with an item with a given uid. Used for when an item is deleted
-     * from the matrix
+     * from the matrix. Adds changes to the stack.
      *
      * @param uid the uid of the item that will be looked for when removing connections
      */
@@ -372,222 +722,137 @@ public class DSMData {
                 toRemove.add(connection);
             }
         }
-        connections.removeAll(toRemove);
-        this.wasModified = true;
+
+        addChangeToStack(new MatrixChange(
+            () -> {  // do function
+                connections.removeAll(toRemove);
+            },
+            () -> {  // undo function
+                connections.addAll(toRemove);
+            },
+            false
+        ));
     }
 
 
     /**
-     * Removes an item from the matrix symmetrically. Both row and column with alias equal to the row
-     * uid are removed. Removes connections for the items as well
+     * Sets the name of an item in the matrix. This method should be called instead of directly modifying the item name
+     * because this method puts the change on the stack but does not set a checkpoint.
      *
-     * @param rowUid the uid of the row item to be removed
+     * @param item    the item to change the name of
+     * @param newName the new name for the item
      */
-    public void deleteSymmetricItem(int rowUid) {
-        assert isSymmetrical() : "cannot call symmetrical function on non symmetrical dataset";
+    public void setItemName(DSMItem item, String newName) {
+        String oldName = item.getName();
 
-        int rIndex = -1;
-        int cIndex = -1;
-        for (int i = 0; i < this.rows.size(); i++) {
-            if (rows.elementAt(i).getUid() == rowUid) rIndex = i;
-            if (cols.elementAt(i).getAliasUid() == rowUid) cIndex = i;
-
-            if (rIndex != -1 && cIndex != -1) {
-                clearItemConnections(rowUid);
-                clearItemConnections(cols.elementAt(cIndex).getUid());
-
-                rows.remove(rIndex);
-                cols.remove(cIndex);
-                break;
-            }
-        }
-
-        assert (!(rIndex == -1 || cIndex == -1)) : "could not find same uid in row and column in symmetrical matrix when deleting item";
-        this.wasModified = true;
+        addChangeToStack(new MatrixChange(
+            () -> {  // do function
+                item.setName(newName);
+            },
+            () -> {  // undo function
+                item.setName(oldName);
+            },
+            false
+        ));
     }
 
 
     /**
-     * Removes an item from the matrix by its uid and deletes associated connections. This should be called only
-     * for non-symmetric datasets
+     * Sets the names of a symmetric pair in the matrix. This method should be called instead of directly modifying the
+     * item because this method puts the change on the stack but does not set a checkpoint.
      *
-     * @param uid the uid of the item to remove
+     * @param rowItem the item to change the name of
+     * @param newName the new name for the item
      */
-    public void deleteItem(int uid) {
-        int index = -1;
-        for(int i=0; i<this.rows.size(); i++) {     // check to see if uid is in the rows
-            if(rows.elementAt(i).getUid() == uid) {
-                index = i;
+    public void setItemNameSymmetric(DSMItem rowItem, String newName) {
+        setItemName(rowItem, newName);
+        for(DSMItem col : cols) {
+            if(col.getAliasUid() == rowItem.getUid()) {
+                setItemName(col, newName);
                 break;
             }
         }
-        if (index != -1) {
-            rows.remove(index);
-        } else {                                   // uid was not in a row, must be in a column
-            for(int i=0; i<this.cols.size(); i++) {
-                if(cols.elementAt(i).getUid() == uid) {
-                    index = i;
-                    break;
+    }
+
+
+    /**
+     * Sets the sort index of an item in the matrix. This method should be called instead of directly modifying the item
+     * because this method puts the change on the stack but does not set a checkpoint.
+     *
+     * @param item     the item to change the name of
+     * @param newIndex the new index for the item
+     */
+    public void setItemSortIndex(DSMItem item, double newIndex) {
+        double oldIndex = item.getSortIndex();
+
+        addChangeToStack(new MatrixChange(
+            () -> {  // do function
+                item.setSortIndex(newIndex);
+            },
+            () -> {  // undo function
+                item.setSortIndex(oldIndex);
+            },
+            false
+        ));
+    }
+
+
+    /**
+     * Sets the sort indexes of a symmetric pair in the matrix. This method should be called instead of directly modifying the
+     * item because this method puts the change on the stack but does not set a checkpoint.
+     *
+     * @param rowItem  the row item in the pair to change the name of
+     * @param newIndex the new sort index for the item
+     */
+    public void setItemSortIndexSymmetric(DSMItem rowItem, double newIndex) {
+        setItemSortIndex(rowItem, newIndex);
+        for(DSMItem col : cols) {
+            if(col.getAliasUid() == rowItem.getUid()) {
+                setItemSortIndex(col, newIndex);
+                break;
+            }
+        }
+    }
+
+
+    /**
+     * Sets the group of an item in the matrix. This method should be called instead of directly modifying the item
+     * because this method puts the change on the stack but does not set a checkpoint.
+     *
+     * @param item     the item to change the name of
+     * @param newGroup the new group for the item
+     */
+    public void setItemGroup(DSMItem item, String newGroup) {
+        String oldGroup = item.getGroup();
+
+        addChangeToStack(new MatrixChange(
+            () -> {  // do function
+                if(!groupingColors.containsKey(newGroup)) {
+                    addGrouping(newGroup, null);
                 }
-            }
-            if (index != -1) {
-                cols.remove(index);
-            }
-        }
-        clearItemConnections(uid);
-        this.wasModified = true;
+                item.setGroup(newGroup);
+            },
+            () -> {  // undo function
+                item.setGroup(oldGroup);
+            },
+            false
+        ));
     }
 
 
     /**
-     * Changes the name of an item of the matrix symmetrically. Both row and column with alias equal to the row
-     * uid are changed. Must be called on a symmetric matrix
+     * Sets the group of a symmetric pair in the matrix. This method should be called instead of directly modifying the
+     * item groups because this method puts the change on the stack but does not set a checkpoint.
      *
-     * @param rowUid the uid of the row item to be modified
+     * @param rowItem  the row item in the pair to change the name of
+     * @param newGroup the new group for the item
      */
-    public void setItemNameSymmetric(int rowUid, String newName) {
-        assert isSymmetrical() : "cannot call symmetrical function on non symmetrical dataset";
-
-        int r_index = -1;
-        int c_index = -1;
-        for (int i = 0; i < this.rows.size(); i++) {
-            if (rows.elementAt(i).getUid() == rowUid) r_index = i;
-            if (cols.elementAt(i).getAliasUid() == rowUid) c_index = i;
-
-            if (r_index != -1 && c_index != -1) {
-                rows.elementAt(r_index).setName(newName);
-                cols.elementAt(r_index).setName(newName);
-            }
-        }
-        assert (r_index != -1 && c_index != -1) : "could not find same uid in row and column in symmetrical matrix when changing item name";
-        this.wasModified = true;
-    }
-
-
-    /**
-     * Changes the name of an item from the matrix by its uid. This should be called only
-     * for non-symmetric datasets
-     *
-     * @param uid the uid of the item to be modified
-     */
-    public void setItemName(int uid, String newName) {
-        for(int i=0; i<this.rows.size(); i++) {     // check to see if uid is in the rows
-            if(rows.elementAt(i).getUid() == uid) {
-                rows.elementAt(i).setName(newName);
-                this.wasModified = true;
-                return;
-            }
-        }
-        for(int i=0; i<this.cols.size(); i++) {
-            if(cols.elementAt(i).getUid() == uid) {
-                cols.elementAt(i).setName(newName);
-                this.wasModified = true;
-                return;
-            }
-        }
-    }
-
-
-    /**
-     * Sets the sort index of an item of the matrix symmetrically. Both row and column with alias equal to the row
-     * uid are changed. Must be called on a symmetric matrix
-     *
-     * @param rowUid the uid of the row item to be modified
-     */
-    public void setSortIndexSymmetric(int rowUid, double newIndex) {
-        assert isSymmetrical() : "cannot call symmetrical function on non symmetrical dataset";
-
-        int r_index = -1;
-        int c_index = -1;
-        for (int i = 0; i < this.rows.size(); i++) {
-            if (rows.elementAt(i).getUid() == rowUid) r_index = i;
-            if (cols.elementAt(i).getAliasUid() == rowUid) c_index = i;
-
-            if (r_index != -1 && c_index != -1) {
-                rows.elementAt(r_index).setSortIndex(newIndex);
-                cols.elementAt(c_index).setSortIndex(newIndex);
-            }
-        }
-        assert (r_index != -1 && c_index != -1) : "could not find same uid matching row and column in symmetrical matrix when changing item name";
-        this.wasModified = true;
-    }
-
-
-    /**
-     * Changes the sort index of an item from the matrix by its uid. This should be called only
-     * for non-symmetric datasets
-     *
-     * @param uid the uid of the item to be modified
-     */
-    public void setSortIndex(int uid, double newIndex) {
-        for(int i=0; i<this.rows.size(); i++) {     // check to see if uid is in the rows
-            if(rows.elementAt(i).getUid() == uid) {
-                rows.elementAt(i).setSortIndex(newIndex);
-                this.wasModified = true;
-                return;
-            }
-        }
-        for(int i=0; i<this.cols.size(); i++) {
-            if(cols.elementAt(i).getUid() == uid) {
-                cols.elementAt(i).setSortIndex(newIndex);
-                this.wasModified = true;
-                return;
-            }
-        }
-    }
-
-
-    /**
-     * Changes the group of an item of the matrix symmetrically. Both row and column with alias equal to the row
-     * uid are changed. Must be called on a symmetric matrix
-     *
-     * @param rowUid the uid of the row item to be modified
-     */
-    public void setGroupSymmetric(int rowUid, String newGroup) {
-        assert isSymmetrical() : "cannot call symmetrical function on non symmetrical dataset";
-
-        if(!groupingColors.containsKey(newGroup)) {
-            addGrouping(newGroup, null);
-        }
-
-        int r_index = -1;
-        int c_index = -1;
-        for (int i = 0; i < this.rows.size(); i++) {
-            if (rows.elementAt(i).getUid() == rowUid) r_index = i;
-            if (cols.elementAt(i).getAliasUid() == rowUid) c_index = i;
-
-            if (r_index != -1 && c_index != -1) {
-                rows.elementAt(r_index).setGroup(newGroup);
-                cols.elementAt(r_index).setGroup(newGroup);
-            }
-        }
-        assert (r_index != -1 && c_index != -1) : "could not find same uid in row and column in symmetrical matrix when changing item name";
-        this.wasModified = true;
-    }
-
-
-    /**
-     * Sets the group of an item from the matrix by its uid. This should be called only
-     * for non-symmetric datasets
-     *
-     * @param uid the uid of the item to be modified
-     */
-    public void setGroup(int uid, String newGroup) {
-        if(!groupingColors.containsKey(newGroup)) {
-            addGrouping(newGroup, null);
-        }
-        for(int i=0; i<this.rows.size(); i++) {     // check to see if uid is in the rows
-            if(rows.elementAt(i).getUid() == uid) {
-                rows.elementAt(i).setGroup(newGroup);
-                this.wasModified = true;
-                return;
-            }
-        }
-        for(int i=0; i<this.cols.size(); i++) {
-            if(cols.elementAt(i).getUid() == uid) {
-                cols.elementAt(i).setGroup(newGroup);
-                this.wasModified = true;
-                return;
+    public void setItemGroupSymmetric(DSMItem rowItem, String newGroup) {
+        setItemGroup(rowItem, newGroup);
+        for(DSMItem col : cols) {
+            if(col.getAliasUid() == rowItem.getUid()) {
+                setItemGroup(col, newGroup);
+                break;
             }
         }
     }
@@ -623,6 +888,9 @@ public class DSMData {
      */
     public Pair<Integer, Integer> getSymmetricConnectionUids(int rowUid, int colUid) {
         assert isSymmetrical() : "cannot call symmetrical function on non symmetrical dataset";
+        if(!cols.contains(colUid)) {
+            return null;
+        }
 
         Integer newRowUid = getItem(colUid).getAliasUid();
         Integer newColUid = null;
@@ -642,7 +910,8 @@ public class DSMData {
 
     /**
      * Modifies a connection with given row item uid and column item uid. First checks to see if the connection
-     * exists, if not it creates it. If it does exist, it will update the connection name and weight
+     * exists, if not it creates it. If it does exist, it will update the connection name and weight. Cannot be used to
+     * delete connections. Puts the change on the stack but does not set a checkpoint.
      *
      * @param rowUid         the row item uid of the connection
      * @param colUid         the column item uid of the connection
@@ -650,88 +919,117 @@ public class DSMData {
      * @param weight         the weight of the connection
      */
     public void modifyConnection(int rowUid, int colUid, String connectionName, double weight) {
-        // check to see if the connection is in the list of connections already
-        boolean connectionExists = false;
+        DSMConnection connection = null;
+        String oldName = "";
+        double oldWeight = 0.0;
         for(DSMConnection conn : this.connections) {
             if(rowUid == conn.getRowUid() && colUid == conn.getColUid()) {
-                connectionExists = true;
-                // connection exists, so modify it
-                conn.setConnectionName(connectionName);
-                conn.setWeight(weight);
+                connection = conn;
+                oldName = conn.getConnectionName();
+                oldWeight = conn.getWeight();
                 break;
             }
         }
+        DSMConnection finalConnection = connection;
+        String finalOldName = oldName;
+        double finalOldWeight = oldWeight;
 
-        if(!connectionExists) {  // if connection does not exist, add it
-            DSMConnection connection = new DSMConnection(connectionName, weight, rowUid, colUid);
-            connections.add(connection);
-        }
-
-        this.wasModified = true;
+        addChangeToStack(new MatrixChange(
+            () -> {  // do function
+                if(finalConnection == null) {
+                    createConnection(rowUid, colUid, connectionName, weight);
+                } else {
+                    finalConnection.setConnectionName(connectionName);
+                    finalConnection.setWeight(weight);
+                }
+            },
+            () -> {  // undo function
+                if(finalConnection == null) {
+                    removeConnection(rowUid, colUid);
+                } else {
+                    finalConnection.setConnectionName(finalOldName);
+                    finalConnection.setWeight(finalOldWeight);
+                }
+            },
+            false
+        ));
     }
 
-
     /**
-     * Removes a connection from the matrix connections by rowUid, colUid
-     *
-     * @param rowUid the connection row item uid
-     * @param colUid the connection column item uid
-     */
-    public void clearConnection(int rowUid, int colUid) {
-        for(DSMConnection connection : connections) {     // check to see if uid is in the rows
-            if(connection.getRowUid() == rowUid && connection.getColUid() == colUid) {
-                connections.remove(connection);
-                break;
-            }
-        }
-        this.wasModified = true;
-    }
-
-
-    /**
-     * Modifies a connection symmetrically. Can only be used with symmetric matrices.
+     * Modifies a connection symmetrically. Can only be used with symmetric matrices. Puts the change on the
+     * stack but does not set a checkpoint
      *
      * @param rowUid         the row item uid of one of the connections
      * @param colUid         the column item uid of one of the connections
      * @param connectionName the new name of the connections
      * @param weight         the new weight of the connections
      */
-    public void modifyConnectionSymmetrically(int rowUid, int colUid, String connectionName, double weight) {
+    public void modifyConnectionSymmetric(int rowUid, int colUid, String connectionName, double weight) {
         assert isSymmetrical() : "cannot call symmetrical function on non symmetrical dataset";
 
         Pair<Integer, Integer> uids = getSymmetricConnectionUids(rowUid, colUid);
         modifyConnection(rowUid, colUid, connectionName, weight);
         modifyConnection(uids.getKey(), uids.getValue(), connectionName, weight);
-        this.wasModified = true;
+    }
+
+
+    /**
+     * Removes a connection from the matrix connections by rowUid, colUid. Puts the change on the stack but does
+     * not set a checkpoint
+     *
+     * @param rowUid the connection row item uid
+     * @param colUid the connection column item uid
+     */
+    public void deleteConnection(int rowUid, int colUid) {
+        for(DSMConnection connection : connections) {     // check to see if uid is in the rows
+            if(connection.getRowUid() == rowUid && connection.getColUid() == colUid) {
+                addChangeToStack(new MatrixChange(
+                    () -> {  // do function
+                        removeConnection(rowUid, colUid);
+                    },
+                    () -> {  // undo function
+                        createConnection(rowUid, colUid, connection.getConnectionName(), connection.getWeight());
+                    },
+                    false
+                ));
+                break;
+            }
+        }
     }
 
 
     /**
      * Sorts the current matrix rows and columns by sort index and modifies all the sort indexes
-     * such that they are now 1 to n. Used to make the sort indexes "clean" numbers.
+     * such that they are now 1 to n. Used to make the sort indexes "clean" numbers. Puts multiple changes on the
+     * stack but does not set any checkpoint.
      */
     public void reDistributeSortIndexes() {
         // sort row and columns by sortIndex
         Collections.sort(rows, Comparator.comparing(r -> r.getSortIndex()));
         Collections.sort(cols, Comparator.comparing(c -> c.getSortIndex()));
         for(int i=0; i<rows.size(); i++) {  // reset row sort indexes 1 -> n
-            rows.elementAt(i).setSortIndex(i + 1);
+            setItemSortIndex(rows.elementAt(i), i + 1);
         }
         for(int i=0; i<cols.size(); i++) {  // reset col sort indexes 1 -> n
-            cols.elementAt(i).setSortIndex(i + 1);
+            setItemSortIndex(cols.elementAt(i), i + 1);
         }
     }
 
 
+    /**
+     * Sorts the matrix rows and columns by their group and then their current sort index, then distributes new sort
+     * indexes 1 to n. Used to make the sort indexes "clean" numbers and make the groups line up. Puts multiple changes on the
+     * stack but does not set any checkpoint.
+     */
     public void reDistributeSortIndexByGroup() {
         Collections.sort(rows, Comparator.comparing(DSMItem::getGroup).thenComparing(DSMItem::getSortIndex));
         Collections.sort(cols, Comparator.comparing(DSMItem::getGroup).thenComparing(DSMItem::getSortIndex));
 
         for(int i=0; i<rows.size(); i++) {  // reset row sort indexes 1 -> n
-            rows.elementAt(i).setSortIndex(i + 1);
+            setItemSortIndex(rows.elementAt(i), i + 1);
         }
         for(int i=0; i<cols.size(); i++) {  // reset col sort indexes 1 -> n
-            cols.elementAt(i).setSortIndex(i + 1);
+            setItemSortIndex(cols.elementAt(i), i + 1);
         }
     }
 
@@ -745,8 +1043,12 @@ public class DSMData {
         assert isSymmetrical() : "cannot call symmetrical function on non symmetrical dataset";
 
         ArrayList<Pair<Integer, Integer>> errors = new ArrayList<>();
-        for(DSMConnection connection : connections) {
+        for(DSMConnection connection : (Vector<DSMConnection>)connections.clone()) {  // use a clone so that there are (hopefully) not concurrency issues
             Pair<Integer, Integer> symmetricUids = getSymmetricConnectionUids(connection.getRowUid(), connection.getColUid());
+            if(symmetricUids == null) {
+                return errors;
+            }
+
             DSMConnection symmetricConnection = getConnection(symmetricUids.getKey(), symmetricUids.getValue());
             if(symmetricConnection == null) {
                 errors.add(new Pair<Integer, Integer>(connection.getRowUid(), connection.getColUid()));
@@ -790,7 +1092,7 @@ public class DSMData {
         row0.add(new Pair<>("plain_text_v", ""));
         row0.add(new Pair<>("plain_text_v", "Column Items"));
         for(DSMItem c : cols) {
-            row0.add(new Pair<>("item_name_v", c.getUid()));
+            row0.add(new Pair<>("item_name_v", c));
         }
         grid.add(row0);
 
@@ -801,7 +1103,7 @@ public class DSMData {
             row1.add(new Pair<>("plain_text_v", ""));
             row1.add(new Pair<>("plain_text_v", "Grouping"));
             for (DSMItem c : cols) {
-                row1.add(new Pair<>("grouping_item_v", c.getUid()));
+                row1.add(new Pair<>("grouping_item_v", c));
             }
             grid.add(row1);
         }
@@ -817,7 +1119,7 @@ public class DSMData {
             }
         } else {
             for(DSMItem c : cols) {
-                row2.add(new Pair<>("index_item", c.getUid()));
+                row2.add(new Pair<>("index_item", c));
             }
         }
         grid.add(row2);
@@ -825,14 +1127,14 @@ public class DSMData {
         // create rows
         for(DSMItem r : rows) {
             ArrayList<Pair< String, Object> > row = new ArrayList<Pair< String, Object> >();
-            row.add(new Pair<>("grouping_item", r.getUid()));
-            row.add(new Pair<>("item_name", r.getUid()));
-            row.add(new Pair<>("index_item", r.getUid()));
+            row.add(new Pair<>("grouping_item", r));
+            row.add(new Pair<>("item_name", r));
+            row.add(new Pair<>("index_item", r));
             for(DSMItem c : cols) {  // create connection items for all columns
                 if(isSymmetrical() && c.getAliasUid() == r.getUid()) {  // can't have connection to itself in a symmetrical matrix
                     row.add(new Pair<>("uneditable_connection", null));
                 } else {
-                    row.add(new Pair<>("editable_connection", new Pair<>(r.getUid(), c.getUid())));
+                    row.add(new Pair<>("editable_connection", new Pair<>(r, c)));
                 }
             }
             grid.add(row);
@@ -842,6 +1144,17 @@ public class DSMData {
     }
 
 
+    /**
+     * Runs propagation analysis for a matrix. Pick a start item and each level find the connections of the items in the
+     * previous level. Items that are excluded are added to the count, but not propagated through.
+     *
+     * @param startItem     the item to start at
+     * @param numLevels     number of levels to run
+     * @param exclusions    array of item uids to be excluded
+     * @param minWeight     minimum weight for item to be included
+     * @param countByWeight count by weight or by occurrence
+     * @return              HashMap(level : Hashmap(uid, occurrences/weights))
+     */
     public HashMap<Integer, HashMap<Integer, Double>> propagationAnalysis(Integer startItem, int numLevels, ArrayList<Integer> exclusions, double minWeight, boolean countByWeight) {
         int currentLevel = 1;
         HashMap<Integer, HashMap<Integer, Double>> results = new HashMap<>();
@@ -1082,7 +1395,7 @@ public class DSMData {
 
         double h = 0.2423353;  // use random start value for color generation
         for(int i = 0; i < matrix.getRows().size(); i++) {
-            matrix.setGroupSymmetric(matrix.getRows().elementAt(i).getUid(), "G" + i);
+            matrix.setItemGroupSymmetric(matrix.getRows().elementAt(i), "G" + i);
             h += 0.618033988749895;  // golden_ratio_conjugate, this is a part of the golden ratio method for generating unique colors
             h %= 1;
             java.awt.Color hsvColor = java.awt.Color.getHSBColor((float)h, (float)0.5, (float)0.95);
@@ -1132,14 +1445,14 @@ public class DSMData {
                         secondHighestBidder = entry.getKey();
                     }
                 }
-                tempMatrix.setGroupSymmetric(item.getUid(), secondHighestBidder);
+                tempMatrix.setItemGroupSymmetric(item, secondHighestBidder);
             } else {  // assign to highest bidder
                 for (Map.Entry<String, Double> entry : bids.entrySet()) {
                     if (Double.compare(entry.getValue(), bids.get(highestBidder)) >= 0) {
                         highestBidder = entry.getKey();
                     }
                 }
-                tempMatrix.setGroupSymmetric(item.getUid(), highestBidder);
+                tempMatrix.setItemGroupSymmetric(item, highestBidder);
             }
 
             // choose a number between 0 and randAccept to determine if change is permanent regardless of it being optimal
@@ -1169,7 +1482,7 @@ public class DSMData {
 
 
     /**
-     * Clears the wasModified flag. Used for when matrix has been saved to a file
+     * Clears the wasModified flag. Used for when matrix has been saved to a file. Does not add changes to the stack
      */
     public void clearWasModifiedFlag() {
         this.wasModified = false;
@@ -1177,7 +1490,7 @@ public class DSMData {
 
 
     /**
-     * Sets the was modified flag
+     * Sets the was modified flag. Does not add changes to the stack
      */
     public void setWasModified() {
         wasModified = true;
@@ -1206,13 +1519,17 @@ public class DSMData {
 
 
     /**
-     * Sets the title metadata information about the matrix
+     * Sets the title metadata information about the matrix. Puts changes on the stack, but does not set a checkpoint.
      *
      * @param title the new title data for the matrix
      */
     public void setTitle(String title) {
-        this.title = title;
-        this.wasModified = true;
+        String currentState = this.title;
+        addChangeToStack(new MatrixChange(
+            () -> this.title = title,
+            () -> this.title = currentState,
+            false
+        ));
     }
 
 
@@ -1227,13 +1544,17 @@ public class DSMData {
 
 
     /**
-     * Sets the project name metadata information about the matrix
+     * Sets the project name metadata information about the matrix. Puts changes on the stack, but does not set a checkpoint.
      *
      * @param projectName the new project name data for the matrix
      */
     public void setProjectName(String projectName) {
-        this.projectName = projectName;
-        this.wasModified = true;
+        String currentState = this.projectName;
+        addChangeToStack(new MatrixChange(
+            () -> this.projectName = projectName,
+            () -> this.projectName = currentState,
+            false
+        ));
     }
 
 
@@ -1248,13 +1569,17 @@ public class DSMData {
 
 
     /**
-     * Sets the customer metadata information about the matrix
+     * Sets the customer metadata information about the matrix. Puts changes on the stack, but does not set a checkpoint.
      *
      * @param customer the new customer data for the matrix
      */
     public void setCustomer(String customer) {
-        this.customer = customer;
-        this.wasModified = true;
+        String currentState = this.customer;
+        addChangeToStack(new MatrixChange(
+            () -> this.customer = customer,
+            () -> this.customer = currentState,
+            false
+        ));
     }
 
 
@@ -1269,12 +1594,16 @@ public class DSMData {
 
 
     /**
-     * Sets the version number metadata information about the matrix
+     * Sets the version number metadata information about the matrix. Puts changes on the stack, but does not set a checkpoint.
      *
      * @param versionNumber the new version number data for the matrix
      */
     public void setVersionNumber(String versionNumber) {
-        this.versionNumber = versionNumber;
-        this.wasModified = true;
+        String currentState = this.versionNumber;
+        addChangeToStack(new MatrixChange(
+            () -> this.versionNumber = versionNumber,
+            () -> this.versionNumber = currentState,
+            false
+        ));
     }
 }

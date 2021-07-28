@@ -130,6 +130,8 @@ public class InfoHandler {
                 matrix.setCustomer(customer.getText());
                 matrix.setVersionNumber(version.getText());
 
+                matrix.setCurrentStateAsCheckpoint();
+
                 window.close();
             });
 

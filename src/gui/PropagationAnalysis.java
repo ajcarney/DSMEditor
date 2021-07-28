@@ -339,7 +339,7 @@ public class PropagationAnalysis {
         final CategoryAxis xAxis = new CategoryAxis();
         final NumberAxis yAxis = new NumberAxis();
         final BarChart<String,Number> graph = new BarChart<>(xAxis,yAxis);
-        graph.setTitle("Country Summary");
+        graph.setTitle("Count Summary");
         xAxis.setLabel("Item Name");
         yAxis.setLabel("Value");
 
