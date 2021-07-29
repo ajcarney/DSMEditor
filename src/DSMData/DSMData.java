@@ -63,7 +63,7 @@ public class DSMData {
     private String customer = "";
     private String versionNumber = "";
 
-    private boolean wasModified = true;
+    private boolean wasModified;
 
     private Stack<MatrixChange> undoStack;
     private Stack<MatrixChange> redoStack;
@@ -311,6 +311,23 @@ public class DSMData {
             }
         }
         return null;
+    }
+
+
+    /**
+     * Checks whether an item is a row or not
+     *
+     * @param uid the uid of the item to check
+     * @return    true or false if it is a row or not
+     */
+    public boolean isRow(int uid) {
+        for(DSMItem row : rows) {
+            if(row.getUid() == uid) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
 
@@ -677,16 +694,14 @@ public class DSMData {
      * @param item the item to delete
      */
     public void deleteItem(DSMItem item) {
-        boolean isRow = false;  // check if the item was a row in case it needs to be added again
-        if(rows.contains(item)) isRow = true;
-        boolean finalIsRow = isRow;
-        
+        boolean isRow = rows.contains(item);  // check if the item was a row in case it needs to be added again
+
         addChangeToStack(new MatrixChange(
             () -> {  // do function
                 removeItem(item);
             },
             () -> {  // undo function
-                addItem(item, finalIsRow);
+                addItem(item, isRow);
             },
             false
         ));
@@ -888,9 +903,6 @@ public class DSMData {
      */
     public Pair<Integer, Integer> getSymmetricConnectionUids(int rowUid, int colUid) {
         assert isSymmetrical() : "cannot call symmetrical function on non symmetrical dataset";
-        if(!cols.contains(colUid)) {
-            return null;
-        }
 
         Integer newRowUid = getItem(colUid).getAliasUid();
         Integer newColUid = null;

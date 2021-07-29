@@ -1,11 +1,15 @@
 package gui;
 
 import DSMData.DSMConnection;
+import DSMData.DSMData;
 import DSMData.DSMItem;
 import DSMData.MatrixHandler;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.collections.ObservableSet;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -1184,6 +1188,7 @@ public class ToolbarHandler {
             if(editor.getFocusedMatrixUid() == null) {
                 return;
             }
+            DSMData matrix = matrixHandler.getMatrix(editor.getFocusedMatrixUid());
             Stage window = new Stage();
 
             // Create Root window
@@ -1198,17 +1203,17 @@ public class ToolbarHandler {
             changesToMakeView.setCellFactory(param -> new ListCell< Pair<Integer, Integer> >() {
                 @Override
                 protected void updateItem(Pair<Integer, Integer> item, boolean empty) {
-                    super.updateItem(item, empty);
+                super.updateItem(item, empty);
 
-                    if (empty || item == null) {
-                        setText(null);
-                    } else {
-                        setText(
-                                "Delete " +
-                                matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getItem(item.getKey()).getName() + ":" +
-                                matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getItem(item.getValue()).getName()
-                        );
-                    }
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(
+                        "DELETE " +
+                        matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getItem(item.getKey()).getName() + ":" +
+                        matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getItem(item.getValue()).getName()
+                    );
+                }
                 }
             });
             Button deleteSelected = new Button("Delete Selected Item(s)");
@@ -1221,58 +1226,121 @@ public class ToolbarHandler {
             HBox entryArea = new HBox();
 
             // ComboBox to choose which row or column to modify connections of
-            ComboBox<Pair<Integer, Integer>> itemSelector = new ComboBox<>();
+            ComboBox<Integer> firstItemSelector = new ComboBox<>();
             // function to set text of comboBox items
-            Callback<ListView<Pair<Integer, Integer>>, ListCell<Pair<Integer, Integer>>> cellFactory = new Callback<ListView<Pair<Integer, Integer>>, ListCell<Pair<Integer, Integer>>>() {
+            Callback<ListView<Integer>, ListCell<Integer>> cellFactory = new Callback<>() {
                 @Override
-                public ListCell<Pair<Integer, Integer>> call(ListView<Pair<Integer, Integer>> l) {
-                    return new ListCell<Pair<Integer, Integer>>() {
+                public ListCell<Integer> call(ListView<Integer> l) {
+                    return new ListCell<Integer>() {
 
                         @Override
-                        protected void updateItem(Pair<Integer, Integer> item, boolean empty) {
+                        protected void updateItem(Integer item, boolean empty) {
                             super.updateItem(item, empty);
                             if (item == null || empty) {
                                 setGraphic(null);
                             } else {
-                                setText(
-                                    matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getItem(item.getKey()).getName() + ":" +
-                                    matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getItem(item.getValue()).getName()
-                                );
+                                if(matrix.isRow(matrix.getItem(item).getUid())) {
+                                    setText(matrix.getItem(item).getName() + " (Row)");
+                                } else {
+                                    setText(matrix.getItem(item).getName() + " (Column)");
+                                }
                             }
                         }
                     };
                 }
             };
-            itemSelector.setButtonCell(cellFactory.call(null));
-            itemSelector.setCellFactory(cellFactory);
-            Vector<Pair<Integer, Integer>> connections = new Vector<>();
-            for(DSMConnection connection : matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getConnections()) {
-                connections.add(new Pair<>(connection.getRowUid(), connection.getColUid()));
+            firstItemSelector.setButtonCell(cellFactory.call(null));
+            firstItemSelector.setCellFactory(cellFactory);
+            Vector<Integer> items = new Vector<>();
+            for(DSMItem row : matrix.getRows()) {
+                items.add(row.getUid());
             }
-            itemSelector.getItems().addAll(connections);
-            itemSelector.setMaxWidth(Double.MAX_VALUE);
-            HBox.setHgrow(itemSelector, Priority.ALWAYS);
-            itemSelector.setPromptText("Connection");
+            for(DSMItem col : matrix.getCols()) {
+                items.add(col.getUid());
+            }
+            firstItemSelector.getItems().addAll(items);
+
+
+            firstItemSelector.setMaxWidth(Double.MAX_VALUE);
+            HBox.setHgrow(firstItemSelector, Priority.ALWAYS);
+            firstItemSelector.setPromptText("From");
+
+
+            // ComboBox to choose the second item of the connection (row or column)
+            ObservableList<Integer> connectionItems = FXCollections.observableArrayList();
+
+            ComboBox<Integer> secondItemSelector = new ComboBox<>();
+            secondItemSelector.setButtonCell(cellFactory.call(null));
+            secondItemSelector.setCellFactory(cellFactory);
+            secondItemSelector.setItems(connectionItems);
+
+            secondItemSelector.setMaxWidth(Double.MAX_VALUE);
+            HBox.setHgrow(secondItemSelector, Priority.ALWAYS);
+            secondItemSelector.setPromptText("To");
+
+            // add listener to first item to update options in second column
+            firstItemSelector.valueProperty().addListener((observable, oldValue, newValue) -> {
+                if(matrix.isRow(newValue)) {
+                    connectionItems.clear();
+                    for(DSMItem col : matrix.getCols()) {
+                        if(matrix.getConnection(newValue, col.getUid()) != null) {
+                            connectionItems.add(col.getUid());
+                        }
+                    }
+                } else {
+                    connectionItems.clear();
+                    for(DSMItem row : matrix.getRows()) {
+                        if(matrix.getConnection(row.getUid(), newValue) != null) {
+                            connectionItems.add(row.getUid());
+                        }
+                    }
+                }
+
+                secondItemSelector.getSelectionModel().clearSelection();  // clear selection of the second item
+                secondItemSelector.setValue(null);
+            });
 
             Button deleteConnection = new Button("Delete Connection");
-            Button deleteConnectionSymmetrically = new Button("Delete Connection Symmetrically");
+            deleteConnection.setMaxWidth(Double.MAX_VALUE);
+            HBox.setHgrow(deleteConnection, Priority.ALWAYS);
 
-            entryArea.getChildren().addAll(itemSelector, deleteConnection);
-            if(matrixHandler.getMatrix(editor.getFocusedMatrixUid()).isSymmetrical()) {
+            Button deleteConnectionSymmetrically = new Button("Delete Connection Symmetrically");
+            deleteConnectionSymmetrically.setMaxWidth(Double.MAX_VALUE);
+            HBox.setHgrow(deleteConnectionSymmetrically, Priority.ALWAYS);
+
+            entryArea.getChildren().addAll(firstItemSelector, secondItemSelector, deleteConnection);
+            if(matrix.isSymmetrical()) {
                 entryArea.getChildren().add(deleteConnectionSymmetrically);
             }
             entryArea.setPadding(new Insets(10, 10, 10, 10));
             entryArea.setSpacing(20);
 
             deleteConnection.setOnAction(ee -> {
-                if(itemSelector.getValue() == null) return;
-                changesToMakeView.getItems().add(new Pair<Integer, Integer>(itemSelector.getValue().getKey(), itemSelector.getValue().getValue()));
+                if(firstItemSelector.getValue() == null || secondItemSelector.getValue() == null) return;
+                if(matrix.isRow(firstItemSelector.getValue())) {
+                    changesToMakeView.getItems().add(new Pair<Integer, Integer>(firstItemSelector.getValue(), secondItemSelector.getValue()));
+                } else {
+                    changesToMakeView.getItems().add(new Pair<Integer, Integer>(secondItemSelector.getValue(), firstItemSelector.getValue()));
+                }
             });
             deleteConnectionSymmetrically.setOnAction(ee -> {
-                if(itemSelector.getValue() == null) return;
-                changesToMakeView.getItems().add(new Pair<Integer, Integer>(itemSelector.getValue().getKey(), itemSelector.getValue().getValue()));
-                Pair<Integer, Integer> uids = matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getSymmetricConnectionUids(itemSelector.getValue().getKey(), itemSelector.getValue().getValue());
-                changesToMakeView.getItems().add(uids);
+                if(firstItemSelector.getValue() == null || secondItemSelector.getValue() == null) return;
+                if(matrix.isRow(firstItemSelector.getValue())) {
+                    changesToMakeView.getItems().add(new Pair<Integer, Integer>(firstItemSelector.getValue(), secondItemSelector.getValue()));
+
+                    if(!matrix.getCols().contains(secondItemSelector.getValue())) {
+                        System.out.println(secondItemSelector.getValue());
+                    }
+
+                    Pair<Integer, Integer> uids = matrix.getSymmetricConnectionUids(firstItemSelector.getValue(), secondItemSelector.getValue());
+                    System.out.println(firstItemSelector.getValue() + " " + secondItemSelector.getValue() + " " + matrix.getItem(secondItemSelector.getValue()).getAliasUid() + " " + uids);
+                    changesToMakeView.getItems().add(uids);
+                } else {
+                    changesToMakeView.getItems().add(new Pair<Integer, Integer>(secondItemSelector.getValue(), firstItemSelector.getValue()));
+                    Pair<Integer, Integer> uids = matrix.getSymmetricConnectionUids(secondItemSelector.getValue(), firstItemSelector.getValue());
+                    changesToMakeView.getItems().add(uids);
+                }
+
             });
 
 
@@ -1311,7 +1379,7 @@ public class ToolbarHandler {
 
 
             //Display window and wait for it to be closed before returning
-            Scene scene = new Scene(layout, 1000, 500);
+            Scene scene = new Scene(layout, 1100, 500);
             window.setScene(scene);
             window.showAndWait();
         });

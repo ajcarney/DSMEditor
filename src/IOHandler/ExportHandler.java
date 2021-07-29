@@ -3,12 +3,15 @@ package IOHandler;
 import DSMData.DSMConnection;
 import DSMData.DSMData;
 import DSMData.DSMItem;
+import gui.MatrixGuiHandler;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
+import javafx.scene.SnapshotParameters;
+import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
@@ -16,6 +19,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import javafx.util.Pair;
+import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.WorkbookUtil;
 import org.apache.poi.xssf.usermodel.*;
@@ -25,6 +29,8 @@ import org.jdom2.Element;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Map;
@@ -482,6 +488,201 @@ public class ExportHandler {
         window.showAndWait();
 
         return code.get();
+    }
+
+
+    static public void exportToImage(DSMData matrix) {
+        // Create Root window
+        Stage window = new Stage();
+//        window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
+        window.setTitle("DSMEditor");
+
+        SplitPane splitPane = new SplitPane();
+
+        // preview area
+        VBox preview = new VBox();
+        preview.setAlignment(Pos.CENTER_LEFT);
+        preview.setSpacing(10);
+        preview.setPadding(new Insets(5));
+
+
+        // parameters area
+        VBox parametersLayout = new VBox();
+        parametersLayout.setAlignment(Pos.CENTER);
+        parametersLayout.setSpacing(10);
+        parametersLayout.setPadding(new Insets(5));
+
+        // add info about the matrix (customer, title, version, etc.)
+        CheckBox addInfo = new CheckBox("Add Matrix Info");
+        addInfo.setSelected(true);
+        addInfo.setMaxWidth(Double.MAX_VALUE);
+
+        // make title big and centered
+        CheckBox bigTitle = new CheckBox("Big Title");
+        bigTitle.setSelected(true);
+        bigTitle.setMaxWidth(Double.MAX_VALUE);
+
+        // show connection names
+        CheckBox showConnectionNames = new CheckBox("Show Connection Names");
+        showConnectionNames.setSelected(true);
+        showConnectionNames.setMaxWidth(Double.MAX_VALUE);
+
+        // annotation
+        CheckBox addAnnotation = new CheckBox("Add Annotation");
+        addAnnotation.setMaxWidth(Double.MAX_VALUE);
+
+        VBox annotationLayout = new VBox();
+        TextArea annotation = new TextArea();
+        annotation.setMinHeight(100);
+        annotation.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(annotation, Priority.ALWAYS);
+        annotationLayout.getChildren().addAll(annotation);
+
+        // listener to make annotation area invisible
+        addAnnotation.selectedProperty().addListener((observable, oldValue, newValue) -> {
+           if(newValue) {
+               annotationLayout.setVisible(true);
+               annotationLayout.setManaged(true);
+           } else {
+               annotationLayout.setVisible(false);
+               annotationLayout.setManaged(false);
+           }
+        });
+
+        // file save area
+        HBox saveArea = new HBox();
+        Label saveLocation = new Label("");
+        saveLocation.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(saveLocation, Priority.ALWAYS);
+
+        Button chooseFile = new Button("Choose Save Location");
+        chooseFile.setOnAction(e -> {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PNG Image File", "*.png"));  // dsm is the only file type usable
+            File fileName = fileChooser.showSaveDialog(window);
+            if(fileName != null) {
+                saveLocation.setText(fileName.getAbsolutePath());
+            }
+        });
+
+        saveArea.getChildren().addAll(saveLocation, chooseFile);
+        saveArea.setSpacing(10);
+        saveArea.setPadding(new Insets(5));
+
+        // save button
+        VBox vSpacer = new VBox();
+        vSpacer.setMaxHeight(Double.MAX_VALUE);
+        VBox.setVgrow(vSpacer, Priority.ALWAYS);
+
+        HBox saveButtonArea = new HBox();
+        HBox spacer = new HBox();
+        spacer.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Button saveButton = new Button("Save");
+        saveButton.setOnAction(e -> {
+            if(saveLocation.getText() != ""){
+                File file = new File(saveLocation.getText());
+                BufferedImage img = SwingFXUtils.fromFXImage(preview.snapshot(new SnapshotParameters(), null), null);
+                try {
+                    ImageIO.write(img, "png", file);
+                } catch (IOException ioException) {
+                    System.out.println("Did not save image - caught IOException");
+                    ioException.printStackTrace();
+                }
+            }
+            window.close();
+        });
+
+        Button cancelButton = new Button("Cancel");
+        cancelButton.setOnAction(e -> {
+            window.close();
+        });
+
+        saveButtonArea.getChildren().addAll(spacer, cancelButton, saveButton);
+
+
+        // parameter layout configuring
+        parametersLayout.getChildren().addAll(addInfo, bigTitle, showConnectionNames, addAnnotation, annotationLayout, saveArea, vSpacer, saveButtonArea);
+        addAnnotation.setSelected(false);  // set it here so annotation area is not shown
+        annotationLayout.setVisible(false);
+        annotationLayout.setManaged(false);
+
+
+        Runnable updatePreview = () -> {
+            preview.getChildren().removeAll(preview.getChildren());  // remove items
+            if(bigTitle.isSelected()) {
+                HBox centeredLabel = new HBox();
+                Label l = new Label(matrix.getTitle());
+                l.setStyle(l.getStyle() + "-fx-font-size: 24}; .combo-box > .list-cell {-fx-padding: 0 0 0 0; -fx-border-insets: 0 0 0 0;}");
+                l.setAlignment(Pos.CENTER);
+
+                centeredLabel.getChildren().add(l);
+                centeredLabel.setAlignment(Pos.CENTER);
+
+                preview.getChildren().add(centeredLabel);
+            }
+
+            if(addInfo.isSelected() && bigTitle.isSelected()) {
+                Label l = new Label(
+                    "Project Name: " + matrix.getProjectName() + "\n"
+                    + "Customer: " + matrix.getCustomer() + "\n"
+                    + "Version: " + matrix.getVersionNumber()
+                );
+                l.setAlignment(Pos.CENTER_LEFT);
+
+                preview.getChildren().add(l);
+            } else if(addInfo.isSelected() && !bigTitle.isSelected()) {
+                Label l = new Label(
+                    "Title: " + matrix.getTitle() + "\n"
+                    + "Project Name: " + matrix.getProjectName() + "\n"
+                    + "Customer: " + matrix.getCustomer() + "\n"
+                    + "Version: " + matrix.getVersionNumber()
+                );
+                l.setAlignment(Pos.CENTER_LEFT);
+
+                preview.getChildren().add(l);
+            }
+
+            MatrixGuiHandler m = new MatrixGuiHandler(matrix, 12);
+            HBox centeredMatrix = new HBox();
+            centeredMatrix.getChildren().add(m.getImmutableMatrix(!showConnectionNames.isSelected()));
+            centeredMatrix.setAlignment(Pos.CENTER);
+            preview.getChildren().add(centeredMatrix);
+
+            if(addAnnotation.isSelected()) {
+                preview.getChildren().add(new Label(annotation.getText()));
+            }
+        };
+
+        // set up listeners to update the preview
+        addInfo.selectedProperty().addListener((observable, oldValue, newValue) -> {
+            updatePreview.run();
+        });
+        bigTitle.selectedProperty().addListener((observable, oldValue, newValue) -> {
+            updatePreview.run();
+        });
+        showConnectionNames.selectedProperty().addListener((observable, oldValue, newValue) -> {
+            updatePreview.run();
+        });
+        addAnnotation.selectedProperty().addListener((observable, oldValue, newValue) -> {
+            updatePreview.run();
+        });
+        annotation.textProperty().addListener((observable, oldValue, newValue) -> {
+            updatePreview.run();
+        });
+        updatePreview.run();  // initial update to show the matrix
+
+
+        ScrollPane previewArea = new ScrollPane(preview);
+        previewArea.setFitToWidth(true);
+        splitPane.getItems().addAll(previewArea, parametersLayout);
+        splitPane.setDividerPositions(0.8);
+
+        //Display window and wait for it to be closed before returning
+        Scene scene = new Scene(splitPane, 1400, 1000);
+        window.setScene(scene);
+        window.showAndWait();
     }
 
 

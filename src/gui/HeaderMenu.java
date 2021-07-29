@@ -185,8 +185,15 @@ public class HeaderMenu {
             }
             ExportHandler.promptExportToThebeau(matrixHandler.getMatrix(editor.getFocusedMatrixUid()), menuBar.getScene().getWindow());
         });
+        MenuItem exportImage = new MenuItem("PNG Image File (.png)");
+        exportImage.setOnAction(e -> {
+            if(editor.getFocusedMatrixUid() == null) {
+                return;
+            }
+            ExportHandler.exportToImage(matrixHandler.getMatrix(editor.getFocusedMatrixUid()));
+        });
 
-        exportMenu.getItems().addAll(exportCSV, exportXLSX, exportThebeau);
+        exportMenu.getItems().addAll(exportCSV, exportXLSX, exportThebeau, exportImage);
 
 
         MenuItem exit = new MenuItem("Exit");
