@@ -4,17 +4,21 @@ import DSMData.DSMData;
 import DSMData.DSMItem;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.value.ObservableIntegerValue;
+import javafx.beans.value.ObservableStringValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
-import java.text.DecimalFormat;
 import java.util.*;
 
 
@@ -112,7 +116,7 @@ public class ClusterAnalysis {
 
         Label optimalClusterSizeLabel = new Label("Optimal Cluster Size");
 
-        optimalSizeCluster = new SimpleDoubleProperty(7.0);
+        optimalSizeCluster = new SimpleDoubleProperty(4.5);
         NumericTextField optimalSizeEntry = new NumericTextField(optimalSizeCluster.getValue());
         optimalSizeEntry.textProperty().addListener((obs, oldText, newText) -> {
             optimalSizeCluster.setValue(optimalSizeEntry.getNumericValue());
@@ -148,7 +152,7 @@ public class ClusterAnalysis {
         Label powdepLabel = new Label("powdep constant");
         powdepLabel.setTooltip(new Tooltip("Exponential to emphasize connections when calculating bids"));
 
-        powdep = new SimpleDoubleProperty(1.0);
+        powdep = new SimpleDoubleProperty(4.0);
         NumericTextField powdepEntry = new NumericTextField(powdep.getValue());
         powdepEntry.textProperty().addListener((obs, oldText, newText) -> {
             powdep.setValue(powdepEntry.getNumericValue());
@@ -160,7 +164,7 @@ public class ClusterAnalysis {
         powdepArea.setAlignment(Pos.CENTER);
 
 
-    // powdep layout
+    // powbid layout
         VBox powbidArea = new VBox();
 
         Label powbidLabel = new Label("powbid constant");
@@ -253,161 +257,131 @@ public class ClusterAnalysis {
      * Runs the bidding analysis algorithm for the input matrix. Updates content on the main window of the gui
      */
     private void runClusterBidsAnalysis() {
-        GridPane grid = new GridPane();
-        grid.setAlignment(Pos.CENTER);
+        class CellData {
+            private ObservableStringValue name;
+            private ObservableIntegerValue highlight;
 
-        // create header row
-        int currentRow = 0;
-        int currentCol = 0;
-        Vector<String> groupOrder = new Vector<>(matrix.getGroupings());
+            public CellData(String name, int highlight) {
+                this.highlight = new SimpleIntegerProperty(highlight);
+                this.name = new SimpleStringProperty(name);
+            }
 
-        HBox groupHeader = new HBox();  // group
-        groupHeader.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
-        groupHeader.setPadding(new Insets(2));
-        Label groupHeaderLabel = new Label("Current Group");
-        groupHeaderLabel.setMinWidth(Region.USE_PREF_SIZE);
-        groupHeader.getChildren().add(groupHeaderLabel);
-        GridPane.setConstraints(groupHeader, currentCol, currentRow);
-        grid.getChildren().add(groupHeader);
-        currentCol += 1;
+            public ObservableStringValue getName() {
+                return name;
+            }
 
-        HBox nameHeader = new HBox();  // item name
-        nameHeader.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
-        nameHeader.setPadding(new Insets(2));
-        Label nameHeaderLabel = new Label("Item Group");
-        nameHeaderLabel.setMinWidth(Region.USE_PREF_SIZE);
-        nameHeader.getChildren().add(nameHeaderLabel);
-        GridPane.setConstraints(nameHeader, currentCol, currentRow);
-        grid.getChildren().add(nameHeader);
-        currentCol += 1;
-
-        for(String groupName : groupOrder) {
-            HBox cell = new HBox();
-            Label text = new Label(groupName + " Bids");
-            text.setMinWidth(Region.USE_PREF_SIZE);
-            cell.getChildren().add(text);
-            cell.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
-            cell.setPadding(new Insets(2));
-
-            GridPane.setConstraints(cell, currentCol, currentRow);
-            grid.getChildren().add(cell);
-            currentCol += 1;
+            public ObservableIntegerValue getHighlight() {
+                return highlight;
+            }
         }
 
-
-        // add the rest of the content
+        Vector<String> groupOrder = new Vector<>(matrix.getGroupings());
         Vector<DSMItem> items = matrix.getRows();
         Collections.sort(items, Comparator.comparing(r -> r.getSortIndex()));
 
-        currentRow = 1;  // group names
-        currentCol = 0;
-        for(DSMItem item : items) {
-            HBox cell = new HBox();
-            Label text = new Label(item.getGroup());
-            text.setMinWidth(Region.USE_PREF_SIZE);
-            cell.getChildren().add(text);
-            cell.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
-            cell.setPadding(new Insets(2));
-
-            GridPane.setConstraints(cell, currentCol, currentRow);
-            grid.getChildren().add(cell);
-            currentRow += 1;
-        }
-
-        currentRow = 1;  // item names
-        currentCol = 1;
-        for(DSMItem item : items) {
-            HBox cell = new HBox();
-            Label text = new Label(item.getName());
-            text.setMinWidth(Region.USE_PREF_SIZE);
-            cell.getChildren().add(text);
-            cell.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
-            cell.setPadding(new Insets(2));
-
-            GridPane.setConstraints(cell, currentCol, currentRow);
-            grid.getChildren().add(cell);
-            currentRow += 1;
-        }
-
-        currentCol = 2;  // bids
-        for(String group : groupOrder) {
-            currentRow = 1;
-
-            HashMap<Integer, Double> groupBids = DSMData.calculateClusterBids(matrix, group, optimalSizeCluster.doubleValue(), powdep.doubleValue(), powbid.doubleValue(), countByWeight.isSelected());
-            for (DSMItem item : items) {
-                HBox cell = new HBox();
-                DecimalFormat df = new DecimalFormat("#.##");
-                Double bid = Double.valueOf(df.format(groupBids.get(item.getUid())));
-                Label text = new Label(bid.toString());
-                text.setMinWidth(Region.USE_PREF_SIZE);
-                cell.getChildren().add(text);
-                cell.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
-                cell.setPadding(new Insets(2));
-
-                GridPane.setConstraints(cell, currentCol, currentRow);
-                grid.getChildren().add(cell);
-                currentRow += 1;
-            }
-
-            currentCol += 1;
-        }
-
-
-        // perform highlighting
-        for(int r=1; r < items.size(); r++) {  // 1 is start row for data
+        // create data structure for the table
+        ArrayList<ArrayList<CellData>> data = new ArrayList<>();
+        ArrayList<Integer> highlightColors = new ArrayList<>();  // 0 for none, 1 for red, 2 for green
+        for(int r = 0; r < items.size(); r++) {
+            ArrayList<String> rowBids = new ArrayList<>();
+            double maxBid = 0;
+            double minBid = 0;
             String maxBidGroup = "";
-            Double maxBid = 0.0;
             String minBidGroup = "";
-            Double minBid = 0.0;
-            for(int c=2; c < groupOrder.size() + 2; c++) {  // 2 is start column for data, so offset it by two
-                // find the cell and extract the value from it
-                Double bid = 0.0;
-                for (Node cell : grid.getChildren()) {
-                    if (GridPane.getColumnIndex(cell) == c && GridPane.getRowIndex(cell) == r) {
-                        for(Node node : ((HBox) cell).getChildren()) {
-                            bid = Double.parseDouble(((Label)node).getText());
-                            break;
+            for(int c = 0; c < groupOrder.size() + 2; c++) {  // add two to include header columns
+                if(c == 0) {
+                    rowBids.add(items.get(r).getGroup());
+                } else if(c == 1) {
+                    rowBids.add(items.get(r).getName());
+                } else {
+                    HashMap<Integer, Double> groupBids = DSMData.calculateClusterBids(matrix, groupOrder.get(c - 2), optimalSizeCluster.doubleValue(), powdep.doubleValue(), powbid.doubleValue(), countByWeight.isSelected());
+
+                    double bid = groupBids.get(items.get(r).getUid());
+                    rowBids.add(String.valueOf(bid));
+
+                    if(bid > maxBid) {
+                        if(maxBid < minBid) {
+                            minBid = maxBid;
+                            minBidGroup = maxBidGroup;
                         }
-                        break;
+                        maxBid = bid;
+                        maxBidGroup = groupOrder.get(c - 2);
+                    } else if(bid < minBid) {
+                        if(minBid > maxBid) {
+                            maxBid = minBid;
+                            maxBidGroup = minBidGroup;
+                        }
+                        minBid = bid;
+                        minBidGroup = groupOrder.get(c - 2);
                     }
                 }
-                if(bid >= maxBid) {
-                    maxBid = bid;
-                    maxBidGroup = groupOrder.get(c - 2);  // subtract 2 because that is the offset
-                } else if(bid <= minBid) {
-                    minBid = bid;
-                    minBidGroup = groupOrder.get(c - 2);  // subtract 2 because that is the offset
-                }
+            }
+            int highlightColor = 0;
+            if(maxBidGroup.equals(items.get(r).getGroup())) {  // decide row highlight color
+                highlightColor = 2;
+            } else if(minBidGroup.equals(items.get(r).getGroup())) {
+                highlightColor = 1;
             }
 
-            String itemGroup = "";
-            for (Node cell : grid.getChildren()) {
-                if (GridPane.getColumnIndex(cell) == 0 && GridPane.getRowIndex(cell) == r) {
-                    for (Node node : ((HBox) cell).getChildren()) {
-                        itemGroup = ((Label) node).getText();
-                        break;
-                    }
-                    break;
-                }
+            // add row to data structure
+            ArrayList<CellData> row = new ArrayList<>();
+            for(String bid : rowBids) {
+                row.add(new CellData(bid, highlightColor));
             }
-            if(itemGroup.equals(maxBidGroup)) {  // highlight green
-                for (Node cell : grid.getChildren()) {
-                    if (GridPane.getColumnIndex(cell) == 1 && GridPane.getRowIndex(cell) == r) {
-                        ((HBox)cell).setBackground(new Background(new BackgroundFill(Color.color(.6, 1, .6), new CornerRadii(3), new Insets(0))));
-                    }
-                }
-            } else if(itemGroup.equals(minBidGroup)) {  // highlight red
-                for (Node cell : grid.getChildren()) {
-                    if (GridPane.getColumnIndex(cell) == 1 && GridPane.getRowIndex(cell) == r) {
-                        ((HBox)cell).setBackground(new Background(new BackgroundFill(Color.color(1, .6, .6), new CornerRadii(3), new Insets(0))));
-                    }
-                }
-            }
-
+            data.add(row);
         }
+
+        // create table and columns
+        TableView<ArrayList<CellData>> table = new TableView<>();  // column name, cell data
+        table.setMaxHeight(Double.MAX_VALUE);
+        VBox.setVgrow(table, Priority.ALWAYS);
+
+        for(int c = 0; c < data.get(0).size(); c++) {
+            TableColumn<ArrayList<CellData>, String> column = new TableColumn<>();
+            if(c == 0) {
+                column.setText("Current Group");
+            } else if(c == 1) {
+                column.setText("Item Name");
+            } else {
+                column.setText(groupOrder.get(c - 2) + " Bids");
+            }
+            int finalC = c;
+            column.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().get(finalC).getName().getValue() + String.valueOf(cellData.getValue().get(finalC).getHighlight().getValue())));
+
+            column.setCellFactory(col -> {
+                return new TableCell<ArrayList<CellData>, String>() {
+                    @Override
+                    protected void updateItem(String item, boolean empty) {
+                        super.updateItem(item, empty);
+
+                        if (item == null || empty) {
+                            setText(null);
+                            setStyle("");
+                        } else {
+                            // Format date.
+                            String text = item.substring(0, item.length() - 1);
+                            Integer highlight = Integer.parseInt(item.substring(item.length() - 1, item.length()));
+                            setText(text);
+                            if(highlight == 2) {
+                                setStyle("-fx-background-color:palegreen");
+                            } else if(highlight == 1) {
+                                setStyle("-fx-background-color:indianred");
+                            } else {
+                                setStyle("-fx-background-color:white");
+                            }
+                        }
+                    }
+                };
+            });
+
+            table.getColumns().add(column);
+        }
+
+        table.getItems().addAll(data);
+
 
         bidsLayout.getChildren().removeAll(bidsLayout.getChildren());
-        bidsLayout.getChildren().addAll(grid);
+        bidsLayout.getChildren().addAll(table);
         bidsLayout.setAlignment(Pos.CENTER);
         bidsLayout.setPadding(new Insets(10));
         bidsLayout.setSpacing(15);
