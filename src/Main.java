@@ -15,6 +15,7 @@ import javafx.stage.WindowEvent;
 
 import java.io.*;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -34,6 +35,7 @@ public class Main extends Application {
     private static final HeaderMenu menu = new HeaderMenu(matrixHandler, editor, searchWidget);
     private static final ToolbarHandler toolbarHandler = new ToolbarHandler(matrixHandler, editor);
 
+    private static ArrayList<String> cliArgs = new ArrayList<>();
 
     /**
      * Starts the gui application
@@ -59,10 +61,16 @@ public class Main extends Application {
 
 
         // start with a tab open (used for debugging, remove or comment out for release)
-        File file = new File("/home/aiden/Documents/DSMEditor/vpas3.dsm");
-        DSMData matrix = ImportHandler.readFile(file);
-        int uid = matrixHandler.addMatrix(matrix, file);
-        editor.addTab(uid);
+        if(cliArgs.contains("--debug=true")) {
+            File file = new File("/home/aiden/Documents/DSMEditor/vpas3.dsm");
+            DSMData matrix = ImportHandler.readFile(file);
+            int uid = matrixHandler.addMatrix(matrix, file);
+            editor.addTab(uid);
+        }
+
+        for(int i=0; i<cliArgs.size(); i++) {
+            System.out.println(cliArgs.get(i));
+        }
 
 
         // on close, iterate through each tab and run the close request to save it or not
@@ -140,6 +148,10 @@ public class Main extends Application {
      * @param args any command line args used by javafx (probably not used anywhere and will be ignored)
      */
     public static void main(String[] args) {
+        for(int i=0; i<args.length; i++) {
+            cliArgs.add(args[i]);
+        }
+
         launch(args);  // starts gui application
     }
 }

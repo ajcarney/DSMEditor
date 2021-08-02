@@ -272,7 +272,7 @@ public class HeaderMenu {
         RadioMenuItem showNames = new RadioMenuItem("Show Connection Names");
         showNames.setSelected(true);
         showNames.setOnAction(e -> {
-            if(editor.getFocusedMatrixUid() == null) {
+            if(editor.getFocusedMatrixUid() == null) {  // TODO: this will not update to show connection names if no matrix is open
                 return;
             }
             matrixHandler.getMatrixGuiHandler(editor.getFocusedMatrixUid()).setShowNames(showNames.isSelected());

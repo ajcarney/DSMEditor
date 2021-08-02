@@ -24,7 +24,7 @@ or
 If you used the installer, you can run the program with the created batch file <code>DSMEditor.bat</code>
 
 To run from the command prompt use
-<code>java -jar --module-path "path_to_javafx_sdk\javafx-sdk-11.0.2\lib" --add-modules=javafx.controls (name_of_jar_file)</code>
+<code>java -jar --module-path "(path_to_javafx_sdk)\javafx-sdk-11.0.2\lib" --add-modules=javafx.controls (name_of_jar_file)</code>
 
 ### Getting Started
 To create a new matrix, select the "File" drop-down menu and select "New...". You can create either a symmetrical or non-symmetrical matrix.
@@ -70,6 +70,4 @@ If you encounter any bugs or would like to submit a feature request, feel free t
 This project is in active development with commits every few days
 ##### What's Next?
 * Propagation analysis with only specified connection names
-* Export to <code>.png</code>
-* Undo/Redo buttons
 * Keyboard bindings
