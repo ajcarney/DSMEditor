@@ -2,6 +2,7 @@ package gui;
 
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -41,7 +42,7 @@ public class FreezeGrid {
         }
     }
 
-    // { {start x, start y}, {end x, end y} }
+    // { {start row, start col}, {end row, end col} }
     private Pair<Pair<Integer, Integer>, Pair<Integer, Integer>> nwGridConstraints;
     private Pair<Pair<Integer, Integer>, Pair<Integer, Integer>> neGridConstraints;
     private Pair<Pair<Integer, Integer>, Pair<Integer, Integer>> swGridConstraints;
@@ -72,9 +73,9 @@ public class FreezeGrid {
 
     public void updateConstraints() {
         nwGridConstraints = new Pair<>(new Pair<>(0, 0), new Pair<>(0, 0));
-        neGridConstraints = new Pair<>(new Pair<>(getNumCols() - 1, 0), new Pair<>(getNumCols() - 1, 0));
-        swGridConstraints = new Pair<>(new Pair<>(0, getNumRows() - 1), new Pair<>(0, getNumRows() - 1));
-        seGridConstraints = new Pair<>(new Pair<>(getNumRows() - 1, getNumCols() - 1), new Pair<>(getNumRows() - 1, getNumCols() - 1));
+        neGridConstraints = new Pair<>(new Pair<>(getNumCols(), 0), new Pair<>(getNumCols(), 0));
+        swGridConstraints = new Pair<>(new Pair<>(0, getNumRows()), new Pair<>(0, getNumRows()));
+        seGridConstraints = new Pair<>(new Pair<>(getNumCols(), getNumRows()), new Pair<>(getNumCols(), getNumRows()));
     }
 
 
@@ -135,9 +136,13 @@ public class FreezeGrid {
             ArrayList<HBox> row = data.get(r);
             ArrayList<Cell> newRow = new ArrayList<>();
 
-            colPrefWidths.add(new SimpleDoubleProperty(0.0));
-            rowPrefHeights.add(new SimpleDoubleProperty(0.0));
+            if(r >= rowPrefHeights.size()) {
+                rowPrefHeights.add(new SimpleDoubleProperty(0.0));
+            }
             for(int c=0; c<row.size(); c++) {
+                if(c >= colPrefWidths.size()) {
+                    colPrefWidths.add(new SimpleDoubleProperty(0.0));
+                }
                 Cell cell = new Cell(new Pair<>(r, c), row.get(c));
                 newRow.add(cell);
 
@@ -147,11 +152,13 @@ public class FreezeGrid {
                 ghostPane.applyCss();
                 ghostPane.layout();
 
-                if(cell.getNode().getBoundsInLocal().getWidth() > colPrefWidths.get(r).doubleValue()) {
-                    colPrefWidths.get(r).set(cell.getNode().getBoundsInLocal().getWidth());
+                double width = cell.getNode().getBoundsInLocal().getWidth() + cell.getNode().getPadding().getLeft() + cell.getNode().getPadding().getRight();
+                double height = cell.getNode().getBoundsInLocal().getHeight() + cell.getNode().getPadding().getTop() + cell.getNode().getPadding().getBottom();
+                if(width > colPrefWidths.get(c).doubleValue()) {
+                    colPrefWidths.get(c).set(width);
                 }
-                if(cell.getNode().getBoundsInLocal().getHeight() > rowPrefHeights.get(r).doubleValue()) {
-                    rowPrefHeights.get(r).set(cell.getNode().getBoundsInLocal().getHeight());
+                if(height > rowPrefHeights.get(r).doubleValue()) {
+                    rowPrefHeights.get(r).set(height);
                 }
 
                 ghostPane.getChildren().removeAll(ghostPane.getChildren());  // remove it so area has no parent
@@ -169,14 +176,14 @@ public class FreezeGrid {
     private VBox createCornerBox(int startX, int startY, int endX, int endY) {
         VBox box = new VBox();
         System.out.println(startX + " " + startY + " " + endX + " " + endY);
-        for(int r=startY; r<endY; r++) {
+        for(int r=startX; r<endX; r++) {
             ArrayList<Cell> rowData = cells.get(r);
             if(rowData == null) {
                 continue;
             }
 
             HBox row = new HBox();
-            for(int c=startX; c<endX; c++) {
+            for(int c=startY; c<endY; c++) {
                 Cell cell = rowData.get(c);
                 if(cell == null) {
                     continue;
@@ -207,10 +214,10 @@ public class FreezeGrid {
 
     public void setFreezeFooter(int endRow) {
         // set sw start location
-        swGridConstraints = new Pair<>(new Pair<>(swGridConstraints.getKey().getKey(), getNumRows() - 1 - endRow), new Pair<>(swGridConstraints.getValue().getKey(), swGridConstraints.getValue().getValue()));
+        swGridConstraints = new Pair<>(new Pair<>(swGridConstraints.getKey().getKey(), getNumRows() - endRow), new Pair<>(swGridConstraints.getValue().getKey(), swGridConstraints.getValue().getValue()));
 
         // set se start location
-        seGridConstraints = new Pair<>(new Pair<>(seGridConstraints.getKey().getKey(), getNumRows() - 1 - endRow), new Pair<>(seGridConstraints.getValue().getKey(), seGridConstraints.getValue().getValue()));
+        seGridConstraints = new Pair<>(new Pair<>(seGridConstraints.getKey().getKey(), getNumRows() - endRow), new Pair<>(seGridConstraints.getValue().getKey(), seGridConstraints.getValue().getValue()));
         updateGrid();
     }
 
@@ -227,10 +234,10 @@ public class FreezeGrid {
 
     public void setFreezeRight(int endCol) {
         // set ne start location
-        neGridConstraints = new Pair<>(new Pair<>(getNumCols() - 1 - endCol, neGridConstraints.getKey().getValue()), new Pair<>(neGridConstraints.getValue().getKey(), neGridConstraints.getValue().getValue()));
+        neGridConstraints = new Pair<>(new Pair<>(getNumCols() - endCol, neGridConstraints.getKey().getValue()), new Pair<>(neGridConstraints.getValue().getKey(), neGridConstraints.getValue().getValue()));
 
         // set se start location
-        seGridConstraints = new Pair<>(new Pair<>(getNumCols() - 1 - endCol, seGridConstraints.getKey().getValue()), new Pair<>(seGridConstraints.getValue().getKey(), seGridConstraints.getValue().getValue()));
+        seGridConstraints = new Pair<>(new Pair<>(getNumCols() - endCol, seGridConstraints.getKey().getValue()), new Pair<>(seGridConstraints.getValue().getKey(), seGridConstraints.getValue().getValue()));
         updateGrid();
     }
 
@@ -245,80 +252,102 @@ public class FreezeGrid {
         HBox nBox = new HBox();
         HBox sBox = new HBox();
 
+        System.out.println("Size: " + getNumRows() + " " + getNumCols());
+
         // create nw box
-        VBox nwBox = createCornerBox(nwGridConstraints.getKey().getKey(), nwGridConstraints.getKey().getValue(), nwGridConstraints.getValue().getKey(), nwGridConstraints.getValue().getValue());
+        System.out.print("NW: ");
+        VBox nwBox = createCornerBox(nwGridConstraints.getKey().getKey(), nwGridConstraints.getKey().getValue(), nwGridConstraints.getValue().getValue(), nwGridConstraints.getValue().getKey());
         if(!nwBox.getChildren().isEmpty()) {
+            System.out.println("adding nw");
             nBox.getChildren().add(nwBox);
         }
 
         // create nn box
+        System.out.print("North: ");
         VBox nnBox = createCornerBox(
+                nwGridConstraints.getKey().getValue(),    // nw start y
             nwGridConstraints.getValue().getKey(),    // nw end x
-            nwGridConstraints.getKey().getValue(),    // nw start y
-            neGridConstraints.getKey().getKey(),      // ne start x
-            neGridConstraints.getValue().getValue()   // ne end y
+//            neGridConstraints.getKey().getKey(),      // ne start x
+//            neGridConstraints.getValue().getValue()   // ne end y
+                neGridConstraints.getValue().getValue(),   // ne end y
+                neGridConstraints.getKey().getKey()      // ne start x
         );
 
         ScrollPane scrollNBox = new ScrollPane(nnBox);  // configure scroll pane later
         if(!nnBox.getChildren().isEmpty()) {
+            System.out.println("adding n");
             nBox.getChildren().add(scrollNBox);
         }
 
         // create ne box
-        VBox neBox = createCornerBox(neGridConstraints.getKey().getKey(), neGridConstraints.getKey().getValue(), neGridConstraints.getValue().getKey(), neGridConstraints.getValue().getValue());
+        System.out.print("NE: ");
+        VBox neBox = createCornerBox(neGridConstraints.getKey().getValue(), neGridConstraints.getKey().getKey(), neGridConstraints.getValue().getValue(), neGridConstraints.getValue().getKey());
         if(!neBox.getChildren().isEmpty()) {
+            System.out.println("adding ne");
             nBox.getChildren().add(neBox);
         }
 
         // create ww box
+        System.out.print("West: ");
         VBox wBox = createCornerBox(
-                nwGridConstraints.getKey().getKey(),      // nw start x
                 nwGridConstraints.getValue().getValue(),  // nw end y
-                swGridConstraints.getValue().getKey(),    // sw end x
-                swGridConstraints.getKey().getValue()     // sw start y
+                nwGridConstraints.getKey().getKey(),      // nw start x
+                swGridConstraints.getKey().getValue(),     // sw start y
+                swGridConstraints.getValue().getKey()    // sw end x
+
         );
         ScrollPane scrollWBox = new ScrollPane(wBox);  // configure scroll pane later
 
         // create center box
+        System.out.print("Center: ");
         VBox cBox = createCornerBox(
-                nwGridConstraints.getValue().getKey(),    // nw end x
                 nwGridConstraints.getValue().getValue(),  // nw end y
-                seGridConstraints.getKey().getKey(),      // se start x
-                seGridConstraints.getKey().getValue()     // se start y
+                nwGridConstraints.getValue().getKey(),    // nw end x
+                seGridConstraints.getKey().getValue(),     // se start y
+                seGridConstraints.getKey().getKey()      // se start x
         );
         ScrollPane scrollCBox = new ScrollPane(cBox);  // configure scroll pane later
 
         // create sw box
-        VBox swBox = createCornerBox(swGridConstraints.getKey().getKey(), swGridConstraints.getKey().getValue(), swGridConstraints.getValue().getKey(), swGridConstraints.getValue().getValue());
+        System.out.print("SW: ");
+//        VBox swBox = createCornerBox(swGridConstraints.getKey().getKey(), swGridConstraints.getKey().getValue(), swGridConstraints.getValue().getKey(), swGridConstraints.getValue().getValue());
+        VBox swBox = createCornerBox(swGridConstraints.getKey().getValue(), swGridConstraints.getKey().getKey(), swGridConstraints.getValue().getValue(), swGridConstraints.getValue().getKey());
+
         if(!swBox.getChildren().isEmpty()) {
+            System.out.println("adding sw");
             sBox.getChildren().add(swBox);
         }
 
         // create ss box
+        System.out.print("South: ");
         VBox ssBox = createCornerBox(
-                swGridConstraints.getValue().getKey(),    // sw end x
                 swGridConstraints.getKey().getValue(),    // sw start y
-                seGridConstraints.getKey().getKey(),      // se start x
-                seGridConstraints.getValue().getValue()   // se end y
+                swGridConstraints.getValue().getKey(),    // sw end x
+                seGridConstraints.getValue().getValue(),   // se end y
+                seGridConstraints.getKey().getKey()      // se start x
         );
 
         ScrollPane scrollSBox = new ScrollPane(ssBox);  // configure scroll pane later
         if(!ssBox.getChildren().isEmpty()) {
+            System.out.println("adding s");
             sBox.getChildren().add(scrollSBox);
         }
 
         // create se box
-        VBox seBox = createCornerBox(seGridConstraints.getKey().getKey(), seGridConstraints.getKey().getValue(), seGridConstraints.getValue().getKey(), seGridConstraints.getValue().getValue());
+        System.out.print("SE: ");
+        VBox seBox = createCornerBox(seGridConstraints.getKey().getValue(), seGridConstraints.getKey().getKey(), seGridConstraints.getValue().getValue(), seGridConstraints.getValue().getKey());
         if(!seBox.getChildren().isEmpty()) {
+            System.out.println("adding se");
             sBox.getChildren().add(seBox);
         }
 
+        System.out.print("East: ");
         // create ee box
         VBox eBox = createCornerBox(
-                neGridConstraints.getKey().getKey(),      // ne start x
                 neGridConstraints.getValue().getValue(),  // ne end y
-                seGridConstraints.getValue().getKey(),    // se end x
-                seGridConstraints.getKey().getValue()     // se start y
+                neGridConstraints.getKey().getKey(),      // ne start x
+                seGridConstraints.getKey().getValue(),     // se start y
+                seGridConstraints.getValue().getKey()    // se end x
         );
         ScrollPane scrollEBox = new ScrollPane(eBox);  // configure scroll pane later
 
@@ -326,11 +355,12 @@ public class FreezeGrid {
         // bind cell pref sizes to row/col sizes
         assert colPrefWidths.size() == cells.size();
         assert rowPrefHeights.size() == cells.get(0).size();  // no need to perform null check on get() (0 size checked for earlier)
-        for (ArrayList<Cell> row : cells) {
+        for (int r=0; r<cells.size(); r++) {
+            ArrayList<Cell> row = cells.get(r);
             for (int c = 0; c < row.size(); c++) {
                 Cell cell = row.get(c);
                 cell.getNode().setMinWidth(colPrefWidths.get(c).getValue());
-                cell.getNode().setMinHeight(rowPrefHeights.get(c).getValue());
+                cell.getNode().setMinHeight(rowPrefHeights.get(r).getValue());
             }
         }
 
@@ -362,19 +392,75 @@ public class FreezeGrid {
 
         // add boxes to border pane
         if(!nBox.getChildren().isEmpty()) {
+            System.out.println("setting n");
             grid.setTop(nBox);
+            BorderPane.setMargin(nBox, new Insets(-1));
         }
         if(!wBox.getChildren().isEmpty()) {
+            System.out.println("setting w");
             grid.setLeft(scrollWBox);
+            BorderPane.setMargin(scrollWBox, new Insets(-1));
         }
         if(!eBox.getChildren().isEmpty()) {
+            System.out.println("setting e");
             grid.setRight(scrollEBox);
+            BorderPane.setMargin(scrollEBox, new Insets(-1));
         }
         if(!sBox.getChildren().isEmpty()) {
+            System.out.println("setting s");
             grid.setBottom(sBox);
+            BorderPane.setMargin(sBox, new Insets(-1));
         }
         grid.setCenter(scrollCBox);
+        BorderPane.setMargin(scrollCBox, new Insets(-1));
 
+        grid.setStyle(grid.getStyle() + "-fx-border-width: -1; -fx-box-border: transparent; -fx-border-style: none;");
+    }
+
+    public void updateGridSizing() {
+        if(cells.isEmpty()) {
+            return;
+        }
+
+        Pane ghostPane = new Pane();
+        Scene ghostScene = new Scene(ghostPane);  // a scene is needed to calculate preferred sizes of nodes
+
+        assert cells.size() == rowPrefHeights.size(): "Assertion failed, rowPrefHeights size does not match data";
+        assert cells.get(0).size() == colPrefWidths.size(): "Assertion failed, colPrefWidths size does not match data";
+
+        for(int r=0; r<cells.size(); r++) {
+            ArrayList<Cell> row = cells.get(r);
+
+            for(int c=0; c<row.size(); c++) {
+                Cell cell = row.get(c);
+
+                // update preferred sizes
+                // add the node to a test pane with the scene set, but not visible so the preferred size gets calculated
+                ghostPane.getChildren().add(cell.getNode());
+                ghostPane.applyCss();
+                ghostPane.layout();
+
+                double width = cell.getNode().getBoundsInLocal().getWidth() + cell.getNode().getPadding().getLeft() + cell.getNode().getPadding().getRight();
+                double height = cell.getNode().getBoundsInLocal().getHeight() + cell.getNode().getPadding().getTop() + cell.getNode().getPadding().getBottom();
+                if(width > colPrefWidths.get(c).doubleValue()) {
+                    colPrefWidths.get(c).set(width);
+                }
+                if(height > rowPrefHeights.get(r).doubleValue()) {
+                    rowPrefHeights.get(r).set(height);
+                }
+
+                ghostPane.getChildren().removeAll(ghostPane.getChildren());  // remove it so area has no parent
+            }
+        }
+
+        for (int r=0; r<cells.size(); r++) {
+            ArrayList<Cell> row = cells.get(r);
+            for (int c = 0; c < row.size(); c++) {
+                Cell cell = row.get(c);
+                cell.getNode().setMinWidth(colPrefWidths.get(c).getValue());
+                cell.getNode().setMinHeight(rowPrefHeights.get(r).getValue());
+            }
+        }
     }
 
     public BorderPane getGrid() {

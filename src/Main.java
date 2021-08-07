@@ -89,6 +89,8 @@ public class Main extends Application {
             }
         });
 
+//        FreezeGrid.debug();
+
     }
 
 

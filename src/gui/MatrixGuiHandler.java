@@ -27,7 +27,7 @@ import java.util.Vector;
 
 
 /**
- * Creates a new class that manages the gui for a matrix.
+ * Creates a new class that manages the gui for a matrix. Can only contain a mutable or immutable matrix object
  *
  * @author Aiden Carney
  */
@@ -222,7 +222,8 @@ public class MatrixGuiHandler {
     private DoubleProperty fontSize;
     private BooleanProperty showNames;
 
-    private VBox rootLayout = new VBox();
+    private VBox rootLayout;
+    FreezeGrid grid;
 
     Vector<Cell> cells;  // contains information for highlighting
     HashMap<String, HashMap<Integer, Integer>> gridUidLookup;
@@ -241,8 +242,12 @@ public class MatrixGuiHandler {
         gridUidLookup.put("rows", new HashMap<Integer, Integer>());
         gridUidLookup.put("cols", new HashMap<Integer, Integer>());
 
+        rootLayout = new VBox();
+        grid = new FreezeGrid();
+
         this.fontSize = new SimpleDoubleProperty(fontSize);
         showNames = new SimpleBooleanProperty(true);  // default to showing names instead of weights
+        refreshMatrixEditorMutable();
     }
 
 
@@ -436,28 +441,26 @@ public class MatrixGuiHandler {
      *
      * @return VBox that contains all the gui widgets
      */
-    public VBox getMatrixEditor() {
+    public void refreshMatrixEditorMutable() {
         cells = new Vector<>();
         gridUidLookup = new HashMap<>();
         gridUidLookup.put("rows", new HashMap<Integer, Integer>());
         gridUidLookup.put("cols", new HashMap<Integer, Integer>());
 
-        rootLayout = new VBox();
+        rootLayout.getChildren().removeAll(rootLayout.getChildren());
         rootLayout.setAlignment(Pos.CENTER);
-        rootLayout.styleProperty().bind(Bindings.concat(
-                "-fx-font-size: ", fontSize.asString(), "};",
-                ".combo-box > .list-cell {-fx-padding: 0 0 0 0; -fx-border-insets: 0 0 0 0;}"
-        ));
 
         Label location = new Label("");
-        GridPane grid = new GridPane();
+        grid = new FreezeGrid();
 
-        grid.setAlignment(Pos.CENTER);
         ArrayList<ArrayList<Pair<String, Object>>> template = matrix.getGridArray();
+        ArrayList<ArrayList<HBox>> gridData = new ArrayList<>();
+
         int rows = template.size();
         int columns = template.get(0).size();
 
         for(int r=0; r<rows; r++) {
+            ArrayList<HBox> rowData = new ArrayList<>();
             for(int c=0; c<columns; c++) {
                 Pair<String, Object> item = template.get(r).get(c);
                 HBox cell = new HBox();  // wrap everything in an HBox so a border can be added easily
@@ -490,11 +493,23 @@ public class MatrixGuiHandler {
                 } else if(item.getKey().equals("grouping_item")) {
                     ComboBox<String> groupings = new ComboBox<>();
                     groupings.setMinWidth(Region.USE_PREF_SIZE);
-
-                    groupings.setStyle("""
-                            -fx-border-insets: -2, -2, -2, -2;
-                            -fx-padding: -5, -5, -5, -5;"""
+                    groupings.setPadding(new Insets(0));
+                    groupings.setPadding(new Insets(-5));
+                    groupings.setStyle(
+                            "-fx-background-color: transparent;" +
+                            "-fx-padding: 0, 0, 0, 0;" +
+                            "-fx-font-size: " + (fontSize.doubleValue() - 2) + " };"
                     );
+
+                    Pane ghostPane = new Pane();
+                    Scene ghostScene = new Scene(ghostPane);  // a scene is needed to calculate preferred sizes of nodes
+
+                    ghostPane.getChildren().add(groupings);
+                    ghostPane.applyCss();
+                    ghostPane.layout();
+                    double maxHeight = groupings.getBoundsInLocal().getHeight() + groupings.getPadding().getTop() + groupings.getPadding().getBottom();
+
+                    System.out.println(maxHeight);
 
                     groupings.getItems().addAll(matrix.getGroupings());
                     groupings.getSelectionModel().select(((DSMItem)item.getValue()).getGroup());
@@ -510,7 +525,9 @@ public class MatrixGuiHandler {
                             c_.updateCellHighlight();
                         }
                     });
+
                     cell.getChildren().add(groupings);
+                    System.out.println(cell.getMaxHeight());
                 } else if(item.getKey().equals("grouping_item_v")) {
                     ComboBox<String> groupings = new ComboBox<String>();
                     groupings.getItems().addAll(matrix.getGroupings());
@@ -716,35 +733,39 @@ public class MatrixGuiHandler {
                 }
                 cell.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
                 cell.setPadding(new Insets(0));
-                GridPane.setConstraints(cell, c, r);
-                grid.getChildren().add(cell);
+                cell.styleProperty().bind(Bindings.concat("-fx-font-size: ", fontSize.asString(), "};"));
+                rowData.add(cell);
 
                 Cell cellData = new Cell(new Pair<>(r, c), cell);
                 cellData.setHighlightBG(defaultBackground, "default");
                 cells.add(cellData);
 
             }
+            gridData.add(rowData);
         }
         for(Cell cell : cells) {
             cell.updateCellHighlight();
         }
 
-        ScrollPane scrollPane = new ScrollPane(grid);
-        scrollPane.setFitToWidth(true);
-        rootLayout.getChildren().addAll(scrollPane, location);
+        grid.setGridDataHBox(gridData);
+        grid.setFreezeLeft(3);
+        if(matrix.isSymmetrical()) {
+            grid.setFreezeHeader(2);
+        } else {
+            grid.setFreezeHeader(3);
+        }
 
-
-        return rootLayout;
+        rootLayout.getChildren().addAll(grid.getGrid(), location);
     }
 
 
-    public VBox getImmutableMatrix(boolean showWeights) {
+    public void refreshMatrixEditorImmutable(boolean showWeights) {
         cells = new Vector<>();
         gridUidLookup = new HashMap<>();
         gridUidLookup.put("rows", new HashMap<Integer, Integer>());
         gridUidLookup.put("cols", new HashMap<Integer, Integer>());
 
-        rootLayout = new VBox();
+        rootLayout.getChildren().removeAll(rootLayout.getChildren());
         rootLayout.setAlignment(Pos.CENTER);
         rootLayout.styleProperty().bind(Bindings.concat(
                 "-fx-font-size: ", fontSize.asString(), "};",
@@ -853,14 +874,22 @@ public class MatrixGuiHandler {
         }
 
         rootLayout.getChildren().addAll(grid);
+    }
 
+
+    /**
+     * Returns the current layout for the matrix editor that is either mutable or immutable depending on the last refresh call
+     *
+     * @return VBox of the root layout
+     */
+    public VBox getMatrixEditor() {
         return rootLayout;
     }
 
 
 
     /**
-     * Sets the font size to a new value. This value is bound to in the gui so it will be auto updated
+     * Sets the font size to a new value. This value is bound to in the gui so it will be auto updated.
      *
      * @param newSize the new font size to use in the gui
      */
@@ -870,7 +899,7 @@ public class MatrixGuiHandler {
 
 
     /**
-     * Sets the value of showNames. This value is bound to in the gui so that either the connection names or weights will be shown
+     * Sets the value of showNames. This value is bound to in the gui so that either the connection names or weights will be shown.
      *
      * @param newValue show the names of the connections or the weights if false
      */

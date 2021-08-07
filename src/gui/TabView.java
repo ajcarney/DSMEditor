@@ -25,7 +25,7 @@ public class TabView {
     private static MatrixHandler matrixHandler;
     private static InfoHandler infoHandler;
 
-    private static final Double[] fontSizes = {
+    private static final double[] fontSizes = {
         5.0, 6.0, 8.0, 9.0, 9.5, 10.0, 10.5, 11.0, 12.0, 12.5, 14.0, 16.0, 18.0, 24.0, 30.0, 36.0, 60.0
     };
     private static final double DEFAULT_FONT_SIZE = 12.0;
@@ -116,6 +116,7 @@ public class TabView {
             title += "*";
         }
         DraggableTab tab = new DraggableTab(title);
+        matrixHandler.getMatrixGuiHandler(matrixUid).refreshMatrixEditorMutable();
         tab.setContent(matrixHandler.getMatrixGuiHandler(matrixUid).getMatrixEditor());
         tab.setDetachable(false);
         tabPane.getScene().setOnKeyPressed(e -> {  // add keybinding to toggle cross-highlighting on the editor
@@ -229,6 +230,7 @@ public class TabView {
      */
     public void refreshTab() {
         if(getFocusedMatrixUid() != null) {
+            matrixHandler.getMatrixGuiHandler(getFocusedMatrixUid()).refreshMatrixEditorMutable();
             getFocusedTab().setContent(matrixHandler.getMatrixGuiHandler(getFocusedMatrixUid()).getMatrixEditor());
             infoHandler.setMatrix(matrixHandler.getMatrix(getFocusedMatrixUid()));
         }
@@ -265,6 +267,7 @@ public class TabView {
         if(currentFontSizeIndex > fontSizes.length - 1) currentFontSizeIndex = fontSizes.length - 1;
 
         matrixHandler.getMatrixGuiHandler(getFocusedMatrixUid()).setFontSize(fontSizes[currentFontSizeIndex]);
+        matrixHandler.getMatrixGuiHandler(getFocusedMatrixUid()).refreshMatrixEditorMutable();
         refreshTab();
     }
 
@@ -278,6 +281,7 @@ public class TabView {
         if(currentFontSizeIndex < 0) currentFontSizeIndex = 0;
 
         matrixHandler.getMatrixGuiHandler(getFocusedMatrixUid()).setFontSize(fontSizes[currentFontSizeIndex]);
+        matrixHandler.getMatrixGuiHandler(getFocusedMatrixUid()).refreshMatrixEditorMutable();
         refreshTab();
     }
 
@@ -295,6 +299,7 @@ public class TabView {
         }
 
         matrixHandler.getMatrixGuiHandler(getFocusedMatrixUid()).setFontSize(DEFAULT_FONT_SIZE);
+        matrixHandler.getMatrixGuiHandler(getFocusedMatrixUid()).refreshMatrixEditorMutable();
         refreshTab();
     }
 

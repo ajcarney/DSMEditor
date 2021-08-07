@@ -276,6 +276,7 @@ public class HeaderMenu {
                 return;
             }
             matrixHandler.getMatrixGuiHandler(editor.getFocusedMatrixUid()).setShowNames(showNames.isSelected());
+            matrixHandler.getMatrixGuiHandler(editor.getFocusedMatrixUid()).refreshMatrixEditorMutable();
         });
 
         viewMenu.getItems().addAll(zoomIn, zoomOut, zoomReset);

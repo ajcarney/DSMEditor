@@ -646,7 +646,8 @@ public class ExportHandler {
 
             MatrixGuiHandler m = new MatrixGuiHandler(matrix, 12);
             HBox centeredMatrix = new HBox();
-            centeredMatrix.getChildren().add(m.getImmutableMatrix(!showConnectionNames.isSelected()));
+            m.refreshMatrixEditorImmutable(!showConnectionNames.isSelected());
+            centeredMatrix.getChildren().add(m.getMatrixEditor());
             centeredMatrix.setAlignment(Pos.CENTER);
             preview.getChildren().add(centeredMatrix);
 

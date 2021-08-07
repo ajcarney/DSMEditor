@@ -488,6 +488,7 @@ public class ClusterAlgorithm {
         popup.showAndWait();  // wait for it to finish
 
         MatrixGuiHandler gui = new MatrixGuiHandler(outputMatrix, 10);
+        gui.refreshMatrixEditorImmutable(true);
 
         outputMatrixLayout.getChildren().removeAll(outputMatrixLayout.getChildren());
         outputMatrixLayout.getChildren().addAll(gui.getMatrixEditor());
