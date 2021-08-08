@@ -1,8 +1,8 @@
 package gui;
 
 import DSMData.DSMConnection;
-import DSMData.DSMItem;
 import DSMData.DSMData;
+import DSMData.DSMItem;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
@@ -13,7 +13,10 @@ import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -509,8 +512,6 @@ public class MatrixGuiHandler {
                     ghostPane.layout();
                     double maxHeight = groupings.getBoundsInLocal().getHeight() + groupings.getPadding().getTop() + groupings.getPadding().getBottom();
 
-                    System.out.println(maxHeight);
-
                     groupings.getItems().addAll(matrix.getGroupings());
                     groupings.getSelectionModel().select(((DSMItem)item.getValue()).getGroup());
                     groupings.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal)->{
@@ -527,7 +528,6 @@ public class MatrixGuiHandler {
                     });
 
                     cell.getChildren().add(groupings);
-                    System.out.println(cell.getMaxHeight());
                 } else if(item.getKey().equals("grouping_item_v")) {
                     ComboBox<String> groupings = new ComboBox<String>();
                     groupings.getItems().addAll(matrix.getGroupings());
@@ -616,7 +616,6 @@ public class MatrixGuiHandler {
 
                     cell.setOnMouseClicked(e -> {
                         if(e.getButton().equals(MouseButton.PRIMARY)) {
-
                             // create popup window to edit the connection
                             Stage window = new Stage();
 
@@ -759,6 +758,11 @@ public class MatrixGuiHandler {
     }
 
 
+    /**
+     * sets the current matrix to an immutable view
+     *
+     * @param showWeights show weights if true or names if false
+     */
     public void refreshMatrixEditorImmutable(boolean showWeights) {
         cells = new Vector<>();
         gridUidLookup = new HashMap<>();

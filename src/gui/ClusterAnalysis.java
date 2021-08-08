@@ -4,19 +4,13 @@ import DSMData.DSMData;
 import DSMData.DSMItem;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.value.ObservableIntegerValue;
-import javafx.beans.value.ObservableStringValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 import java.util.*;
@@ -257,31 +251,14 @@ public class ClusterAnalysis {
      * Runs the bidding analysis algorithm for the input matrix. Updates content on the main window of the gui
      */
     private void runClusterBidsAnalysis() {
-        class CellData {
-            private ObservableStringValue name;
-            private ObservableIntegerValue highlight;
-
-            public CellData(String name, int highlight) {
-                this.highlight = new SimpleIntegerProperty(highlight);
-                this.name = new SimpleStringProperty(name);
-            }
-
-            public ObservableStringValue getName() {
-                return name;
-            }
-
-            public ObservableIntegerValue getHighlight() {
-                return highlight;
-            }
-        }
-
         Vector<String> groupOrder = new Vector<>(matrix.getGroupings());
         Vector<DSMItem> items = matrix.getRows();
         Collections.sort(items, Comparator.comparing(r -> r.getSortIndex()));
 
         // create data structure for the table
-        ArrayList<ArrayList<CellData>> data = new ArrayList<>();
-        ArrayList<Integer> highlightColors = new ArrayList<>();  // 0 for none, 1 for red, 2 for green
+        ArrayList<ArrayList<HBox>> data = new ArrayList<>();
+
+        // fill in the main data structure
         for(int r = 0; r < items.size(); r++) {
             ArrayList<String> rowBids = new ArrayList<>();
             double maxBid = 0;
@@ -299,7 +276,7 @@ public class ClusterAnalysis {
                     double bid = groupBids.get(items.get(r).getUid());
                     rowBids.add(String.valueOf(bid));
 
-                    if(bid > maxBid) {
+                    if(bid > maxBid) {  // check for max or min bids
                         if(maxBid < minBid) {
                             minBid = maxBid;
                             minBidGroup = maxBidGroup;
@@ -316,72 +293,60 @@ public class ClusterAnalysis {
                     }
                 }
             }
-            int highlightColor = 0;
-            if(maxBidGroup.equals(items.get(r).getGroup())) {  // decide row highlight color
-                highlightColor = 2;
-            } else if(minBidGroup.equals(items.get(r).getGroup())) {
-                highlightColor = 1;
-            }
 
             // add row to data structure
-            ArrayList<CellData> row = new ArrayList<>();
-            for(String bid : rowBids) {
-                row.add(new CellData(bid, highlightColor));
+            ArrayList<HBox> row = new ArrayList<>();
+            for(String text : rowBids) {
+                HBox cell = new HBox();
+                Label label = new Label(text);
+                if(maxBidGroup.equals(items.get(r).getGroup())) {  // highlight green because group has highest bid
+                    cell.setStyle(cell.getStyle() + "-fx-background-color:palegreen");
+                } else if(minBidGroup.equals(items.get(r).getGroup())) {  // highlight red because group has lowest bid
+                    cell.setStyle(cell.getStyle() + "-fx-background-color:indianred");
+                } else {
+                    cell.setStyle(cell.getStyle() + "-fx-background-color:white");
+                }
+                cell.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
+                cell.setPadding(new Insets(5));
+                cell.getChildren().add(label);
+
+                row.add(cell);
             }
             data.add(row);
         }
 
-        // create table and columns
-        TableView<ArrayList<CellData>> table = new TableView<>();  // column name, cell data
-        table.setMaxHeight(Double.MAX_VALUE);
-        VBox.setVgrow(table, Priority.ALWAYS);
-
+        // create header row
+        ArrayList<HBox> headerRow = new ArrayList<>();
         for(int c = 0; c < data.get(0).size(); c++) {
-            TableColumn<ArrayList<CellData>, String> column = new TableColumn<>();
-            if(c == 0) {
-                column.setText("Current Group");
-            } else if(c == 1) {
-                column.setText("Item Name");
+            HBox cell = new HBox();
+            Label label = new Label();
+
+            if (c == 0) {
+                label.setText("Current Group");
+            } else if (c == 1) {
+                label.setText("Item Name");
             } else {
-                column.setText(groupOrder.get(c - 2) + " Bids");
+                label.setText(groupOrder.get(c - 2) + " Bids");
             }
-            int finalC = c;
-            column.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().get(finalC).getName().getValue() + String.valueOf(cellData.getValue().get(finalC).getHighlight().getValue())));
+            label.setStyle(label.getStyle() + "-fx-font-weight: bold;" + "-fx-font-size: 18;");
+            label.setAlignment(Pos.CENTER);
 
-            column.setCellFactory(col -> {
-                return new TableCell<ArrayList<CellData>, String>() {
-                    @Override
-                    protected void updateItem(String item, boolean empty) {
-                        super.updateItem(item, empty);
+            cell.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
+            cell.setPadding(new Insets(5));
+            cell.getChildren().add(label);
+            cell.setAlignment(Pos.CENTER);
 
-                        if (item == null || empty) {
-                            setText(null);
-                            setStyle("");
-                        } else {
-                            // Format date.
-                            String text = item.substring(0, item.length() - 1);
-                            Integer highlight = Integer.parseInt(item.substring(item.length() - 1, item.length()));
-                            setText(text);
-                            if(highlight == 2) {
-                                setStyle("-fx-background-color:palegreen");
-                            } else if(highlight == 1) {
-                                setStyle("-fx-background-color:indianred");
-                            } else {
-                                setStyle("-fx-background-color:white");
-                            }
-                        }
-                    }
-                };
-            });
-
-            table.getColumns().add(column);
+            headerRow.add(cell);
         }
+        data.add(0, headerRow);
 
-        table.getItems().addAll(data);
-
+        FreezeGrid table = new FreezeGrid();
+        table.setGridDataHBox(data);
+        table.setFreezeHeader(1);
+        table.setFreezeLeft(2);
 
         bidsLayout.getChildren().removeAll(bidsLayout.getChildren());
-        bidsLayout.getChildren().addAll(table);
+        bidsLayout.getChildren().addAll(table.getGrid());
         bidsLayout.setAlignment(Pos.CENTER);
         bidsLayout.setPadding(new Insets(10));
         bidsLayout.setSpacing(15);
