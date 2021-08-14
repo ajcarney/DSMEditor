@@ -302,7 +302,8 @@ public class MatrixGuiHandler {
         Integer colLoc = null;
 
         for(Cell cell : (Vector<Cell>)cells.clone()) {  // use a clone so we don't run into concurrent modification exceptions
-            if(getUidsFromGridLoc(cell.getGridLocation()).equals(uids)) {
+            Pair<Integer, Integer> testUids = getUidsFromGridLoc(cell.getGridLocation());
+            if(testUids != null && testUids.equals(uids)) {
                 rowLoc = cell.getGridLocation().getKey();
                 colLoc = cell.getGridLocation().getValue();
             }

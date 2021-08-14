@@ -1514,7 +1514,7 @@ public class ToolbarHandler {
                 applyAllButton.setOnAction(eee -> {
                     // key must not be empty and must not already exist
                     if(!currentItems.getValue().equals("") && !matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getGroupingColors().containsKey(newName.getText())) {
-                        for(Node grouping : currentGroupings.getChildren()) {  // delete the old object
+                        for(Node grouping : currentGroupings.getChildren()) {  // delete the old object from the pane
                             HBox area = (HBox)grouping;
                             for(Node item : area.getChildren()) {
                                 if(item.getClass().equals(Label.class)) {
@@ -1588,7 +1588,7 @@ public class ToolbarHandler {
                 applyAllButton.setOnAction(eee -> {
                     // key must not be empty and must not already exist
                     if(currentItems.getValue() != "") {
-                        for(Node grouping : currentGroupings.getChildren()) {  // delete the old object
+                        for(Node grouping : currentGroupings.getChildren()) {  // delete the old object from the window
                             HBox area = (HBox)grouping;
                             for(Node item : area.getChildren()) {
                                 if(item.getClass().equals(Label.class)) {

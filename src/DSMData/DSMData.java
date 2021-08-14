@@ -418,28 +418,29 @@ public class DSMData {
      */
     public void removeGrouping(String name) {
         Color color = groupingColors.get(name);
+        for(DSMItem item : rows) {
+            if(item.getGroup().equals(name)) {
+                setItemGroup(item, "(None)");
+            }
+        }
+        for(DSMItem item : cols) {
+            if(item.getGroup().equals(name)) {
+                setItemGroup(item, "(None)");
+            }
+        }
+
         addChangeToStack(new MatrixChange(
             () -> {  // do function
+                groupingColors.remove(name);
+                groupings.remove(name);
+            },
+            () -> {  // undo function
                 if(color != null) {
                     groupingColors.put(name, color);
                 } else {
                     groupingColors.put(name, Color.color(1.0, 1.0, 1.0));
                 }
                 groupings.add(name);
-            },
-            () -> {  // undo function
-                groupingColors.remove(name);
-                groupings.remove(name);
-                for(DSMItem item : rows) {
-                    if(item.getGroup().equals(name)) {
-                        item.setGroup("(None)");
-                    }
-                }
-                for(DSMItem item : cols) {
-                    if(item.getGroup().equals(name)) {
-                        item.setGroup("(None)");
-                    }
-                }
             },
             false
         ));
@@ -455,6 +456,13 @@ public class DSMData {
         ObservableSet<String> oldGroupings = FXCollections.observableSet();
         for(String group : groupingColors.keySet()) {
             oldGroupings.add(group);
+        }
+
+        for(DSMItem r : rows) {
+            setItemGroup(r, "");
+        }
+        for(DSMItem c : cols) {
+            setItemGroup(c, "");
         }
 
         addChangeToStack(new MatrixChange(
@@ -490,39 +498,19 @@ public class DSMData {
      * @param newName the new name of the grouping
      */
     public void renameGrouping(String oldName, String newName) {
-        addChangeToStack(new MatrixChange(
-            () -> {  // do function
-                Color oldColor = groupingColors.get(oldName);
-                for(DSMItem item : rows) {
-                    if(item.getGroup().equals(oldName)) {
-                        item.setGroup(newName);
-                    }
-                }
-                for(DSMItem item : cols) {
-                    if(item.getGroup().equals(oldName)) {
-                        item.setGroup(newName);
-                    }
-                }
-                removeGrouping(oldName);
-                addGrouping(newName, oldColor);
-            },
-            () -> {  // undo function
-                Color oldColor = groupingColors.get(newName);
-                for(DSMItem item : rows) {
-                    if(item.getGroup().equals(newName)) {
-                        item.setGroup(oldName);
-                    }
-                }
-                for(DSMItem item : cols) {
-                    if(item.getGroup().equals(newName)) {
-                        item.setGroup(oldName);
-                    }
-                }
-                removeGrouping(newName);
-                addGrouping(oldName, oldColor);
-            },
-            false
-        ));
+        Color color = groupingColors.get(oldName);
+        for(DSMItem item : rows) {
+            if(item.getGroup().equals(oldName)) {
+                setItemGroup(item, newName);
+            }
+        }
+        for(DSMItem item : cols) {
+            if(item.getGroup().equals(oldName)) {
+                setItemGroup(item, newName);
+            }
+        }
+        removeGrouping(oldName);
+        addGrouping(newName, color);
     }
 
 
