@@ -263,6 +263,66 @@ public class DSMData {
 
 
     /**
+     * Deletes the columns of the matrix. Adds changes to the stack. Clears alias uids also
+     */
+    public void deleteCols() {
+        Vector<DSMItem> oldCols = new Vector<>();  // deep clone old column items
+        for(DSMItem col : cols) {
+            oldCols.add(new DSMItem(col));
+        }
+
+        Vector<DSMItem> oldRows = new Vector<>();  // deep clone old column items
+        for(DSMItem row : rows) {
+            oldRows.add(new DSMItem(row));
+        }
+
+        addChangeToStack(new MatrixChange(
+            () -> {
+                cols.clear();
+                for(DSMItem row : rows) {
+                    row.setAliasUid(null);
+                }
+            },
+            () -> {
+                cols = oldCols;
+                rows = oldRows;
+            },
+            false
+        ));
+    }
+
+
+    /**
+     * Deletes the rows of the matrix. Adds changes to the stack. Clears alias uids also
+     */
+    public void deleteRows() {
+        Vector<DSMItem> oldCols = new Vector<>();  // deep clone old column items
+        for(DSMItem col : cols) {
+            oldCols.add(new DSMItem(col));
+        }
+
+        Vector<DSMItem> oldRows = new Vector<>();  // deep clone old column items
+        for(DSMItem row : rows) {
+            oldRows.add(new DSMItem(row));
+        }
+
+        addChangeToStack(new MatrixChange(
+            () -> {
+                rows.clear();
+                for(DSMItem col : cols) {
+                    col.setAliasUid(null);
+                }
+            },
+            () -> {
+                cols = oldCols;
+                rows = oldRows;
+            },
+            false
+        ));
+    }
+
+
+    /**
      * Finds the maximum sort index of the rows by performing a linear search.
      *
      * @return the maximum sort index of the row items
@@ -895,7 +955,7 @@ public class DSMData {
         Integer newRowUid = getItem(colUid).getAliasUid();
         Integer newColUid = null;
         for(DSMItem item : getCols()) {
-            if(item.getAliasUid() == rowUid) {
+            if(item.getAliasUid() != null && item.getAliasUid() == rowUid) {
                 newColUid = item.getUid();
                 break;
             }

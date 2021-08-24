@@ -4,10 +4,19 @@ import DSMData.DSMData;
 import DSMData.MatrixHandler;
 import IOHandler.ExportHandler;
 import IOHandler.ImportHandler;
+import javafx.geometry.Insets;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import javafx.util.Pair;
+import constants.Constants;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -26,6 +35,7 @@ public class HeaderMenu {
     private static Menu editMenu;
     private static Menu viewMenu;
     private static Menu toolsMenu;
+    private static Menu helpMenu;
 
     private static MenuBar menuBar;
     private static MatrixHandler matrixHandler;
@@ -219,7 +229,7 @@ public class HeaderMenu {
         fileMenu.getItems().add(exit);
 
 
-        //Edit menu
+    //Edit menu
         editMenu = new Menu("_Edit");
 
         MenuItem undo = new MenuItem("Undo");
@@ -240,17 +250,78 @@ public class HeaderMenu {
             editor.refreshTab();
         });
 
+        MenuItem convertToNonSymmetrical = new MenuItem("Convert to Non-Symmetrical Matrix");
+        convertToNonSymmetrical.setOnAction(e -> {
+            if(editor.getFocusedMatrixUid() == null) {
+                return;
+            }
+            // bring up window asking to delete rows or columns
+            Stage window = new Stage();
+            window.setTitle("Clear Rows or Columns?");
+            window.initModality(Modality.APPLICATION_MODAL);  // Block events to other windows
+
+            VBox rootLayout = new VBox();
+            rootLayout.setPadding(new Insets(10, 10, 10, 10));
+            rootLayout.setSpacing(10);
+
+            Label title = new Label("Delete Matrix Rows or Columns?");
+
+            // create radio buttons
+            RadioButton deleteRows = new RadioButton("Rows");
+            RadioButton deleteColumns = new RadioButton("Columns");
+            // create a toggle group
+            ToggleGroup tg = new ToggleGroup();
+            deleteRows.setToggleGroup(tg);
+            deleteColumns.setToggleGroup(tg);
+            deleteRows.setSelected(true);
+            // add radio buttons to HBox
+            HBox radioButtonLayout = new HBox();
+            radioButtonLayout.getChildren().addAll(deleteRows, deleteColumns);
+
+            Pane vSpacer = new Pane();
+            vSpacer.setMaxHeight(Double.MAX_VALUE);
+            VBox.setVgrow(vSpacer, Priority.ALWAYS);
+
+            Button okButton = new Button("Ok");
+            okButton.setOnAction(ee -> {
+                boolean clearRows = false;
+                if(deleteRows.isSelected()) {
+                    clearRows = true;
+                }
+                ExportHandler.convertToNonSymmetrical(matrixHandler.getMatrix(editor.getFocusedMatrixUid()), clearRows);
+                window.close();
+                editor.refreshTab();
+            });
+            Pane spacer = new Pane();
+            spacer.setMaxWidth(Double.MAX_VALUE);
+            HBox.setHgrow(spacer, Priority.ALWAYS);
+            Button cancelButton = new Button("Cancel");
+            cancelButton.setOnAction(ee -> {
+                window.close();
+            });
+            HBox closeView = new HBox();
+            closeView.getChildren().addAll(cancelButton, spacer, okButton);
+
+            rootLayout.getChildren().addAll(title, radioButtonLayout, vSpacer, closeView);
+
+            Scene scene = new Scene(rootLayout);
+            window.setScene(scene);
+            window.showAndWait();
+        });
+
         editMenu.setOnShown(e -> {  // disable validate symmetry for non-symmetrical matrices
             if(editor.getFocusedMatrixUid() == null) {
                 return;
             }
             undo.setDisable(!matrixHandler.getMatrix(editor.getFocusedMatrixUid()).canUndo());
             redo.setDisable(!matrixHandler.getMatrix(editor.getFocusedMatrixUid()).canRedo());
+            convertToNonSymmetrical.setDisable(!matrixHandler.getMatrix(editor.getFocusedMatrixUid()).isSymmetrical());
         });
 
 
         editMenu.getItems().add(undo);
         editMenu.getItems().add(redo);
+        editMenu.getItems().add(convertToNonSymmetrical);
 
 
     // View menu
@@ -389,8 +460,33 @@ public class HeaderMenu {
 
         toolsMenu.getItems().addAll(validateSymmetry, search, propagationAnalysis, coordinationScore, thebeau);
 
+    // help menu
+        helpMenu = new Menu("_Help");
 
-        menuBar.getMenus().addAll(fileMenu, editMenu, viewMenu, toolsMenu);
+        MenuItem about = new MenuItem("About");
+        about.setOnAction(e -> {
+        // bring up window asking to delete rows or columns
+            Stage window = new Stage();
+            window.setTitle("About");
+            window.initModality(Modality.APPLICATION_MODAL);  // Block events to other windows
+
+            VBox rootLayout = new VBox();
+            rootLayout.setPadding(new Insets(10, 10, 10, 10));
+            rootLayout.setSpacing(10);
+
+            Label versionLabel = new Label("Version: " + Constants.version);
+
+            rootLayout.getChildren().addAll(versionLabel);
+
+            Scene scene = new Scene(rootLayout);
+            window.setScene(scene);
+            window.showAndWait();
+        });
+
+        helpMenu.getItems().addAll(about);
+
+
+        menuBar.getMenus().addAll(fileMenu, editMenu, viewMenu, toolsMenu, helpMenu);
     }
 
 

@@ -329,6 +329,39 @@ public class ExportHandler {
     }
 
 
+    /**
+     * Converts a symmetrical matrix to a non-symmetrical matrix in place.
+     * Method can be called on non-symmetrical matrix without issues.
+     *
+     * @param matrix    the matrix to convert
+     * @param clearRows whether or not to clear rows or columns when converting
+     */
+    static public void convertToNonSymmetrical(DSMData matrix, boolean clearRows) {
+        if(clearRows) {
+            matrix.deleteRows();
+        } else {
+            matrix.deleteCols();
+        }
+        matrix.setSymmetrical(false);
+    }
+
+
+    /**
+     * Exports a symmetrical matrix as non-symmetrical in a new file
+     *
+     * @param matrix    the matrix to convert
+     * @param file      the file to export to
+     * @param clearRows clear matrix rows if true, matrix columns if false
+     * @return          error code: 1 on success
+     */
+    static public int exportSymmetricalToNonSymmetrical(DSMData matrix, File file, boolean clearRows) {
+        convertToNonSymmetrical(matrix, clearRows);
+        DSMData nonSymmetricMatrix = new DSMData(matrix);  // make a copy of the matrix
+
+        int code = saveMatrixToFile(nonSymmetricMatrix, file);
+        return code;
+    }
+
 
     /**
      * Saves the matrix to an xml file specified by the caller of the function. Clears
