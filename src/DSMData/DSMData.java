@@ -670,6 +670,9 @@ public class DSMData {
      * @param weight         the weight of the connection
      */
     private void createConnection(int rowUid, int colUid, String connectionName, double weight) {
+        if(isSymmetrical() && getItem(rowUid).getUid() == getItem(colUid).getAliasUid()) {
+            return;
+        }
         DSMConnection connection = new DSMConnection(connectionName, weight, rowUid, colUid);
         connections.add(connection);
     }
@@ -1082,8 +1085,22 @@ public class DSMData {
      * stack but does not set any checkpoint.
      */
     public void reDistributeSortIndexByGroup() {
-        Collections.sort(rows, Comparator.comparing(DSMItem::getGroup).thenComparing(DSMItem::getSortIndex));
-        Collections.sort(cols, Comparator.comparing(DSMItem::getGroup).thenComparing(DSMItem::getSortIndex));
+        Collections.sort(rows, Comparator.comparing(DSMItem::getGroup).thenComparing(DSMItem::getName));
+//        Collections.sort(cols, Comparator.comparing(DSMItem::getGroup).thenComparing(DSMItem::getName));
+        Vector<DSMItem> newCols = new Vector<>();
+
+        for(DSMItem row : rows) {
+            for(DSMItem col : cols) {
+                if(col.getAliasUid() == row.getUid()) {
+                    if(!col.getGroup().equals(row.getGroup())) {
+                        System.out.println("groups do not match");
+                    }
+                    newCols.add(col);
+                    break;
+                }
+            }
+        }
+        cols = newCols;
 
         for(int i=0; i<rows.size(); i++) {  // reset row sort indexes 1 -> n
             setItemSortIndex(rows.elementAt(i), i + 1);
@@ -1481,7 +1498,6 @@ public class DSMData {
             // choose an element from the matrix
             int n = (int)(generator.nextDouble() * (matrix.getRows().size() - 1));  // double from 0 to 1.0 multiplied by max index cast to integer
             DSMItem item = matrix.getRows().elementAt(n);
-
             // calculate bids
             HashMap<String, Double> bids = new HashMap<>();
             for (String group : matrix.getGroupings()) {
@@ -1491,7 +1507,8 @@ public class DSMData {
 
             // choose a number between 0 and randBid to determine if it should make a suboptimal change
             DSMData tempMatrix = new DSMData(matrix);
-            int nBid = (int) (generator.nextDouble() * randBid);
+            item = tempMatrix.getRows().elementAt(n);  // update item to the item from the new matrix so that it is not modifying a copy
+            int nBid = (int) (generator.nextDouble() * (randBid + 1));  // add one to randBid because with truncation nBid will never be equal to randBid
 
             // find if the change is optimal
             String highestBidder = bids.entrySet().iterator().next().getKey();  // start with a default value so comparison doesn't throw NullPointerException
@@ -1506,6 +1523,7 @@ public class DSMData {
                     }
                 }
                 tempMatrix.setItemGroupSymmetric(item, secondHighestBidder);
+
             } else {  // assign to highest bidder
                 for (Map.Entry<String, Double> entry : bids.entrySet()) {
                     if (Double.compare(entry.getValue(), bids.get(highestBidder)) >= 0) {
@@ -1516,17 +1534,18 @@ public class DSMData {
             }
 
             // choose a number between 0 and randAccept to determine if change is permanent regardless of it being optimal
-            int nAccept = (int) (generator.nextDouble() * randAccept);
+            int nAccept = (int) (generator.nextDouble() * (randAccept + 1));  // add one to randAccept because with truncation nAccept will never be equal to randAccept
             Double newCoordinationScore = (Double) getCoordinationScore(tempMatrix, optimalSizeCluster, powcc, calculateByWeight).get("TotalCost");
 
             if (nAccept == randAccept || newCoordinationScore < coordinationCost) {  // make the change permanent
                 coordinationCost = newCoordinationScore;
-                matrix = tempMatrix;
+                matrix = new DSMData(tempMatrix);
 
                 if (coordinationCost < (Double) getCoordinationScore(bestSolution, optimalSizeCluster, powcc, calculateByWeight).get("TotalCost")) {  // save the new solution as the best one
-                    bestSolution = matrix;
+                    bestSolution = new DSMData(matrix);
                 }
             }
+
 
             String startTime = String.valueOf(Duration.between(absStart, start).toMillis());
             String elapsedTime = String.valueOf(Duration.between(start, Instant.now()).toMillis());

@@ -285,7 +285,6 @@ public class MatrixGuiHandler {
             Integer colUid = gridUidLookup.get("cols").get(cellLoc.getValue());
             return new Pair<>(rowUid, colUid);
         } catch(NullPointerException e) {
-            e.printStackTrace();
             return null;
         }
     }

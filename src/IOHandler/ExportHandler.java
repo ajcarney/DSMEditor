@@ -289,10 +289,13 @@ public class ExportHandler {
 
             String connectionsString = "";
             for(DSMConnection conn: matrix.getConnections()) {
+                DSMItem row = matrix.getItem(conn.getRowUid());
+                DSMItem col = matrix.getItem(conn.getColUid());
+
                 String c = "DSM("
                         + (int)matrix.getItem(conn.getRowUid()).getSortIndex()  // add one because matlab is 1 indexed
                         + ","
-                        + (int)matrix.getItem(conn.getRowUid()).getSortIndex()  // add one because matlab is 1 indexed
+                        + (int)matrix.getItem(conn.getColUid()).getSortIndex()  // add one because matlab is 1 indexed
                         + ") = "
                         + conn.getWeight()
                         + ";\n";

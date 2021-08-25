@@ -49,7 +49,7 @@ public class ImportHandler {
         HashMap<Integer, DSMItem> colItems = new HashMap<>();
         int uid = 0;
         for(String line : lines) {  // parse the relevant data
-            if(line.contains("DSM(")) {
+            if(line.contains("DSM(")) {  // connection
                 double xLoc = Integer.parseInt(line.split(Pattern.quote("DSM("))[1].split(Pattern.quote(","))[0]);
                 double yLoc = Integer.parseInt(line.split(Pattern.quote(","))[1].split(Pattern.quote(")"))[0]);
                 double weight = Double.parseDouble(line.split(Pattern.quote("= "))[1].split(Pattern.quote(";"))[0]);
@@ -57,25 +57,28 @@ public class ImportHandler {
                 data.add(xLoc);
                 data.add(yLoc);
                 data.add(weight);
-                connections.add(data);
+                if(xLoc != yLoc) {  // no need to add it to the connections
+                    connections.add(data);
+                }
             } else if(line.contains("DSMLABEL{")) {
                 int loc = Integer.parseInt(line.split(Pattern.quote("DSMLABEL{"))[1].split(Pattern.quote(","))[0]);
                 String name = line.split(Pattern.quote("'"))[1];
-                DSMItem rowItem = new DSMItem(uid, null, (double)uid, name, "(none)");
-                DSMItem colItem = new DSMItem(uid + 1, uid, (double)uid + 1, name, "(none)");
+                DSMItem rowItem = new DSMItem(uid, null, (double)uid, name, "(None)");
+                DSMItem colItem = new DSMItem(uid + 1, uid, (double)uid + 1, name, "(None)");
                 uid += 2;  // add two because of column item
 
                 matrix.addItem(rowItem, true);
                 matrix.addItem(colItem, false);
+                System.out.println(rowItem.getUid() + " " + colItem.getAliasUid());
                 rowItems.put(loc, rowItem);
                 colItems.put(loc, colItem);
             }
         }
-
         // create the connections
         for(ArrayList<Double> conn : connections) {
             int rowUid = rowItems.get(conn.get(0).intValue()).getUid();
             int colUid = colItems.get(conn.get(1).intValue()).getUid();
+
             matrix.modifyConnection(rowUid, colUid, "x", conn.get(2));
         }
 
