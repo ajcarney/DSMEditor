@@ -46,10 +46,29 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class ExportHandler {
     /**
+     * Forces a file to have a specific extension. Returns a new file object with the specified extension.
+     * Checks if the file absolute path ends with ".extension" and if not adds it
+     *
+     * @param file      the file to check
+     * @param extension the extension to force
+     * @return          a file object with the extension at the end
+     */
+    static private File forceExtension(File file, String extension) {
+        String path = file.getAbsolutePath();
+        if(!path.endsWith(extension)) {
+            path += extension;
+            return new File(path);
+        }
+
+        return file;
+    }
+
+
+    /**
      * Saves a matrix to a csv file that includes the matrix metadata
      *
      * @param matrix    the matrix to export
-     * @param file      the file to save the csv file to  TODO: add validation that the file is in fact .csv
+     * @param file      the file to save the csv file to
      * @return          1 on success, 0 on error
      */
     static public int exportMatrixToCSV(DSMData matrix, File file) {
@@ -89,6 +108,8 @@ public class ExportHandler {
                 contents += "\n";
             }
 
+            file = forceExtension(file, ".csv");
+            System.out.println("Exporting to " + file.getAbsolutePath());
             FileWriter writer = new FileWriter(file);
             writer.write(contents);
             writer.close();
@@ -108,7 +129,7 @@ public class ExportHandler {
      * so that the sizing for it is not impacted by the matrix metadata
      *
      * @param matrix    the matrix to export
-     * @param file      A File object of the location of the .xlsx file  TODO: add validation that it is a .xlsx file
+     * @param file      A File object of the location of the .xlsx file
      * @return          1 on success, 0 on error
      */
     static public int exportMatrixToXLSX(DSMData matrix, File file) {
@@ -262,7 +283,8 @@ public class ExportHandler {
             }
 
             // write file
-            System.out.println(file.getAbsolutePath());
+            file = forceExtension(file, ".xlsx");
+            System.out.println("Exporting to " + file.getAbsolutePath());
             OutputStream fileOut = new FileOutputStream(file);
             workbook.write(fileOut);
             fileOut.close();
@@ -319,6 +341,9 @@ public class ExportHandler {
                     + "\n\nDSMLABEL = cell(DSM_size,1);\n"
                     + labelsString;
 
+
+            file = forceExtension(file, ".m");
+            System.out.println("Exporting to " + file.getAbsolutePath());
             PrintWriter out = new PrintWriter(file);
             out.println(matlabString);
             out.close();
