@@ -1,5 +1,5 @@
 # DSMEditor
-An open-source application for editing, designing, and analyzing Design Structure Matrices
+Design Structure Matrix editor (DSM editor) - An open-source application for editing, designing, and analyzing Design Structure Matrices
 
 ---
 
