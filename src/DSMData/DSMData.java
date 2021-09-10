@@ -1061,6 +1061,12 @@ public class DSMData {
     }
 
 
+    public void invertMatrix() {
+        Vector<DSMItem> oldRows = rows;
+        Vector<DSMItem> oldCols = cols;
+    }
+
+
     /**
      * Sorts the current matrix rows and columns by sort index and modifies all the sort indexes
      * such that they are now 1 to n. Used to make the sort indexes "clean" numbers. Puts multiple changes on the

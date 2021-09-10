@@ -268,6 +268,9 @@ public class HeaderMenu {
 
             // create radio buttons
             RadioButton deleteRows = new RadioButton("Rows");
+            Pane hSpacer = new Pane();
+            hSpacer.setMaxWidth(Double.MAX_VALUE);
+            HBox.setHgrow(hSpacer, Priority.ALWAYS);
             RadioButton deleteColumns = new RadioButton("Columns");
             // create a toggle group
             ToggleGroup tg = new ToggleGroup();
@@ -276,7 +279,7 @@ public class HeaderMenu {
             deleteRows.setSelected(true);
             // add radio buttons to HBox
             HBox radioButtonLayout = new HBox();
-            radioButtonLayout.getChildren().addAll(deleteRows, deleteColumns);
+            radioButtonLayout.getChildren().addAll(deleteRows, hSpacer, deleteColumns);
 
             Pane vSpacer = new Pane();
             vSpacer.setMaxHeight(Double.MAX_VALUE);
