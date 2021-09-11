@@ -307,7 +307,7 @@ public class ExportHandler {
      */
     static public int exportMatrixToThebeauMatlabFile(DSMData matrix, File file) {
         try {
-            matrix.reDistributeSortIndexes();  // re-number 0 -> n
+            matrix.reDistributeSortIndices();  // re-number 0 -> n
 
             String connectionsString = "";
             for(DSMConnection conn: matrix.getConnections()) {
@@ -443,6 +443,16 @@ public class ExportHandler {
                 rowElement.addContent(new Element("name").setText(row.getName()));
                 rowElement.addContent(new Element("sort_index").setText(Double.valueOf(row.getSortIndex()).toString()));
                 rowElement.addContent(new Element("group").setText(row.getGroup()));
+                if(row.getAliasUid() != null) {
+                    rowElement.addContent(new Element("alias").setText(row.getAliasUid().toString()));
+                } else if(row.getAliasUid() == null && matrix.isSymmetrical()) {  // leave for compatibility with old files
+                    for(DSMItem col : matrix.getCols()) {
+                        if(col.getAliasUid() == row.getUid()) {
+                            rowElement.addContent(new Element("alias").setText(String.valueOf(col.getUid())));
+                            break;
+                        }
+                    }
+                }
                 rowsElement.addContent(rowElement);
             }
 

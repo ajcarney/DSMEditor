@@ -42,7 +42,7 @@ public class ToolbarHandler {
     private Button setConnections;
     private Button configureGroupings;
     private Button sort;
-    private Button reDistributeIndexes;
+    private Button reDistributeIndices;
     private Button deleteConnections;
 
     private TabView editor;
@@ -1719,21 +1719,21 @@ public class ToolbarHandler {
 
 
 
-        reDistributeIndexes = new Button("Re-Distribute Sort Indexes");
-        reDistributeIndexes.setOnAction(e -> {
+        reDistributeIndices = new Button("Re-Distribute Sort Indices");
+        reDistributeIndices.setOnAction(e -> {
             if(editor.getFocusedMatrixUid() == null) {
                 return;
             }
-            matrixHandler.getMatrix(editor.getFocusedMatrixUid()).reDistributeSortIndexes();
+            matrixHandler.getMatrix(editor.getFocusedMatrixUid()).reDistributeSortIndices();
             editor.refreshTab();
             matrixHandler.getMatrix(editor.getFocusedMatrixUid()).setCurrentStateAsCheckpoint();
         });
-        reDistributeIndexes.setMaxWidth(Double.MAX_VALUE);
+        reDistributeIndices.setMaxWidth(Double.MAX_VALUE);
 
 
 
 
-        layout.getChildren().addAll(addMatrixItem, deleteMatrixItem, renameMatrixItem, appendConnections, setConnections, deleteConnections, configureGroupings, sort, reDistributeIndexes);
+        layout.getChildren().addAll(addMatrixItem, deleteMatrixItem, renameMatrixItem, appendConnections, setConnections, deleteConnections, configureGroupings, sort, reDistributeIndices);
         layout.setPadding(new Insets(10, 10, 10, 10));
         layout.setSpacing(20);
         layout.setAlignment(Pos.CENTER);

@@ -12,6 +12,7 @@ import java.util.*;
 /**
  * A class that contains data about a matrix. All operations to a matrix come through
  * this class. Handles both symmetrical and non-symmetrical matrices.
+ * TODO: I added double linked aliases, and it could remove some linear searches
  *
  * @author: Aiden Carney
  */
@@ -622,8 +623,13 @@ public class DSMData {
      * @param name the name of the item
      * @return     the created item
      */
-    private DSMItem createItem(String name) {
-        double index = (int)getRowMaxSortIndex() + 1;  // cast to int to remove the decimal place so that the index will be a whole number
+    private DSMItem createItem(String name, boolean isRow) {
+        double index;
+        if(isRow) {
+            index = (int) getRowMaxSortIndex() + 1;  // cast to int to remove the decimal place so that the index will be a whole number
+        } else {
+            index = (int) getColMaxSortIndex() + 1;  // cast to int to remove the decimal place so that the index will be a whole number
+        }
         DSMItem item = new DSMItem(index, name);
 
         return item;
@@ -721,7 +727,7 @@ public class DSMData {
      * @param isRow is the item a row
      */
     public void addItem(String name, boolean isRow) {
-        DSMItem item = createItem(name);
+        DSMItem item = createItem(name, isRow);
         addItem(item, isRow);
     }
 
@@ -864,7 +870,7 @@ public class DSMData {
 
 
     /**
-     * Sets the sort indexes of a symmetric pair in the matrix. This method should be called instead of directly modifying the
+     * Sets the sort Indices of a symmetric pair in the matrix. This method should be called instead of directly modifying the
      * item because this method puts the change on the stack but does not set a checkpoint.
      *
      * @param rowItem  the row item in the pair to change the name of
@@ -1061,25 +1067,85 @@ public class DSMData {
     }
 
 
-    public void invertMatrix() {
-        Vector<DSMItem> oldRows = rows;
-        Vector<DSMItem> oldCols = cols;
+    /**
+     * Deletes all connections for a given row. Adds changes to the stack, but does not set a checkpoint
+     *
+     * @param rowUid the uid of the row to clear the connections of
+     */
+    public void deleteRowConnections(int rowUid) {
+        for(DSMConnection connection : connections) {     // check to see if uid is in the rows
+            if(connection.getRowUid() == rowUid) {
+                deleteConnection(connection.getRowUid(), connection.getColUid());
+            }
+        }
     }
 
 
     /**
-     * Sorts the current matrix rows and columns by sort index and modifies all the sort indexes
-     * such that they are now 1 to n. Used to make the sort indexes "clean" numbers. Puts multiple changes on the
+     * Deletes all connections for a given column. Adds changes to the stack, but does not set a checkpoint
+     *
+     * @param colUid the uid of the row to clear the connections of
+     */
+    public void deleteColConnections(int colUid) {
+        for(DSMConnection connection : connections) {     // check to see if uid is in the rows
+            if(connection.getColUid() == colUid) {
+                deleteConnection(connection.getRowUid(), connection.getColUid());
+            }
+        }
+    }
+
+
+    /**
+     * deletes all connections in the matrix. Adds changes to the stack, but does not set a checkpoint
+     */
+    public void deleteAllConnections() {
+        for(DSMConnection connection : connections) {     // check to see if uid is in the rows
+            deleteConnection(connection.getRowUid(), connection.getColUid());
+        }
+    }
+
+
+    /**
+     * Inverts a matrix by flipping its rows and columns and switching the connection rows and columns. Adds changes to
+     * the stack to be handled, but does not set a checkpoint
+     */
+    public void invertMatrix() {
+        Vector<DSMItem> oldRows = (Vector<DSMItem>)rows.clone();
+        Vector<DSMItem> oldCols = (Vector<DSMItem>)cols.clone();
+        Vector<DSMConnection> oldConnections = (Vector<DSMConnection>)connections.clone();
+
+        for(DSMConnection conn : oldConnections) {  // these function calls already put a change on the stack so they don't need to be wrapped
+            deleteConnection(conn.getRowUid(), conn.getColUid());
+            modifyConnection(conn.getColUid(), conn.getRowUid(), conn.getConnectionName(), conn.getWeight());
+        }
+
+        addChangeToStack(new MatrixChange(
+            () -> {  // do function
+                cols = oldRows;
+                rows = oldCols;
+            },
+            () -> {  // undo function
+                cols = oldCols;
+                rows = oldRows;
+            },
+            false
+        ));
+    }
+
+
+    /**
+     * Sorts the current matrix rows and columns by sort index and modifies all the sort Indices
+     * such that they are now 1 to n. Used to make the sort Indices "clean" numbers. Puts multiple changes on the
      * stack but does not set any checkpoint.
      */
-    public void reDistributeSortIndexes() {
+    public void reDistributeSortIndices() {
         // sort row and columns by sortIndex
         Collections.sort(rows, Comparator.comparing(r -> r.getSortIndex()));
         Collections.sort(cols, Comparator.comparing(c -> c.getSortIndex()));
-        for(int i=0; i<rows.size(); i++) {  // reset row sort indexes 1 -> n
+        for(int i=0; i<rows.size(); i++) {  // reset row sort Indices 1 -> n
             setItemSortIndex(rows.elementAt(i), i + 1);
         }
-        for(int i=0; i<cols.size(); i++) {  // reset col sort indexes 1 -> n
+        for(int i=0; i<cols.size(); i++) {  // reset col sort Indices 1 -> n
             setItemSortIndex(cols.elementAt(i), i + 1);
         }
     }
@@ -1087,7 +1153,7 @@ public class DSMData {
 
     /**
      * Sorts the matrix rows and columns by their group and then their current sort index, then distributes new sort
-     * indexes 1 to n. Used to make the sort indexes "clean" numbers and make the groups line up. Puts multiple changes on the
+     * Indices 1 to n. Used to make the sort Indices "clean" numbers and make the groups line up. Puts multiple changes on the
      * stack but does not set any checkpoint.
      */
     public void reDistributeSortIndexByGroup() {
@@ -1108,10 +1174,10 @@ public class DSMData {
         }
         cols = newCols;
 
-        for(int i=0; i<rows.size(); i++) {  // reset row sort indexes 1 -> n
+        for(int i=0; i<rows.size(); i++) {  // reset row sort Indices 1 -> n
             setItemSortIndex(rows.elementAt(i), i + 1);
         }
-        for(int i=0; i<cols.size(); i++) {  // reset col sort indexes 1 -> n
+        for(int i=0; i<cols.size(); i++) {  // reset col sort Indices 1 -> n
             setItemSortIndex(cols.elementAt(i), i + 1);
         }
     }

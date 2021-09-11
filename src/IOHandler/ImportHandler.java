@@ -126,8 +126,8 @@ public class ImportHandler {
                 uids.add(uid);
                 String name = col.getChild("name").getText();
                 double sortIndex = Double.parseDouble(col.getChild("sort_index").getText());
-                Integer aliasUid = null;
                 String group = col.getChild("group").getText();
+                Integer aliasUid = null;
                 try {
                     aliasUid = Integer.parseInt(col.getChild("alias").getText());
                 } catch(NullPointerException npe) {}
@@ -144,8 +144,12 @@ public class ImportHandler {
                 String name = row.getChild("name").getText();
                 double sortIndex = Double.parseDouble(row.getChild("sort_index").getText());
                 String group = row.getChild("group").getText();
+                Integer aliasUid = null;
+                try {
+                    aliasUid = Integer.parseInt(row.getChild("alias").getText());
+                } catch(NullPointerException npe) {}
 
-                DSMItem item = new DSMItem(uid, null, sortIndex, name, group);
+                DSMItem item = new DSMItem(uid, aliasUid, sortIndex, name, group);
                 matrix.addItem(item, true);
             }
 

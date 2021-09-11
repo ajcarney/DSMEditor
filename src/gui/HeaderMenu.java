@@ -312,6 +312,17 @@ public class HeaderMenu {
             window.showAndWait();
         });
 
+        MenuItem invert = new MenuItem("Invert Matrix");
+        invert.setOnAction(e -> {
+            if(editor.getFocusedMatrixUid() == null) {
+                return;
+            }
+            matrixHandler.getMatrix(editor.getFocusedMatrixUid()).invertMatrix();
+            matrixHandler.getMatrix(editor.getFocusedMatrixUid()).setCurrentStateAsCheckpoint();
+            editor.refreshTab();
+        });
+
+
         editMenu.setOnShown(e -> {  // disable validate symmetry for non-symmetrical matrices
             if(editor.getFocusedMatrixUid() == null) {
                 return;
@@ -324,7 +335,9 @@ public class HeaderMenu {
 
         editMenu.getItems().add(undo);
         editMenu.getItems().add(redo);
+        editMenu.getItems().add(new SeparatorMenuItem());
         editMenu.getItems().add(convertToNonSymmetrical);
+        editMenu.getItems().add(invert);
 
 
     // View menu

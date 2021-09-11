@@ -1,0 +1,12 @@
+lib/
+out/
+.idea/
+.log/
+.recovery/
+*.iml
+*.dsm
+*.m
+*.csv
+prod/
+*.py
+*.MF
