@@ -67,7 +67,8 @@ If you encounter any bugs or would like to submit a feature request, feel free t
 [MIT](https://opensource.org/licenses/MIT)
 
 ### Project Status
-This project is in active development with commits every few days
+This project is in semi-active development with commits as needed. New features are typically only being added on request.
 ##### What's Next?
+* Bug fixes
 * Propagation analysis with only specified connection names
 * Keyboard bindings
