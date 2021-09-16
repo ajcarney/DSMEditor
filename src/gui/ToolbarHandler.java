@@ -22,9 +22,12 @@ import javafx.stage.Stage;
 import javafx.util.Callback;
 import javafx.util.Pair;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 
 /**
@@ -1203,19 +1206,20 @@ public class ToolbarHandler {
             changesToMakeView.setCellFactory(param -> new ListCell< Pair<Integer, Integer> >() {
                 @Override
                 protected void updateItem(Pair<Integer, Integer> item, boolean empty) {
-                super.updateItem(item, empty);
+                    super.updateItem(item, empty);
 
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    setText(
-                        "DELETE " +
-                        matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getItem(item.getKey()).getName() + ":" +
-                        matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getItem(item.getValue()).getName()
-                    );
-                }
+                    if (empty || item == null) {
+                        setText(null);
+                    } else {
+                        setText(
+                            "DELETE " +
+                            matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getItem(item.getKey()).getName() + ":" +
+                            matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getItem(item.getValue()).getName()
+                        );
+                    }
                 }
             });
+
             Button deleteSelected = new Button("Delete Selected Item(s)");
             deleteSelected.setOnAction(ee -> {
                 changesToMakeView.getItems().removeAll(changesToMakeView.getSelectionModel().getSelectedItems());
@@ -1239,7 +1243,9 @@ public class ToolbarHandler {
                             if (item == null || empty) {
                                 setGraphic(null);
                             } else {
-                                if(matrix.isRow(matrix.getItem(item).getUid())) {
+                                if(item == Integer.MAX_VALUE) {
+                                    setText("All");
+                                } else if(matrix.isRow(matrix.getItem(item).getUid())) {
                                     setText(matrix.getItem(item).getName() + " (Row)");
                                 } else {
                                     setText(matrix.getItem(item).getName() + " (Column)");
@@ -1252,6 +1258,7 @@ public class ToolbarHandler {
             firstItemSelector.setButtonCell(cellFactory.call(null));
             firstItemSelector.setCellFactory(cellFactory);
             Vector<Integer> items = new Vector<>();
+            items.add(Integer.MAX_VALUE);  // this will be used for selecting all items
             for(DSMItem row : matrix.getRows()) {
                 items.add(row.getUid());
             }
@@ -1282,6 +1289,7 @@ public class ToolbarHandler {
             firstItemSelector.valueProperty().addListener((observable, oldValue, newValue) -> {
                 if(matrix.isRow(newValue)) {
                     connectionItems.clear();
+                    connectionItems.add(Integer.MAX_VALUE);  // add the all option
                     for(DSMItem col : matrix.getCols()) {
                         if(matrix.getConnection(newValue, col.getUid()) != null) {
                             connectionItems.add(col.getUid());
@@ -1289,6 +1297,7 @@ public class ToolbarHandler {
                     }
                 } else {
                     connectionItems.clear();
+                    connectionItems.add(Integer.MAX_VALUE);  // add the all option
                     for(DSMItem row : matrix.getRows()) {
                         if(matrix.getConnection(row.getUid(), newValue) != null) {
                             connectionItems.add(row.getUid());
@@ -1317,28 +1326,82 @@ public class ToolbarHandler {
 
             deleteConnection.setOnAction(ee -> {
                 if(firstItemSelector.getValue() == null || secondItemSelector.getValue() == null) return;
-                if(matrix.isRow(firstItemSelector.getValue())) {
-                    changesToMakeView.getItems().add(new Pair<Integer, Integer>(firstItemSelector.getValue(), secondItemSelector.getValue()));
+
+                if(firstItemSelector.getValue() == Integer.MAX_VALUE) {
+                    ArrayList<Integer> toDelete = new ArrayList<>();
+                    if(secondItemSelector.getValue() == Integer.MAX_VALUE) {
+                        for(DSMItem col : matrix.getCols()) {
+                            toDelete.add(col.getUid());
+                        }
+                    } else {
+                        toDelete.add(secondItemSelector.getValue());
+                    }
+
+                    for(DSMItem row : matrix.getRows()) {
+                        for(Integer i : toDelete) {
+                            if(matrix.getConnection(row.getUid(), i) != null) {
+                                safeAddConnectionChange(changesToMakeView, row.getUid(), i);
+                            }
+                        }
+                    }
+                } else if(secondItemSelector.getValue() == Integer.MAX_VALUE) {
+                    for(DSMItem col : matrix.getCols()) {
+                        if(matrix.getConnection(firstItemSelector.getValue(), col.getUid()) != null) {
+                            safeAddConnectionChange(changesToMakeView, firstItemSelector.getValue(), col.getUid());
+                        }
+                    }
+                } else if(matrix.isRow(firstItemSelector.getValue())) {
+                    safeAddConnectionChange(changesToMakeView, firstItemSelector.getValue(), secondItemSelector.getValue());
                 } else {
-                    changesToMakeView.getItems().add(new Pair<Integer, Integer>(secondItemSelector.getValue(), firstItemSelector.getValue()));
+                    safeAddConnectionChange(changesToMakeView, secondItemSelector.getValue(), firstItemSelector.getValue());
                 }
             });
             deleteConnectionSymmetrically.setOnAction(ee -> {
                 if(firstItemSelector.getValue() == null || secondItemSelector.getValue() == null) return;
-                if(matrix.isRow(firstItemSelector.getValue())) {
-                    changesToMakeView.getItems().add(new Pair<Integer, Integer>(firstItemSelector.getValue(), secondItemSelector.getValue()));
 
-                    if(!matrix.getCols().contains(secondItemSelector.getValue())) {
-                        System.out.println(secondItemSelector.getValue());
+                if(firstItemSelector.getValue() == Integer.MAX_VALUE) {
+                    ArrayList<Integer> toDelete = new ArrayList<>();
+                    if(secondItemSelector.getValue() == Integer.MAX_VALUE) {  // if all then add all the columns
+                        for(DSMItem col : matrix.getCols()) {
+                            toDelete.add(col.getUid());
+                        }
+                    } else {                                                  // else then only add the second value
+                        toDelete.add(secondItemSelector.getValue());
                     }
 
+                    for(DSMItem row : matrix.getRows()) {
+                        for(Integer colUid : toDelete) {
+                            if(matrix.getConnection(row.getUid(), colUid) != null) {
+                                safeAddConnectionChange(changesToMakeView, row.getUid(), colUid);
+                                Pair<Integer, Integer> uids = matrix.getSymmetricConnectionUids(row.getUid(), colUid);
+                                if(matrix.getConnection(uids.getKey(), uids.getValue()) != null) {
+                                    safeAddConnectionChange(changesToMakeView, uids.getKey(), uids.getValue());
+                                }
+                            }
+                        }
+                    }
+                } else if(secondItemSelector.getValue() == Integer.MAX_VALUE) {
+                    for(DSMItem col : matrix.getCols()) {
+                        if(matrix.getConnection(firstItemSelector.getValue(), col.getUid()) != null) {
+                            safeAddConnectionChange(changesToMakeView, firstItemSelector.getValue(), col.getUid());
+                            Pair<Integer, Integer> uids = matrix.getSymmetricConnectionUids(firstItemSelector.getValue(), col.getUid());
+                            if(matrix.getConnection(uids.getKey(), uids.getValue()) != null) {
+                                safeAddConnectionChange(changesToMakeView, uids.getKey(), uids.getValue());
+                            }
+                        }
+                    }
+                } else if(matrix.isRow(firstItemSelector.getValue())) {
+                    safeAddConnectionChange(changesToMakeView, firstItemSelector.getValue(), secondItemSelector.getValue());
                     Pair<Integer, Integer> uids = matrix.getSymmetricConnectionUids(firstItemSelector.getValue(), secondItemSelector.getValue());
-                    System.out.println(firstItemSelector.getValue() + " " + secondItemSelector.getValue() + " " + matrix.getItem(secondItemSelector.getValue()).getAliasUid() + " " + uids);
-                    changesToMakeView.getItems().add(uids);
+                    if(matrix.getConnection(uids.getKey(), uids.getValue()) != null) {
+                        safeAddConnectionChange(changesToMakeView, uids.getKey(), uids.getValue());
+                    }
                 } else {
-                    changesToMakeView.getItems().add(new Pair<Integer, Integer>(secondItemSelector.getValue(), firstItemSelector.getValue()));
+                    safeAddConnectionChange(changesToMakeView, secondItemSelector.getValue(), firstItemSelector.getValue());
                     Pair<Integer, Integer> uids = matrix.getSymmetricConnectionUids(secondItemSelector.getValue(), firstItemSelector.getValue());
-                    changesToMakeView.getItems().add(uids);
+                    if(matrix.getConnection(uids.getKey(), uids.getValue()) != null) {
+                        safeAddConnectionChange(changesToMakeView, uids.getKey(), uids.getValue());
+                    }
                 }
 
             });
@@ -1739,6 +1802,22 @@ public class ToolbarHandler {
         layout.setAlignment(Pos.CENTER);
     }
 
+
+    /**
+     * Safely adds a change to a javafx listview by ensuring the item is not present
+     *
+     * @param currentChanges the javafx listview to add the change to
+     * @param rowUid         the row uid of the connection to attempt to add
+     * @param colUid         the col uid of the connection to attempt to add
+     */
+    public void safeAddConnectionChange(ListView<Pair<Integer, Integer>> currentChanges, int rowUid, int colUid) {
+        for(Pair<Integer, Integer> item : currentChanges.getItems()) {
+            if(item.getKey() == rowUid && item.getValue() == colUid) {
+                return;
+            }
+        }
+        currentChanges.getItems().add(new Pair<>(rowUid, colUid));
+    }
 
     /**
      * Returns the VBox of the layout so that it can be added to a scene
