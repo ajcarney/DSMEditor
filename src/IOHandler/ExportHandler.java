@@ -187,7 +187,6 @@ public class ExportHandler {
                         cell.setCellStyle(cellStyle);
                     } else if (item.getKey().equals("item_name")) {
                         Cell cell = row.createCell(c + COL_START);
-//                        cell.setCellValue(matrix.getItem((Integer) item.getValue()).getName());
                         cell.setCellValue(((DSMItem)item.getValue()).getName());
 
                         javafx.scene.paint.Color cellColor = matrix.getGroupingColors().get(((DSMItem)item.getValue()).getGroup());
@@ -199,7 +198,6 @@ public class ExportHandler {
                     } else if(item.getKey().equals("item_name_v")) {
                         Cell cell = row.createCell(c + COL_START);
                         System.out.println(item);
-//                        cell.setCellValue(matrix.getItem((Integer) item.getValue()).getName());
                         cell.setCellValue(((DSMItem)item.getValue()).getName());
 
                         javafx.scene.paint.Color cellColor = matrix.getGroupingColors().get(((DSMItem)item.getValue()).getGroup());
