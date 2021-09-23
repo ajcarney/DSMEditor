@@ -61,12 +61,12 @@ public class Main extends Application {
 
 
         // start with a tab open (used for debugging, remove or comment out for release)
-//        if(cliArgs.contains("--debug=true")) {
-//            File file = new File("/home/aiden/Documents/DSMEditor/vpas3.dsm");
-//            DSMData matrix = ImportHandler.readFile(file);
-//            int uid = matrixHandler.addMatrix(matrix, file);
-//            editor.addTab(uid);
-//        }
+        if(cliArgs.contains("--debug=true")) {
+            File file = new File("/home/aiden/Documents/DSMEditor/dsms/vpas3.dsm");
+            DSMData matrix = ImportHandler.readFile(file);
+            int uid = matrixHandler.addMatrix(matrix, file);
+            editor.addTab(uid);
+        }
 
         for(int i=0; i<cliArgs.size(); i++) {
             System.out.println(cliArgs.get(i));

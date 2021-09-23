@@ -89,16 +89,16 @@ public class ExportHandler {
                     if (item.getKey().equals("plain_text") || item.getKey().equals("plain_text_v")) {
                         contents += item.getValue() + ",";
                     } else if (item.getKey().equals("item_name") || item.getKey().equals("item_name_v")) {
-                        contents += matrix.getItem((Integer) item.getValue()).getName() + ",";
+                        contents += ((DSMItem)item.getValue()).getName() + ",";
                     } else if (item.getKey().equals("grouping_item") || item.getKey().equals("grouping_item_v")) {
-                        contents += matrix.getItem((Integer) item.getValue()).getGroup() + ",";
+                        contents += ((DSMItem)item.getValue()).getGroup() + ",";
                     } else if (item.getKey().equals("index_item")) {
-                        contents += matrix.getItem((Integer) item.getValue()).getSortIndex() + ",";
+                        contents += ((DSMItem)item.getValue()).getSortIndex() + ",";
                     } else if (item.getKey().equals("uneditable_connection")) {
                         contents += ",";
                     } else if (item.getKey().equals("editable_connection")) {
-                        int rowUid = ((Pair<Integer, Integer>)item.getValue()).getKey();
-                        int colUid = ((Pair<Integer, Integer>)item.getValue()).getValue();
+                        int rowUid = ((Pair<DSMItem, DSMItem>)item.getValue()).getKey().getUid();
+                        int colUid = ((Pair<DSMItem, DSMItem>)item.getValue()).getValue().getUid();
                         if(matrix.getConnection(rowUid, colUid) != null) {
                             contents += matrix.getConnection(rowUid, colUid).getConnectionName();
                         }
@@ -187,9 +187,10 @@ public class ExportHandler {
                         cell.setCellStyle(cellStyle);
                     } else if (item.getKey().equals("item_name")) {
                         Cell cell = row.createCell(c + COL_START);
-                        cell.setCellValue(matrix.getItem((Integer) item.getValue()).getName());
+//                        cell.setCellValue(matrix.getItem((Integer) item.getValue()).getName());
+                        cell.setCellValue(((DSMItem)item.getValue()).getName());
 
-                        javafx.scene.paint.Color cellColor = matrix.getGroupingColors().get(matrix.getItem((Integer)item.getValue()).getGroup());
+                        javafx.scene.paint.Color cellColor = matrix.getGroupingColors().get(((DSMItem)item.getValue()).getGroup());
                         XSSFCellStyle style = workbook.createCellStyle();
                         style.setFillForegroundColor(new XSSFColor(new java.awt.Color((float) (cellColor.getRed()), (float) (cellColor.getGreen()), (float) (cellColor.getBlue())), new DefaultIndexedColorMap()));
                         style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
@@ -197,9 +198,11 @@ public class ExportHandler {
                         cell.setCellStyle(style);
                     } else if(item.getKey().equals("item_name_v")) {
                         Cell cell = row.createCell(c + COL_START);
-                        cell.setCellValue(matrix.getItem((Integer) item.getValue()).getName());
+                        System.out.println(item);
+//                        cell.setCellValue(matrix.getItem((Integer) item.getValue()).getName());
+                        cell.setCellValue(((DSMItem)item.getValue()).getName());
 
-                        javafx.scene.paint.Color cellColor = matrix.getGroupingColors().get(matrix.getItem((Integer)item.getValue()).getGroup());
+                        javafx.scene.paint.Color cellColor = matrix.getGroupingColors().get(((DSMItem)item.getValue()).getGroup());
                         XSSFCellStyle style = workbook.createCellStyle();
                         style.setRotation(VERTICAL_ROTATION);
                         style.setFillForegroundColor(new XSSFColor(new java.awt.Color((float) (cellColor.getRed()), (float) (cellColor.getGreen()), (float) (cellColor.getBlue())), new DefaultIndexedColorMap()));
@@ -207,9 +210,9 @@ public class ExportHandler {
                         cell.setCellStyle(style);
                     } else if (item.getKey().equals("grouping_item")) {
                         Cell cell = row.createCell(c + COL_START);
-                        cell.setCellValue(matrix.getItem((Integer) item.getValue()).getGroup());
+                        cell.setCellValue(((DSMItem)item.getValue()).getGroup());
 
-                        javafx.scene.paint.Color cellColor = matrix.getGroupingColors().get(matrix.getItem((Integer)item.getValue()).getGroup());
+                        javafx.scene.paint.Color cellColor = matrix.getGroupingColors().get(((DSMItem)item.getValue()).getGroup());
                         XSSFCellStyle style = workbook.createCellStyle();
                         style.setFillForegroundColor(new XSSFColor(new java.awt.Color((float) (cellColor.getRed()), (float) (cellColor.getGreen()), (float) (cellColor.getBlue())), new DefaultIndexedColorMap()));
                         style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
@@ -217,9 +220,9 @@ public class ExportHandler {
                         cell.setCellStyle(style);
                     } else if (item.getKey().equals("grouping_item_v")) {
                         Cell cell = row.createCell(c + COL_START);
-                        cell.setCellValue(matrix.getItem((Integer) item.getValue()).getGroup());
+                        cell.setCellValue(((DSMItem)item.getValue()).getGroup());
 
-                        javafx.scene.paint.Color cellColor = matrix.getGroupingColors().get(matrix.getItem((Integer)item.getValue()).getGroup());
+                        javafx.scene.paint.Color cellColor = matrix.getGroupingColors().get(((DSMItem)item.getValue()).getGroup());
                         XSSFCellStyle style = workbook.createCellStyle();
                         style.setFillForegroundColor(new XSSFColor(new java.awt.Color((float) (cellColor.getRed()), (float) (cellColor.getGreen()), (float) (cellColor.getBlue())), new DefaultIndexedColorMap()));
                         style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
@@ -227,9 +230,9 @@ public class ExportHandler {
                         cell.setCellStyle(style);
                     } else if (item.getKey().equals("index_item")) {
                         Cell cell = row.createCell(c + COL_START);
-                        cell.setCellValue(matrix.getItem((Integer) item.getValue()).getSortIndex());
+                        cell.setCellValue(((DSMItem)item.getValue()).getSortIndex());
 
-                        javafx.scene.paint.Color cellColor = matrix.getGroupingColors().get(matrix.getItem((Integer)item.getValue()).getGroup());
+                        javafx.scene.paint.Color cellColor = matrix.getGroupingColors().get(((DSMItem)item.getValue()).getGroup());
                         XSSFCellStyle style = workbook.createCellStyle();
                         style.setFillForegroundColor(new XSSFColor(new java.awt.Color((float) (cellColor.getRed()), (float) (cellColor.getGreen()), (float) (cellColor.getBlue())), new DefaultIndexedColorMap()));
                         style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
@@ -245,8 +248,8 @@ public class ExportHandler {
                         style.setRotation(HORIZONTAL_ROTATION);
                         cell.setCellStyle(style);
                     } else if (item.getKey().equals("editable_connection")) {
-                        Integer rowUid = ((Pair<Integer, Integer>)item.getValue()).getKey();
-                        Integer colUid = ((Pair<Integer, Integer>)item.getValue()).getValue();
+                        Integer rowUid = ((Pair<DSMItem, DSMItem>)item.getValue()).getKey().getUid();
+                        Integer colUid = ((Pair<DSMItem, DSMItem>)item.getValue()).getValue().getUid();
 
                         Cell cell = row.createCell(c + COL_START);
                         if(matrix.getConnection(rowUid, colUid) != null) {
