@@ -1,7 +1,7 @@
 package gui;
 
-import DSMData.DSMData;
-import DSMData.MatrixHandler;
+import Data.SymmetricDSM;
+import Data.MatrixHandler;
 import IOHandler.ExportHandler;
 import IOHandler.ImportHandler;
 import javafx.geometry.Insets;
@@ -65,7 +65,7 @@ public class HeaderMenu {
 
         MenuItem newSymmetric = new MenuItem("Symmetric Matrix");
         newSymmetric.setOnAction(e -> {
-            DSMData matrix = new DSMData();
+            SymmetricDSM matrix = new SymmetricDSM();
             matrix.setSymmetrical(true);
             File file = new File("./untitled" + Integer.toString(defaultName));
             while(file.exists()) {  // make sure file does not exist
@@ -80,7 +80,7 @@ public class HeaderMenu {
         });
         MenuItem newNonSymmetric = new MenuItem("Non-Symmetric Matrix");
         newNonSymmetric.setOnAction(e -> {
-            DSMData matrix = new DSMData();
+            SymmetricDSM matrix = new SymmetricDSM();
             matrix.setSymmetrical(false);
             File file = new File("./untitled" + Integer.toString(defaultName));
             while(file.exists()) {  // make sure file does not exist
@@ -104,7 +104,7 @@ public class HeaderMenu {
             fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("DSM File", "*.dsm"));  // dsm is the only file type usable
             File file = fileChooser.showOpenDialog(menuBar.getScene().getWindow());
             if(file != null) {  // make sure user did not just close out of the file chooser window
-                DSMData matrix = ImportHandler.readFile(file);
+                SymmetricDSM matrix = ImportHandler.readFile(file);
                 if(matrix == null) {
                     // TODO: open window saying there was an error parsing the document
                     System.out.println("there was an error reading the file " + file.toString());
@@ -124,7 +124,7 @@ public class HeaderMenu {
             fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Matlab File", "*.m"));  // matlab is the only file type usable
             File file = fileChooser.showOpenDialog(menuBar.getScene().getWindow());
             if(file != null) {  // make sure user did not just close out of the file chooser window
-                DSMData matrix = ImportHandler.importThebeauMatlabFile(file);
+                SymmetricDSM matrix = ImportHandler.importThebeauMatlabFile(file);
                 if(matrix == null) {
                     // TODO: open window saying there was an error parsing the document
                     System.out.println("there was an error reading the file " + file.toString());

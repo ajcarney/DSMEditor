@@ -1,4 +1,4 @@
-package DSMData;
+package Data;
 
 import java.time.Instant;
 
@@ -13,7 +13,8 @@ public class DSMItem {
     private Integer aliasUid;
     private String name;
     private Double sortIndex;
-    private String group;
+    private Grouping group1;  // how these 2 groupings are used is up to implementation of the DSM type
+    private Grouping group2;
 
 
     /**
@@ -23,16 +24,12 @@ public class DSMItem {
      * @param name  the starting name of the item
      */
     public DSMItem(Double index, String name) {
-        this.uid = name.hashCode() + Instant.now().toString().hashCode();
-        try {  // wait a millisecond to ensure that the next uid will for sure be unique even with the same name
-            Thread.sleep(1);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        this.uid = java.util.UUID.randomUUID().hashCode();
 
         this.name = name;
         this.sortIndex = index;
-        this.group = "(None)";
+        this.group1 = null;
+        this.group2 = null;
     }
 
 
@@ -43,14 +40,16 @@ public class DSMItem {
      * @param aliasUid the uid of the row associated with a column item. Use null if item is not a column item or item is not part of a symmetric matrix
      * @param index    the sort index of the item
      * @param name     the name of the item
-     * @param group    the group of the item
+     * @param group1   the first group of the item
+     * @param group2   the second group of the item
      */
-    public DSMItem(Integer uid, Integer aliasUid, Double index, String name, String group) {
+    public DSMItem(Integer uid, Integer aliasUid, Double index, String name, Grouping group1, Grouping group2) {
         this.uid = uid;
         this.aliasUid = aliasUid;
         this.name = name;
         this.sortIndex = index;
-        this.group = group;
+        this.group1 = group1;
+        this.group2 = group2;
     }
 
 
@@ -64,7 +63,8 @@ public class DSMItem {
         aliasUid = copy.getAliasUid();
         name = copy.getName();
         sortIndex = copy.getSortIndex();
-        group = copy.getGroup();
+        this.group1 = copy.getGroup1();
+        this.group2 = copy.getGroup2();
     }
 
 
@@ -108,12 +108,22 @@ public class DSMItem {
 
 
     /**
-     * Getter function for the group of the item
+     * Getter function for the first group of the item
      *
-     * @return the group of the item
+     * @return the second group of the item
      */
-    public String getGroup() {
-        return group;
+    public Grouping getGroup1() {
+        return group1;
+    }
+
+
+    /**
+     * Getter function for the second group of the item
+     *
+     * @return the first group of the item
+     */
+    public Grouping getGroup2() {
+        return group2;
     }
 
 
@@ -148,12 +158,22 @@ public class DSMItem {
 
 
     /**
-     * Setter function for the group of the item
+     * Setter function for the first group of the item
      *
-     * @param group the new group of the item
+     * @param group1 the new group of the item
      */
-    public void setGroup(String group) {
-        this.group = group;
+    public void setGroup1(Grouping group1) {
+        this.group1 = group1;
+    }
+
+
+    /**
+     * Setter function for the second group of the item
+     *
+     * @param group2 the new group of the item
+     */
+    public void setGroup2(Grouping group2) {
+        this.group2 = group2;
     }
 
 

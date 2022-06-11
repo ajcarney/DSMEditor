@@ -1,15 +1,13 @@
 package gui;
 
-import DSMData.DSMConnection;
-import DSMData.DSMData;
-import DSMData.DSMItem;
-import DSMData.MatrixHandler;
+import Data.SymmetricDSM;
+import Data.DSMItem;
+import Data.MatrixHandler;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.collections.ObservableSet;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -26,8 +24,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 
 /**
@@ -1191,7 +1187,7 @@ public class ToolbarHandler {
             if(editor.getFocusedMatrixUid() == null) {
                 return;
             }
-            DSMData matrix = matrixHandler.getMatrix(editor.getFocusedMatrixUid());
+            SymmetricDSM matrix = matrixHandler.getMatrix(editor.getFocusedMatrixUid());
             Stage window = new Stage();
 
             // Create Root window

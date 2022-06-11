@@ -1,6 +1,6 @@
 package gui;
 
-import DSMData.DSMData;
+import Data.SymmetricDSM;
 import IOHandler.ExportHandler;
 import javafx.application.Platform;
 import javafx.beans.property.*;
@@ -27,7 +27,7 @@ import java.util.Map;
  * @author Aiden Carney
  */
 public class ClusterAlgorithm {
-    DSMData matrix;
+    SymmetricDSM matrix;
 
     Stage window;
     private BorderPane rootLayout;
@@ -47,7 +47,7 @@ public class ClusterAlgorithm {
     private DoubleProperty numLevels;
     private DoubleProperty randSeed;
 
-    DSMData outputMatrix = null;
+    SymmetricDSM outputMatrix = null;
 
     // main content panes
     private VBox coordinationLayout;
@@ -63,7 +63,7 @@ public class ClusterAlgorithm {
      *
      * @param matrix the input matrix to perform the algorithm on
      */
-    public ClusterAlgorithm(DSMData matrix) {
+    public ClusterAlgorithm(SymmetricDSM matrix) {
         this.matrix = matrix;
 
         window = new Stage();
@@ -134,7 +134,7 @@ public class ClusterAlgorithm {
         Menu runMenu = new Menu("Run");
         MenuItem run = new MenuItem("Run Algorithm");
         run.setOnAction(e -> {
-            DSMData outputMatrix = runThebeauAlgorithm();
+            SymmetricDSM outputMatrix = runThebeauAlgorithm();
             runCoordinationScore(outputMatrix);
         });
         runMenu.getItems().addAll(run);
@@ -351,9 +351,9 @@ public class ClusterAlgorithm {
      *
      * @param matrix the matrix output from the algorithm
      */
-    private void runCoordinationScore(DSMData matrix) {
-        HashMap<String, Object> coordinationScore = DSMData.getCoordinationScore(matrix, optimalSizeCluster.doubleValue(), powcc.doubleValue(), countByWeight.isSelected());
-        HashMap<String, Object> currentScores = DSMData.getCoordinationScore(this.matrix, optimalSizeCluster.doubleValue(), powcc.doubleValue(), countByWeight.isSelected());
+    private void runCoordinationScore(SymmetricDSM matrix) {
+        HashMap<String, Object> coordinationScore = SymmetricDSM.getCoordinationScore(matrix, optimalSizeCluster.doubleValue(), powcc.doubleValue(), countByWeight.isSelected());
+        HashMap<String, Object> currentScores = SymmetricDSM.getCoordinationScore(this.matrix, optimalSizeCluster.doubleValue(), powcc.doubleValue(), countByWeight.isSelected());
 
         Label titleLabel = new Label("Cluster Cost Analysis");
         titleLabel.setStyle(titleLabel.getStyle() + "-fx-font-weight: bold;");
@@ -412,12 +412,12 @@ public class ClusterAlgorithm {
      *
      * @return the new clustered matrix
      */
-    private DSMData runThebeauAlgorithm() {
+    private SymmetricDSM runThebeauAlgorithm() {
         BooleanProperty completedProperty = new SimpleBooleanProperty();  // used to know when to close popup
         completedProperty.set(false);
 
         Thread t = new Thread(() -> {  // thread to perform the function
-            outputMatrix = DSMData.thebeauAlgorithm(
+            outputMatrix = SymmetricDSM.thebeauAlgorithm(
                     matrix,
                     optimalSizeCluster.doubleValue(),
                     powdep.doubleValue(),

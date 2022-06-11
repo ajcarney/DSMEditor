@@ -1,4 +1,4 @@
-package DSMData;
+package Data;
 
 /**
  * Data class to manage DSM connections

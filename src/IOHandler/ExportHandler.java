@@ -1,8 +1,8 @@
 package IOHandler;
 
-import DSMData.DSMConnection;
-import DSMData.DSMData;
-import DSMData.DSMItem;
+import Data.DSMConnection;
+import Data.SymmetricDSM;
+import Data.DSMItem;
 import gui.MatrixGuiHandler;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.geometry.Insets;
@@ -38,7 +38,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 
 /**
- * A class with methods that handle exporting or saving a DSMData matrix object
+ * A class with methods that handle exporting or saving a SymmetricDSM matrix object
  * Currently supports DSM file (.dsm), CSV file (.csv), Excel spreadsheet (.xlsx), and Thebeau
  * Matlab files (.m)
  *
@@ -71,7 +71,7 @@ public class ExportHandler {
      * @param file      the file to save the csv file to
      * @return          1 on success, 0 on error
      */
-    static public int exportMatrixToCSV(DSMData matrix, File file) {
+    static public int exportMatrixToCSV(SymmetricDSM matrix, File file) {
         try {
             String contents = "Title," + matrix.getTitle() + "\n";
             contents += "Project Name," + matrix.getProjectName() + "\n";
@@ -132,7 +132,7 @@ public class ExportHandler {
      * @param file      A File object of the location of the .xlsx file
      * @return          1 on success, 0 on error
      */
-    static public int exportMatrixToXLSX(DSMData matrix, File file) {
+    static public int exportMatrixToXLSX(SymmetricDSM matrix, File file) {
         try {
             // set up document
             XSSFWorkbook workbook = new XSSFWorkbook();
@@ -306,7 +306,7 @@ public class ExportHandler {
      * @param file      the file to export the matrix to
      * @return          1 on success, 0 on error
      */
-    static public int exportMatrixToThebeauMatlabFile(DSMData matrix, File file) {
+    static public int exportMatrixToThebeauMatlabFile(SymmetricDSM matrix, File file) {
         try {
             matrix.reDistributeSortIndices();  // re-number 0 -> n
 
@@ -365,7 +365,7 @@ public class ExportHandler {
      * @param matrix    the matrix to convert
      * @param clearRows whether or not to clear rows or columns when converting
      */
-    static public void convertToNonSymmetrical(DSMData matrix, boolean clearRows) {
+    static public void convertToNonSymmetrical(SymmetricDSM matrix, boolean clearRows) {
         if(clearRows) {
             matrix.deleteRows();
         } else {
@@ -383,9 +383,9 @@ public class ExportHandler {
      * @param clearRows clear matrix rows if true, matrix columns if false
      * @return          error code: 1 on success
      */
-    static public int exportSymmetricalToNonSymmetrical(DSMData matrix, File file, boolean clearRows) {
+    static public int exportSymmetricalToNonSymmetrical(SymmetricDSM matrix, File file, boolean clearRows) {
         convertToNonSymmetrical(matrix, clearRows);
-        DSMData nonSymmetricMatrix = new DSMData(matrix);  // make a copy of the matrix
+        SymmetricDSM nonSymmetricMatrix = new SymmetricDSM(matrix);  // make a copy of the matrix
 
         int code = saveMatrixToFile(nonSymmetricMatrix, file);
         return code;
@@ -400,7 +400,7 @@ public class ExportHandler {
      * @param file      the file to save the matrix to
      * @return          1 on success, 0 on error
      */
-    static public int saveMatrixToFile(DSMData matrix, File file) {
+    static public int saveMatrixToFile(SymmetricDSM matrix, File file) {
         try {
             // create xml
             Element rootElement = new Element("dsm");
@@ -563,7 +563,7 @@ public class ExportHandler {
     }
 
 
-    static public void exportToImage(DSMData matrix) {
+    static public void exportToImage(SymmetricDSM matrix) {
         // Create Root window
         Stage window = new Stage();
 //        window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
@@ -765,7 +765,7 @@ public class ExportHandler {
      * @param matrix the matrix to save
      * @param window the window associated with the file chooser
      */
-    static public void promptSaveToFile(DSMData matrix, Window window) {
+    static public void promptSaveToFile(SymmetricDSM matrix, Window window) {
         FileChooser fileChooser = new FileChooser();
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("DSM File", "*.dsm"));  // dsm is the only file type usable
         File fileName = fileChooser.showSaveDialog(window);
@@ -781,7 +781,7 @@ public class ExportHandler {
      * @param matrix the matrix to save
      * @param window the window associated with the file chooser
      */
-    static public void promptExportToCSV(DSMData matrix, Window window) {
+    static public void promptExportToCSV(SymmetricDSM matrix, Window window) {
         FileChooser fileChooser = new FileChooser();
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV File", "*.csv"));  // dsm is the only file type usable
         File fileName = fileChooser.showSaveDialog(window);
@@ -797,7 +797,7 @@ public class ExportHandler {
      * @param matrix the matrix to save
      * @param window the window associated with the file chooser
      */
-    static public void promptExportToExcel(DSMData matrix, Window window) {
+    static public void promptExportToExcel(SymmetricDSM matrix, Window window) {
         FileChooser fileChooser = new FileChooser();
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Microsoft Excel File", "*.xlsx"));  // dsm is the only file type usable
         File fileName = fileChooser.showSaveDialog(window);
@@ -813,7 +813,7 @@ public class ExportHandler {
      * @param matrix the matrix to save
      * @param window the window associated with the file chooser
      */
-    static public void promptExportToThebeau(DSMData matrix, Window window) {
+    static public void promptExportToThebeau(SymmetricDSM matrix, Window window) {
         FileChooser fileChooser = new FileChooser();
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Matlab File", "*.m"));  // dsm is the only file type usable
         File fileName = fileChooser.showSaveDialog(window);

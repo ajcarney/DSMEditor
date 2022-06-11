@@ -1,7 +1,7 @@
 package gui;
 
-import DSMData.DSMData;
-import DSMData.DSMItem;
+import Data.SymmetricDSM;
+import Data.DSMItem;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.Insets;
@@ -23,7 +23,7 @@ import java.util.*;
  * @author Aiden Carney
  */
 public class ClusterAnalysis {
-    DSMData matrix;
+    SymmetricDSM matrix;
 
     Stage window;
     private BorderPane rootLayout;
@@ -51,7 +51,7 @@ public class ClusterAnalysis {
      *
      * @param matrix The matrix to be analyzed
      */
-    public ClusterAnalysis(DSMData matrix) {
+    public ClusterAnalysis(SymmetricDSM matrix) {
         this.matrix = matrix;
 
         window = new Stage();
@@ -200,7 +200,7 @@ public class ClusterAnalysis {
      * runs the algorithm that determines the coordination score of a matrix. Updates content on the main window of the gui
      */
     private void runCoordinationScore() {
-        HashMap<String, Object> coordinationScore = DSMData.getCoordinationScore(matrix, optimalSizeCluster.doubleValue(), powcc.doubleValue(), countByWeight.isSelected());
+        HashMap<String, Object> coordinationScore = SymmetricDSM.getCoordinationScore(matrix, optimalSizeCluster.doubleValue(), powcc.doubleValue(), countByWeight.isSelected());
 
         Label titleLabel = new Label("Cluster Cost Analysis");
         titleLabel.setStyle(titleLabel.getStyle() + "-fx-font-weight: bold;");
@@ -271,7 +271,7 @@ public class ClusterAnalysis {
                 } else if(c == 1) {
                     rowBids.add(items.get(r).getName());
                 } else {
-                    HashMap<Integer, Double> groupBids = DSMData.calculateClusterBids(matrix, groupOrder.get(c - 2), optimalSizeCluster.doubleValue(), powdep.doubleValue(), powbid.doubleValue(), countByWeight.isSelected());
+                    HashMap<Integer, Double> groupBids = SymmetricDSM.calculateClusterBids(matrix, groupOrder.get(c - 2), optimalSizeCluster.doubleValue(), powdep.doubleValue(), powbid.doubleValue(), countByWeight.isSelected());
 
                     double bid = groupBids.get(items.get(r).getUid());
                     rowBids.add(String.valueOf(bid));

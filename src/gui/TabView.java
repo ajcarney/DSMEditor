@@ -1,7 +1,7 @@
 package gui;
 
-import DSMData.DSMItem;
-import DSMData.MatrixHandler;
+import Data.DSMItem;
+import Data.MatrixHandler;
 import IOHandler.ExportHandler;
 import javafx.application.Platform;
 import javafx.scene.control.TabPane;

@@ -1,5 +1,5 @@
-import DSMData.DSMData;
-import DSMData.MatrixHandler;
+import Data.SymmetricDSM;
+import Data.MatrixHandler;
 import IOHandler.ExportHandler;
 import IOHandler.ImportHandler;
 import gui.*;
@@ -63,7 +63,7 @@ public class Main extends Application {
         // start with a tab open (used for debugging, remove or comment out for release)
         if(cliArgs.contains("--debug=true")) {
             File file = new File("/home/aiden/Documents/DSMEditor/dsms/vpas3.dsm");
-            DSMData matrix = ImportHandler.readFile(file);
+            SymmetricDSM matrix = ImportHandler.readFile(file);
             int uid = matrixHandler.addMatrix(matrix, file);
             editor.addTab(uid);
         }
@@ -135,7 +135,7 @@ public class Main extends Application {
 
        File recoveryDir = new File("./.recovery");
        if(!recoveryDir.exists()) recoveryDir.mkdir();
-       for(Map.Entry<Integer, DSMData> matrix : matrixHandler.getMatrices().entrySet()) {
+       for(Map.Entry<Integer, SymmetricDSM> matrix : matrixHandler.getMatrices().entrySet()) {
            File f = new File("./.recovery/" + matrixHandler.getMatrixSaveFile(matrix.getKey()).getName());
            ExportHandler.saveMatrixToFile(matrix.getValue(), f);
            matrix.getValue().setWasModified();  // matrix is not saved to known location, so don't display it as saved to the user

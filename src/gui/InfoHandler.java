@@ -1,6 +1,6 @@
 package gui;
 
-import DSMData.DSMData;
+import Data.SymmetricDSM;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -29,7 +29,7 @@ public class InfoHandler {
     private VBox layout;
     private GridPane detailsLayout;
 
-    private DSMData matrix;
+    private SymmetricDSM matrix;
 
 
     /**
@@ -170,9 +170,9 @@ public class InfoHandler {
     /**
      * Changes which matrix the gui will display the metadata of. Updates the gui as well
      *
-     * @param newMatrix the new DSMData object to use
+     * @param newMatrix the new SymmetricDSM object to use
      */
-    public void setMatrix(DSMData newMatrix) {
+    public void setMatrix(SymmetricDSM newMatrix) {
         matrix = newMatrix;
         if(matrix != null) {
             titleLabel.setText(matrix.getTitle());

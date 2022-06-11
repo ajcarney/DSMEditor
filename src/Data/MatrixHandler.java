@@ -1,4 +1,4 @@
-package DSMData;
+package Data;
 
 import gui.MatrixGuiHandler;
 
@@ -6,13 +6,13 @@ import java.io.File;
 import java.util.HashMap;
 
 /**
- * Class to manage DSMData classes and read and write to different file formats
+ * Class to manage SymmetricDSM classes and read and write to different file formats
  * TODO: add validation of file paths when they are passed as parameters
  *
  * @author: Aiden Carney
  */
 public class MatrixHandler {
-    private HashMap<Integer, DSMData> matrices;
+    private HashMap<Integer, SymmetricDSM> matrices;
     private HashMap<Integer, File> matrixSaveNames;
     private HashMap<Integer, MatrixGuiHandler> matrixGuiHandlers;
     private static int currentMatrixUid = 0;
@@ -31,11 +31,11 @@ public class MatrixHandler {
     /**
      * Adds a matrix to be handled and returns the unique id assigned to it
      *
-     * @param matrix DSMData object of the matrix to be added
+     * @param matrix SymmetricDSM object of the matrix to be added
      * @param file   File object of the location to save the matrix to
      * @return the unique id given to the matrix so that it can be tracked
      */
-    public int addMatrix(DSMData matrix, File file) {
+    public int addMatrix(SymmetricDSM matrix, File file) {
         currentMatrixUid += 1;
 
         this.matrices.put(currentMatrixUid, matrix);
@@ -49,9 +49,9 @@ public class MatrixHandler {
     /**
      * Returns the matrices HashMap
      *
-     * @return HashMap of matrix uids and DSMData objects  TODO: This should probably be immutable in the future
+     * @return HashMap of matrix uids and SymmetricDSM objects  TODO: This should probably be immutable in the future
      */
-    public HashMap<Integer, DSMData> getMatrices() {
+    public HashMap<Integer, SymmetricDSM> getMatrices() {
         return matrices;
     }
 
@@ -67,12 +67,12 @@ public class MatrixHandler {
 
 
     /**
-     * Returns a DSMData object
+     * Returns a SymmetricDSM object
      *
      * @param uid the uid of the matrix to return
-     * @return DSMData object of the matrix
+     * @return SymmetricDSM object of the matrix
      */
-    public DSMData getMatrix(int uid) {
+    public SymmetricDSM getMatrix(int uid) {
         return matrices.get(uid);
     }
 

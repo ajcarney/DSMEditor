@@ -1,7 +1,7 @@
 package gui;
 
-import DSMData.DSMItem;
-import DSMData.DSMData;
+import Data.DSMItem;
+import Data.SymmetricDSM;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -36,7 +36,7 @@ import java.util.Map;
  * @author Aiden Carney
  */
 public class PropagationAnalysis {
-    DSMData matrix;
+    SymmetricDSM matrix;
 
     Stage window;
     private BorderPane rootLayout;
@@ -68,7 +68,7 @@ public class PropagationAnalysis {
      *
      * @param matrix the matrix to analyze
      */
-    public PropagationAnalysis(DSMData matrix) {
+    public PropagationAnalysis(SymmetricDSM matrix) {
         this.matrix = matrix;
 
         window = new Stage();

@@ -1,7 +1,7 @@
 package IOHandler;
 
-import DSMData.DSMData;
-import DSMData.DSMItem;
+import Data.SymmetricDSM;
+import Data.DSMItem;
 import javafx.scene.paint.Color;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -14,21 +14,21 @@ import java.util.regex.Pattern;
 
 
 /**
- * Class with methods for reading and importing files to the DSMData type.
+ * Class with methods for reading and importing files to the SymmetricDSM type.
  * Currently supports DSM (.dsm) and Thebeau matlab file (.m)
  *
  * @author Aiden Carney
  */
 public class ImportHandler {
     /**
-     * Reads a matlab file in Thebeau's format and parses it as a DSMData object. Returns the DSMData object,
+     * Reads a matlab file in Thebeau's format and parses it as a SymmetricDSM object. Returns the SymmetricDSM object,
      * but does not automatically add it to be handled.
      *
      * @param file the file location to read from
-     * @return     DSMData object of the parsed in matrix
+     * @return     SymmetricDSM object of the parsed in matrix
      */
-    public static DSMData importThebeauMatlabFile(File file) {
-        DSMData matrix = new DSMData();
+    public static SymmetricDSM importThebeauMatlabFile(File file) {
+        SymmetricDSM matrix = new SymmetricDSM();
         matrix.setSymmetrical(true);  // all of thebeau's matrices are symmetrical
 
         ArrayList<String> lines = new ArrayList<>();
@@ -89,15 +89,15 @@ public class ImportHandler {
 
 
     /**
-     * Reads an xml file and parses it as a DSMData object. Returns the DSMData object,
+     * Reads an xml file and parses it as a SymmetricDSM object. Returns the SymmetricDSM object,
      * but does not automatically add it to be handled.
      *
      * @param fileName the file location to read from
-     * @return         DSMData object of the parsed in matrix
+     * @return         SymmetricDSM object of the parsed in matrix
      */
-    static public DSMData readFile(File fileName) {
+    static public SymmetricDSM readFile(File fileName) {
         try {
-            DSMData matrix = new DSMData();
+            SymmetricDSM matrix = new SymmetricDSM();
 
             SAXBuilder saxBuilder = new SAXBuilder();
             Document document = saxBuilder.build(fileName);  // read file into memory

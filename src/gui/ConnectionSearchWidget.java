@@ -1,7 +1,7 @@
 package gui;
 
-import DSMData.DSMConnection;
-import DSMData.MatrixHandler;
+import Data.DSMConnection;
+import Data.MatrixHandler;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.IntegerProperty;
