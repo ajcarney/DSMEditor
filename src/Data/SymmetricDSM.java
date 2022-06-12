@@ -46,17 +46,17 @@ public class SymmetricDSM extends TemplateDSM {
      * @param copy SymmetricDSM object to copy
      */
     public SymmetricDSM(SymmetricDSM copy) {
-        super();
+            super();
 
-        undoStack = new Stack<>();
-        redoStack = new Stack<>();
+            undoStack = new Stack<>();
+            redoStack = new Stack<>();
 
-        rows = new Vector<>();
-        for(DSMItem row : copy.getRows()) {
-            rows.add(new DSMItem(row));
-        }
+            rows = new Vector<>();
+            for(DSMItem row : copy.getRows()) {
+                rows.add(new DSMItem(row));
+            }
 
-        cols = new Vector<>();
+            cols = new Vector<>();
         for(DSMItem col : copy.getCols()) {
             cols.add(new DSMItem(col));
         }

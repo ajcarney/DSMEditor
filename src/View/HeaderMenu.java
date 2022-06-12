@@ -1,4 +1,4 @@
-package gui;
+package View;
 
 import Data.SymmetricDSM;
 import Data.MatrixHandler;

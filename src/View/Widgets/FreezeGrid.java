@@ -1,4 +1,4 @@
-package gui;
+package View.Widgets;
 
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;

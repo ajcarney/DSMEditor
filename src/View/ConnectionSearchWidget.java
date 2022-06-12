@@ -1,4 +1,4 @@
-package gui;
+package View;
 
 import Data.DSMConnection;
 import Data.MatrixHandler;

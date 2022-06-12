@@ -1,7 +1,9 @@
-package gui;
+package View;
 
 import Data.SymmetricDSM;
 import Data.DSMItem;
+import View.Widgets.FreezeGrid;
+import View.Widgets.NumericTextField;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.Insets;

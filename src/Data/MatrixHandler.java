@@ -1,6 +1,6 @@
 package Data;
 
-import gui.MatrixGuiHandler;
+import View.MatrixGuiHandler;
 
 import java.io.File;
 import java.util.HashMap;

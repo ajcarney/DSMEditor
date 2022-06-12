@@ -1,8 +1,9 @@
-package gui;
+package View;
 
 import Data.SymmetricDSM;
 import Data.DSMItem;
 import Data.MatrixHandler;
+import View.Widgets.NumericTextField;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -34,15 +35,15 @@ import java.util.Vector;
 public class ToolbarHandler {
     private VBox layout;
 
-    private Button addMatrixItem;
-    private Button deleteMatrixItem;
-    private Button renameMatrixItem;
-    private Button appendConnections;
-    private Button setConnections;
-    private Button configureGroupings;
-    private Button sort;
-    private Button reDistributeIndices;
-    private Button deleteConnections;
+    private final Button addMatrixItem;
+    private final Button deleteMatrixItem;
+    private final Button renameMatrixItem;
+    private final Button appendConnections;
+    private final Button setConnections;
+    private final Button configureGroupings;
+    private final Button sort;
+    private final Button reDistributeIndices;
+    private final Button deleteConnections;
 
     private TabView editor;
     private MatrixHandler matrixHandler;
@@ -179,8 +180,6 @@ public class ToolbarHandler {
             window.showAndWait();
         });
         addMatrixItem.setMaxWidth(Double.MAX_VALUE);
-
-
 
 
         deleteMatrixItem = new Button("Delete Row/Column");

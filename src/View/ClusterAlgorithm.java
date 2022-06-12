@@ -1,7 +1,8 @@
-package gui;
+package View;
 
 import Data.SymmetricDSM;
 import IOHandler.ExportHandler;
+import View.Widgets.NumericTextField;
 import javafx.application.Platform;
 import javafx.beans.property.*;
 import javafx.geometry.Insets;

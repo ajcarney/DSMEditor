@@ -1,4 +1,4 @@
-package gui;
+package View.Widgets;
 
 import java.util.HashSet;
 import java.util.Set;

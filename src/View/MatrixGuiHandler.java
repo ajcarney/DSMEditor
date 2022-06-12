@@ -1,8 +1,10 @@
-package gui;
+package View;
 
 import Data.DSMConnection;
 import Data.SymmetricDSM;
 import Data.DSMItem;
+import View.Widgets.FreezeGrid;
+import View.Widgets.NumericTextField;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
@@ -169,12 +171,12 @@ public class MatrixGuiHandler {
                 guiCell.setBackground(getHighlightBG("symmetryError"));
             } else if(getHighlightBG("search") != null) {
                 guiCell.setBackground(getHighlightBG("search"));
-            }else if (getHighlightBG("cross") != null && crossHighlightEnabled) {
+            } else if (getHighlightBG("cross") != null && crossHighlightEnabled) {
                 guiCell.setBackground(getHighlightBG("cross"));
             } else if (getHighlightBG("user") != null) {
                 guiCell.setBackground(getHighlightBG("user"));
             } else {  // default background determined by groupings
-                Integer rowUid = getUidsFromGridLoc(gridLocation).getKey();
+                Integer rowUid = getUidsFromGridLoc(getGridLocation()).getKey();
                 Integer colUid = getUidsFromGridLoc(gridLocation).getValue();
                 Color mergedColor = null;
                 if (rowUid == null && colUid != null) {  // highlight with column color
@@ -335,7 +337,7 @@ public class MatrixGuiHandler {
      *
      * @param cellLoc       the grid location of a cell (row, column)
      * @param bg            the color to assign to a cell
-     * @param highlightType the highlight type to assign to
+     * @param highlightType the highlight type to assign to (see Cell class for types)
      */
     public void setCellHighlight(Pair<Integer, Integer> cellLoc, Background bg, String highlightType) {
         Cell cell = getCellByLoc(cellLoc);

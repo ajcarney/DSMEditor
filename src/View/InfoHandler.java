@@ -1,4 +1,4 @@
-package gui;
+package View;
 
 import Data.SymmetricDSM;
 import javafx.geometry.Insets;

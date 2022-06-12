@@ -186,6 +186,6 @@ public class DSMItem {
     @Override
     public String toString() {
         return name;
-    }
+    }  // TODO: This should not be how this is implemented (use a cell factory)
 }
 

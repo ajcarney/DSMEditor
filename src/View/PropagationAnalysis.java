@@ -1,7 +1,8 @@
-package gui;
+package View;
 
 import Data.DSMItem;
 import Data.SymmetricDSM;
+import View.Widgets.NumericTextField;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;

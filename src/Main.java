@@ -2,7 +2,7 @@ import Data.SymmetricDSM;
 import Data.MatrixHandler;
 import IOHandler.ExportHandler;
 import IOHandler.ImportHandler;
-import gui.*;
+import View.*;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.event.Event;

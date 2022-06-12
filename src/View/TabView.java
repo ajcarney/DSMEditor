@@ -1,8 +1,9 @@
-package gui;
+package View;
 
 import Data.DSMItem;
 import Data.MatrixHandler;
 import IOHandler.ExportHandler;
+import View.Widgets.DraggableTab;
 import javafx.application.Platform;
 import javafx.scene.control.TabPane;
 import javafx.scene.input.KeyCode;

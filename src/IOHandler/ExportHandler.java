@@ -3,7 +3,7 @@ package IOHandler;
 import Data.DSMConnection;
 import Data.SymmetricDSM;
 import Data.DSMItem;
-import gui.MatrixGuiHandler;
+import View.MatrixGuiHandler;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
