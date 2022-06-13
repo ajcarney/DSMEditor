@@ -32,8 +32,6 @@ public class SymmetricDSM extends TemplateDSM {
         connections = new Vector<>();
         groupings = FXCollections.observableSet();
 
-        addGrouping(defaultGroup);  // add default group
-
         this.wasModified = true;
 
         clearStacks();
@@ -46,17 +44,17 @@ public class SymmetricDSM extends TemplateDSM {
      * @param copy SymmetricDSM object to copy
      */
     public SymmetricDSM(SymmetricDSM copy) {
-            super();
+        super();
 
-            undoStack = new Stack<>();
-            redoStack = new Stack<>();
+        undoStack = new Stack<>();
+        redoStack = new Stack<>();
 
-            rows = new Vector<>();
-            for(DSMItem row : copy.getRows()) {
-                rows.add(new DSMItem(row));
-            }
+        rows = new Vector<>();
+        for(DSMItem row : copy.getRows()) {
+            rows.add(new DSMItem(row));
+        }
 
-            cols = new Vector<>();
+        cols = new Vector<>();
         for(DSMItem col : copy.getCols()) {
             cols.add(new DSMItem(col));
         }
@@ -85,6 +83,16 @@ public class SymmetricDSM extends TemplateDSM {
 
 
 //region Methods to Handle Groups and Grouping
+    /**
+     * Gets the default grouping object
+     *
+     * @return the default group for the matrix
+     */
+    public Grouping getDefaultGrouping() {
+        return defaultGroup;
+    }
+
+
     /**
      * Adds a new grouping to the matrix. Puts the change on the stack but does not set a checkpoint
      *
@@ -161,6 +169,7 @@ public class SymmetricDSM extends TemplateDSM {
         addChangeToStack(new MatrixChange(
             () -> {  // do function
                 groupings.clear();
+
             },
             () -> {  // undo function
                 groupings = oldGroupings;
@@ -452,6 +461,19 @@ public class SymmetricDSM extends TemplateDSM {
             return new Pair<>(newRowUid, newColUid);
         }
         return null;
+    }
+
+
+    /**
+     * Returns the symmetric connection of a given pair of uids
+     *
+     * @param   rowUid the uid of the row item of the connection
+     * @param   colUid the uid of the column item of the connection
+     * @return  the DSMConnection object of the symmetric connection
+     */
+    public DSMConnection getSymmetricConnection(int rowUid, int colUid) {
+        Pair<Integer, Integer> symmetricUids = getSymmetricConnectionUids(rowUid, colUid);
+        return getConnection(rowUid, colUid);
     }
 
 

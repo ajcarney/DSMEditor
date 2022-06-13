@@ -70,7 +70,7 @@ public class ToolbarHandler {
             Stage window = new Stage();
 
             // Create Root window
-            window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
+            window.initModality(Modality.APPLICATION_MODAL); // Block events to other windows
             window.setTitle("Add Row/Column");
 
             // Create changes view and button for it
@@ -307,8 +307,6 @@ public class ToolbarHandler {
         deleteMatrixItem.setMaxWidth(Double.MAX_VALUE);
 
 
-
-
         renameMatrixItem = new Button("Rename Row/Column");
         renameMatrixItem.setOnAction(e -> {
             if(editor.getFocusedMatrixUid() == null) {
@@ -427,8 +425,6 @@ public class ToolbarHandler {
             window.showAndWait();
         });
         renameMatrixItem.setMaxWidth(Double.MAX_VALUE);
-
-
 
 
         appendConnections = new Button("Append Connections");
