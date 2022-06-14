@@ -247,6 +247,7 @@ public class SymmetricDSM extends TemplateDSM {
         DSMItem rowItem = new DSMItem(index, name);
         DSMItem colItem = new DSMItem(index, name);
         colItem.setAliasUid(rowItem.getUid());
+        rowItem.setAliasUid(colItem.getUid());
 
         addItem(rowItem, true);
         addItem(colItem, false);

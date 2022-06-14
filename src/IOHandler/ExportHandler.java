@@ -566,7 +566,7 @@ public class ExportHandler {
     static public void exportToImage(SymmetricDSM matrix) {
         // Create Root window
         Stage window = new Stage();
-//        window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
+        window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
         window.setTitle("DSMEditor");
 
         SplitPane splitPane = new SplitPane();

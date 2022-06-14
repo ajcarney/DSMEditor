@@ -61,34 +61,6 @@ public abstract class TemplateSideBar<T extends TemplateDSM> {
 
 
     /**
-     * Creates a JavaFx Pane that grows vertically to fill up remaining space in a window
-     *
-     * @return the Pane object that grows vertically
-     */
-    protected static Pane getVerticalSpacer() {
-        Pane spacer = new Pane();
-        VBox.setVgrow(spacer, Priority.ALWAYS);
-        spacer.setMaxHeight(Double.MAX_VALUE);
-
-        return spacer;
-    }
-
-
-    /**
-     * Creates a JavaFx Pane that grows horizontally to fill up remaining space in a window
-     *
-     * @return the Pane object that grows vertically
-     */
-    protected static Pane getHorizontalSpacer() {
-        Pane spacer = new Pane();  // used as a spacer between buttons
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-        spacer.setMaxWidth(Double.MAX_VALUE);
-
-        return spacer;
-    }
-
-
-    /**
      * Sets up the button callback for adding items to the matrix
      */
     protected abstract void addMatrixItemsCallback();
