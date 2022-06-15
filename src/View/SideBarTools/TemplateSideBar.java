@@ -1,11 +1,8 @@
 package View.SideBarTools;
 
 import Data.TemplateDSM;
-import View.TabView;
+import View.EditorPane;
 import javafx.scene.control.Button;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
 
@@ -20,19 +17,19 @@ public abstract class TemplateSideBar<T extends TemplateDSM> {
     protected final Button sort = new Button("Sort");
     protected final Button reDistributeIndices = new Button("Re-Distribute Indices");
 
-    protected TabView editor;
+    protected EditorPane editor;
     protected T matrix;
 
 
     /**
      * Creates a new Sidebar object. Sets up the gui and all its widgets and puts them in the layout field.
-     * Requires an MatrixHandler object to get the matrix and a TabView object to get the current focused tab
+     * Requires an MatrixHandler object to get the matrix and a EditorPane object to get the current focused tab
      * and call updates to it.
      *
      * @param matrix  the matrix data object instance
-     * @param editor  the TabView instance
+     * @param editor  the EditorPane instance
      */
-    TemplateSideBar(T matrix, TabView editor) {
+    TemplateSideBar(T matrix, EditorPane editor) {
         layout = new VBox();
         this.editor = editor;
         this.matrix = matrix;

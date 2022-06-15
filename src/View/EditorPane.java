@@ -1,8 +1,7 @@
 package View;
 
 import Data.DSMItem;
-import Data.MatrixHandler;
-import IOHandler.ExportHandler;
+import Data.MatricesData;
 import View.Widgets.DraggableTab;
 import javafx.application.Platform;
 import javafx.scene.control.TabPane;
@@ -19,12 +18,12 @@ import java.util.Vector;
  *
  * @author Aiden Carney
  */
-public class TabView {
+public class EditorPane {
     private static TabPane tabPane;
     private static HashMap<DraggableTab, Integer> tabs;  // tab object, matrix uid
 
-    private static MatrixHandler matrixHandler;
-    private static InfoHandler infoHandler;
+    private MatricesData matricesData;
+    private MatrixMetaDataPane matrixMetaDataPane;
 
     private static final double[] fontSizes = {
         5.0, 6.0, 8.0, 9.0, 9.5, 10.0, 10.5, 11.0, 12.0, 12.5, 14.0, 16.0, 18.0, 24.0, 30.0, 36.0, 60.0
@@ -36,19 +35,19 @@ public class TabView {
 
 
     /**
-     * Creates a new TabView object where each pane is a different matrix. Needs an MatrixHandler instance to determine
-     * which matrices to display and an InfoHandler instance to set the matrix in use. Creates and starts a daemon thread
-     * that manages the saved/unsaved name of the matrices in the tabview. Matrices already in the MatrixHandler instance
+     * Creates a new EditorPane object where each pane is a different matrix. Needs an MatricesData instance to determine
+     * which matrices to display and an MatrixMetaDataPane instance to set the matrix in use. Creates and starts a daemon thread
+     * that manages the saved/unsaved name of the matrices in the tabview. Matrices already in the MatricesData instance
      * will be added to the tab.
      *
-     * @param matrixHandler   the MatrixHandler instance
-     * @param infoHandler the InfoHandler instance
+     * @param matricesData        the MatricesData instance
+     * @param matrixMetaDataPane  the MatrixMetaDataPane instance
      */
-    public TabView(MatrixHandler matrixHandler, InfoHandler infoHandler) {
+    public EditorPane(MatricesData matricesData, MatrixMetaDataPane matrixMetaDataPane) {
         tabPane = new TabPane();
         tabs = new HashMap<>();
-        this.matrixHandler = matrixHandler;
-        this.infoHandler = infoHandler;
+        this.matricesData = matricesData;
+        this.matrixMetaDataPane = matrixMetaDataPane;
 
         for(int i=0; i<fontSizes.length; i++) {
             if(fontSizes[i] == DEFAULT_FONT_SIZE) {
@@ -59,21 +58,21 @@ public class TabView {
 
 
         // create current tabs
-        Set<Integer> keys = this.matrixHandler.getMatrices().keySet();
+        Set<Integer> keys = this.matricesData.getMatrices().keySet();
         for(int uid : keys) {
             addTab(uid);
-        };
+        }
 
         tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.ALL_TABS);  // any tab can be closed, but add event to be called on close
 
         this.nameHandlerThread = new Thread(() -> {
             while(true) {  // go through and update names
                 for(HashMap.Entry<DraggableTab, Integer> entry : tabs.entrySet()) {
-                    String title = matrixHandler.getMatrixSaveFile(entry.getValue()).getName();
-                    if(!matrixHandler.isMatrixSaved(entry.getValue())) {
+                    String title = matricesData.getMatrixIOHandler(entry.getValue()).getSavePath().getName();
+                    if(!matricesData.isMatrixSaved(entry.getValue())) {
                         title += "*";
                     }
-                    if(entry.getKey().getText() != title) {
+                    if(!entry.getKey().getText().equals(title)) {
                         String finalTitle = title;
                         Platform.runLater(new Runnable(){  // this allows a thread to update the gui
                             @Override
@@ -99,38 +98,37 @@ public class TabView {
 
 
     /**
-     * Creates and adds a matrix tab to the TabPane from a matrix in the MatrixHandler. This function
-     * must be called when creating or adding a matrix to the MatrixHandler instance or else the matrix
+     * Creates and adds a matrix tab to the TabPane from a matrix in the MatricesData. This function
+     * must be called when creating or adding a matrix to the MatricesData instance or else the matrix
      * will not be displayed in the TabPane
      *
-     * @param matrixUid the uid of the matrix in the MatrixHandler instance
+     * @param  matrixUid the uid of the matrix in the MatricesData instance
      */
     public void addTab(int matrixUid) {
-        Vector<DSMItem> rows = this.matrixHandler.getMatrix(matrixUid).getRows();
-        String label = "";
+        Vector<DSMItem> rows = this.matricesData.getMatrix(matrixUid).getRows();
+        StringBuilder label = new StringBuilder();
         for(DSMItem row : rows) {
-            label += row.getName() + '\n';
+            label.append(row.getName()).append('\n');
         }
 
-        String title = matrixHandler.getMatrixSaveFile(matrixUid).getName();
-        if(!matrixHandler.isMatrixSaved(matrixUid)) {
+        String title = matricesData.getMatrixIOHandler(matrixUid).getSavePath().getName();
+        if(!matricesData.isMatrixSaved(matrixUid)) {
             title += "*";
         }
         DraggableTab tab = new DraggableTab(title);
-        matrixHandler.getMatrixGuiHandler(matrixUid).refreshMatrixEditorMutable();
-        tab.setContent(matrixHandler.getMatrixGuiHandler(matrixUid).getMatrixEditor());
+        matricesData.getMatrixHandler(matrixUid).refreshMatrixEditor();
+        tab.setContent(matricesData.getMatrixHandler(matrixUid).getMatrixEditor());
         tab.setDetachable(false);
         tabPane.getScene().setOnKeyPressed(e -> {  // add keybinding to toggle cross-highlighting on the editor
             if (e.getCode() == KeyCode.F) {
-                matrixHandler.getMatrixGuiHandler(matrixUid).toggleCrossHighlighting();
+                matricesData.getMatrixHandler(matrixUid).toggleCrossHighlighting();
             }
         });
 
         tab.setOnCloseRequest(e -> {
-            if(!matrixHandler.isMatrixSaved(matrixUid)) {
-                focusTab(matrixHandler.getMatrixSaveFile(matrixUid));
-                int selection = ExportHandler.promptSave(matrixHandler.getMatrixSaveFile(matrixUid).getAbsolutePath());
-                // TODO: add alert box that opens asking if you want to save before closing the tab
+            if(!matricesData.isMatrixSaved(matrixUid)) {
+                focusTab(matricesData.getMatrixIOHandler(matrixUid).getSavePath());
+                int selection = matricesData.getMatrixIOHandler(matrixUid).promptSave();
 
                 // 0 = close the tab, 1 = save and close, 2 = don't close
                 if(selection == 2) {  // user doesn't want to close the pane so consume the event
@@ -139,7 +137,8 @@ public class TabView {
                     }
                     return;
                 } else if(selection == 1) {  // user wants to save before closing the pane
-                    ExportHandler.saveMatrixToFile(matrixHandler.getMatrix(matrixUid), matrixHandler.getMatrixSaveFile(matrixUid));  // TODO: if there is an error saving, then display a message and don't close the file
+                    // TODO: if there is an error saving, then display a message and don't close the file
+                    matricesData.getMatrixIOHandler(matrixUid).saveMatrixToFile(matricesData.getMatrix(matrixUid), matricesData.getMatrixIOHandler(matrixUid).getSavePath());
                 }
             }
             DraggableTab thisTab = null;
@@ -151,17 +150,17 @@ public class TabView {
             }
             tabs.remove(thisTab);
             tabPane.getTabs().remove(thisTab);
-            matrixHandler.removeMatrix(matrixUid);
-            infoHandler.setMatrix(null);
+            matricesData.removeMatrix(matrixUid);
+            matrixMetaDataPane.setMatrix(null);
 
         });
 
         tab.setOnSelectionChanged(e -> {
-            infoHandler.setMatrix(matrixHandler.getMatrix(matrixUid));
+            matrixMetaDataPane.setMatrix(matricesData.getMatrix(matrixUid));
         });
 
         tabs.put(tab, matrixUid);
-        this.tabPane.getTabs().add(tab);
+        tabPane.getTabs().add(tab);
     }
 
 
@@ -169,11 +168,11 @@ public class TabView {
      * Finds the matrix the user is focused on by using a lookup table
      * TODO: this function and getFocusedTab() are implemented really stupidly and inefficiently
      *
-     * @return the uid of the matrix that is focused
+     * @return  the uid of the matrix that is focused
      */
     public Integer getFocusedMatrixUid() {
         try {
-            return tabs.get(this.tabPane.getSelectionModel().getSelectedItem());
+            return tabs.get(tabPane.getSelectionModel().getSelectedItem());
         } catch(Exception e) {
             return null;
         }
@@ -183,7 +182,7 @@ public class TabView {
     /**
      * Finds the tab that is currently focused on by the user
      *
-     * @return the DraggableTab object that is selected
+     * @return  the DraggableTab object that is selected
      */
     public DraggableTab getFocusedTab() {
         DraggableTab tab = null;
@@ -200,12 +199,12 @@ public class TabView {
     /**
      * Focuses a tab by a matrices save file
      *
-     * @param file the matrix with this file path will be focused
+     * @param  file the matrix with this file path will be focused
      */
     public void focusTab(File file) {
         DraggableTab tab = null;
         for (HashMap.Entry<DraggableTab, Integer> e : tabs.entrySet()) {
-            if(matrixHandler.getMatrixSaveFile(e.getValue()).getAbsolutePath().equals(file.getAbsolutePath())) {
+            if(matricesData.getMatrixIOHandler(e.getValue()).getSavePath().getAbsolutePath().equals(file.getAbsolutePath())) {
                 tab = e.getKey();
                 break;
             }
@@ -231,9 +230,9 @@ public class TabView {
      */
     public void refreshTab() {
         if(getFocusedMatrixUid() != null) {
-            matrixHandler.getMatrixGuiHandler(getFocusedMatrixUid()).refreshMatrixEditorMutable();
-            getFocusedTab().setContent(matrixHandler.getMatrixGuiHandler(getFocusedMatrixUid()).getMatrixEditor());
-            infoHandler.setMatrix(matrixHandler.getMatrix(getFocusedMatrixUid()));
+            matricesData.getMatrixHandler(getFocusedMatrixUid()).refreshMatrixEditor();
+            getFocusedTab().setContent(matricesData.getMatrixHandler(getFocusedMatrixUid()).getMatrixEditor());
+            matrixMetaDataPane.setMatrix(matricesData.getMatrix(getFocusedMatrixUid()));
         }
     }
 
@@ -267,8 +266,8 @@ public class TabView {
         currentFontSizeIndex += 1;
         if(currentFontSizeIndex > fontSizes.length - 1) currentFontSizeIndex = fontSizes.length - 1;
 
-        matrixHandler.getMatrixGuiHandler(getFocusedMatrixUid()).setFontSize(fontSizes[currentFontSizeIndex]);
-        matrixHandler.getMatrixGuiHandler(getFocusedMatrixUid()).refreshMatrixEditorMutable();
+        matricesData.getMatrixHandler(getFocusedMatrixUid()).setFontSize(fontSizes[currentFontSizeIndex]);
+        matricesData.getMatrixHandler(getFocusedMatrixUid()).refreshMatrixEditor();
         refreshTab();
     }
 
@@ -281,8 +280,8 @@ public class TabView {
         currentFontSizeIndex -= 1;
         if(currentFontSizeIndex < 0) currentFontSizeIndex = 0;
 
-        matrixHandler.getMatrixGuiHandler(getFocusedMatrixUid()).setFontSize(fontSizes[currentFontSizeIndex]);
-        matrixHandler.getMatrixGuiHandler(getFocusedMatrixUid()).refreshMatrixEditorMutable();
+        matricesData.getMatrixHandler(getFocusedMatrixUid()).setFontSize(fontSizes[currentFontSizeIndex]);
+        matricesData.getMatrixHandler(getFocusedMatrixUid()).refreshMatrixEditor();
         refreshTab();
     }
 
@@ -299,8 +298,8 @@ public class TabView {
             }
         }
 
-        matrixHandler.getMatrixGuiHandler(getFocusedMatrixUid()).setFontSize(DEFAULT_FONT_SIZE);
-        matrixHandler.getMatrixGuiHandler(getFocusedMatrixUid()).refreshMatrixEditorMutable();
+        matricesData.getMatrixHandler(getFocusedMatrixUid()).setFontSize(DEFAULT_FONT_SIZE);
+        matricesData.getMatrixHandler(getFocusedMatrixUid()).refreshMatrixEditor();
         refreshTab();
     }
 

@@ -29,10 +29,10 @@ import java.util.Map;
 public class Main extends Application {
 
     private static final MatrixHandler matrixHandler = new MatrixHandler();
-    private static final InfoHandler infoHandler = new InfoHandler();
-    private static final TabView editor = new TabView(matrixHandler, infoHandler);
+    private static final MatrixMetaDataPane infoHandler = new MatrixMetaDataPane();
+    private static final EditorPane editor = new EditorPane(matrixHandler, infoHandler);
     private static final ConnectionSearchWidget searchWidget = new ConnectionSearchWidget(matrixHandler, editor);
-    private static final HeaderMenu menu = new HeaderMenu(matrixHandler, editor, searchWidget);
+    private static final HeaderMenu_old menu = new HeaderMenu_old(matrixHandler, editor, searchWidget);
     private static final ToolbarHandler toolbarHandler = new ToolbarHandler(matrixHandler, editor);
 
     private static ArrayList<String> cliArgs = new ArrayList<>();

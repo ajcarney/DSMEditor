@@ -4,7 +4,7 @@ import Data.DSMConnection;
 import Data.DSMItem;
 import Data.Grouping;
 import Data.SymmetricDSM;
-import View.TabView;
+import View.EditorPane;
 import View.Widgets.MiscWidgets;
 import View.Widgets.NumericTextField;
 import javafx.beans.value.ChangeListener;
@@ -29,7 +29,7 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
 
     protected final Button configureGroupings = new Button("Sort");
 
-    SymmetricSideBar(SymmetricDSM matrix, TabView editor) {
+    SymmetricSideBar(SymmetricDSM matrix, EditorPane editor) {
         super(matrix, editor);
 
         addMatrixItems.setText("Add Rows/Columns");

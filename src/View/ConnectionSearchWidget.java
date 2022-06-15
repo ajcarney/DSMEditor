@@ -1,7 +1,8 @@
 package View;
 
 import Data.DSMConnection;
-import Data.MatrixHandler;
+import Data.MatricesData;
+import View.MatrixHandlers.TemplateMatrixHandler;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.IntegerProperty;
@@ -15,8 +16,8 @@ import javafx.scene.layout.VBox;
 import javafx.util.Pair;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 
 /**
@@ -26,34 +27,34 @@ import java.util.stream.Collectors;
  * @author Aiden Carney
  */
 public class ConnectionSearchWidget {
-    private HBox mainLayout = new HBox();
+    private final HBox mainLayout = new HBox();
 
-    private TextField searchInput = new TextField();
+    private final TextField searchInput = new TextField();
 
-    private ToggleGroup tg = new ToggleGroup();
-    private RadioButton exactRadio = new RadioButton("Name - Exact Match");
-    private RadioButton containsRadio = new RadioButton("Name - Contains");
-    private RadioButton weightRadio = new RadioButton("Weight");
+    private final ToggleGroup tg = new ToggleGroup();
+    private final RadioButton exactRadio = new RadioButton("Name - Exact Match");
+    private final RadioButton containsRadio = new RadioButton("Name - Contains");
+    private final RadioButton weightRadio = new RadioButton("Weight");
 
-    private IntegerProperty numResults = new SimpleIntegerProperty(0);
-    private Label numResultsLabel = new Label("0 Results");
+    private final IntegerProperty numResults = new SimpleIntegerProperty(0);
+    private final Label numResultsLabel = new Label("0 Results");
 
-    private Button closeButton = new Button("Close");
+    private final Button closeButton = new Button("Close");
 
     private Boolean isOpen = false;
-    private static MatrixHandler matrixHandler;
-    private static TabView editor;
-    private Thread searchHighlightThread;
+    private final MatricesData matricesData;
+    private final EditorPane editor;
+    private final Thread searchHighlightThread;
 
 
     /**
      * Creates the object and formats all the widgets on the HBox pane
      *
-     * @param matrixHandler the MatrixHandler object to access the gui handler to highlight cells
-     * @param editor    the TabView object to determine which matrix is open
+     * @param matricesData the MatricesData object to access the gui handler to highlight cells
+     * @param editor    the EditorPane object to determine which matrix is open
      */
-    public ConnectionSearchWidget(MatrixHandler matrixHandler, TabView editor) {
-        this.matrixHandler = matrixHandler;
+    public ConnectionSearchWidget(MatricesData matricesData, EditorPane editor) {
+        this.matricesData = matricesData;
         this.editor = editor;
         close();  // default to hidden
 
@@ -107,11 +108,11 @@ public class ConnectionSearchWidget {
                     continue;
                 }
 
-                synchronized (matrixHandler.getMatrix(editor.getFocusedMatrixUid())) {  // TODO: maybe this synchronization call can be removed. Idk, i was too scared to check
-                    MatrixGuiHandler m = matrixHandler.getMatrixGuiHandler(editor.getFocusedMatrixUid());
+                synchronized (matricesData.getMatrix(editor.getFocusedMatrixUid())) {  // TODO: maybe this synchronization call can be removed. Idk, i was too scared to check
+                    TemplateMatrixHandler<?> m = matricesData.getMatrixHandler(editor.getFocusedMatrixUid());
 
                     matches = getMatches(searchInput.getText());
-                    Set<Pair<Integer, Integer>> prevAndCurrentErrors = prevMatches.stream().collect(Collectors.toSet());
+                    Set<Pair<Integer, Integer>> prevAndCurrentErrors = new HashSet<>(prevMatches);
                     prevAndCurrentErrors.addAll(matches);
 
                     int numMatches = matches.size();  // update label text
@@ -145,20 +146,20 @@ public class ConnectionSearchWidget {
     private ArrayList<Pair<Integer, Integer>> getMatches(String text) {
         ArrayList<Pair<Integer, Integer>> matches = new ArrayList<>();  // find the connection cells to highlight
         if(tg.getSelectedToggle().equals(exactRadio)) {
-            for(DSMConnection connection : matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getConnections()) {
+            for(DSMConnection connection : matricesData.getMatrix(editor.getFocusedMatrixUid()).getConnections()) {
                 if(connection.getConnectionName().equals(text)) {
                     matches.add(new Pair<>(connection.getRowUid(), connection.getColUid()));
                 }
             }
         } else if(tg.getSelectedToggle().equals(containsRadio)){
-            for(DSMConnection connection : matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getConnections()) {
+            for(DSMConnection connection : matricesData.getMatrix(editor.getFocusedMatrixUid()).getConnections()) {
                 if(connection.getConnectionName().contains(text)) {
                     matches.add(new Pair<>(connection.getRowUid(), connection.getColUid()));
                 }
             }
         } else {
-            for(DSMConnection connection : matrixHandler.getMatrix(editor.getFocusedMatrixUid()).getConnections()) {
-                Double searchWeight;
+            for(DSMConnection connection : matricesData.getMatrix(editor.getFocusedMatrixUid()).getConnections()) {
+                double searchWeight;
                 try{
                     searchWeight = Double.parseDouble(text);
                 } catch(NumberFormatException e) {
@@ -184,7 +185,7 @@ public class ConnectionSearchWidget {
         mainLayout.setManaged(false);  // so that the layout will not take up space on the application
         searchInput.setText("");
 
-        for(MatrixGuiHandler m : matrixHandler.getMatrixGuiHandlers().values()) {  // clear all search highlight for all matrices for better flow when switching tabs
+        for(TemplateMatrixHandler<?> m : matricesData.getMatrixHandlers().values()) {  // clear all search highlight for all matrices for better flow when switching tabs
             m.clearAllCellsHighlight("search");
         }
     }

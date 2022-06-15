@@ -45,19 +45,19 @@ public class ToolbarHandler {
     private final Button reDistributeIndices;
     private final Button deleteConnections;
 
-    private TabView editor;
+    private EditorPane editor;
     private MatrixHandler matrixHandler;
 
 
     /**
      * Creates a new ToolBar Handler object. Sets up the gui and all its widgets and puts them in the layout field.
-     * Requires an MatrixHandler object to get the matrix and a TabView object to get the current focused tab
+     * Requires an MatrixHandler object to get the matrix and a EditorPane object to get the current focused tab
      * and call updates to it.
      *
      * @param matrixHandler the MatrixHandler instance
-     * @param editor    the TabView instance
+     * @param editor    the EditorPane instance
      */
-    public ToolbarHandler(MatrixHandler matrixHandler, TabView editor) {
+    public ToolbarHandler(MatrixHandler matrixHandler, EditorPane editor) {
         layout = new VBox();
         this.editor = editor;
         this.matrixHandler = matrixHandler;

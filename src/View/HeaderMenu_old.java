@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
  *
  * @author Aiden Carney
  */
-public class HeaderMenu {
+public class HeaderMenu_old {
     private static int defaultName = 0;
 
     private static Menu fileMenu;
@@ -39,7 +39,7 @@ public class HeaderMenu {
 
     private static MenuBar menuBar;
     private static MatrixHandler matrixHandler;
-    private static TabView editor;
+    private static EditorPane editor;
     private static ConnectionSearchWidget searchWidget;
 
     private Thread symmetryErrorHandlerThread;
@@ -50,9 +50,9 @@ public class HeaderMenu {
      * Creates a new instance of the header menu and instantiate widgets on it
      *
      * @param matrixHandler the MatrixHandler instance
-     * @param editor    the TabView instance
+     * @param editor    the EditorPane instance
      */
-    public HeaderMenu(MatrixHandler matrixHandler, TabView editor, ConnectionSearchWidget searchWidget) {
+    public HeaderMenu_old(MatrixHandler matrixHandler, EditorPane editor, ConnectionSearchWidget searchWidget) {
         menuBar = new MenuBar();
         this.matrixHandler = matrixHandler;
         this.editor = editor;

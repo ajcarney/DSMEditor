@@ -109,15 +109,14 @@ public abstract class TemplateIOHandler<T1 extends TemplateDSM, T2 extends Templ
      * should be called before removing a matrix. Does not save the matrix only decides what
      * should be done
      *
-     * @param file The matrix save path
      * @return     0 = don't save, 1 = save, 2 = cancel
      */
-     public Integer promptSave(String file) {
+     public Integer promptSave() {
         AtomicReference<Integer> code = new AtomicReference<>(); // 0 = close the tab, 1 = save and close, 2 = don't close
         code.set(2);  // default value
         Stage window = new Stage();
 
-        Label prompt = new Label("Would you like to save your changes to " + file);
+        Label prompt = new Label("Would you like to save your changes to " + savePath.getAbsolutePath());
 
         // Create Root window
         window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
