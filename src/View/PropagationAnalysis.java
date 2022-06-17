@@ -32,7 +32,8 @@ import java.util.Map;
 
 
 /**
- * Class for performing propagation analysis on a given matrix
+ * Class for performing propagation analysis on a given matrix. Currently only works on symmetric matrices but could
+ * needs to be refactored to support other types as well
  *
  * @author Aiden Carney
  */
@@ -147,18 +148,10 @@ public class PropagationAnalysis {
         startItemEntry.setButtonCell(cellFactory.call(null));
         startItemEntry.setCellFactory(cellFactory);
         ArrayList<Integer> items = new ArrayList<>();
-        if(matrix.isSymmetrical()) {
-            for(DSMItem row : matrix.getRows()) {
-                items.add(row.getUid());
-            }
-        } else {
-            for(DSMItem row : matrix.getRows()) {
-                items.add(row.getUid());
-            }
-            for(DSMItem col : matrix.getCols()) {
-                items.add(col.getUid());
-            }
+        for(DSMItem row : matrix.getRows()) {
+            items.add(row.getUid());
         }
+
         startItemEntry.getItems().addAll(items);
         startItemEntry.setMaxWidth(Double.MAX_VALUE);
         startItemEntry.getSelectionModel().selectFirst();
@@ -260,18 +253,10 @@ public class PropagationAnalysis {
         itemExceptionSelector.setCellFactory(cellFactory);
 
         ArrayList<Integer> exceptions = new ArrayList<>();
-        if(matrix.isSymmetrical()) {
-            for(DSMItem row : matrix.getRows()) {
-                exceptions.add(row.getUid());
-            }
-        } else {
-            for(DSMItem row : matrix.getRows()) {
-                exceptions.add(row.getUid());
-            }
-            for(DSMItem col : matrix.getCols()) {
-                exceptions.add(col.getUid());
-            }
+        for(DSMItem row : matrix.getRows()) {
+            exceptions.add(row.getUid());
         }
+
         itemExceptionSelector.getItems().addAll(exceptions);
         itemExceptionSelector.setMaxWidth(Double.MAX_VALUE);
         HBox.setHgrow(itemExceptionSelector, Priority.ALWAYS);
@@ -379,20 +364,20 @@ public class PropagationAnalysis {
 
         Button copyButton = new Button("Copy Table");
         copyButton.setOnAction(e -> {
-            String copyString = "";
+            StringBuilder copyString = new StringBuilder();
             for (Object row : table.getItems()) {
                 for (TableColumn column : table.getColumns()) {
                     if(column.getCellObservableValue(row).getValue().getClass().equals(Integer.class)) {
-                        copyString += matrix.getItem((Integer)column.getCellObservableValue(row).getValue()).getName() + ",";
+                        copyString.append(matrix.getItem((Integer) column.getCellObservableValue(row).getValue()).getName()).append(",");
                     } else {
-                        copyString += column.getCellObservableValue(row).getValue() + ",";
+                        copyString.append(column.getCellObservableValue(row).getValue()).append(",");
                     }
                 }
-                copyString += "\n";
+                copyString.append("\n");
             }
 
             final ClipboardContent content = new ClipboardContent();
-            content.putString(copyString);
+            content.putString(copyString.toString());
             Clipboard.getSystemClipboard().setContent(content);
         });
 

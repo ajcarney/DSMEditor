@@ -1,5 +1,6 @@
 package View;
 
+import Data.Grouping;
 import Data.SymmetricDSM;
 import Data.DSMItem;
 import View.Widgets.FreezeGrid;
@@ -253,7 +254,7 @@ public class ClusterAnalysis {
      * Runs the bidding analysis algorithm for the input matrix. Updates content on the main window of the gui
      */
     private void runClusterBidsAnalysis() {
-        Vector<String> groupOrder = new Vector<>(matrix.getGroupings());
+        Vector<Grouping> groupOrder = new Vector<>(matrix.getGroupings());
         Vector<DSMItem> items = matrix.getRows();
         Collections.sort(items, Comparator.comparing(r -> r.getSortIndex()));
 
@@ -265,11 +266,11 @@ public class ClusterAnalysis {
             ArrayList<String> rowBids = new ArrayList<>();
             double maxBid = 0;
             double minBid = 0;
-            String maxBidGroup = "";
-            String minBidGroup = "";
+            Grouping maxBidGroup = null;
+            Grouping minBidGroup = null;
             for(int c = 0; c < groupOrder.size() + 2; c++) {  // add two to include header columns
                 if(c == 0) {
-                    rowBids.add(items.get(r).getGroup());
+                    rowBids.add(items.get(r).getGroup1().getName());
                 } else if(c == 1) {
                     rowBids.add(items.get(r).getName());
                 } else {
@@ -301,9 +302,9 @@ public class ClusterAnalysis {
             for(String text : rowBids) {
                 HBox cell = new HBox();
                 Label label = new Label(text);
-                if(maxBidGroup.equals(items.get(r).getGroup())) {  // highlight green because group has highest bid
+                if(maxBidGroup.equals(items.get(r).getGroup1())) {  // highlight green because group has highest bid
                     cell.setStyle(cell.getStyle() + "-fx-background-color:palegreen");
-                } else if(minBidGroup.equals(items.get(r).getGroup())) {  // highlight red because group has lowest bid
+                } else if(minBidGroup.equals(items.get(r).getGroup1())) {  // highlight red because group has lowest bid
                     cell.setStyle(cell.getStyle() + "-fx-background-color:indianred");
                 } else {
                     cell.setStyle(cell.getStyle() + "-fx-background-color:white");

@@ -1,8 +1,10 @@
 import Data.SymmetricDSM;
-import Data.MatrixHandler;
-import IOHandler.ExportHandler;
-import IOHandler.ImportHandler;
-import View.*;
+import Data.TemplateDSM;
+import IOHandler.SymmetricIOHandler;
+import View.EditorPane;
+import View.HeaderMenu.SymmetricHeaderMenu;
+import View.MatrixHandlers.SymmetricMatrixHandler;
+import View.SideBarTools.SymmetricSideBar;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.event.Event;
@@ -27,13 +29,9 @@ import java.util.Map;
  * @author Aiden Carney
  */
 public class Main extends Application {
+    private static final BorderPane root = new BorderPane();
 
-    private static final MatrixHandler matrixHandler = new MatrixHandler();
-    private static final MatrixMetaDataPane infoHandler = new MatrixMetaDataPane();
-    private static final EditorPane editor = new EditorPane(matrixHandler, infoHandler);
-    private static final ConnectionSearchWidget searchWidget = new ConnectionSearchWidget(matrixHandler, editor);
-    private static final HeaderMenu_old menu = new HeaderMenu_old(matrixHandler, editor, searchWidget);
-    private static final ToolbarHandler toolbarHandler = new ToolbarHandler(matrixHandler, editor);
+    private static final EditorPane editor = new EditorPane(root);
 
     private static ArrayList<String> cliArgs = new ArrayList<>();
 
@@ -46,12 +44,6 @@ public class Main extends Application {
     public void start(Stage primaryStage) {
         Thread.setDefaultUncaughtExceptionHandler(Main::handleError);
 
-        BorderPane root = new BorderPane();
-        root.setTop(menu.getMenuBar());
-        root.setCenter(editor.getTabPane());
-        root.setRight(infoHandler.getLayout());
-        root.setLeft(toolbarHandler.getLayout());
-        root.setBottom(searchWidget.getMainLayout());
 
         Scene scene = new Scene(root, 1400, 800);
         primaryStage.setTitle("DSM Editor");
@@ -62,10 +54,15 @@ public class Main extends Application {
 
         // start with a tab open (used for debugging, remove or comment out for release)
         if(cliArgs.contains("--debug=true")) {
-            File file = new File("/home/aiden/Documents/DSMEditor/dsms/vpas3.dsm");
-            SymmetricDSM matrix = ImportHandler.readFile(file);
-            int uid = matrixHandler.addMatrix(matrix, file);
-            editor.addTab(uid);
+//            SymmetricIOHandler ioHandler = new SymmetricIOHandler(new File("/home/aiden/Documents/DSMEditor/dsms/vpas3.dsm"));
+//            SymmetricDSM matrix = ioHandler.readFile();
+//            this.editor.addTab(
+//                matrix,
+//                ioHandler,
+//                new SymmetricMatrixHandler(matrix, 12.0),
+//                new SymmetricHeaderMenu(editor, editor.getSearchWidget()),
+//                new SymmetricSideBar(matrix, editor
+//            ));
         }
 
         for(int i=0; i<cliArgs.size(); i++) {
@@ -135,9 +132,9 @@ public class Main extends Application {
 
        File recoveryDir = new File("./.recovery");
        if(!recoveryDir.exists()) recoveryDir.mkdir();
-       for(Map.Entry<Integer, SymmetricDSM> matrix : matrixHandler.getMatrices().entrySet()) {
-           File f = new File("./.recovery/" + matrixHandler.getMatrixSaveFile(matrix.getKey()).getName());
-           ExportHandler.saveMatrixToFile(matrix.getValue(), f);
+       for(Map.Entry<Integer, TemplateDSM> matrix : editor.getMatrices().entrySet()) {
+           File f = new File("./.recovery/" + editor.getMatrixIOHandler(matrix.getKey()).getSavePath().getName());
+           editor.getMatrixIOHandler(matrix.getKey()).saveMatrixToFile(matrix.getValue(), f);
            matrix.getValue().setWasModified();  // matrix is not saved to known location, so don't display it as saved to the user
        }
 

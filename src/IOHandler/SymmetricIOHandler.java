@@ -36,7 +36,7 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
      *
      * @param file  the path to default to reading from and saving to
      */
-    SymmetricIOHandler(File file) {
+    public SymmetricIOHandler(File file) {
         super(file);
     }
 

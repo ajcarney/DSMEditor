@@ -29,7 +29,7 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
 
     protected final Button configureGroupings = new Button("Sort");
 
-    SymmetricSideBar(SymmetricDSM matrix, EditorPane editor) {
+    public SymmetricSideBar(SymmetricDSM matrix, EditorPane editor) {
         super(matrix, editor);
 
         addMatrixItems.setText("Add Rows/Columns");

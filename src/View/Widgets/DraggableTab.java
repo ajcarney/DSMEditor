@@ -240,6 +240,10 @@ public class DraggableTab extends Tab {
         return nameLabel;
     }
 
+    public String getLabelText() {
+        return nameLabel.getText();
+    }
+
     private boolean betweenX(Rectangle2D r1, Rectangle2D r2, double xPoint) {
         double lowerBound = r1.getMinX() + r1.getWidth() / 2;
         double upperBound = r2.getMaxX() - r2.getWidth() / 2;

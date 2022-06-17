@@ -104,6 +104,22 @@ public abstract class TemplateIOHandler<T1 extends TemplateDSM, T2 extends Templ
 
 
     /**
+     * Opens a file chooser window to choose a location to save a matrix to
+     *
+     * @param matrix the matrix to save
+     * @param window the window associated with the file chooser
+     */
+    public void promptSaveToFile(T1 matrix, Window window) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("DSM File", "*.dsm"));  // dsm is the only file type usable
+        File fileName = fileChooser.showSaveDialog(window);
+        if(fileName != null) {
+            int code = this.saveMatrixToFile(matrix, fileName);
+        }
+    }
+
+
+    /**
      * Brings up a dialogue window that asks whether the user wants to save a file or not.
      * Presents the user with three options: save, don't save, and cancel. This function
      * should be called before removing a matrix. Does not save the matrix only decides what

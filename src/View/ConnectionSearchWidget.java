@@ -1,7 +1,6 @@
 package View;
 
 import Data.DSMConnection;
-import Data.MatricesData;
 import View.MatrixHandlers.TemplateMatrixHandler;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -42,7 +41,6 @@ public class ConnectionSearchWidget {
     private final Button closeButton = new Button("Close");
 
     private Boolean isOpen = false;
-    private final MatricesData matricesData;
     private final EditorPane editor;
     private final Thread searchHighlightThread;
 
@@ -50,11 +48,9 @@ public class ConnectionSearchWidget {
     /**
      * Creates the object and formats all the widgets on the HBox pane
      *
-     * @param matricesData the MatricesData object to access the gui handler to highlight cells
      * @param editor    the EditorPane object to determine which matrix is open
      */
-    public ConnectionSearchWidget(MatricesData matricesData, EditorPane editor) {
-        this.matricesData = matricesData;
+    public ConnectionSearchWidget(EditorPane editor) {
         this.editor = editor;
         close();  // default to hidden
 
@@ -108,8 +104,8 @@ public class ConnectionSearchWidget {
                     continue;
                 }
 
-                synchronized (matricesData.getMatrix(editor.getFocusedMatrixUid())) {  // TODO: maybe this synchronization call can be removed. Idk, i was too scared to check
-                    TemplateMatrixHandler<?> m = matricesData.getMatrixHandler(editor.getFocusedMatrixUid());
+                synchronized (editor.getFocusedMatrix()) {  // TODO: maybe this synchronization call can be removed. Idk, i was too scared to check
+                    TemplateMatrixHandler<?> m = editor.getMatrixHandler(editor.getFocusedMatrixUid());
 
                     matches = getMatches(searchInput.getText());
                     Set<Pair<Integer, Integer>> prevAndCurrentErrors = new HashSet<>(prevMatches);
@@ -122,7 +118,7 @@ public class ConnectionSearchWidget {
                         if (!matches.contains(pair) && prevMatches.contains(pair)) {  // old match that no longer matches, unhighlight it
                             m.clearCellHighlight(m.getGridLocFromUids(pair), "search");
                         } else {
-                            m.setCellHighlight(m.getGridLocFromUids(pair), MatrixGuiHandler.SEARCH_BACKGROUND, "search");
+                            m.setCellHighlight(m.getGridLocFromUids(pair), TemplateMatrixHandler.SEARCH_BACKGROUND, "search");
                         }
                     }
 
@@ -146,19 +142,19 @@ public class ConnectionSearchWidget {
     private ArrayList<Pair<Integer, Integer>> getMatches(String text) {
         ArrayList<Pair<Integer, Integer>> matches = new ArrayList<>();  // find the connection cells to highlight
         if(tg.getSelectedToggle().equals(exactRadio)) {
-            for(DSMConnection connection : matricesData.getMatrix(editor.getFocusedMatrixUid()).getConnections()) {
+            for(DSMConnection connection : editor.getFocusedMatrix().getConnections()) {
                 if(connection.getConnectionName().equals(text)) {
                     matches.add(new Pair<>(connection.getRowUid(), connection.getColUid()));
                 }
             }
         } else if(tg.getSelectedToggle().equals(containsRadio)){
-            for(DSMConnection connection : matricesData.getMatrix(editor.getFocusedMatrixUid()).getConnections()) {
+            for(DSMConnection connection : editor.getFocusedMatrix().getConnections()) {
                 if(connection.getConnectionName().contains(text)) {
                     matches.add(new Pair<>(connection.getRowUid(), connection.getColUid()));
                 }
             }
         } else {
-            for(DSMConnection connection : matricesData.getMatrix(editor.getFocusedMatrixUid()).getConnections()) {
+            for(DSMConnection connection : editor.getFocusedMatrix().getConnections()) {
                 double searchWeight;
                 try{
                     searchWeight = Double.parseDouble(text);
@@ -185,7 +181,7 @@ public class ConnectionSearchWidget {
         mainLayout.setManaged(false);  // so that the layout will not take up space on the application
         searchInput.setText("");
 
-        for(TemplateMatrixHandler<?> m : matricesData.getMatrixHandlers().values()) {  // clear all search highlight for all matrices for better flow when switching tabs
+        for(TemplateMatrixHandler<?> m : editor.getMatrixHandlers().values()) {  // clear all search highlight for all matrices for better flow when switching tabs
             m.clearAllCellsHighlight("search");
         }
     }

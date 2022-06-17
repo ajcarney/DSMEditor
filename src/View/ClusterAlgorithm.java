@@ -1,7 +1,10 @@
 package View;
 
 import Data.SymmetricDSM;
-import IOHandler.ExportHandler;
+import IOHandler.SymmetricIOHandler;
+import IOHandler.TemplateIOHandler;
+import View.MatrixHandlers.StaticSymmetricHandler;
+import View.MatrixHandlers.SymmetricMatrixHandler;
 import View.Widgets.NumericTextField;
 import javafx.application.Platform;
 import javafx.beans.property.*;
@@ -16,6 +19,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
+import java.io.File;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
@@ -23,7 +27,7 @@ import java.util.Map;
 
 
 /**
- * A class that graphically runs Thebeau's dsm clustering algorithm
+ * A class that graphically runs Thebeau's dsm clustering algorithm. Currently only works for symmetric DSMs
  *
  * @author Aiden Carney
  */
@@ -60,7 +64,7 @@ public class ClusterAlgorithm {
 
     /**
      * Creates a ClusterAlgorithm object and initializes all the widgets. Does not open
-     * the gui
+     * the gui.
      *
      * @param matrix the input matrix to perform the algorithm on
      */
@@ -90,28 +94,32 @@ public class ClusterAlgorithm {
            if(outputMatrix == null) {
                return;
            }
-           ExportHandler.promptSaveToFile(outputMatrix, menuBar.getScene().getWindow());
+           SymmetricIOHandler ioHandler = new SymmetricIOHandler(new File(""));
+           ioHandler.promptSaveToFile(outputMatrix, menuBar.getScene().getWindow());
         });
         MenuItem csv = new MenuItem("CSV File");
         csv.setOnAction(e -> {
             if(outputMatrix == null) {
                 return;
             }
-            ExportHandler.promptExportToCSV(outputMatrix, menuBar.getScene().getWindow());
+            SymmetricIOHandler ioHandler = new SymmetricIOHandler(new File(""));
+            ioHandler.promptExportToCSV(outputMatrix, menuBar.getScene().getWindow());
         });
         MenuItem excel = new MenuItem("Excel File");
         excel.setOnAction(e -> {
             if(outputMatrix == null) {
                 return;
             }
-            ExportHandler.promptExportToExcel(outputMatrix, menuBar.getScene().getWindow());
+            SymmetricIOHandler ioHandler = new SymmetricIOHandler(new File(""));
+            ioHandler.promptExportToExcel(outputMatrix, menuBar.getScene().getWindow());
         });
         MenuItem thebeau = new MenuItem("Thebeau Matlab File");
         thebeau.setOnAction(e -> {
             if(outputMatrix == null) {
                 return;
             }
-            ExportHandler.promptExportToThebeau(outputMatrix, menuBar.getScene().getWindow());
+            SymmetricIOHandler ioHandler = new SymmetricIOHandler(new File(""));
+            ioHandler.promptExportToThebeau(outputMatrix, menuBar.getScene().getWindow());
         });
 
         exportMenu.getItems().addAll(dsm, csv, excel, thebeau);
@@ -431,7 +439,7 @@ public class ClusterAlgorithm {
                     randSeed.longValue(),
                     debug.isSelected()
             );
-            outputMatrix.reDistributeSortIndexByGroup();
+            outputMatrix.reDistributeSortIndicesByGroup();
             completedProperty.set(true);
         });
         t.setDaemon(true);
@@ -488,8 +496,7 @@ public class ClusterAlgorithm {
 
         popup.showAndWait();  // wait for it to finish
 
-        MatrixGuiHandler gui = new MatrixGuiHandler(outputMatrix, 10);
-        gui.refreshMatrixEditorImmutable(true);
+        StaticSymmetricHandler gui = new StaticSymmetricHandler(outputMatrix, 10);
 
         outputMatrixLayout.getChildren().removeAll(outputMatrixLayout.getChildren());
         outputMatrixLayout.getChildren().addAll(gui.getMatrixEditor());

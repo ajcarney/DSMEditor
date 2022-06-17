@@ -1,16 +1,23 @@
 package View.HeaderMenu;
 
 
-import Data.MatricesData;
+import Data.SymmetricDSM;
+import IOHandler.SymmetricIOHandler;
 import View.ConnectionSearchWidget;
 import View.EditorPane;
+import View.MatrixHandlers.SymmetricMatrixHandler;
+import View.SideBarTools.SymmetricSideBar;
 import constants.Constants;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
+
+import java.io.File;
 
 /**
  * Class to create the header of the gui. Includes menus like file, edit, and view
@@ -27,18 +34,15 @@ public abstract class TemplateHeaderMenu {
     protected final Menu helpMenu = new Menu("_Help");
 
     protected final MenuBar menuBar = new MenuBar();
-    protected MatricesData matricesData;
     protected EditorPane editor;
     protected ConnectionSearchWidget searchWidget;
 
     /**
      * Creates a new instance of the header menu and instantiate widgets on it
      *
-     * @param matricesData  the MatrixHandler instance
      * @param editor        the EditorPane instance
      */
-    public TemplateHeaderMenu(MatricesData matricesData, EditorPane editor, ConnectionSearchWidget searchWidget) {
-        this.matricesData = matricesData;
+    public TemplateHeaderMenu(EditorPane editor, ConnectionSearchWidget searchWidget) {
         this.editor = editor;
         this.searchWidget = searchWidget;
 
@@ -47,13 +51,154 @@ public abstract class TemplateHeaderMenu {
         setUpToolsMenu();
         setupViewMenu();
         setupHelpMenu();
+
+        menuBar.getMenus().addAll(fileMenu, editMenu, viewMenu, toolsMenu, helpMenu);
     }
 
 
     /**
      * sets up the Menu object for the file menu
      */
-    abstract protected void setupFileMenu();
+    protected void setupFileMenu() {
+        Menu newFileMenu = new Menu("New...");
+        MenuItem newSymmetric = new MenuItem("Symmetric Matrix");
+        newSymmetric.setOnAction(e -> {
+            SymmetricDSM matrix = new SymmetricDSM();
+            File file = new File("./untitled" + Integer.toString(defaultName));
+            while(file.exists()) {  // make sure file does not exist
+                defaultName += 1;
+                file = new File("./untitled" + Integer.toString(defaultName));
+            }
+
+            this.editor.addTab(
+                    matrix,
+                    new SymmetricIOHandler(file),
+                    new SymmetricMatrixHandler(matrix, 12.0),
+                    this,
+                    new SymmetricSideBar(matrix, editor
+                    ));
+
+            defaultName += 1;
+        });
+//        MenuItem newNonSymmetric = new MenuItem("Non-Symmetric Matrix");
+//        newNonSymmetric.setOnAction(e -> {
+//
+//        });
+
+        newFileMenu.getItems().addAll(newSymmetric);
+
+
+        MenuItem openFile = new MenuItem("Open...");
+        openFile.setOnAction( e -> {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("DSM File", "*.dsm"));  // dsm is the only file type usable
+            File file = fileChooser.showOpenDialog(menuBar.getScene().getWindow());
+            if(file != null) {  // make sure user did not just close out of the file chooser window
+                SymmetricIOHandler ioHandler = new SymmetricIOHandler(file);
+                SymmetricDSM matrix = ioHandler.readFile();
+                if(matrix == null) {
+                    // TODO: open window saying there was an error parsing the document
+                    System.out.println("there was an error reading the file " + file.toString());
+                } else if(!this.editor.getMatrixFileAbsoluteSavePaths().contains(file.getAbsolutePath())) {
+                    this.editor.addTab(
+                            matrix,
+                            new SymmetricIOHandler(file),
+                            new SymmetricMatrixHandler(matrix, 12.0),
+                            this,
+                            new SymmetricSideBar(matrix, editor
+                            ));
+                } else {
+                    editor.focusTab(file);  // focus on that tab because it is already open
+                }
+            }
+        });
+
+        Menu importMenu = new Menu("Import...");
+        MenuItem importThebeau = new MenuItem("Thebeau Matlab File");
+        importThebeau.setOnAction(e -> {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Matlab File", "*.m"));  // matlab is the only file type usable
+            File file = fileChooser.showOpenDialog(menuBar.getScene().getWindow());
+            if(file != null) {  // make sure user did not just close out of the file chooser window
+                SymmetricIOHandler ioHandler = new SymmetricIOHandler(file);
+                SymmetricDSM matrix = ioHandler.readFile();
+                if(matrix == null) {
+                    // TODO: open window saying there was an error parsing the document
+                    System.out.println("there was an error reading the file " + file.toString());
+                } else if(!this.editor.getMatrixFileAbsoluteSavePaths().contains(file.getAbsolutePath())) {
+                    File importedFile = new File(file.getParent(), file.getName().substring(0, file.getName().lastIndexOf('.')) + ".dsm");  // convert .m extension to .dsm
+                    this.editor.addTab(
+                            matrix,
+                            new SymmetricIOHandler(importedFile),
+                            new SymmetricMatrixHandler(matrix, 12.0),
+                            this,
+                            new SymmetricSideBar(matrix, editor
+                            ));
+                } else {
+                    editor.focusTab(file);  // focus on that tab because it is already open
+                }
+            }
+        });
+
+        importMenu.getItems().add(importThebeau);
+
+        MenuItem saveFile = new MenuItem("Save...");
+        saveFile.setOnAction(e -> {
+            if(editor.getFocusedMatrixUid() == null) {
+                return;
+            }
+            if(this.editor.getMatrixIOHandler(editor.getFocusedMatrixUid()).getSavePath().getAbsolutePath().contains("untitled")) {
+                FileChooser fileChooser = new FileChooser();
+                fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("DSM File", "*.dsm"));  // dsm is the only file type usable
+                File fileName = fileChooser.showSaveDialog(menuBar.getScene().getWindow());
+                if(fileName != null) {
+                    this.editor.getMatrixIOHandler(editor.getFocusedMatrixUid()).setSavePath(fileName);
+                } else {  // user did not select a file, so do not save it
+                    return;
+                }
+            }
+            int matrixUid = editor.getFocusedMatrixUid();
+            SymmetricDSM matrix = (SymmetricDSM) this.editor.getFocusedMatrix();
+            int code = this.editor.getMatrixIOHandler(matrixUid).saveMatrixToFile(matrix, this.editor.getMatrixIOHandler(editor.getFocusedMatrixUid()).getSavePath());  // TODO: add checking with the return code
+        });
+
+        MenuItem saveFileAs = new MenuItem("Save As...");
+        saveFileAs.setOnAction(e -> {
+            if(editor.getFocusedMatrixUid() == null) {
+                return;
+            }
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("DSM File", "*.dsm"));  // dsm is the only file type usable
+            File file = fileChooser.showSaveDialog(menuBar.getScene().getWindow());
+            if(file != null) {
+                int matrixUid = editor.getFocusedMatrixUid();
+                SymmetricDSM matrix = (SymmetricDSM) this.editor.getFocusedMatrix();
+                int code = this.editor.getMatrixIOHandler(matrixUid).saveMatrixToFile(matrix, file);  // TODO: add checking with the return code
+
+                this.editor.getMatrixIOHandler(matrixUid).setSavePath(file);
+            }
+        });
+
+        MenuItem exit = new MenuItem("Exit");
+        exit.setOnAction(e -> {
+            menuBar.getScene().getWindow().fireEvent(
+                    new WindowEvent(
+                            menuBar.getScene().getWindow(),
+                            WindowEvent.WINDOW_CLOSE_REQUEST
+                    )
+            );
+        });
+
+
+        fileMenu.getItems().add(newFileMenu);
+        fileMenu.getItems().add(openFile);
+        fileMenu.getItems().add(saveFile);
+        fileMenu.getItems().add(saveFileAs);
+        fileMenu.getItems().add(new SeparatorMenuItem());
+        fileMenu.getItems().add(importMenu);
+        fileMenu.getItems().add(new SeparatorMenuItem());
+        fileMenu.getItems().add(exit);
+    }
 
 
     /**
@@ -91,8 +236,8 @@ public abstract class TemplateHeaderMenu {
             if(editor.getFocusedMatrixUid() == null) {  // TODO: this will not update to show connection names if no matrix is open
                 return;
             }
-            matricesData.getMatrixHandler(editor.getFocusedMatrixUid()).setShowNames(showNames.isSelected());
-            matricesData.getMatrixHandler(editor.getFocusedMatrixUid()).refreshMatrixEditor();
+            editor.getMatrixHandler(editor.getFocusedMatrixUid()).setShowNames(showNames.isSelected());
+            editor.getMatrixHandler(editor.getFocusedMatrixUid()).refreshMatrixEditor();
         });
 
         viewMenu.getItems().addAll(zoomIn, zoomOut, zoomReset);
@@ -126,5 +271,13 @@ public abstract class TemplateHeaderMenu {
         });
 
         helpMenu.getItems().addAll(about);
+    }
+
+
+    /**
+     * @return  the menu bar object that has been set up
+     */
+    public MenuBar getMenuBar() {
+        return this.menuBar;
     }
 }
