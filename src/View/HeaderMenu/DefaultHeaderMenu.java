@@ -1,6 +1,5 @@
 package View.HeaderMenu;
 
-import View.ConnectionSearchWidget;
 import View.EditorPane;
 
 public class DefaultHeaderMenu extends TemplateHeaderMenu {
@@ -10,8 +9,8 @@ public class DefaultHeaderMenu extends TemplateHeaderMenu {
      *
      * @param editor        the EditorPane instance
      */
-    public DefaultHeaderMenu(EditorPane editor, ConnectionSearchWidget searchWidget) {
-        super(editor, searchWidget);
+    public DefaultHeaderMenu(EditorPane editor) {
+        super(editor);
 
         // methods to set up buttons are already called
     }

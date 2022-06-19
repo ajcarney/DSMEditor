@@ -27,7 +27,7 @@ import java.util.Vector;
 
 public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
 
-    protected final Button configureGroupings = new Button("Sort");
+    protected final Button configureGroupings = new Button("Configure Groupings");
 
     public SymmetricSideBar(SymmetricDSM matrix, EditorPane editor) {
         super(matrix, editor);
@@ -339,45 +339,50 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
                 if(rb.equals(selectByRow)) {  // clear all items and add rows to it
                     itemSelector.getItems().removeAll(itemSelector.getItems());
                     itemSelector.getItems().addAll(matrix.getRows());  // populate combobox with the rows
-
-                    connectionsModifier.getChildren().removeAll(connectionsModifier.getChildren());
-                    connections.clear();
-
-                    for(DSMItem col : matrix.getCols()) {  // create the checkboxes
-                        VBox connectionVBox = new VBox();
-                        connectionVBox.setAlignment(Pos.CENTER);
-
-                        Label name = new Label(col.getName());
-                        CheckBox box = new CheckBox();
-                        connections.put(box, col);
-                        connectionVBox.getChildren().addAll(name, box);
-                        connectionsModifier.getChildren().add(connectionVBox);
-                    }
                 } else if(rb.equals(selectByCol)) {  // clear all items and add cols to it
                     itemSelector.getItems().removeAll(itemSelector.getItems());
                     itemSelector.getItems().addAll(matrix.getCols());  // populate combobox with the columns
-
-                    connectionsModifier.getChildren().removeAll(connectionsModifier.getChildren());
-                    connections.clear();
-
-                    for(DSMItem row : matrix.getRows()) {  // create the checkboxes
-                        VBox connectionVBox = new VBox();
-                        connectionVBox.setAlignment(Pos.CENTER);
-
-                        Label name = new Label(row.getName());
-                        CheckBox box = new CheckBox();
-                        connections.put(box, row);
-                        connectionVBox.getChildren().addAll(name, box);
-                        connectionsModifier.getChildren().add(connectionVBox);
-                    }
                 } else {  // clear all items
                     itemSelector.getItems().removeAll(itemSelector.getItems());
-
-                    connectionsModifier.getChildren().removeAll(connectionsModifier.getChildren());
-                    connections.clear();
                 }
             }
         });
+
+        itemSelector.valueProperty().addListener((options, oldValue, newValue) -> {
+            RadioButton rb = (RadioButton)tg.getSelectedToggle();
+            connectionsModifier.getChildren().removeAll(connectionsModifier.getChildren());
+            connections.clear();
+            if (rb.equals(selectByRow)) {  // clear all items and add rows to it
+                for(DSMItem col : matrix.getCols()) {  // create the checkboxes
+                    if(itemSelector.getValue() != null && col.getAliasUid().equals(itemSelector.getValue().getUid())) {  // don't allow creating connections between same row and column pair
+                        continue;
+                    }
+                    VBox connectionVBox = new VBox();
+                    connectionVBox.setAlignment(Pos.CENTER);
+
+                    Label name = new Label(col.getName());
+                    CheckBox box = new CheckBox();
+                    connections.put(box, col);
+                    connectionVBox.getChildren().addAll(name, box);
+                    connectionsModifier.getChildren().add(connectionVBox);
+                }
+            } else if (rb.equals(selectByCol)) {
+                for(DSMItem row : matrix.getRows()) {  // create the checkboxes
+                    if(itemSelector.getValue() != null && row.getAliasUid().equals(itemSelector.getValue().getUid())) {  // don't allow creating connections between same row and column pair
+                        continue;
+                    }
+                    VBox connectionVBox = new VBox();
+                    connectionVBox.setAlignment(Pos.CENTER);
+
+                    Label name = new Label(row.getName());
+                    CheckBox box = new CheckBox();
+                    connections.put(box, row);
+                    connectionVBox.getChildren().addAll(name, box);
+                    connectionsModifier.getChildren().add(connectionVBox);
+                }
+            }
+        });
+
         rowColRadioButtons.getChildren().addAll(selectByRow, selectByCol);
         itemSelectorView.getChildren().addAll(l, rowColRadioButtons, itemSelector);
 
@@ -513,7 +518,7 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
 
         // Create Root window
         window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
-        window.setTitle("Append Connections");
+        window.setTitle("Set Connections");
 
 
         // Create changes view (does not have button to remove items from it
@@ -631,45 +636,50 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
                 if(rb.equals(selectByRow)) {  // clear all items and add rows to it
                     itemSelector.getItems().removeAll(itemSelector.getItems());
                     itemSelector.getItems().addAll(matrix.getRows());  // populate combobox with the rows
-
-                    connectionsModifier.getChildren().removeAll(connectionsModifier.getChildren());
-                    connections.clear();
-
-                    for(DSMItem col : matrix.getCols()) {  // create the checkboxes
-                        VBox connectionVBox = new VBox();
-                        connectionVBox.setAlignment(Pos.CENTER);
-
-                        Label name = new Label(col.getName());
-                        CheckBox box = new CheckBox();
-                        connections.put(box, col);
-                        connectionVBox.getChildren().addAll(name, box);
-                        connectionsModifier.getChildren().add(connectionVBox);
-                    }
                 } else if(rb.equals(selectByCol)) {  // clear all items and add cols to it
                     itemSelector.getItems().removeAll(itemSelector.getItems());
                     itemSelector.getItems().addAll(matrix.getCols());  // populate combobox with the columns
-
-                    connectionsModifier.getChildren().removeAll(connectionsModifier.getChildren());
-                    connections.clear();
-
-                    for(DSMItem row : matrix.getRows()) {  // create the checkboxes
-                        VBox connectionVBox = new VBox();
-                        connectionVBox.setAlignment(Pos.CENTER);
-
-                        Label name = new Label(row.getName());
-                        CheckBox box = new CheckBox();
-                        connections.put(box, row);
-                        connectionVBox.getChildren().addAll(name, box);
-                        connectionsModifier.getChildren().add(connectionVBox);
-                    }
                 } else {  // clear all items
                     itemSelector.getItems().removeAll(itemSelector.getItems());
-
-                    connectionsModifier.getChildren().removeAll(connectionsModifier.getChildren());
-                    connections.clear();
                 }
             }
         });
+
+        itemSelector.valueProperty().addListener((options, oldValue, newValue) -> {
+            RadioButton rb = (RadioButton)tg.getSelectedToggle();
+            connectionsModifier.getChildren().removeAll(connectionsModifier.getChildren());
+            connections.clear();
+            if (rb.equals(selectByRow)) {  // clear all items and add rows to it
+                for(DSMItem col : matrix.getCols()) {  // create the checkboxes
+                    if(itemSelector.getValue() != null && col.getAliasUid().equals(itemSelector.getValue().getUid())) {  // don't allow creating connections between same row and column pair
+                        continue;
+                    }
+                    VBox connectionVBox = new VBox();
+                    connectionVBox.setAlignment(Pos.CENTER);
+
+                    Label name = new Label(col.getName());
+                    CheckBox box = new CheckBox();
+                    connections.put(box, col);
+                    connectionVBox.getChildren().addAll(name, box);
+                    connectionsModifier.getChildren().add(connectionVBox);
+                }
+            } else if (rb.equals(selectByCol)) {
+                for(DSMItem row : matrix.getRows()) {  // create the checkboxes
+                    if(itemSelector.getValue() != null && row.getAliasUid().equals(itemSelector.getValue().getUid())) {  // don't allow creating connections between same row and column pair
+                        continue;
+                    }
+                    VBox connectionVBox = new VBox();
+                    connectionVBox.setAlignment(Pos.CENTER);
+
+                    Label name = new Label(row.getName());
+                    CheckBox box = new CheckBox();
+                    connections.put(box, row);
+                    connectionVBox.getChildren().addAll(name, box);
+                    connectionsModifier.getChildren().add(connectionVBox);
+                }
+            }
+        });
+
         rowColRadioButtons.getChildren().addAll(selectByRow, selectByCol);
         itemSelectorView.getChildren().addAll(l, rowColRadioButtons, itemSelector);
 
@@ -713,12 +723,12 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
 
         Button applyButton = new Button("Modify Connections");
         applyButton.setOnAction(ee -> {
-            if(itemSelector.getValue() == null || connectionName.getText().isEmpty() || weight.getText().isEmpty()) {  // ensure connection can be added
+            if(itemSelector.getValue() == null) {  // ensure connection can be added
                 // TODO: add popup window saying why it cannot make the changes
                 return;
             }
             for (Map.Entry<CheckBox, DSMItem> entry : connections.entrySet()) {
-                if (entry.getKey().isSelected()) {
+                if (entry.getKey().isSelected() && !connectionName.getText().isEmpty()) {  // create the connection
                     if(tg.getSelectedToggle().equals(selectByRow)) {  // selecting by row
                         DSMConnection conn = new DSMConnection(connectionName.getText(), weight.getNumericValue(), itemSelector.getValue().getUid(), entry.getValue().getUid());
                         if(!changesToMakeView.getItems().contains(conn)) {  // ensure no duplicates
@@ -731,7 +741,7 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
                             changesToMakeView.getItems().add(conn);
                         }
                     }
-                } else {
+                } else {  // delete the connection
                     if(tg.getSelectedToggle().equals(selectByRow)) {  // selecting by row
                         DSMConnection conn = new DSMConnection(null, Double.MAX_VALUE, itemSelector.getValue().getUid(), entry.getValue().getUid());
                         if(!changesToMakeView.getItems().contains(conn)) {  // ensure no duplicates
@@ -1203,7 +1213,7 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
         HBox display = new HBox();
 
         TextField groupingName = new TextField();     // use a text field to display the name so that it can be renamed easily
-        groupingName.setPromptText(grouping.getName());
+        groupingName.setText(grouping.getName());
         groupingName.setMaxWidth(Double.MAX_VALUE);
         groupingName.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
             if (!newPropertyValue) {  // TextField changed to be not focused so update the new name in the matrix
@@ -1254,8 +1264,12 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
             HBox groupRow = configureGroupingEditorRow(matrix, grouping, mainGroupingsView, true);
             mainGroupingsView.getChildren().add(groupRow);
         }
+        HBox defaultGroupLabel = new HBox();
+        defaultGroupLabel.setPadding(new Insets(10));
+        defaultGroupLabel.getChildren().add(new Label("Default Grouping:"));
+
         HBox defaultGroupRow = configureGroupingEditorRow(matrix, matrix.getDefaultGrouping(), mainGroupingsView, false);
-        allGroupings.getChildren().addAll(mainGroupingsView, defaultGroupRow);
+        allGroupings.getChildren().addAll(mainGroupingsView, defaultGroupLabel, defaultGroupRow);
 
         // area to add, delete, rename
         HBox modifyArea = new HBox();
@@ -1291,7 +1305,7 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
         //Display window and wait for it to be closed before returning
         Scene scene = new Scene(layout, 500, 300);
         window.setScene(scene);
-        scene.getWindow().setOnCloseRequest(ee -> {
+        scene.getWindow().setOnHidden(e -> {  // TODO: 6/17/2020 changed from setOnCloseRequest when it was working before and idk why this fixed it
             window.close();                        // changes have already been made so just close and refresh the screen
             matrix.setCurrentStateAsCheckpoint();
             editor.refreshTab();

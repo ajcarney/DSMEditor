@@ -105,7 +105,7 @@ public class ConnectionSearchWidget {
                 }
 
                 synchronized (editor.getFocusedMatrix()) {  // TODO: maybe this synchronization call can be removed. Idk, i was too scared to check
-                    TemplateMatrixHandler<?> m = editor.getMatrixHandler(editor.getFocusedMatrixUid());
+                    TemplateMatrixHandler<?> m = this.editor.getMatrixController().getMatrixHandler(editor.getFocusedMatrixUid());
 
                     matches = getMatches(searchInput.getText());
                     Set<Pair<Integer, Integer>> prevAndCurrentErrors = new HashSet<>(prevMatches);
@@ -181,7 +181,7 @@ public class ConnectionSearchWidget {
         mainLayout.setManaged(false);  // so that the layout will not take up space on the application
         searchInput.setText("");
 
-        for(TemplateMatrixHandler<?> m : editor.getMatrixHandlers().values()) {  // clear all search highlight for all matrices for better flow when switching tabs
+        for(TemplateMatrixHandler<?> m : this.editor.getMatrixController().getMatrixHandlers().values()) {  // clear all search highlight for all matrices for better flow when switching tabs
             m.clearAllCellsHighlight("search");
         }
     }

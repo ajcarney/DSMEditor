@@ -246,6 +246,8 @@ public class SymmetricDSM extends TemplateDSM {
 
         DSMItem rowItem = new DSMItem(index, name);
         DSMItem colItem = new DSMItem(index, name);
+        rowItem.setGroup1(defaultGroup);
+        colItem.setGroup1(defaultGroup);
         colItem.setAliasUid(rowItem.getUid());
         rowItem.setAliasUid(colItem.getUid());
 
@@ -349,7 +351,7 @@ public class SymmetricDSM extends TemplateDSM {
 
         assert oldGroup.getUid().equals(aliasedItem.getGroup1().getUid()) : "Symmetric item groupings were not the same";
 
-        Boolean addedNewGroup = !groupings.contains(newGroup);  // TODO: make sure this works as expected
+        Boolean addedNewGroup = !groupings.contains(newGroup) && !newGroup.equals(defaultGroup);
 
         addChangeToStack(new MatrixChange(
             () -> {  // do function
@@ -514,7 +516,7 @@ public class SymmetricDSM extends TemplateDSM {
      *   item_name             : Integer -> item uid
      *   item_name_v           : Integer -> item uid
      *   grouping_item         : Integer -> item uid
-     *   grouping_item_v       : Integer -> item uid
+     *   grouping_item_v       : Integer -> item uid (not used for symmetric)
      *   index_item            : Integer -> item uid
      *   uneditable_connection : null
      *   editable_connection   : Pair<Integer, Integer> -> rowUid, colUid

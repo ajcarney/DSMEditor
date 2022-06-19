@@ -14,8 +14,10 @@ import javafx.scene.Scene;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.util.Callback;
 import javafx.util.Pair;
 
 import java.util.ArrayList;
@@ -165,18 +167,26 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
                                         "-fx-font-size: " + (fontSize.doubleValue() - 2) + " };"
                         );
 
-                        groupings.setCellFactory(param -> new ListCell<Grouping>() {
+                        Callback<ListView<Grouping>, ListCell<Grouping>> cellFactory = new Callback<ListView<Grouping>, ListCell<Grouping>>() {
                             @Override
-                            protected void updateItem(Grouping group, boolean empty) {
-                                super.updateItem(group, empty);
+                            public ListCell<Grouping> call(ListView<Grouping> l) {
+                                return new ListCell<Grouping>() {
 
-                                if (empty || group == null) {
-                                    setText(null);
-                                } else {
-                                    setText(group.getName());
-                                }
+                                    @Override
+                                    protected void updateItem(Grouping group, boolean empty) {
+                                        super.updateItem(group, empty);
+
+                                        if (empty || group == null) {
+                                            setText(null);
+                                        } else {
+                                            setText(group.getName());
+                                        }
+                                    }
+                                };
                             }
-                        });
+                        };
+                        groupings.setCellFactory(cellFactory);
+                        groupings.setButtonCell(cellFactory.call(null));
 
                         Pane ghostPane = new Pane();
                         Scene ghostScene = new Scene(ghostPane);  // a scene is needed to calculate preferred sizes of nodes
@@ -188,6 +198,7 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
                         double maxHeight = groupings.getBoundsInLocal().getHeight() + groupings.getPadding().getTop() + groupings.getPadding().getBottom();
 
                         groupings.getItems().addAll(matrix.getGroupings());
+                        groupings.getItems().add(matrix.getDefaultGrouping());
                         groupings.getSelectionModel().select(((DSMItem) item.getValue()).getGroup1());
                         groupings.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
                             matrix.setItemGroup((DSMItem) item.getValue(), groupings.getValue());
@@ -199,44 +210,6 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
                         });
 
                         cell.getChildren().add(groupings);
-                        break;
-                    }
-                    case "grouping_item_v" -> {
-                        ComboBox<Grouping> groupings = new ComboBox<Grouping>();
-                        groupings.getItems().addAll(matrix.getGroupings());
-                        groupings.setStyle(  // remove border from button when selecting it because this causes weird resizing bugs in the grouping
-                                """
-                                        -fx-focus-color: transparent;
-                                        -fx-background-insets: 0, 0, 0;
-                                        -fx-background-radius: 0, 0, 0;"""
-                        );
-                        groupings.setRotate(-90);
-                        groupings.getSelectionModel().select(((DSMItem) item.getValue()).getGroup1());
-
-                        groupings.setCellFactory(param -> new ListCell<>() {
-                            @Override
-                            protected void updateItem(Grouping group, boolean empty) {
-                                super.updateItem(group, empty);
-
-                                if (empty || group == null) {
-                                    setText(null);
-                                } else {
-                                    setText(group.getName());
-                                }
-                            }
-                        });
-
-                        groupings.setOnAction(e -> {
-                            matrix.setItemGroup((DSMItem) item.getValue(), groupings.getValue());
-                            matrix.setCurrentStateAsCheckpoint();
-                            for (Cell c_ : cells) {
-                                refreshCellHighlight(c_);
-                            }
-                        });
-                        Group g = new Group();  // box will be added to a group so that it will be formatted correctly if it is vertical
-
-                        g.getChildren().add(groupings);
-                        cell.getChildren().add(g);
                         break;
                     }
                     case "index_item" -> {

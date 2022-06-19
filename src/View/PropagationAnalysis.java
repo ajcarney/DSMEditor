@@ -393,7 +393,7 @@ public class PropagationAnalysis {
     /**
      * Opens and starts the gui so users can interact with it.
      */
-    void start() {
+    public void start() {
         Scene scene = new Scene(rootLayout, 1200, 800);
         window.setScene(scene);
         window.show();

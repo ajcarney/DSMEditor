@@ -162,16 +162,6 @@ public class StaticSymmetricHandler extends TemplateMatrixHandler<SymmetricDSM> 
                         cell.getChildren().add(label);
                         break;
                     }
-                    case "grouping_item_v" -> {
-                        Label label = new Label(((DSMItem) item.getValue()).getGroup1().getName());
-                        label.setRotate(-90);
-                        cell.setAlignment(Pos.BOTTOM_RIGHT);
-                        Group g = new Group();  // label will be added to a group so that it will be formatted correctly if it is vertical
-
-                        g.getChildren().add(label);
-                        cell.getChildren().add(g);
-                        break;
-                    }
                     case "index_item" -> {
                         Label label = new Label(String.valueOf(((DSMItem) item.getValue()).getSortIndex()));
                         cell.setAlignment(Pos.BOTTOM_RIGHT);

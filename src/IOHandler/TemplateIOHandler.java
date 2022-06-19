@@ -1,5 +1,6 @@
 package IOHandler;
 
+import Data.SymmetricDSM;
 import Data.TemplateDSM;
 import View.MatrixHandlers.TemplateMatrixHandler;
 import View.Widgets.MiscWidgets;
@@ -16,6 +17,9 @@ import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.input.SAXBuilder;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -80,6 +84,33 @@ public abstract class TemplateIOHandler<T1 extends TemplateDSM, T2 extends Templ
         }
 
         return file;
+    }
+
+
+    /**
+     * Reads a file into memory to determine what type of matrix it is
+     *
+     * @param file  the file to read in
+     * @return      type string of the dsm type the file contains
+     */
+    public static String getFileDSMType(File file) {
+        try {
+            SymmetricDSM matrix = new SymmetricDSM();
+
+            SAXBuilder saxBuilder = new SAXBuilder();
+            Document document = saxBuilder.build(file);  // read file into memory
+            Element rootElement = document.getRootElement();
+            Element info = rootElement.getChild("info");
+
+            return info.getChild("type").getText();
+
+        } catch(Exception e) {
+            // TODO: add alert box that says the file was corrupted in some way and could not be read in
+            System.out.println("Error checking DSM file type");
+            System.out.println(e);
+            e.printStackTrace();
+            return null;
+        }
     }
 
 

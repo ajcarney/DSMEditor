@@ -187,7 +187,9 @@ public abstract class TemplateDSM {
      * could go horribly wrong
      */
     public final void setCurrentStateAsCheckpoint() {
-        undoStack.peek().setCheckpoint(true);
+        if (!undoStack.isEmpty()) {
+            undoStack.peek().setCheckpoint(true);
+        }
         redoStack.clear();
     }
 

@@ -1,10 +1,14 @@
 package View;
 
+import Data.MatrixController;
+import Data.SymmetricDSM;
 import Data.TemplateDSM;
 import IOHandler.TemplateIOHandler;
 import View.HeaderMenu.DefaultHeaderMenu;
+import View.HeaderMenu.SymmetricHeaderMenu;
 import View.HeaderMenu.TemplateHeaderMenu;
 import View.MatrixHandlers.TemplateMatrixHandler;
+import View.SideBarTools.SymmetricSideBar;
 import View.SideBarTools.TemplateSideBar;
 import View.Widgets.DraggableTab;
 import javafx.application.Platform;
@@ -13,7 +17,6 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.HashMap;
 
 
@@ -25,18 +28,13 @@ import java.util.HashMap;
 public class EditorPane {
     private BorderPane rootLayout;
 
-    private TabPane tabPane;
-    private HashMap<DraggableTab, Integer> tabs;  // tab object, matrix uid
+    private final TabPane tabPane = new TabPane();
+    private final HashMap<DraggableTab, Integer> tabs = new HashMap<>();  // tab object, matrix uid
 
     private static int currentMatrixUid = 0;
-    private HashMap<Integer, TemplateDSM> matrices;
-    private HashMap<Integer, TemplateIOHandler> matrixIOHandlers;
-    private HashMap<Integer, TemplateMatrixHandler> matrixHandlers;
-    private HashMap<Integer, TemplateHeaderMenu> headerMenus;
-    private HashMap<Integer, TemplateSideBar> sideBars;
+    private MatrixController matrices;
 
     private MatrixMetaDataPane matrixMetaDataPane;
-    private ConnectionSearchWidget searchWidget;
 
     private static final double[] fontSizes = {
         5.0, 6.0, 8.0, 9.0, 9.5, 10.0, 10.5, 11.0, 12.0, 12.5, 14.0, 16.0, 18.0, 24.0, 30.0, 36.0, 60.0
@@ -52,16 +50,9 @@ public class EditorPane {
      * that manages the saved/unsaved name of the matrices in the tabview.
      *
      */
-    public EditorPane(BorderPane rootLayout) {
-        this.tabPane = new TabPane();
-        this.tabs = new HashMap<>();
-        this.matrices = new HashMap<>();
-        this.matrixIOHandlers = new HashMap<>();
-        this.matrixHandlers = new HashMap<>();
-        this.headerMenus = new HashMap<>();
-        this.sideBars = new HashMap<>();
+    public EditorPane(MatrixController matrices, BorderPane rootLayout) {
+        this.matrices = matrices;
         this.matrixMetaDataPane = new MatrixMetaDataPane();
-        this.searchWidget = new ConnectionSearchWidget(this);
 
         for(int i=0; i<fontSizes.length; i++) {
             if(fontSizes[i] == DEFAULT_FONT_SIZE) {
@@ -73,11 +64,11 @@ public class EditorPane {
 
         tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.ALL_TABS);  // any tab can be closed, but add event to be called on close
 
-        this.nameHandlerThread = new Thread(() -> {
+        this.nameHandlerThread = new Thread(() -> {  // TODO: this should be set up as a binding
             while(true) {  // go through and update names
                 for(HashMap.Entry<DraggableTab, Integer> entry : tabs.entrySet()) {
-                    String title = matrixIOHandlers.get(entry.getValue()).getSavePath().getName();
-                    if(!isMatrixSaved(entry.getValue())) {
+                    String title = matrices.getMatrixIOHandler(entry.getValue()).getSavePath().getName();
+                    if(!matrices.isMatrixSaved(entry.getValue())) {
                         title += "*";
                     }
                     if(!entry.getKey().getLabelText().equals(title)) {
@@ -102,89 +93,11 @@ public class EditorPane {
         nameHandlerThread.start();
 
         this.rootLayout = rootLayout;
-        this.rootLayout.setTop(new DefaultHeaderMenu(this, searchWidget).getMenuBar());
+        DefaultHeaderMenu menu = new DefaultHeaderMenu(this);
+        this.rootLayout.setTop(menu.getMenuBar());
+        this.rootLayout.setBottom(menu.getConnectionSearchLayout());
         this.rootLayout.setCenter(getTabPane());
-        this.rootLayout.setBottom(searchWidget.getMainLayout());
-    }
-
-
-    /**
-     * Creates and adds a matrix tab to the TabPane from a matrix object.
-     *
-     * @param  matrix  the matrix to add a tab for
-     */
-    public void addTab(TemplateDSM matrix, TemplateIOHandler ioHandler, TemplateMatrixHandler matrixHandler, TemplateHeaderMenu headerMenu, TemplateSideBar sideBar) {
-        int matrixUid = currentMatrixUid;
-        currentMatrixUid += 1;
-
-        this.matrices.put(matrixUid, matrix);
-        this.matrixIOHandlers.put(matrixUid, ioHandler);
-        this.matrixHandlers.put(matrixUid, matrixHandler);
-        this.headerMenus.put(matrixUid, headerMenu);
-        this.sideBars.put(matrixUid, sideBar);
-
-        // update the root layout
-        this.rootLayout.setTop(headerMenu.getMenuBar());
-        this.rootLayout.setLeft(sideBar.getLayout());
-
-        String title = this.matrixIOHandlers.get(matrixUid).getSavePath().getName();
-        if(!isMatrixSaved(matrixUid)) {
-            title += "*";
-        }
-        DraggableTab tab = new DraggableTab(title);
-        this.matrixHandlers.get(matrixUid).refreshMatrixEditor();
-        tab.setContent(this.matrixHandlers.get(matrixUid).getMatrixEditor());
-        tab.setDetachable(false);
-        tabPane.getScene().setOnKeyPressed(e -> {  // add keybinding to toggle cross-highlighting on the editor
-            if (e.getCode() == KeyCode.F) {
-                this.matrixHandlers.get(matrixUid).toggleCrossHighlighting();
-            }
-        });
-
-        tab.setOnCloseRequest(e -> {
-            if(!isMatrixSaved(matrixUid)) {
-                focusTab(this.matrixIOHandlers.get(matrixUid).getSavePath());
-                int selection = this.matrixIOHandlers.get(matrixUid).promptSave();
-
-                // 0 = close the tab, 1 = save and close, 2 = don't close
-                if(selection == 2) {  // user doesn't want to close the pane so consume the event
-                    if(e != null) {
-                        e.consume();
-                    }
-                    return;
-                } else if(selection == 1) {  // user wants to save before closing the pane
-                    // TODO: if there is an error saving, then display a message and don't close the file
-                    this.matrixIOHandlers.get(matrixUid).saveMatrixToFile(this.matrices.get(matrixUid), this.matrixIOHandlers.get(matrixUid).getSavePath());
-                }
-            }
-            DraggableTab thisTab = null;
-            for (HashMap.Entry<DraggableTab, Integer> m : tabs.entrySet()) {  // remove from HashMap by uid
-                if(m.getValue() == matrixUid) {
-                    thisTab = m.getKey();
-                    break;
-                }
-            }
-            this.tabs.remove(thisTab);
-            this.tabPane.getTabs().remove(thisTab);
-            this.matrices.remove(matrixUid);
-            this.matrixIOHandlers.remove(matrixUid);
-            this.matrixHandlers.remove(matrixUid);
-            this.headerMenus.remove(matrixUid);
-            this.sideBars.remove(matrixUid);
-            this.matrixMetaDataPane.setMatrix(null);
-
-            if(this.tabs.isEmpty()) {
-                this.rootLayout.setTop(new DefaultHeaderMenu(this, searchWidget).getMenuBar());
-                this.rootLayout.setLeft(null);
-            }
-        });
-
-        tab.setOnSelectionChanged(e -> {
-            matrixMetaDataPane.setMatrix(this.matrices.get(matrixUid));
-        });
-
-        tabs.put(tab, matrixUid);
-        tabPane.getTabs().add(tab);
+        this.rootLayout.setRight(matrixMetaDataPane.getLayout());
     }
 
 
@@ -210,80 +123,10 @@ public class EditorPane {
      */
     public TemplateDSM getFocusedMatrix() {
         try {
-            return matrices.get(getFocusedMatrixUid());
+            return matrices.getMatrix(getFocusedMatrixUid());
         } catch(Exception e) {
             return null;
         }
-    }
-
-
-    /**
-     * @return  the hashmap for all the matrix io handlers
-     */
-    public HashMap<Integer, TemplateDSM> getMatrices() {
-        return this.matrices;
-    }
-
-
-    /**
-     * returns a matrix based on the matrix uid
-     *
-     * @param matrixUid  the uid of the matrix
-     * @return           the matrix object associated with the uid
-     */
-    public TemplateDSM getMatrix(int matrixUid) {
-        return this.matrices.get(matrixUid);
-    }
-
-
-    /**
-     * returns a matrix handler based on the matrix uid
-     *
-     * @param matrixUid  the uid of the matrix
-     * @return           the matrix handler object associated with the uid
-     */
-    public TemplateMatrixHandler getMatrixHandler(int matrixUid) {
-        return this.matrixHandlers.get(matrixUid);
-    }
-
-
-    /**
-     * @return  the hashmap for all the matrix handlers
-     */
-    public HashMap<Integer, TemplateMatrixHandler> getMatrixHandlers() {
-        return this.matrixHandlers;
-    }
-
-
-    /**
-     * @return  the hashmap for all the matrix io handlers
-     */
-    public HashMap<Integer, TemplateIOHandler> getMatrixIOHandlers() {
-        return this.matrixIOHandlers;
-    }
-
-
-
-    /**
-     * returns a matrix io handler based on the matrix uid
-     *
-     * @param matrixUid  the uid of the matrix
-     * @return           the matrix io handler object associated with the uid
-     */
-    public TemplateIOHandler getMatrixIOHandler(int matrixUid) {
-        return this.matrixIOHandlers.get(matrixUid);
-    }
-
-
-    /**
-     * @return  a list of all the absolute save paths for the matrices stored by the editor
-     */
-    public ArrayList<String> getMatrixFileAbsoluteSavePaths() {
-        ArrayList<String> saveNames = new ArrayList<>();
-        for(TemplateIOHandler ioHandler : this.matrixIOHandlers.values()) {
-            saveNames.add(ioHandler.getSavePath().getAbsolutePath());
-        }
-        return saveNames;
     }
 
 
@@ -305,21 +148,12 @@ public class EditorPane {
 
 
     /**
-     * Focuses a tab by a matrices save file
+     * Returns that HashMap that contains the tab objects and matrix uids
      *
-     * @param  file the matrix with this file path will be focused
+     * @return the tabs HashMap
      */
-    public void focusTab(File file) {
-        DraggableTab tab = null;
-        for (HashMap.Entry<DraggableTab, Integer> e : tabs.entrySet()) {
-            if(this.matrixIOHandlers.get(e.getValue()).getSavePath().getAbsolutePath().equals(file.getAbsolutePath())) {
-                tab = e.getKey();
-                break;
-            }
-        }
-        if(tab != null) {
-            tabPane.getSelectionModel().select(tab);
-        }
+    public HashMap<DraggableTab, Integer> getTabs() {
+        return tabs;
     }
 
 
@@ -334,24 +168,143 @@ public class EditorPane {
 
 
     /**
-     * Refreshes a tabs content by redrawing the content
+     * @return  The matrix controller object that all the tabs are based on
      */
-    public void refreshTab() {
-        if(getFocusedMatrixUid() != null) {
-            this.matrixHandlers.get(getFocusedMatrixUid()).refreshMatrixEditor();
-            getFocusedTab().setContent(this.matrixHandlers.get(getFocusedMatrixUid()).getMatrixEditor());
-            matrixMetaDataPane.setMatrix(this.matrices.get(getFocusedMatrixUid()));
+    public MatrixController getMatrixController() {
+        return matrices;
+    }
+
+
+    /**
+     * Creates and adds a matrix tab to the TabPane from a matrix object.
+     *
+     * @param  matrix  the matrix to add a tab for
+     */
+    public void addTab(TemplateDSM matrix, TemplateIOHandler ioHandler, TemplateMatrixHandler matrixHandler, TemplateHeaderMenu headerMenu, TemplateSideBar sideBar) {
+        int matrixUid = currentMatrixUid;
+        currentMatrixUid += 1;
+
+        this.matrices.addMatrix(matrixUid, matrix, ioHandler, matrixHandler);
+
+        // update the root layout
+        this.rootLayout.setTop(headerMenu.getMenuBar());
+        this.rootLayout.setLeft(sideBar.getLayout());
+
+        String title = this.matrices.getMatrixIOHandler(matrixUid).getSavePath().getName();
+        if(!matrices.isMatrixSaved(matrixUid)) {
+            title += "*";
+        }
+        DraggableTab tab = new DraggableTab(title);
+        this.matrices.getMatrixHandler(matrixUid).refreshMatrixEditor();
+        tab.setContent(this.matrices.getMatrixHandler(matrixUid).getMatrixEditor());
+        tab.setDetachable(false);
+        tabPane.getScene().setOnKeyPressed(e -> {  // add keybinding to toggle cross-highlighting on the editor
+            if (e.getCode() == KeyCode.F) {
+                this.matrices.getMatrixHandler(matrixUid).toggleCrossHighlighting();
+            }
+        });
+
+        tab.setOnCloseRequest(e -> {
+            if(!matrices.isMatrixSaved(matrixUid)) {
+                focusTab(matrixUid);
+                int selection = this.matrices.getMatrixIOHandler(matrixUid).promptSave();
+
+                // 0 = close the tab, 1 = save and close, 2 = don't close
+                if(selection == 2) {  // user doesn't want to close the pane so consume the event
+                    if(e != null) {
+                        e.consume();
+                    }
+                    return;
+                } else if(selection == 1) {  // user wants to save before closing the pane
+                    // TODO: if there is an error saving, then display a message and don't close the file
+                    this.matrices.getMatrixIOHandler(matrixUid).saveMatrixToFile(this.matrices.getMatrix(matrixUid), this.matrices.getMatrixIOHandler(matrixUid).getSavePath());
+                }
+            }
+            DraggableTab thisTab = null;
+            for (HashMap.Entry<DraggableTab, Integer> m : tabs.entrySet()) {  // remove from HashMap by uid
+                if(m.getValue() == matrixUid) {
+                    thisTab = m.getKey();
+                    break;
+                }
+            }
+            this.tabs.remove(thisTab);
+            this.tabPane.getTabs().remove(thisTab);
+            this.matrices.removeMatrix(matrixUid);
+
+            if(this.tabs.isEmpty()) {
+                DefaultHeaderMenu menu = new DefaultHeaderMenu(this);
+                this.rootLayout.setTop(menu.getMenuBar());
+                this.rootLayout.setBottom(menu.getConnectionSearchLayout());
+                this.rootLayout.setLeft(null);
+                this.matrixMetaDataPane.setMatrix(null);
+            }
+
+        });
+
+        tab.setOnSelectionChanged(e -> {
+            matrixMetaDataPane.setMatrix(this.matrices.getMatrix(matrixUid));
+            if(this.matrices.getMatrix(matrixUid).getClass().equals(SymmetricDSM.class)) {
+                SymmetricHeaderMenu menu = new SymmetricHeaderMenu(this);
+                this.rootLayout.setTop(menu.getMenuBar());
+                this.rootLayout.setBottom(menu.getConnectionSearchLayout());
+                this.rootLayout.setLeft(new SymmetricSideBar((SymmetricDSM)this.matrices.getMatrix(matrixUid), this).getLayout());
+            } else {
+                throw new IllegalStateException("Matrix being handled was not of a valid type");
+            }
+        });
+
+        tabs.put(tab, matrixUid);
+        tabPane.getTabs().add(tab);
+    }
+
+
+    /**
+     * Focuses a tab by the matrix uid
+     *
+     * @param  matrixUid  the matrix uid that will be focused
+     */
+    public void focusTab(int matrixUid) {
+        DraggableTab tab = null;
+        for (HashMap.Entry<DraggableTab, Integer> e : tabs.entrySet()) {
+            if(e.getValue().equals(matrixUid)) {
+                tab = e.getKey();
+                break;
+            }
+        }
+        if(tab != null) {
+            tabPane.getSelectionModel().select(tab);
         }
     }
 
 
     /**
-     * Returns that HashMap that contains the tab objects and matrix uids
+     * Focuses a tab by a matrices save file
      *
-     * @return the tabs HashMap
+     * @param file the matrix with this file path will be focused
      */
-    public HashMap<DraggableTab, Integer> getTabs() {
-        return tabs;
+    public void focusTab(File file) {
+        DraggableTab tab = null;
+        for (HashMap.Entry<DraggableTab, Integer> e : tabs.entrySet()) {
+            if(this.matrices.getMatrixIOHandler(e.getValue()).getSavePath().getAbsolutePath().equals(file.getAbsolutePath())) {
+                tab = e.getKey();
+                break;
+            }
+        }
+        if(tab != null) {
+            tabPane.getSelectionModel().select(tab);
+        }
+    }
+
+
+    /**
+     * Refreshes a tabs content by redrawing the content
+     */
+    public void refreshTab() {
+        if(getFocusedMatrixUid() != null) {
+            this.matrices.getMatrixHandler(getFocusedMatrixUid()).refreshMatrixEditor();
+            getFocusedTab().setContent(this.matrices.getMatrixHandler(getFocusedMatrixUid()).getMatrixEditor());
+            matrixMetaDataPane.setMatrix(this.matrices.getMatrix(getFocusedMatrixUid()));
+        }
     }
 
 
@@ -374,8 +327,8 @@ public class EditorPane {
         currentFontSizeIndex += 1;
         if(currentFontSizeIndex > fontSizes.length - 1) currentFontSizeIndex = fontSizes.length - 1;
 
-        this.matrixHandlers.get(getFocusedMatrixUid()).setFontSize(fontSizes[currentFontSizeIndex]);
-        this.matrixHandlers.get(getFocusedMatrixUid()).refreshMatrixEditor();
+        this.matrices.getMatrixHandler(getFocusedMatrixUid()).setFontSize(fontSizes[currentFontSizeIndex]);
+        this.matrices.getMatrixHandler(getFocusedMatrixUid()).refreshMatrixEditor();
         refreshTab();
     }
 
@@ -388,8 +341,8 @@ public class EditorPane {
         currentFontSizeIndex -= 1;
         if(currentFontSizeIndex < 0) currentFontSizeIndex = 0;
 
-        this.matrixHandlers.get(getFocusedMatrixUid()).setFontSize(fontSizes[currentFontSizeIndex]);
-        this.matrixHandlers.get(getFocusedMatrixUid()).refreshMatrixEditor();
+        this.matrices.getMatrixHandler(getFocusedMatrixUid()).setFontSize(fontSizes[currentFontSizeIndex]);
+        this.matrices.getMatrixHandler(getFocusedMatrixUid()).refreshMatrixEditor();
         refreshTab();
     }
 
@@ -406,46 +359,9 @@ public class EditorPane {
             }
         }
 
-        this.matrixHandlers.get(getFocusedMatrixUid()).setFontSize(DEFAULT_FONT_SIZE);
-        this.matrixHandlers.get(getFocusedMatrixUid()).refreshMatrixEditor();
+        this.matrices.getMatrixHandler(getFocusedMatrixUid()).setFontSize(DEFAULT_FONT_SIZE);
+        this.matrices.getMatrixHandler(getFocusedMatrixUid()).refreshMatrixEditor();
         refreshTab();
     }
-
-
-    /**
-     * Finds all the save paths of the matrices being handled
-     *
-     * @return  ArrayList of type string of the absolute paths of the save locations
-     */
-    public ArrayList<String> getMatrixFileSavePaths() {
-        ArrayList<String> savePaths = new ArrayList<>();
-        for(TemplateIOHandler ioHandler : this.matrixIOHandlers.values()) {
-            savePaths.add(ioHandler.getSavePath().getAbsolutePath());
-        }
-
-        return savePaths;
-    }
-
-
-    /**
-     * returns whether or not the wasModifiedFlag of a matrix is set or cleared. If
-     * it is set then the matrix is not saved. If the flag is cleared, then the matrix
-     * is saved.
-     *
-     * @param matrixUid the matrix to check whether or not has been saved
-     * @return true if matrix is saved, false otherwise
-     */
-    public boolean isMatrixSaved(int matrixUid) {
-        return !matrices.get(matrixUid).getWasModified();
-    }
-
-
-    /**
-     * @return  the connection search widget of the matrix
-     */
-    public ConnectionSearchWidget getSearchWidget() {
-        return this.searchWidget;
-    }
-
 
 }

@@ -1,10 +1,6 @@
-import Data.SymmetricDSM;
+import Data.MatrixController;
 import Data.TemplateDSM;
-import IOHandler.SymmetricIOHandler;
 import View.EditorPane;
-import View.HeaderMenu.SymmetricHeaderMenu;
-import View.MatrixHandlers.SymmetricMatrixHandler;
-import View.SideBarTools.SymmetricSideBar;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.event.Event;
@@ -31,7 +27,7 @@ import java.util.Map;
 public class Main extends Application {
     private static final BorderPane root = new BorderPane();
 
-    private static final EditorPane editor = new EditorPane(root);
+    private static final EditorPane editor = new EditorPane(new MatrixController(), root);
 
     private static ArrayList<String> cliArgs = new ArrayList<>();
 
@@ -132,9 +128,9 @@ public class Main extends Application {
 
        File recoveryDir = new File("./.recovery");
        if(!recoveryDir.exists()) recoveryDir.mkdir();
-       for(Map.Entry<Integer, TemplateDSM> matrix : editor.getMatrices().entrySet()) {
-           File f = new File("./.recovery/" + editor.getMatrixIOHandler(matrix.getKey()).getSavePath().getName());
-           editor.getMatrixIOHandler(matrix.getKey()).saveMatrixToFile(matrix.getValue(), f);
+       for(Map.Entry<Integer, TemplateDSM> matrix : editor.getMatrixController().getMatrices().entrySet()) {
+           File f = new File("./.recovery/" + editor.getMatrixController().getMatrixIOHandler(matrix.getKey()).getSavePath().getName());
+           editor.getMatrixController().getMatrixIOHandler(matrix.getKey()).saveMatrixToFile(matrix.getValue(), f);
            matrix.getValue().setWasModified();  // matrix is not saved to known location, so don't display it as saved to the user
        }
 
