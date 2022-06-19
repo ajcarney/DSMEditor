@@ -15,6 +15,7 @@ import javafx.util.Pair;
 
 import java.util.ArrayList;
 
+
 /**
  * A class for viewing data in a grid with the ability to freeze rows or columns along the outside of the table
  */

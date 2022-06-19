@@ -1,6 +1,11 @@
 import Data.MatrixController;
+import Data.SymmetricDSM;
 import Data.TemplateDSM;
+import IOHandler.SymmetricIOHandler;
 import View.EditorPane;
+import View.HeaderMenu.SymmetricHeaderMenu;
+import View.MatrixHandlers.SymmetricMatrixHandler;
+import View.SideBarTools.SymmetricSideBar;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.event.Event;
@@ -50,15 +55,15 @@ public class Main extends Application {
 
         // start with a tab open (used for debugging, remove or comment out for release)
         if(cliArgs.contains("--debug=true")) {
-//            SymmetricIOHandler ioHandler = new SymmetricIOHandler(new File("/home/aiden/Documents/DSMEditor/dsms/vpas3.dsm"));
-//            SymmetricDSM matrix = ioHandler.readFile();
-//            this.editor.addTab(
-//                matrix,
-//                ioHandler,
-//                new SymmetricMatrixHandler(matrix, 12.0),
-//                new SymmetricHeaderMenu(editor, editor.getSearchWidget()),
-//                new SymmetricSideBar(matrix, editor
-//            ));
+            SymmetricIOHandler ioHandler = new SymmetricIOHandler(new File("/home/aiden/Documents/DSMEditor/test2.dsm"));
+            SymmetricDSM matrix = ioHandler.readFile();
+            this.editor.addTab(
+                matrix,
+                ioHandler,
+                new SymmetricMatrixHandler(matrix, 12.0),
+                new SymmetricHeaderMenu(editor),
+                new SymmetricSideBar(matrix, editor)
+            );
         }
 
         for(int i=0; i<cliArgs.size(); i++) {

@@ -5,6 +5,10 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
+
+/**
+ * A class that contains miscellaneous widgets that do not have many functions
+ */
 public class MiscWidgets {
     /**
      * Creates a JavaFx Pane that grows vertically to fill up remaining space in a window

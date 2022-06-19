@@ -6,6 +6,11 @@ import javafx.scene.control.Button;
 import javafx.scene.layout.VBox;
 
 
+/**
+ * Generic class for creating a sidebar to interact with matrices
+ *
+ * @param <T>  the type of matrix the sidebar is for
+ */
 public abstract class TemplateSideBar<T extends TemplateDSM> {
     protected VBox layout;
 

@@ -476,34 +476,7 @@ public class SymmetricDSM extends TemplateDSM {
      */
     public DSMConnection getSymmetricConnection(int rowUid, int colUid) {
         Pair<Integer, Integer> symmetricUids = getSymmetricConnectionUids(rowUid, colUid);
-        return getConnection(rowUid, colUid);
-    }
-
-
-    /**
-     * Checks to make sure that connections have a symmetrical counterpart that has an equal name and an equal weight
-     *
-     * @return list of row uid, column uid of the connections that have issues. Will always be an even length.
-     */
-    public ArrayList<Pair<Integer, Integer>> findSymmetryErrors() {
-        ArrayList<Pair<Integer, Integer>> errors = new ArrayList<>();
-        for(DSMConnection connection : (Vector<DSMConnection>)connections.clone()) {  // use a clone so that there are (hopefully) not concurrency issues
-            Pair<Integer, Integer> symmetricUids = getSymmetricConnectionUids(connection.getRowUid(), connection.getColUid());
-            if(symmetricUids == null) {
-                return errors;
-            }
-
-            DSMConnection symmetricConnection = getConnection(symmetricUids.getKey(), symmetricUids.getValue());
-            if(symmetricConnection == null) {
-                errors.add(new Pair<>(connection.getRowUid(), connection.getColUid()));
-                errors.add(new Pair<>(symmetricUids.getKey(), symmetricUids.getValue()));
-            } else if(!symmetricConnection.getConnectionName().equals(connection.getConnectionName()) || symmetricConnection.getWeight() != connection.getWeight()) {
-                errors.add(new Pair<>(connection.getRowUid(), connection.getColUid()));
-                errors.add(new Pair<>(symmetricUids.getKey(), symmetricUids.getValue()));
-            }
-        }
-
-        return errors;
+        return getConnection(symmetricUids.getKey(), symmetricUids.getValue());
     }
 
 

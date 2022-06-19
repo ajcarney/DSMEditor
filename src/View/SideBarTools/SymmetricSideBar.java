@@ -25,6 +25,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
 
+
+/**
+ * Creates a sidebar with methods to interact with a symmetric matrix
+ */
 public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
 
     protected final Button configureGroupings = new Button("Configure Groupings");

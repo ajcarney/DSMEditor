@@ -17,6 +17,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Vector;
 
+
+/**
+ * Creates a static view of a symmetric matrix
+ */
 public class StaticSymmetricHandler extends TemplateMatrixHandler<SymmetricDSM> {
     
     private Boolean showWeights = false;

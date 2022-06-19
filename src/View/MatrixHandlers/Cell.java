@@ -11,6 +11,10 @@ import javafx.util.Pair;
 import java.util.HashMap;
 
 
+/**
+ * Generic class to hold a data type that the matrix gui handler uses to display the matrix elements along with storing
+ * metadata for them
+ */
 public class Cell {
     protected Pair<Integer, Integer> gridLocation;
     protected HBox guiCell;

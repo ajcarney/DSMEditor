@@ -102,6 +102,13 @@ public class Grouping {
         this.color = color;
     }
 
+
+    /**
+     * The function for determining if two groupings are equal. Compare on uid
+     *
+     * @param o  the object to compare
+     * @return   true if the objects are equal
+     */
     @Override
     public boolean equals(Object o) {
         // If the object is compared with itself then return true

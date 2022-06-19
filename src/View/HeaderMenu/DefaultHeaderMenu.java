@@ -2,6 +2,10 @@ package View.HeaderMenu;
 
 import View.EditorPane;
 
+
+/**
+ * A default header menu that contains only basic functions
+ */
 public class DefaultHeaderMenu extends TemplateHeaderMenu {
 
     /**

@@ -1,14 +1,12 @@
 package View.HeaderMenu;
 
 import Data.SymmetricDSM;
-import Data.TemplateDSM;
 import IOHandler.SymmetricIOHandler;
 import IOHandler.TemplateIOHandler;
 import View.ClusterAlgorithm;
 import View.ClusterAnalysis;
 import View.EditorPane;
 import View.MatrixHandlers.SymmetricMatrixHandler;
-import View.MatrixHandlers.TemplateMatrixHandler;
 import View.PropagationAnalysis;
 import View.SideBarTools.SymmetricSideBar;
 import javafx.scene.control.Menu;
@@ -17,20 +15,16 @@ import javafx.scene.control.RadioMenuItem;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.stage.FileChooser;
 import javafx.stage.WindowEvent;
-import javafx.util.Pair;
 
-import java.io.Closeable;
 import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Set;
-import java.util.stream.Collectors;
 
-public class SymmetricHeaderMenu extends TemplateHeaderMenu implements AutoCloseable {
 
-    private Thread symmetryErrorHandlerThread = null;
-    private Boolean runSymmetryValidationThread;
-
+/**
+ * Class to create the header of the gui for a symmetric matrix.
+ *
+ * @author Aiden Carney
+ */
+public class SymmetricHeaderMenu extends TemplateHeaderMenu {
 
     /**
      * Creates a new instance of the header menu and instantiate widgets on it
@@ -53,10 +47,10 @@ public class SymmetricHeaderMenu extends TemplateHeaderMenu implements AutoClose
         MenuItem newSymmetric = new MenuItem("Symmetric Matrix");
         newSymmetric.setOnAction(e -> {
             SymmetricDSM matrix = new SymmetricDSM();
-            File file = new File("./untitled" + Integer.toString(defaultName));
+            File file = new File("./untitled" + defaultName);
             while(file.exists()) {  // make sure file does not exist
                 defaultName += 1;
-                file = new File("./untitled" + Integer.toString(defaultName));
+                file = new File("./untitled" + defaultName);
             }
 
             this.editor.addTab(
@@ -104,14 +98,13 @@ public class SymmetricHeaderMenu extends TemplateHeaderMenu implements AutoClose
                             ));
                         } else {
                             // TODO: open window saying there was an error parsing the document
-                            System.out.println("there was an error reading the file " + file.toString());
+                            System.out.println("there was an error reading the file " + file);
                         }
 
                         break;
                     }
                     default -> {
                         System.out.println("the type of dsm could not be determined from the file " + file.getAbsolutePath());
-                        break;
                     }
                 }
             }
@@ -207,10 +200,8 @@ public class SymmetricHeaderMenu extends TemplateHeaderMenu implements AutoClose
             if(editor.getFocusedMatrixUid() == null) {
                 return;
             }
-            int matrixUid = editor.getFocusedMatrixUid();
             SymmetricDSM matrix = (SymmetricDSM) this.editor.getFocusedMatrix();
-            SymmetricIOHandler ioHandler = (SymmetricIOHandler) this.editor.getMatrixController().getMatrixIOHandler(matrixUid);
-            ioHandler.promptExportToThebeau(matrix, menuBar.getScene().getWindow());
+            SymmetricIOHandler.promptExportToThebeau(matrix, menuBar.getScene().getWindow());
         });
         MenuItem exportImage = new MenuItem("PNG Image File (.png)");
         exportImage.setOnAction(e -> {
@@ -305,58 +296,16 @@ public class SymmetricHeaderMenu extends TemplateHeaderMenu implements AutoClose
      */
     @Override
     protected void setUpToolsMenu() {
-        runSymmetryValidationThread = false;
-
         RadioMenuItem validateSymmetry = new RadioMenuItem("Validate Symmetry");
         validateSymmetry.setOnAction(e -> {
-            runSymmetryValidationThread = validateSymmetry.isSelected();
-        });
-
-        symmetryErrorHandlerThread = new Thread(() -> {
-            ArrayList<Pair<Integer, Integer>> errors = new ArrayList<>();
-            ArrayList<Pair<Integer, Integer>> prevErrors = new ArrayList<>();
-
-            while(true) {  // go through and update names
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-
-                if(this.editor.getFocusedMatrix() == null) {  // this call is still needed because of timing issues when tab switches
-                    continue;
-                }
-
-                synchronized (this.editor.getFocusedMatrix()) {  // TODO: maybe this synchronization call can be removed. Idk, i was too scared to check
-                    SymmetricMatrixHandler m = (SymmetricMatrixHandler) this.editor.getMatrixController().getMatrixHandler(editor.getFocusedMatrixUid());
-                    SymmetricDSM matrix = (SymmetricDSM) this.editor.getFocusedMatrix();
-
-                    errors = matrix.findSymmetryErrors();
-                    Set<Pair<Integer, Integer>> prevAndCurrentErrors = prevErrors.stream().collect(Collectors.toSet());
-                    prevAndCurrentErrors.addAll(errors);
-
-                    if (!runSymmetryValidationThread) {
-                        for (Pair<Integer, Integer> pair : prevAndCurrentErrors) {
-                            m.clearCellHighlight(m.getGridLocFromUids(pair), "symmetryError");
-                        }
-                        continue;
-                    } else {
-                        for (Pair<Integer, Integer> pair : prevAndCurrentErrors) {
-                            if (!errors.contains(pair) && prevErrors.contains(pair)) {  // old error that has been fixed, unhighlight it
-                                m.clearCellHighlight(m.getGridLocFromUids(pair), "symmetryError");
-                            } else {
-                                m.setCellHighlight(m.getGridLocFromUids(pair), TemplateMatrixHandler.SYMMETRY_ERROR_BACKGROUND, "symmetryError");
-                            }
-                        }
-                    }
-
-                    prevErrors = errors;
-
-                }
+            SymmetricMatrixHandler matrixHandler = (SymmetricMatrixHandler) editor.getMatrixController().getMatrixHandler(editor.getFocusedMatrixUid());
+            if(validateSymmetry.isSelected()) {
+                matrixHandler.setValidateSymmetry();
+            } else {
+                matrixHandler.clearValidateSymmetry();
             }
         });
-        symmetryErrorHandlerThread.setDaemon(true);
-        symmetryErrorHandlerThread.start();
+
 
         MenuItem search = new MenuItem("Find Connections");
         search.setOnAction(e -> {
@@ -396,19 +345,5 @@ public class SymmetricHeaderMenu extends TemplateHeaderMenu implements AutoClose
 
         toolsMenu.getItems().addAll(validateSymmetry, search, propagationAnalysis, coordinationScore, thebeau);
 
-    }
-
-    /**
-     * This method is used to clean up after the thread when an instance of this class goes out of scope
-     *
-     * @throws Exception  not used
-     */
-    @Override
-    public void close() throws Exception {
-        runSymmetryValidationThread = false;
-        if(symmetryErrorHandlerThread != null) {
-            symmetryErrorHandlerThread.interrupt();  // stop the thread
-        }
-        System.out.println("cleaning up symmetry thread");
     }
 }

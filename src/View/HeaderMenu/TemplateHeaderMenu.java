@@ -143,42 +143,6 @@ public abstract class TemplateHeaderMenu {
 
         importMenu.getItems().add(importThebeau);
 
-        MenuItem saveFile = new MenuItem("Save...");
-        saveFile.setOnAction(e -> {
-            if(editor.getFocusedMatrixUid() == null) {
-                return;
-            }
-            if(this.editor.getMatrixController().getMatrixIOHandler(editor.getFocusedMatrixUid()).getSavePath().getAbsolutePath().contains("untitled")) {
-                FileChooser fileChooser = new FileChooser();
-                fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("DSM File", "*.dsm"));  // dsm is the only file type usable
-                File fileName = fileChooser.showSaveDialog(menuBar.getScene().getWindow());
-                if(fileName != null) {
-                    this.editor.getMatrixController().getMatrixIOHandler(editor.getFocusedMatrixUid()).setSavePath(fileName);
-                } else {  // user did not select a file, so do not save it
-                    return;
-                }
-            }
-            int matrixUid = editor.getFocusedMatrixUid();
-            SymmetricDSM matrix = (SymmetricDSM) this.editor.getFocusedMatrix();
-            int code = this.editor.getMatrixController().getMatrixIOHandler(matrixUid).saveMatrixToFile(matrix, this.editor.getMatrixController().getMatrixIOHandler(editor.getFocusedMatrixUid()).getSavePath());  // TODO: add checking with the return code
-        });
-
-        MenuItem saveFileAs = new MenuItem("Save As...");
-        saveFileAs.setOnAction(e -> {
-            if(editor.getFocusedMatrixUid() == null) {
-                return;
-            }
-            FileChooser fileChooser = new FileChooser();
-            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("DSM File", "*.dsm"));  // dsm is the only file type usable
-            File file = fileChooser.showSaveDialog(menuBar.getScene().getWindow());
-            if(file != null) {
-                int matrixUid = editor.getFocusedMatrixUid();
-                SymmetricDSM matrix = (SymmetricDSM) this.editor.getFocusedMatrix();
-                int code = this.editor.getMatrixController().getMatrixIOHandler(matrixUid).saveMatrixToFile(matrix, file);  // TODO: add checking with the return code
-
-                this.editor.getMatrixController().getMatrixIOHandler(matrixUid).setSavePath(file);
-            }
-        });
 
         MenuItem exit = new MenuItem("Exit");
         exit.setOnAction(e -> {
@@ -193,8 +157,6 @@ public abstract class TemplateHeaderMenu {
 
         fileMenu.getItems().add(newFileMenu);
         fileMenu.getItems().add(openFile);
-        fileMenu.getItems().add(saveFile);
-        fileMenu.getItems().add(saveFileAs);
         fileMenu.getItems().add(new SeparatorMenuItem());
         fileMenu.getItems().add(importMenu);
         fileMenu.getItems().add(new SeparatorMenuItem());

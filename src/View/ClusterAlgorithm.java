@@ -2,9 +2,7 @@ package View;
 
 import Data.SymmetricDSM;
 import IOHandler.SymmetricIOHandler;
-import IOHandler.TemplateIOHandler;
 import View.MatrixHandlers.StaticSymmetricHandler;
-import View.MatrixHandlers.SymmetricMatrixHandler;
 import View.Widgets.NumericTextField;
 import javafx.application.Platform;
 import javafx.beans.property.*;

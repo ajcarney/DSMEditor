@@ -1,7 +1,5 @@
 package Data;
 
-import java.time.Instant;
-
 /**
  * Data class to handle an item in a DSM. Each item has a uid, an alias uid to be used to associate rows
  * and columns in a symmetric matrix, a name, a sort index, and a group

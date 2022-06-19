@@ -25,6 +25,12 @@ import javafx.util.Pair;
 import java.util.HashMap;
 import java.util.Vector;
 
+
+/**
+ * Generic class for displaying a matrix
+ *
+ * @param <T>  the type of matrix this handler is for
+ */
 public abstract class TemplateMatrixHandler<T extends TemplateDSM> {
 
     public static final Background DEFAULT_BACKGROUND = new Background(new BackgroundFill(Color.color(1, 1, 1), new CornerRadii(3), new Insets(0)));
