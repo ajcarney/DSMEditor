@@ -1,4 +1,4 @@
-package DSMData;
+package Data;
 
 /**
  * Data class to manage DSM connections
@@ -99,4 +99,38 @@ public class DSMConnection {
         this.weight = weight;
     }
 
+
+    /**
+     * The function for determining if two connections are equal. Compare on weight and name
+     *
+     * @param o  the object to compare
+     * @return   true if the objects are equal
+     */
+    @Override
+    public boolean equals(Object o) {
+        // If the object is compared with itself then return true
+        if (o == this) {
+            return true;
+        }
+
+        // Check if o is an instance of DSMConnection or not "null instanceof [type]" also returns false
+        if (!(o instanceof DSMConnection)) {
+            return false;
+        }
+
+        // cast to this object
+        DSMConnection c = (DSMConnection) o;
+        return ((c.getConnectionName().equals(this.getConnectionName())) && (c.getWeight() == this.getWeight()) && (c.getRowUid() == this.getRowUid()) && (c.getColUid() == this.getColUid()));  // compare based on name, weight, and uids
+    }
+
+
+    /**
+     * Compares two DSMConnection types to check if they have the same name and weight
+     *
+     * @param c  the connection to compare to
+     * @return   true or false if connections are the same type
+     */
+    public boolean isSameConnectionType(DSMConnection c) {
+        return ((c.getConnectionName().equals(this.getConnectionName())) && (c.getWeight() == this.getWeight()));  // compare based on name and weight
+    }
 }

@@ -1,7 +1,10 @@
-package gui;
+package View;
 
-import DSMData.DSMData;
-import DSMData.DSMItem;
+import Data.Grouping;
+import Data.SymmetricDSM;
+import Data.DSMItem;
+import View.Widgets.FreezeGrid;
+import View.Widgets.NumericTextField;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.Insets;
@@ -23,7 +26,7 @@ import java.util.*;
  * @author Aiden Carney
  */
 public class ClusterAnalysis {
-    DSMData matrix;
+    SymmetricDSM matrix;
 
     Stage window;
     private BorderPane rootLayout;
@@ -51,7 +54,7 @@ public class ClusterAnalysis {
      *
      * @param matrix The matrix to be analyzed
      */
-    public ClusterAnalysis(DSMData matrix) {
+    public ClusterAnalysis(SymmetricDSM matrix) {
         this.matrix = matrix;
 
         window = new Stage();
@@ -200,7 +203,7 @@ public class ClusterAnalysis {
      * runs the algorithm that determines the coordination score of a matrix. Updates content on the main window of the gui
      */
     private void runCoordinationScore() {
-        HashMap<String, Object> coordinationScore = DSMData.getCoordinationScore(matrix, optimalSizeCluster.doubleValue(), powcc.doubleValue(), countByWeight.isSelected());
+        HashMap<String, Object> coordinationScore = SymmetricDSM.getCoordinationScore(matrix, optimalSizeCluster.doubleValue(), powcc.doubleValue(), countByWeight.isSelected());
 
         Label titleLabel = new Label("Cluster Cost Analysis");
         titleLabel.setStyle(titleLabel.getStyle() + "-fx-font-weight: bold;");
@@ -251,7 +254,7 @@ public class ClusterAnalysis {
      * Runs the bidding analysis algorithm for the input matrix. Updates content on the main window of the gui
      */
     private void runClusterBidsAnalysis() {
-        Vector<String> groupOrder = new Vector<>(matrix.getGroupings());
+        Vector<Grouping> groupOrder = new Vector<>(matrix.getGroupings());
         Vector<DSMItem> items = matrix.getRows();
         Collections.sort(items, Comparator.comparing(r -> r.getSortIndex()));
 
@@ -263,15 +266,15 @@ public class ClusterAnalysis {
             ArrayList<String> rowBids = new ArrayList<>();
             double maxBid = 0;
             double minBid = 0;
-            String maxBidGroup = "";
-            String minBidGroup = "";
+            Grouping maxBidGroup = null;
+            Grouping minBidGroup = null;
             for(int c = 0; c < groupOrder.size() + 2; c++) {  // add two to include header columns
                 if(c == 0) {
-                    rowBids.add(items.get(r).getGroup());
+                    rowBids.add(items.get(r).getGroup1().getName());
                 } else if(c == 1) {
                     rowBids.add(items.get(r).getName());
                 } else {
-                    HashMap<Integer, Double> groupBids = DSMData.calculateClusterBids(matrix, groupOrder.get(c - 2), optimalSizeCluster.doubleValue(), powdep.doubleValue(), powbid.doubleValue(), countByWeight.isSelected());
+                    HashMap<Integer, Double> groupBids = SymmetricDSM.calculateClusterBids(matrix, groupOrder.get(c - 2), optimalSizeCluster.doubleValue(), powdep.doubleValue(), powbid.doubleValue(), countByWeight.isSelected());
 
                     double bid = groupBids.get(items.get(r).getUid());
                     rowBids.add(String.valueOf(bid));
@@ -299,9 +302,9 @@ public class ClusterAnalysis {
             for(String text : rowBids) {
                 HBox cell = new HBox();
                 Label label = new Label(text);
-                if(maxBidGroup.equals(items.get(r).getGroup())) {  // highlight green because group has highest bid
+                if(maxBidGroup.equals(items.get(r).getGroup1())) {  // highlight green because group has highest bid
                     cell.setStyle(cell.getStyle() + "-fx-background-color:palegreen");
-                } else if(minBidGroup.equals(items.get(r).getGroup())) {  // highlight red because group has lowest bid
+                } else if(minBidGroup.equals(items.get(r).getGroup1())) {  // highlight red because group has lowest bid
                     cell.setStyle(cell.getStyle() + "-fx-background-color:indianred");
                 } else {
                     cell.setStyle(cell.getStyle() + "-fx-background-color:white");
