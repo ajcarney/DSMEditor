@@ -1,4 +1,4 @@
-package gui;
+package View.Widgets;
 
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
@@ -14,6 +14,7 @@ import javafx.stage.Stage;
 import javafx.util.Pair;
 
 import java.util.ArrayList;
+
 
 /**
  * A class for viewing data in a grid with the ability to freeze rows or columns along the outside of the table

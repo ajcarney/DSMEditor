@@ -1,6 +1,6 @@
-package gui;
+package View;
 
-import DSMData.DSMData;
+import Data.TemplateDSM;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -18,7 +18,7 @@ import javafx.stage.Stage;
  *
  * @author Aiden Carney
  */
-public class InfoHandler {
+public class MatrixMetaDataPane {
     private Label titleLabel;
     private Label projectNameLabel;
     private Label customerLabel;
@@ -29,13 +29,13 @@ public class InfoHandler {
     private VBox layout;
     private GridPane detailsLayout;
 
-    private DSMData matrix;
+    private TemplateDSM matrix;
 
 
     /**
      * Creates a new object and instantiates widgets on the gui.
      */
-    public InfoHandler() {
+    public MatrixMetaDataPane() {
         layout = new VBox();
         detailsLayout = new GridPane();
 
@@ -170,9 +170,9 @@ public class InfoHandler {
     /**
      * Changes which matrix the gui will display the metadata of. Updates the gui as well
      *
-     * @param newMatrix the new DSMData object to use
+     * @param  newMatrix the new matrix object to use
      */
-    public void setMatrix(DSMData newMatrix) {
+    public void setMatrix(TemplateDSM newMatrix) {
         matrix = newMatrix;
         if(matrix != null) {
             titleLabel.setText(matrix.getTitle());
@@ -191,7 +191,7 @@ public class InfoHandler {
     /**
      * Returns the VBox layout that contains all the widgets so that it can be added to a main layout
      *
-     * @return VBox of the gui that displays the metadata
+     * @return  VBox of the gui that displays the metadata
      */
     public VBox getLayout() {
         return layout;

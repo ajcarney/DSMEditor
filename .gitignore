@@ -10,3 +10,4 @@ out/
 prod/
 *.py
 *.MF
+*.xlsx

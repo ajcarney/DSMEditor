@@ -1,4 +1,4 @@
-package gui;
+package View.Widgets;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -238,6 +238,10 @@ public class DraggableTab extends Tab {
 
     private Label getLabel() {
         return nameLabel;
+    }
+
+    public String getLabelText() {
+        return nameLabel.getText();
     }
 
     private boolean betweenX(Rectangle2D r1, Rectangle2D r2, double xPoint) {
