@@ -3,8 +3,11 @@ package View.Widgets;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.Insets;
+import javafx.geometry.Orientation;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollBar;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -85,6 +88,9 @@ public class FreezeGrid {
     private final ArrayList<DoubleProperty> colPrefWidths;
     private final ArrayList<DoubleProperty> rowPrefHeights;
 
+    private final ScrollBar xScroll = new ScrollBar();
+    private final ScrollBar yScroll = new ScrollBar();
+
     private final BorderPane grid;
 
     /**
@@ -96,6 +102,9 @@ public class FreezeGrid {
         cells = new ArrayList<>();
         colPrefWidths = new ArrayList<>();
         rowPrefHeights = new ArrayList<>();
+
+        xScroll.setOrientation(Orientation.HORIZONTAL);
+        yScroll.setOrientation(Orientation.VERTICAL);
     }
 
     /**
@@ -440,26 +449,26 @@ public class FreezeGrid {
         scrollNBox.hvalueProperty().bindBidirectional(scrollCBox.hvalueProperty());
         scrollNBox.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollNBox.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollNBox.setPannable(true);
+        scrollNBox.setPannable(false);
 
         scrollSBox.hvalueProperty().bindBidirectional(scrollCBox.hvalueProperty());
         scrollSBox.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollSBox.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollSBox.setPannable(true);
+        scrollSBox.setPannable(false);
 
         scrollWBox.vvalueProperty().bindBidirectional(scrollCBox.vvalueProperty());
         scrollWBox.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollWBox.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollWBox.setPannable(true);
+        scrollWBox.setPannable(false);
 
         scrollEBox.vvalueProperty().bindBidirectional(scrollCBox.vvalueProperty());
         scrollEBox.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollEBox.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollEBox.setPannable(true);
+        scrollEBox.setPannable(false);
 
         scrollCBox.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollCBox.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollCBox.setPannable(true);
+        scrollCBox.setPannable(false);
 
 
         // add boxes to border pane
@@ -483,6 +492,19 @@ public class FreezeGrid {
         BorderPane.setMargin(scrollCBox, new Insets(-1));
 
         grid.setStyle(grid.getStyle() + "-fx-border-width: -1; -fx-box-border: transparent; -fx-border-style: none;");
+
+        // set up scroll bindings
+        xScroll.minProperty().bindBidirectional(scrollCBox.hminProperty());
+        xScroll.maxProperty().bindBidirectional(scrollCBox.hmaxProperty());
+        scrollCBox.hvalueProperty().bindBidirectional(xScroll.valueProperty());
+        scrollSBox.hvalueProperty().bindBidirectional(xScroll.valueProperty());
+        scrollNBox.hvalueProperty().bindBidirectional(xScroll.valueProperty());
+
+        yScroll.minProperty().bindBidirectional(scrollCBox.vminProperty());
+        yScroll.maxProperty().bindBidirectional(scrollCBox.vmaxProperty());
+        scrollCBox.vvalueProperty().bindBidirectional(yScroll.valueProperty());
+        scrollEBox.vvalueProperty().bindBidirectional(yScroll.valueProperty());
+        scrollWBox.vvalueProperty().bindBidirectional(yScroll.valueProperty());
     }
 
 
@@ -491,8 +513,14 @@ public class FreezeGrid {
      *
      * @return BorderPane of the grid
      */
-    public BorderPane getGrid() {
-        return grid;
+    public HBox getGrid() {
+        // create hbox for adding the vertical scroll bar and a vbox for adding the horizontal scroll bar
+        HBox yScrollPane = new HBox();
+        VBox xScrollPane = new VBox();
+        xScrollPane.getChildren().addAll(grid, xScroll);
+        yScrollPane.getChildren().addAll(xScrollPane, yScroll);
+        yScrollPane.setAlignment(Pos.CENTER);
+        return yScrollPane;
     }
 
 

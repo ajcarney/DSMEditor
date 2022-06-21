@@ -1,5 +1,6 @@
 package View;
 
+import Data.Grouping;
 import Data.SymmetricDSM;
 import IOHandler.SymmetricIOHandler;
 import View.MatrixHandlers.StaticSymmetricHandler;
@@ -369,12 +370,12 @@ public class ClusterAlgorithm {
 
         VBox intraBreakDown = new VBox();
         ScrollPane intraScroll = new ScrollPane(intraBreakDown);
-        for(Map.Entry<String, Double> b : ((HashMap<String, Double>)coordinationScore.get("IntraBreakdown")).entrySet()) {
+        for(Map.Entry<Grouping, Double> b : ((HashMap<Grouping, Double>)coordinationScore.get("IntraBreakdown")).entrySet()) {
             HBox breakdown = new HBox();
             Label value = new Label(b.getValue().toString());
             value.setStyle(value.getStyle() + "-fx-font-weight: bold;");
 
-            breakdown.getChildren().addAll(new Label(b.getKey()), value);
+            breakdown.getChildren().addAll(new Label((b.getKey().getName())), value);
             breakdown.setPadding(new Insets(10));
             breakdown.setSpacing(10);
 
