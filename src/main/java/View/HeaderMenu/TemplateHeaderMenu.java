@@ -3,6 +3,7 @@ package View.HeaderMenu;
 
 import Data.SymmetricDSM;
 import IOHandler.SymmetricIOHandler;
+import IOHandler.TemplateIOHandler;
 import View.ConnectionSearchWidget;
 import View.EditorPane;
 import View.MatrixHandlers.SymmetricMatrixHandler;
@@ -29,6 +30,11 @@ public abstract class TemplateHeaderMenu {
     protected static int defaultName = 0;
 
     protected final Menu fileMenu = new Menu("_File");
+    protected final Menu newFileMenu = new Menu("New...");
+    protected final Menu openMenu = new Menu("Open...");
+    protected final Menu importMenu = new Menu("Import...");
+    protected final Menu exitMenu = new Menu("Exit");
+
     protected final Menu editMenu = new Menu("_Edit");
     protected final Menu viewMenu = new Menu("_View");
     protected final Menu toolsMenu = new Menu("_Tools");
@@ -48,6 +54,11 @@ public abstract class TemplateHeaderMenu {
         this.searchWidget = new ConnectionSearchWidget(editor);
 
         setupFileMenu();
+        setupNewFileMenu();
+        setupOpenMenu();
+        setupImportMenu();
+        setupExitMenu();
+
         setupEditMenu();
         setUpToolsMenu();
         setupViewMenu();
@@ -61,14 +72,26 @@ public abstract class TemplateHeaderMenu {
      * sets up the Menu object for the file menu
      */
     protected void setupFileMenu() {
-        Menu newFileMenu = new Menu("New...");
+        fileMenu.getItems().add(newFileMenu);
+        fileMenu.getItems().add(openMenu);
+        fileMenu.getItems().add(new SeparatorMenuItem());
+        fileMenu.getItems().add(importMenu);
+        fileMenu.getItems().add(new SeparatorMenuItem());
+        fileMenu.getItems().add(exitMenu);
+    }
+
+
+    /**
+     * Sets up the menu item for creating a new dsm
+     */
+    protected void setupNewFileMenu() {
         MenuItem newSymmetric = new MenuItem("Symmetric Matrix");
         newSymmetric.setOnAction(e -> {
             SymmetricDSM matrix = new SymmetricDSM();
-            File file = new File("./untitled" + Integer.toString(defaultName));
+            File file = new File("./untitled" + defaultName);
             while(file.exists()) {  // make sure file does not exist
                 defaultName += 1;
-                file = new File("./untitled" + Integer.toString(defaultName));
+                file = new File("./untitled" + defaultName);
             }
 
             this.editor.addTab(
@@ -87,34 +110,56 @@ public abstract class TemplateHeaderMenu {
 //        });
 
         newFileMenu.getItems().addAll(newSymmetric);
+    }
 
-
-        MenuItem openFile = new MenuItem("Open...");
-        openFile.setOnAction( e -> {
+    /**
+     * Sets up the menu for opening dsms
+     */
+    protected void setupOpenMenu() {
+        openMenu.setOnAction( e -> {
             FileChooser fileChooser = new FileChooser();
             fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("DSM File", "*.dsm"));  // dsm is the only file type usable
             File file = fileChooser.showOpenDialog(menuBar.getScene().getWindow());
+            if(file == null) {
+                return;
+            } else if (this.editor.getMatrixController().getMatrixFileAbsoluteSavePaths().contains(file.getAbsolutePath())) {
+                editor.focusTab(file);  // focus on that tab because it is already open
+                return;
+            }
             if(file != null) {  // make sure user did not just close out of the file chooser window
-                SymmetricIOHandler ioHandler = new SymmetricIOHandler(file);
-                SymmetricDSM matrix = ioHandler.readFile();
-                if(matrix == null) {
-                    // TODO: open window saying there was an error parsing the document
-                    System.out.println("there was an error reading the file " + file.toString());
-                } else if(!this.editor.getMatrixController().getMatrixFileAbsoluteSavePaths().contains(file.getAbsolutePath())) {
-                    this.editor.addTab(
-                            matrix,
-                            new SymmetricIOHandler(file),
-                            new SymmetricMatrixHandler(matrix, 12.0),
-                            this,
-                            new SymmetricSideBar(matrix, editor
-                            ));
-                } else {
-                    editor.focusTab(file);  // focus on that tab because it is already open
+                switch (TemplateIOHandler.getFileDSMType(file)) {
+                    case "symmetric" -> {
+                        SymmetricIOHandler ioHandler = new SymmetricIOHandler(file);
+                        SymmetricDSM matrix = ioHandler.readFile();
+
+                        if(matrix != null) {
+                            this.editor.addTab(
+                                    matrix,
+                                    ioHandler,
+                                    new SymmetricMatrixHandler(matrix, 12.0),
+                                    this,
+                                    new SymmetricSideBar(matrix, editor
+                                    ));
+                        } else {
+                            // TODO: open window saying there was an error parsing the document
+                            System.out.println("there was an error reading the file " + file);
+                        }
+
+                        break;
+                    }
+                    default -> {
+                        System.out.println("the type of dsm could not be determined from the file " + file.getAbsolutePath());
+                    }
                 }
             }
         });
+    }
 
-        Menu importMenu = new Menu("Import...");
+
+    /**
+     * Sets up the menu for importing dsms from alternative sources (ex. thebeau matlab files)
+     */
+    protected void setupImportMenu() {
         MenuItem importThebeau = new MenuItem("Thebeau Matlab File");
         importThebeau.setOnAction(e -> {
             FileChooser fileChooser = new FileChooser();
@@ -122,7 +167,7 @@ public abstract class TemplateHeaderMenu {
             File file = fileChooser.showOpenDialog(menuBar.getScene().getWindow());
             if(file != null) {  // make sure user did not just close out of the file chooser window
                 SymmetricIOHandler ioHandler = new SymmetricIOHandler(file);
-                SymmetricDSM matrix = ioHandler.readFile();
+                SymmetricDSM matrix = ioHandler.importThebeauMatlabFile(file);
                 if(matrix == null) {
                     // TODO: open window saying there was an error parsing the document
                     System.out.println("there was an error reading the file " + file.toString());
@@ -142,10 +187,14 @@ public abstract class TemplateHeaderMenu {
         });
 
         importMenu.getItems().add(importThebeau);
+    }
 
 
-        MenuItem exit = new MenuItem("Exit");
-        exit.setOnAction(e -> {
+    /**
+     * Sets up the menu item to exit the application
+     */
+    protected void setupExitMenu() {
+        exitMenu.setOnAction(e -> {
             menuBar.getScene().getWindow().fireEvent(
                     new WindowEvent(
                             menuBar.getScene().getWindow(),
@@ -153,14 +202,6 @@ public abstract class TemplateHeaderMenu {
                     )
             );
         });
-
-
-        fileMenu.getItems().add(newFileMenu);
-        fileMenu.getItems().add(openFile);
-        fileMenu.getItems().add(new SeparatorMenuItem());
-        fileMenu.getItems().add(importMenu);
-        fileMenu.getItems().add(new SeparatorMenuItem());
-        fileMenu.getItems().add(exit);
     }
 
 

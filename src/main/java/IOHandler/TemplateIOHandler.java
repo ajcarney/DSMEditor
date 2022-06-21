@@ -418,7 +418,7 @@ public abstract class TemplateIOHandler<T1 extends TemplateDSM, T2 extends Templ
             }
 
             HBox centeredMatrix = new HBox();
-            matrixHandler.setShowNames(!showConnectionNames.isSelected());
+            matrixHandler.setShowNames(showConnectionNames.isSelected());
             matrixHandler.refreshMatrixEditor();
             centeredMatrix.getChildren().add(matrixHandler.getMatrixEditor());
             centeredMatrix.setAlignment(Pos.CENTER);

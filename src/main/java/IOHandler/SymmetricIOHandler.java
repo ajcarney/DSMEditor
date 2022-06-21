@@ -21,6 +21,7 @@ import org.jdom2.output.XMLOutputter;
 
 import java.io.*;
 import java.util.*;
+import java.util.regex.Pattern;
 
 
 /**
@@ -168,6 +169,73 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
             e.printStackTrace();
             return null;
         }
+    }
+
+
+    /**
+     * Reads a matlab file in Thebeau's format and parses it as a SymmetricDSM object. Returns the SymmetricDSM object,
+     * but does not automatically add it to be handled.
+     *
+     * @param file  the file location to read from
+     * @return      SymmetricDSM object of the parsed in matrix
+     */
+    public SymmetricDSM importThebeauMatlabFile(File file) {
+        SymmetricDSM matrix = new SymmetricDSM();
+
+        ArrayList<String> lines = new ArrayList<>();
+        Scanner s;
+        try {
+            s = new Scanner(file);
+            while (s.hasNextLine()){
+                lines.add(s.nextLine());
+            }
+            s.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        ArrayList<ArrayList<Double>> connections = new ArrayList<>();
+        HashMap<Integer, DSMItem> rowItems = new HashMap<>();
+        HashMap<Integer, DSMItem> colItems = new HashMap<>();
+        int uid = 0;
+        for(String line : lines) {  // parse the relevant data
+            if(line.contains("DSM(")) {  // connection
+                double xLoc = Integer.parseInt(line.split(Pattern.quote("DSM("))[1].split(Pattern.quote(","))[0]);
+                double yLoc = Integer.parseInt(line.split(Pattern.quote(","))[1].split(Pattern.quote(")"))[0]);
+                double weight = Double.parseDouble(line.split(Pattern.quote("= "))[1].split(Pattern.quote(";"))[0]);
+                ArrayList<Double> data = new ArrayList<>();
+                data.add(xLoc);
+                data.add(yLoc);
+                data.add(weight);
+                if(xLoc != yLoc) {  // no need to add it to the connections
+                    connections.add(data);
+                }
+            } else if(line.contains("DSMLABEL{")) {
+                int loc = Integer.parseInt(line.split(Pattern.quote("DSMLABEL{"))[1].split(Pattern.quote(","))[0]);
+                String name = line.split(Pattern.quote("'"))[1];
+                double sortIndex = (uid / 2) + 1;  // this will make the sort indices appear like they are normally distributed
+                DSMItem rowItem = new DSMItem(uid, uid + 1, sortIndex, name, matrix.getDefaultGrouping(), null);
+                DSMItem colItem = new DSMItem(uid + 1, uid, sortIndex, name, matrix.getDefaultGrouping(), null);
+                uid += 2;  // add two because of column item
+
+                matrix.addItem(rowItem, true);
+                matrix.addItem(colItem, false);
+                rowItems.put(loc, rowItem);
+                colItems.put(loc, colItem);
+            }
+        }
+        // create the connections
+        for(ArrayList<Double> conn : connections) {
+            int rowUid = rowItems.get(conn.get(0).intValue()).getUid();
+            int colUid = colItems.get(conn.get(1).intValue()).getUid();
+
+            matrix.modifyConnection(rowUid, colUid, "x", conn.get(2));
+        }
+
+        matrix.clearStacks();  // make sure there are no changes when it is opened
+
+        return matrix;
     }
 
 

@@ -23,9 +23,6 @@ import java.util.Vector;
  */
 public class StaticSymmetricHandler extends TemplateMatrixHandler<SymmetricDSM> {
     
-    private Boolean showWeights = false;
-    
-    
     /**
      * Returns a MatrixGuiHandler object for a given matrix
      *
@@ -34,14 +31,6 @@ public class StaticSymmetricHandler extends TemplateMatrixHandler<SymmetricDSM> 
      */
     public StaticSymmetricHandler(SymmetricDSM matrix, double fontSize) {
         super(matrix, fontSize);
-    }
-
-
-    /**
-     * toggles the boolean variable showWeights
-     */
-    public void toggleShowWeights() {
-        showWeights = !showWeights;
     }
 
 
@@ -180,10 +169,10 @@ public class StaticSymmetricHandler extends TemplateMatrixHandler<SymmetricDSM> 
                         int colUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getValue().getUid();
                         DSMConnection conn = matrix.getConnection(rowUid, colUid);
                         final Label label = new Label();
-                        if (showWeights && conn != null) {
-                            label.setText(String.valueOf(conn.getWeight()));
-                        } else if (!showWeights && conn != null) {
+                        if (showNames.getValue() && conn != null) {
                             label.setText(conn.getConnectionName());
+                        } else if (!showNames.getValue() && conn != null) {
+                            label.setText(String.valueOf(conn.getWeight()));
                         } else {
                             label.setText("");
                         }
