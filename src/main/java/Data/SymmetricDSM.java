@@ -292,7 +292,7 @@ public class SymmetricDSM extends TemplateDSM {
     @Override
     public void setItemName(DSMItem item, String newName) {
         DSMItem aliasedItem = getItemByAlias(item.getUid());
-        String oldName = item.getName();
+        String oldName = item.getName().getValue();
 
         assert oldName.equals(aliasedItem.getName()) : "Symmetric item names were not the same";
 
@@ -417,7 +417,7 @@ public class SymmetricDSM extends TemplateDSM {
      * stack but does not set any checkpoint.
      */
     public void reDistributeSortIndicesByGroup() {
-        Collections.sort(rows, Comparator.comparing((DSMItem item) ->item.getGroup1().getName()).thenComparing(DSMItem::getName));
+        Collections.sort(rows, Comparator.comparing((DSMItem item) -> item.getGroup1().getName()).thenComparing((DSMItem item) -> item.getName().getValue()));
         Vector<DSMItem> newCols = new Vector<>();
 
         for(DSMItem row : rows) {  // sort the new columns according to the rows (this does not need to be on the change stack because

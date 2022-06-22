@@ -272,7 +272,7 @@ public class ClusterAnalysis {
                 if(c == 0) {
                     rowBids.add(items.get(r).getGroup1().getName());
                 } else if(c == 1) {
-                    rowBids.add(items.get(r).getName());
+                    rowBids.add(items.get(r).getName().getValue());
                 } else {
                     HashMap<Integer, Double> groupBids = SymmetricDSM.calculateClusterBids(matrix, groupOrder.get(c - 2), optimalSizeCluster.doubleValue(), powdep.doubleValue(), powbid.doubleValue(), countByWeight.isSelected());
 

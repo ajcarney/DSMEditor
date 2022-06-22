@@ -272,7 +272,7 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
             for(DSMItem col : matrix.getCols()) {
                 Element colElement = new Element("col");
                 colElement.setAttribute(new Attribute("uid", Integer.valueOf(col.getUid()).toString()));
-                colElement.addContent(new Element("name").setText(col.getName()));
+                colElement.addContent(new Element("name").setText(col.getName().getValue()));
                 colElement.addContent(new Element("sort_index").setText(Double.valueOf(col.getSortIndex()).toString()));
                 if(col.getAliasUid() != null) {
                     colElement.addContent(new Element("alias").setText(col.getAliasUid().toString()));
@@ -286,7 +286,7 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
             for(DSMItem row : matrix.getRows()) {
                 Element rowElement = new Element("row");
                 rowElement.setAttribute(new Attribute("uid", Integer.valueOf(row.getUid()).toString()));
-                rowElement.addContent(new Element("name").setText(row.getName()));
+                rowElement.addContent(new Element("name").setText(row.getName().getValue()));
                 rowElement.addContent(new Element("sort_index").setText(Double.valueOf(row.getSortIndex()).toString()));
                 rowElement.addContent(new Element("group").setText(row.getGroup1().getUid().toString()));
                 rowElement.addContent(new Element("alias").setText(row.getAliasUid().toString()));
@@ -468,7 +468,7 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
                         cell.setCellStyle(cellStyle);
                     } else if (item.getKey().equals("item_name")) {
                         Cell cell = row.createCell(c + COL_START);
-                        cell.setCellValue(((DSMItem)item.getValue()).getName());
+                        cell.setCellValue(((DSMItem)item.getValue()).getName().getValue());
 
                         javafx.scene.paint.Color cellColor = ((DSMItem)item.getValue()).getGroup1().getColor();
                         XSSFCellStyle style = workbook.createCellStyle();
@@ -479,7 +479,7 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
                     } else if(item.getKey().equals("item_name_v")) {
                         Cell cell = row.createCell(c + COL_START);
                         System.out.println(item);
-                        cell.setCellValue(((DSMItem)item.getValue()).getName());
+                        cell.setCellValue(((DSMItem)item.getValue()).getName().getValue());
 
                         javafx.scene.paint.Color cellColor = ((DSMItem)item.getValue()).getGroup1().getColor();
                         XSSFCellStyle style = workbook.createCellStyle();

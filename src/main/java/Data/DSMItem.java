@@ -1,5 +1,8 @@
 package Data;
 
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+
 /**
  * Data class to handle an item in a DSM. Each item has a uid, an alias uid to be used to associate rows
  * and columns in a symmetric matrix, a name, a sort index, and a group
@@ -9,7 +12,7 @@ package Data;
 public class DSMItem {
     private final Integer uid;
     private Integer aliasUid;
-    private String name;
+    private StringProperty name;
     private Double sortIndex;
     private Grouping group1;  // how these 2 groupings are used is up to implementation of the DSM type
     private Grouping group2;
@@ -24,7 +27,7 @@ public class DSMItem {
     public DSMItem(Double index, String name) {
         this.uid = java.util.UUID.randomUUID().hashCode();
 
-        this.name = name;
+        this.name = new SimpleStringProperty(name);
         this.sortIndex = index;
         this.group1 = null;
         this.group2 = null;
@@ -44,7 +47,7 @@ public class DSMItem {
     public DSMItem(Integer uid, Integer aliasUid, Double index, String name, Grouping group1, Grouping group2) {
         this.uid = uid;
         this.aliasUid = aliasUid;
-        this.name = name;
+        this.name = new SimpleStringProperty(name);
         this.sortIndex = index;
         this.group1 = group1;
         this.group2 = group2;
@@ -81,7 +84,7 @@ public class DSMItem {
      *
      * @return the name of the item
      */
-    public String getName() {
+    public StringProperty getName() {
         return name;
     }
 
@@ -131,7 +134,7 @@ public class DSMItem {
      * @param name the new name of the item
      */
     public void setName(String name) {
-        this.name = name;
+        this.name.set(name);
     }
 
 
@@ -183,7 +186,7 @@ public class DSMItem {
      */
     @Override
     public String toString() {
-        return name;
+        return name.getValue();
     }  // TODO: This should not be how this is implemented (use a cell factory)
 }
 

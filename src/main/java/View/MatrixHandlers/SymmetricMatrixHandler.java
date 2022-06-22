@@ -5,6 +5,7 @@ import Data.DSMItem;
 import Data.Grouping;
 import Data.SymmetricDSM;
 import View.Widgets.FreezeGrid;
+import View.Widgets.MiscWidgets;
 import View.Widgets.NumericTextField;
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
@@ -88,171 +89,171 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
         }
     }
 
-
-    /**
-     * Modifies an hbox in place for a cell that when clicked will handle the editing of a DSM connection. Overrides to
-     * add support for highlighting symmetry errors
-     *
-     * @param locationLabel  the label object stating the user's mouse location with units row:column
-     * @param rowUid         the uid of the row item
-     * @param colUid         the uid of the column item
-     * @param gridRowIndex   the row index the cell will be placed in
-     * @param gridColIndex   the column index the cell will be placed in
-     * @return               the HBox object that contains all the callbacks and data
-     */
-    @Override
-    public void getEditableConnectionCell(HBox cell, Label locationLabel, int rowUid, int colUid, int gridRowIndex, int gridColIndex) {
-        DSMConnection conn = matrix.getConnection(rowUid, colUid);
-        final Label label = new Label();
-        label.textProperty().bind(Bindings.createStringBinding(() -> {  // bind so that either weights or name can be shown
-            if(conn == null) {
-                return "";
-            } else if(showNames.getValue()) {
-                return conn.getConnectionName();
-            } else{
-                return String.valueOf(conn.getWeight());
-            }
-        }, showNames));
-
-        cell.setAlignment(Pos.CENTER);  // center the text
-        cell.setMinWidth(Region.USE_PREF_SIZE);
-
-        // this item type will be used to create the lookup table for finding associated uid from grid location
-        if(!gridUidLookup.get("rows").containsKey(gridRowIndex)) {
-            gridUidLookup.get("rows").put(gridRowIndex, rowUid);
-        }
-
-        if(!gridUidLookup.get("cols").containsKey(gridColIndex)) {
-            gridUidLookup.get("cols").put(gridColIndex, colUid);
-        }
-
-        //region cell callbacks
-        // set up callback functions
-        int finalR = gridRowIndex;
-        int finalC = gridColIndex;
-        cell.setOnMouseClicked(e -> {
-            if(e.getButton().equals(MouseButton.PRIMARY)) {
-                // create popup window to edit the connection
-                Stage window = new Stage();
-
-                // Create Root window
-                window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
-                window.setTitle("Modify Connection");
-
-                VBox layout = new VBox();
-
-                // row 0
-                Label titleLabel = new Label("Connection From " + matrix.getItem(rowUid).getName() + " to " + matrix.getItem(colUid).getName());
-                GridPane.setConstraints(titleLabel, 0, 0, 3, 1);  // span 3 columns
-
-                // row 1
-                HBox row1 = new HBox();
-                row1.setPadding(new Insets(10, 10, 10, 10));
-                row1.setSpacing(10);
-                Label nameLabel = new Label("Connection Type:  ");
-
-                String currentName;
-                if(matrix.getConnection(rowUid, colUid) != null) {
-                    currentName = matrix.getConnection(rowUid, colUid).getConnectionName();
-                } else {
-                    currentName = "";
-                }
-                TextField nameField = new TextField(currentName);
-                nameField.setMaxWidth(Double.MAX_VALUE);
-                HBox.setHgrow(nameField, Priority.ALWAYS);
-                row1.getChildren().addAll(nameLabel, nameField);
-
-                // row 2
-                HBox row2 = new HBox();
-                Label weightLabel = new Label("Connection Weight:");
-                row2.setPadding(new Insets(10, 10, 10, 10));
-                row2.setSpacing(10);
-
-                Double currentWeight = null;
-                if(matrix.getConnection(rowUid, colUid) != null) {
-                    currentWeight = matrix.getConnection(rowUid, colUid).getWeight();
-                } else {
-                    currentWeight = 1.0;
-                }
-                NumericTextField weightField = new NumericTextField(currentWeight);
-                weightField.setMaxWidth(Double.MAX_VALUE);
-                HBox.setHgrow(weightField, Priority.ALWAYS);
-                row2.getChildren().addAll(weightLabel, weightField);
-
-                // row 3
-                // create HBox for user to close with our without changes
-                HBox closeArea = new HBox();
-                Button applyButton = new Button("Apply Changes");
-                applyButton.setOnAction(ee -> {
-                    if(!nameField.getText().equals("")) {
-                        Double weight = null;
-                        try {
-                            weight = Double.parseDouble(weightField.getText());
-                        } catch(NumberFormatException nfe) {
-                            weight = 1.0;
-                        }
-                        matrix.modifyConnection(rowUid, colUid, nameField.getText(), weight);
-                    } else {
-                        matrix.deleteConnection(rowUid, colUid);
-                    }
-                    matrix.setCurrentStateAsCheckpoint();
-                    window.close();
-
-                    label.textProperty().unbind();  // reset binding to update text (Bound values cannot be set)
-                    label.setText(nameField.getText());
-                    label.textProperty().bind(Bindings.createStringBinding(() -> {
-                        if(matrix.getConnection(rowUid, colUid) == null) {
-                            return "";
-                        } else if(showNames.getValue()) {
-                            return matrix.getConnection(rowUid, colUid).getConnectionName();
-                        } else{
-                            return String.valueOf(matrix.getConnection(rowUid, colUid).getWeight());
-                        }
-                    }, showNames));
-
-                    // update symmetric error highlight if needed
-                    symmetryHighlightCell(new Pair<>(gridRowIndex, gridColIndex));
-
-                });
-
-                Pane spacer = new Pane();  // used as a spacer between buttons
-                HBox.setHgrow(spacer, Priority.ALWAYS);
-                spacer.setMaxWidth(Double.MAX_VALUE);
-
-                Button cancelButton = new Button("Cancel");
-                cancelButton.setOnAction(ee -> {
-                    window.close();
-                });
-                closeArea.getChildren().addAll(cancelButton, spacer, applyButton);
-
-                //Display window and wait for it to be closed before returning
-                layout.getChildren().addAll(titleLabel, row1, row2, closeArea);
-                layout.setAlignment(Pos.CENTER);
-                layout.setPadding(new Insets(10, 10, 10, 10));
-                layout.setSpacing(10);
-
-                Scene scene = new Scene(layout, 400, 200);
-                window.setScene(scene);
-                window.showAndWait();
-
-            } else if(e.getButton().equals(MouseButton.SECONDARY)) {  // toggle highlighting
-                toggleUserHighlightCell(new Pair<Integer, Integer>(finalR, finalC), HIGHLIGHT_BACKGROUND);
-            }
-        });
-
-        cell.setOnMouseEntered(e -> {
-            crossHighlightCell(new Pair<Integer, Integer>(finalR, finalC), true);
-            locationLabel.setText(matrix.getItem(rowUid).getName() + ":" + matrix.getItem(colUid).getName());
-        });
-
-        cell.setOnMouseExited(e -> {
-            crossHighlightCell(new Pair<Integer, Integer>(finalR, finalC), false);
-            locationLabel.setText("");
-        });
-        //endregion
-
-        cell.getChildren().add(label);
-    }
+//
+//    /**
+//     * Modifies an hbox in place for a cell that when clicked will handle the editing of a DSM connection. Overrides to
+//     * add support for highlighting symmetry errors
+//     *
+//     * @param locationLabel  the label object stating the user's mouse location with units row:column
+//     * @param rowUid         the uid of the row item
+//     * @param colUid         the uid of the column item
+//     * @param gridRowIndex   the row index the cell will be placed in
+//     * @param gridColIndex   the column index the cell will be placed in
+//     * @return               the HBox object that contains all the callbacks and data
+//     */
+//    @Override
+//    public void getEditableConnectionCell(HBox cell, Label locationLabel, int rowUid, int colUid, int gridRowIndex, int gridColIndex) {
+//        DSMConnection conn = matrix.getConnection(rowUid, colUid);
+//        final Label label = new Label();
+//        label.textProperty().bind(Bindings.createStringBinding(() -> {  // bind so that either weights or name can be shown
+//            if(conn == null) {
+//                return "";
+//            } else if(showNames.getValue()) {
+//                return conn.getConnectionName();
+//            } else{
+//                return String.valueOf(conn.getWeight());
+//            }
+//        }, showNames));
+//
+//        cell.setAlignment(Pos.CENTER);  // center the text
+//        cell.setMinWidth(Region.USE_PREF_SIZE);
+//
+//        // this item type will be used to create the lookup table for finding associated uid from grid location
+//        if(!gridUidLookup.get("rows").containsKey(gridRowIndex)) {
+//            gridUidLookup.get("rows").put(gridRowIndex, rowUid);
+//        }
+//
+//        if(!gridUidLookup.get("cols").containsKey(gridColIndex)) {
+//            gridUidLookup.get("cols").put(gridColIndex, colUid);
+//        }
+//
+//        //region cell callbacks
+//        // set up callback functions
+//        int finalR = gridRowIndex;
+//        int finalC = gridColIndex;
+//        cell.setOnMouseClicked(e -> {
+//            if(e.getButton().equals(MouseButton.PRIMARY)) {
+//                // create popup window to edit the connection
+//                Stage window = new Stage();
+//
+//                // Create Root window
+//                window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
+//                window.setTitle("Modify Connection");
+//
+//                VBox layout = new VBox();
+//
+//                // row 0
+//                Label titleLabel = new Label("Connection From " + matrix.getItem(rowUid).getName().getValue() + " to " + matrix.getItem(colUid).getName().getValue());
+//                GridPane.setConstraints(titleLabel, 0, 0, 3, 1);  // span 3 columns
+//
+//                // row 1
+//                HBox row1 = new HBox();
+//                row1.setPadding(new Insets(10, 10, 10, 10));
+//                row1.setSpacing(10);
+//                Label nameLabel = new Label("Connection Type:  ");
+//
+//                String currentName;
+//                if(matrix.getConnection(rowUid, colUid) != null) {
+//                    currentName = matrix.getConnection(rowUid, colUid).getConnectionName();
+//                } else {
+//                    currentName = "";
+//                }
+//                TextField nameField = new TextField(currentName);
+//                nameField.setMaxWidth(Double.MAX_VALUE);
+//                HBox.setHgrow(nameField, Priority.ALWAYS);
+//                row1.getChildren().addAll(nameLabel, nameField);
+//
+//                // row 2
+//                HBox row2 = new HBox();
+//                Label weightLabel = new Label("Connection Weight:");
+//                row2.setPadding(new Insets(10, 10, 10, 10));
+//                row2.setSpacing(10);
+//
+//                Double currentWeight = null;
+//                if(matrix.getConnection(rowUid, colUid) != null) {
+//                    currentWeight = matrix.getConnection(rowUid, colUid).getWeight();
+//                } else {
+//                    currentWeight = 1.0;
+//                }
+//                NumericTextField weightField = new NumericTextField(currentWeight);
+//                weightField.setMaxWidth(Double.MAX_VALUE);
+//                HBox.setHgrow(weightField, Priority.ALWAYS);
+//                row2.getChildren().addAll(weightLabel, weightField);
+//
+//                // row 3
+//                // create HBox for user to close with our without changes
+//                HBox closeArea = new HBox();
+//                Button applyButton = new Button("Apply Changes");
+//                applyButton.setOnAction(ee -> {
+//                    if(!nameField.getText().equals("")) {
+//                        Double weight = null;
+//                        try {
+//                            weight = Double.parseDouble(weightField.getText());
+//                        } catch(NumberFormatException nfe) {
+//                            weight = 1.0;
+//                        }
+//                        matrix.modifyConnection(rowUid, colUid, nameField.getText(), weight);
+//                    } else {
+//                        matrix.deleteConnection(rowUid, colUid);
+//                    }
+//                    matrix.setCurrentStateAsCheckpoint();
+//                    window.close();
+//
+//                    label.textProperty().unbind();  // reset binding to update text (Bound values cannot be set)
+//                    label.setText(nameField.getText());
+//                    label.textProperty().bind(Bindings.createStringBinding(() -> {
+//                        if(matrix.getConnection(rowUid, colUid) == null) {
+//                            return "";
+//                        } else if(showNames.getValue()) {
+//                            return matrix.getConnection(rowUid, colUid).getConnectionName();
+//                        } else{
+//                            return String.valueOf(matrix.getConnection(rowUid, colUid).getWeight());
+//                        }
+//                    }, showNames));
+//
+//                    // update symmetric error highlight if needed
+//                    symmetryHighlightCell(new Pair<>(gridRowIndex, gridColIndex));
+//
+//                });
+//
+//                Pane spacer = new Pane();  // used as a spacer between buttons
+//                HBox.setHgrow(spacer, Priority.ALWAYS);
+//                spacer.setMaxWidth(Double.MAX_VALUE);
+//
+//                Button cancelButton = new Button("Cancel");
+//                cancelButton.setOnAction(ee -> {
+//                    window.close();
+//                });
+//                closeArea.getChildren().addAll(cancelButton, spacer, applyButton);
+//
+//                //Display window and wait for it to be closed before returning
+//                layout.getChildren().addAll(titleLabel, row1, row2, closeArea);
+//                layout.setAlignment(Pos.CENTER);
+//                layout.setPadding(new Insets(10, 10, 10, 10));
+//                layout.setSpacing(10);
+//
+//                Scene scene = new Scene(layout, 400, 200);
+//                window.setScene(scene);
+//                window.showAndWait();
+//
+//            } else if(e.getButton().equals(MouseButton.SECONDARY)) {  // toggle highlighting
+//                toggleUserHighlightCell(new Pair<Integer, Integer>(finalR, finalC), HIGHLIGHT_BACKGROUND);
+//            }
+//        });
+//
+//        cell.setOnMouseEntered(e -> {
+//            crossHighlightCell(new Pair<Integer, Integer>(finalR, finalC), true);
+//            locationLabel.setText(matrix.getItem(rowUid).getName().getValue() + ":" + matrix.getItem(colUid).getName().getValue());
+//        });
+//
+//        cell.setOnMouseExited(e -> {
+//            crossHighlightCell(new Pair<Integer, Integer>(finalR, finalC), false);
+//            locationLabel.setText("");
+//        });
+//        //endregion
+//
+//        cell.getChildren().add(label);
+//    }
 
 
     /**
@@ -278,6 +279,20 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
 
         int rows = template.size();
         int columns = template.get(0).size();
+
+        // create a test item to determine layout width for a vertical item cell to square up the matrix when viewed
+        ComboBox<Grouping> _groupings = new ComboBox<>();
+        _groupings.setMinWidth(Region.USE_PREF_SIZE);
+        _groupings.setPadding(new Insets(0));
+        _groupings.setStyle("-fx-background-color: transparent; -fx-padding: 0, 0, 0, 0; -fx-font-size: " + (fontSize.doubleValue()) + " };");
+        Pane _ghostPane = new Pane();
+        Scene _ghostScene = new Scene(_ghostPane);  // a scene is needed to calculate preferred sizes of nodes
+
+        _ghostPane.getChildren().add(_groupings);
+        _ghostPane.applyCss();
+        _ghostPane.layout();
+        double maxHeight = _groupings.getBoundsInLocal().getHeight() + _groupings.getPadding().getTop() + _groupings.getPadding().getBottom();
+
 
         for(int r=0; r<rows; r++) {
             ArrayList<HBox> rowData = new ArrayList<>();
@@ -307,21 +322,35 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
                         break;
                     }
                     case "item_name" -> {
-                        Label label = new Label(((DSMItem) item.getValue()).getName());
+                        Label label = new Label();
+                        label.textProperty().bind(((DSMItem) item.getValue()).getName());
                         cell.setAlignment(Pos.BOTTOM_RIGHT);
                         label.setMinWidth(Region.USE_PREF_SIZE);
                         cell.getChildren().add(label);
+                        cell.setOnMouseClicked(e -> {
+                            if (e.getButton().equals(MouseButton.PRIMARY)) {
+                                editItemName(((DSMItem) item.getValue()).getUid());
+                            }
+                        });
 
                         break;
                     }
                     case "item_name_v" -> {
-                        Label label = new Label(((DSMItem) item.getValue()).getName());
+                        Label label = new Label();
+                        label.textProperty().bind(((DSMItem) item.getValue()).getName());
                         label.setRotate(-90);
-                        cell.setAlignment(Pos.BOTTOM_RIGHT);
+                        cell.setAlignment(Pos.BOTTOM_CENTER);
                         Group g = new Group();  // label will be added to a group so that it will be formatted correctly if it is vertical
 
                         g.getChildren().add(label);
                         cell.getChildren().add(g);
+                        cell.setOnMouseClicked(e -> {
+                            if (e.getButton().equals(MouseButton.PRIMARY)) {
+                                editItemName(((DSMItem) item.getValue()).getUid());
+                            }
+                        });
+                        cell.setMinWidth(maxHeight);  // set a min width so that the matrix is less boxy (all connection items will follow this even if not
+                                                      // explicitly set due to how the freeze grid is set up)
 
                         break;
                     }
@@ -329,14 +358,13 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
                         ComboBox<Grouping> groupings = new ComboBox<>();
                         groupings.setMinWidth(Region.USE_PREF_SIZE);
                         groupings.setPadding(new Insets(0));
-                        groupings.setPadding(new Insets(-5));
                         groupings.setStyle(
                                 "-fx-background-color: transparent;" +
                                         "-fx-padding: 0, 0, 0, 0;" +
-                                        "-fx-font-size: " + (fontSize.doubleValue() - 2) + " };"
+                                        "-fx-font-size: " + (fontSize.doubleValue()) + " };"
                         );
 
-                        Callback<ListView<Grouping>, ListCell<Grouping>> cellFactory = new Callback<ListView<Grouping>, ListCell<Grouping>>() {
+                        Callback<ListView<Grouping>, ListCell<Grouping>> cellFactory = new Callback<>() {
                             @Override
                             public ListCell<Grouping> call(ListView<Grouping> l) {
                                 return new ListCell<Grouping>() {
@@ -356,15 +384,6 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
                         };
                         groupings.setCellFactory(cellFactory);
                         groupings.setButtonCell(cellFactory.call(null));
-
-                        Pane ghostPane = new Pane();
-                        Scene ghostScene = new Scene(ghostPane);  // a scene is needed to calculate preferred sizes of nodes
-
-
-                        ghostPane.getChildren().add(groupings);
-                        ghostPane.applyCss();
-                        ghostPane.layout();
-                        double maxHeight = groupings.getBoundsInLocal().getHeight() + groupings.getPadding().getTop() + groupings.getPadding().getBottom();
 
                         groupings.getItems().addAll(matrix.getGroupings());
                         groupings.getItems().add(matrix.getDefaultGrouping());
@@ -411,7 +430,6 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
                         int rowUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getKey().getUid();
                         int colUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getValue().getUid();
                         getEditableConnectionCell(cell, locationLabel, rowUid, colUid, r, c);
-
                     }
                 }
                 cell.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));

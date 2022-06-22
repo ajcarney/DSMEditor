@@ -173,7 +173,7 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
                 if (empty || item == null) {
                     setText(null);
                 } else {
-                    setText(item.getName());
+                    setText(item.getName().getValue());
                 }
             }
         });
@@ -275,7 +275,7 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
             VBox connectionVBox = new VBox();
             connectionVBox.setAlignment(Pos.CENTER);
 
-            Label name = new Label(conn.getName());
+            Label name = new Label(conn.getName().getValue());
             CheckBox box = new CheckBox();
             connections.put(box, conn);
             connectionVBox.getChildren().addAll(name, box);
@@ -303,7 +303,7 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
                 if (empty || item == null) {
                     setText(null);
                 } else {
-                    setText(item.getName());
+                    setText(item.getName().getValue());
                 }
             }
         });
@@ -364,7 +364,7 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
                     VBox connectionVBox = new VBox();
                     connectionVBox.setAlignment(Pos.CENTER);
 
-                    Label name = new Label(col.getName());
+                    Label name = new Label(col.getName().getValue());
                     CheckBox box = new CheckBox();
                     connections.put(box, col);
                     connectionVBox.getChildren().addAll(name, box);
@@ -378,7 +378,7 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
                     VBox connectionVBox = new VBox();
                     connectionVBox.setAlignment(Pos.CENTER);
 
-                    Label name = new Label(row.getName());
+                    Label name = new Label(row.getName().getValue());
                     CheckBox box = new CheckBox();
                     connections.put(box, row);
                     connectionVBox.getChildren().addAll(name, box);
@@ -572,7 +572,7 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
             VBox connectionVBox = new VBox();
             connectionVBox.setAlignment(Pos.CENTER);
 
-            Label name = new Label(conn.getName());
+            Label name = new Label(conn.getName().getValue());
             CheckBox box = new CheckBox();
             connections.put(box, conn);
             connectionVBox.getChildren().addAll(name, box);
@@ -600,7 +600,7 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
                 if (empty || item == null) {
                     setText(null);
                 } else {
-                    setText(item.getName());
+                    setText(item.getName().getValue());
                 }
             }
         });
@@ -661,7 +661,7 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
                     VBox connectionVBox = new VBox();
                     connectionVBox.setAlignment(Pos.CENTER);
 
-                    Label name = new Label(col.getName());
+                    Label name = new Label(col.getName().getValue());
                     CheckBox box = new CheckBox();
                     connections.put(box, col);
                     connectionVBox.getChildren().addAll(name, box);
@@ -675,7 +675,7 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
                     VBox connectionVBox = new VBox();
                     connectionVBox.setAlignment(Pos.CENTER);
 
-                    Label name = new Label(row.getName());
+                    Label name = new Label(row.getName().getValue());
                     CheckBox box = new CheckBox();
                     connections.put(box, row);
                     connectionVBox.getChildren().addAll(name, box);

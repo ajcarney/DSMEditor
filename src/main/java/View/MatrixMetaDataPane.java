@@ -1,6 +1,7 @@
 package View;
 
 import Data.TemplateDSM;
+import View.Widgets.MiscWidgets;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -19,15 +20,18 @@ import javafx.stage.Stage;
  * @author Aiden Carney
  */
 public class MatrixMetaDataPane {
-    private Label titleLabel;
-    private Label projectNameLabel;
-    private Label customerLabel;
-    private Label versionNumberLabel;
+    private final Label titleLabel;
+    private final Label projectNameLabel;
+    private final Label customerLabel;
+    private final Label versionNumberLabel;
 
-    private Button modifyButton;
+    private final Button openCloseButton;
+    private Boolean isOpen = true;
 
-    private VBox layout;
-    private GridPane detailsLayout;
+    private final Button modifyButton;
+
+    private final VBox layout;
+    private final GridPane detailsLayout;
 
     private TemplateDSM matrix;
 
@@ -160,7 +164,26 @@ public class MatrixMetaDataPane {
         });
         modifyButton.setMaxWidth(Double.MAX_VALUE);
 
-        layout.getChildren().addAll(detailsLayout, modifyButton);
+        openCloseButton = new Button(">");
+        openCloseButton.setOnAction(e -> {
+            isOpen = !isOpen;
+            layout.requestFocus();
+            if (isOpen) {
+                openCloseButton.setText(">");
+                detailsLayout.setVisible(true);
+                detailsLayout.setManaged(true);
+                modifyButton.setVisible(true);
+                modifyButton.setManaged(true);
+            } else {
+                openCloseButton.setText("<");
+                detailsLayout.setVisible(false);
+                detailsLayout.setManaged(false);
+                modifyButton.setVisible(false);
+                modifyButton.setManaged(false);
+            }
+        });
+
+        layout.getChildren().addAll(new HBox(openCloseButton), MiscWidgets.getVerticalSpacer(), detailsLayout, modifyButton, MiscWidgets.getVerticalSpacer());
         layout.setSpacing(20);
         layout.setPadding(new Insets(10, 10, 10, 10));
         layout.setAlignment(Pos.CENTER);
