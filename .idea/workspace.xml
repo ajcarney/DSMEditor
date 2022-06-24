@@ -6,10 +6,8 @@
   <component name="ChangeListManager">
     <list default="true" id="1e933d21-0475-41e8-afc7-e2d68df7d37d" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/IOHandler/SymmetricIOHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/IOHandler/SymmetricIOHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/View/MatrixHandlers/Cell.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/View/MatrixHandlers/Cell.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/View/MatrixHandlers/StaticSymmetricHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/View/MatrixHandlers/StaticSymmetricHandler.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/View/MatrixHandlers/SymmetricMatrixHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/View/MatrixHandlers/SymmetricMatrixHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/View/Widgets/FreezeGrid.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/View/Widgets/FreezeGrid.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -36,6 +34,7 @@
   <component name="PropertiesComponent">
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
   </component>
   <component name="RunManager" selected="Application.Main">
@@ -67,6 +66,15 @@
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
     <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">

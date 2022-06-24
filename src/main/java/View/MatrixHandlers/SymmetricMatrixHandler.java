@@ -109,7 +109,7 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
         rootLayout.setAlignment(Pos.CENTER);
 
         Label locationLabel = new Label("");
-        grid = new FreezeGrid();
+        grid.clear();
 
         ArrayList<ArrayList<Pair<String, Object>>> template = matrix.getGridArray();
         ArrayList<ArrayList<HBox>> gridData = new ArrayList<>();
@@ -168,6 +168,8 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
                         cell.setOnMouseClicked(e -> {
                             if (e.getButton().equals(MouseButton.PRIMARY)) {
                                 editItemName(((DSMItem) item.getValue()).getUid());
+                                grid.resizeGrid();
+                                grid.updateGrid();
                             }
                         });
 
@@ -185,6 +187,8 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
                         cell.setOnMouseClicked(e -> {
                             if (e.getButton().equals(MouseButton.PRIMARY)) {
                                 editItemName(((DSMItem) item.getValue()).getUid());
+                                grid.resizeGrid();
+                                grid.updateGrid();
                             }
                         });
                         cell.setMinWidth(maxHeight);  // set a min width so that the matrix is less boxy (all connection items will follow this even if not

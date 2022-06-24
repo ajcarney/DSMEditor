@@ -139,6 +139,59 @@ public class FreezeGrid {
 
 
     /**
+     * Re-calculates the pref widths and heights of the grid
+     */
+    public void resizeGrid() {
+        if(cells.isEmpty()) {
+            return;
+        }
+        colPrefWidths.clear();
+        rowPrefHeights.clear();
+
+        Pane ghostPane = new Pane();
+        Scene ghostScene = new Scene(ghostPane);  // a scene is needed to calculate preferred sizes of nodes
+
+        ArrayList<ArrayList<Cell>> newCells = new ArrayList<>();
+        for(int r=0; r<cells.size(); r++) {
+            ArrayList<Cell> row = cells.get(r);
+            ArrayList<Cell> newRow = new ArrayList<>();
+
+            if(r >= rowPrefHeights.size()) {
+                rowPrefHeights.add(new SimpleDoubleProperty(0.0));
+            }
+            for (int c = 0; c < row.size(); c++) {
+                if(c >= colPrefWidths.size()) {
+                    colPrefWidths.add(new SimpleDoubleProperty(0.0));
+                }
+                newRow.add(cells.get(r).get(c));
+
+                // update preferred sizes
+                // add the node to a test pane with the scene set, but not visible so the preferred size gets calculated
+                ghostPane.getChildren().add(cells.get(r).get(c).getNode());
+                ghostPane.applyCss();
+                ghostPane.layout();
+
+                double width = cells.get(r).get(c).getNode().getBoundsInLocal().getWidth() + cells.get(r).get(c).getNode().getPadding().getLeft() + cells.get(r).get(c).getNode().getPadding().getRight();
+                double height = cells.get(r).get(c).getNode().getBoundsInLocal().getHeight() + cells.get(r).get(c).getNode().getPadding().getTop() + cells.get(r).get(c).getNode().getPadding().getBottom();
+                if(width > colPrefWidths.get(c).doubleValue()) {
+                    colPrefWidths.get(c).set(width);
+                }
+                if(height > rowPrefHeights.get(r).doubleValue()) {
+                    rowPrefHeights.get(r).set(height);
+                }
+            }
+
+            newCells.add(newRow);
+        }
+
+        cells.clear();
+        for(ArrayList<Cell> c : newCells) {
+            cells.add(c);
+        }
+    }
+
+
+    /**
      * sets the grid data based on strings by creating labels in an HBox
      *
      * @param data 2d array list type string of the data
@@ -147,9 +200,6 @@ public class FreezeGrid {
         cells.clear();
         colPrefWidths.clear();
         rowPrefHeights.clear();
-
-        Pane ghostPane = new Pane();
-        Scene ghostScene = new Scene(ghostPane);  // a scene is needed to calculate preferred sizes of nodes
 
         for(int r=0; r<data.size(); r++) {
             ArrayList<String> row = data.get(r);
@@ -163,27 +213,13 @@ public class FreezeGrid {
 
                 Cell cell = new Cell(new Pair<>(r, c), area);
                 newRow.add(cell);
-
-                // update preferred sizes
-                // add the node to a test pane with the scene set, but not visible so the preferred size gets calculated
-                ghostPane.getChildren().add(area);
-                ghostPane.applyCss();
-                ghostPane.layout();
-
-                if(area.getBoundsInLocal().getWidth() > colPrefWidths.get(r).doubleValue()) {
-                    colPrefWidths.get(r).set(area.getBoundsInLocal().getWidth());
-                }
-                if(area.getBoundsInLocal().getHeight() > rowPrefHeights.get(r).doubleValue()) {
-                    rowPrefHeights.get(r).set(area.getBoundsInLocal().getHeight());
-                }
-
-                ghostPane.getChildren().removeAll(ghostPane.getChildren());  // remove it so area has no parent
             }
 
             cells.add(newRow);
 
             assert r <= 0 || (newRow.size() == cells.get(0).size());
         }
+        resizeGrid();
         updateConstraints();
         updateGrid();
     }
@@ -199,9 +235,6 @@ public class FreezeGrid {
         colPrefWidths.clear();
         rowPrefHeights.clear();
 
-        Pane ghostPane = new Pane();
-        Scene ghostScene = new Scene(ghostPane);  // a scene is needed to calculate preferred sizes of nodes
-
         for(int r=0; r<data.size(); r++) {
             ArrayList<HBox> row = data.get(r);
             ArrayList<Cell> newRow = new ArrayList<>();
@@ -215,29 +248,13 @@ public class FreezeGrid {
                 }
                 Cell cell = new Cell(new Pair<>(r, c), row.get(c));
                 newRow.add(cell);
-
-                // update preferred sizes
-                // add the node to a test pane with the scene set, but not visible so the preferred size gets calculated
-                ghostPane.getChildren().add(cell.getNode());
-                ghostPane.applyCss();
-                ghostPane.layout();
-
-                double width = cell.getNode().getBoundsInLocal().getWidth() + cell.getNode().getPadding().getLeft() + cell.getNode().getPadding().getRight();
-                double height = cell.getNode().getBoundsInLocal().getHeight() + cell.getNode().getPadding().getTop() + cell.getNode().getPadding().getBottom();
-                if(width > colPrefWidths.get(c).doubleValue()) {
-                    colPrefWidths.get(c).set(width);
-                }
-                if(height > rowPrefHeights.get(r).doubleValue()) {
-                    rowPrefHeights.get(r).set(height);
-                }
-
-                ghostPane.getChildren().removeAll(ghostPane.getChildren());  // remove it so area has no parent
             }
 
             cells.add(newRow);
 
             assert r <= 0 || (newRow.size() == cells.get(0).size());
         }
+        resizeGrid();
         updateConstraints();
         updateGrid();
     }
@@ -280,7 +297,8 @@ public class FreezeGrid {
         return box;
     }
 
-
+    
+    //region set freeze rows/columns
     /**
      * Freezes a header until endRow (1 indexed, endpoint inclusive)
      *
@@ -339,16 +357,17 @@ public class FreezeGrid {
         seGridConstraints = new Pair<>(new Pair<>(getNumCols() - endCol, seGridConstraints.getKey().getValue()), new Pair<>(seGridConstraints.getValue().getKey(), seGridConstraints.getValue().getValue()));
         updateGrid();
     }
+    //endregion
 
 
     /**
      * recreates the grid object. Does not create a new object, but updates the children
      */
     public void updateGrid() {
-        grid.getChildren().removeAll(grid.getChildren());
         if(cells.isEmpty()) {
             return;
         }
+        grid.getChildren().removeAll(grid.getChildren());
 
         HBox nBox = new HBox();
         HBox sBox = new HBox();
@@ -521,6 +540,21 @@ public class FreezeGrid {
         yScrollPane.getChildren().addAll(xScrollPane, yScroll);
         yScrollPane.setAlignment(Pos.CENTER);
         return yScrollPane;
+    }
+
+
+    /**
+     * Sets a FreezeGrid back to its initial state
+     */
+    public void clear() {
+        cells.clear();
+        colPrefWidths.clear();
+        rowPrefHeights.clear();
+        nwGridConstraints = null;
+        neGridConstraints = null;
+        swGridConstraints = null;
+        seGridConstraints = null;
+        grid.getChildren().clear();
     }
 
 
