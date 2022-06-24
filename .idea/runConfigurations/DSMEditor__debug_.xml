@@ -11,6 +11,8 @@
           <option name="goals">
             <list>
               <option value="-Ddebug=true" />
+              <option value="-DforkCount=0" />
+              <option value="-DreuseForks=false" />
               <option value="javafx:run" />
             </list>
           </option>

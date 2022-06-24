@@ -111,18 +111,19 @@ public class StaticSymmetricHandler extends TemplateMatrixHandler<SymmetricDSM> 
             for(int c=0; c<columns; c++) {
                 Pair<String, Object> item = template.get(r).get(c);
                 HBox cell = new HBox();  // wrap everything in an HBox so a border can be added easily
+                Label label = null;
 
                 Background defaultBackground = DEFAULT_BACKGROUND;
 
                 switch (item.getKey()) {
                     case "plain_text" -> {
-                        Label label = new Label((String) item.getValue());
+                        label = new Label((String) item.getValue());
                         label.setMinWidth(Region.USE_PREF_SIZE);
                         cell.getChildren().add((Node) label);
                         break;
                     }
                     case "plain_text_v" -> {
-                        Label label = new Label((String) item.getValue());
+                        label = new Label((String) item.getValue());
                         label.setRotate(-90);
                         cell.setAlignment(Pos.BOTTOM_RIGHT);
                         Group g = new Group();  // label will be added to a group so that it will be formatted correctly if it is vertical
@@ -132,14 +133,14 @@ public class StaticSymmetricHandler extends TemplateMatrixHandler<SymmetricDSM> 
                         break;
                     }
                     case "item_name" -> {
-                        Label label = new Label(((DSMItem) item.getValue()).getName().getValue());
+                        label = new Label(((DSMItem) item.getValue()).getName().getValue());
                         cell.setAlignment(Pos.BOTTOM_RIGHT);
                         label.setMinWidth(Region.USE_PREF_SIZE);
                         cell.getChildren().add(label);
                         break;
                     }
                     case "item_name_v" -> {
-                        Label label = new Label(((DSMItem) item.getValue()).getName().getValue());
+                        label = new Label(((DSMItem) item.getValue()).getName().getValue());
                         label.setRotate(-90);
                         cell.setAlignment(Pos.BOTTOM_RIGHT);
                         Group g = new Group();  // label will be added to a group so that it will be formatted correctly if it is vertical
@@ -149,14 +150,14 @@ public class StaticSymmetricHandler extends TemplateMatrixHandler<SymmetricDSM> 
                         break;
                     }
                     case "grouping_item" -> {
-                        Label label = new Label(((DSMItem) item.getValue()).getGroup1().getName());
+                        label = new Label(((DSMItem) item.getValue()).getGroup1().getName());
                         cell.setAlignment(Pos.BOTTOM_RIGHT);
                         label.setMinWidth(Region.USE_PREF_SIZE);
                         cell.getChildren().add(label);
                         break;
                     }
                     case "index_item" -> {
-                        Label label = new Label(String.valueOf(((DSMItem) item.getValue()).getSortIndex()));
+                        label = new Label(String.valueOf(((DSMItem) item.getValue()).getSortIndex()));
                         cell.setAlignment(Pos.BOTTOM_RIGHT);
                         label.setMinWidth(Region.USE_PREF_SIZE);
                         cell.getChildren().add(label);
@@ -168,7 +169,7 @@ public class StaticSymmetricHandler extends TemplateMatrixHandler<SymmetricDSM> 
                         int rowUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getKey().getUid();
                         int colUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getValue().getUid();
                         DSMConnection conn = matrix.getConnection(rowUid, colUid);
-                        final Label label = new Label();
+                        label = new Label();
                         if (showNames.getValue() && conn != null) {
                             label.setText(conn.getConnectionName());
                         } else if (!showNames.getValue() && conn != null) {
@@ -200,7 +201,7 @@ public class StaticSymmetricHandler extends TemplateMatrixHandler<SymmetricDSM> 
                 GridPane.setConstraints(cell, c, r);
                 grid.getChildren().add(cell);
 
-                Cell cellData = new Cell(new Pair<>(r, c), cell);
+                Cell cellData = new Cell(new Pair<>(r, c), cell, label, fontSize);
                 cellData.updateHighlightBG(defaultBackground, "default");
                 cells.add(cellData);
             }

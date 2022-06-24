@@ -19,7 +19,7 @@ import java.util.*;
  */
 public class SymmetricDSM extends TemplateDSM {
     private ObservableSet<Grouping> groupings;  // ObservableSet is used so that any gui threads reading it will see changes without needing a callback set up
-    private final Grouping defaultGroup = new Grouping(Integer.MAX_VALUE, "(none)", Color.color(1.0, 1.0, 1.0));  // create a default group when none is assigned (this will always have the same uid)
+    private final Grouping defaultGroup = new Grouping(Integer.MAX_VALUE, "(none)", Color.color(1.0, 1.0, 1.0), Grouping.defaultFontColor);  // create a default group when none is assigned (this will always have the same uid)
 
 //region Constructors
     /**
@@ -228,6 +228,26 @@ public class SymmetricDSM extends TemplateDSM {
                 group.setColor(oldColor);
             },
             false
+        ));
+    }
+
+
+    /**
+     * Changes a color of a grouping. Puts the change on the stack but does not set a checkpoint
+     *
+     * @param group    the group who's name should be changed
+     * @param newColor the new color of the grouping
+     */
+    public void updateGroupingFontColor(Grouping group, Color newColor) {
+        Color oldColor = group.getColor();
+        addChangeToStack(new MatrixChange(
+                () -> {  // do function
+                    group.setFontColor(newColor);
+                },
+                () -> {  // undo function
+                    group.setFontColor(oldColor);
+                },
+                false
         ));
     }
 //endregion
