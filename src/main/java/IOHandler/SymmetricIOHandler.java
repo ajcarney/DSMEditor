@@ -79,11 +79,15 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
             // parse default grouping
             Element defaultGroup = rootElement.getChild("default_grouping");
             String defaultGroupName = defaultGroup.getChild("name").getText();
-            double defaultGroupR = Double.parseDouble(defaultGroup.getChild("r").getText());
-            double defaultGroupG = Double.parseDouble(defaultGroup.getChild("g").getText());
-            double defaultGroupB = Double.parseDouble(defaultGroup.getChild("b").getText());
+            double defaultGroupGroupColorR = Double.parseDouble(defaultGroup.getChild("gr").getText());
+            double defaultGroupGroupColorG = Double.parseDouble(defaultGroup.getChild("gg").getText());
+            double defaultGroupGroupColorB = Double.parseDouble(defaultGroup.getChild("gb").getText());
+            double defaultGroupFontColorR = Double.parseDouble(defaultGroup.getChild("fr").getText());
+            double defaultGroupFontColorG = Double.parseDouble(defaultGroup.getChild("fg").getText());
+            double defaultGroupFontColorB = Double.parseDouble(defaultGroup.getChild("fb").getText());
             matrix.getDefaultGrouping().setName(defaultGroupName);
-            matrix.getDefaultGrouping().setColor(Color.color(defaultGroupR, defaultGroupG, defaultGroupB));
+            matrix.getDefaultGrouping().setColor(Color.color(defaultGroupGroupColorR, defaultGroupGroupColorG, defaultGroupGroupColorB));
+            matrix.getDefaultGrouping().setFontColor(Color.color(defaultGroupFontColorR, defaultGroupFontColorG, defaultGroupFontColorB));
             matrixGroupings.put(Integer.MAX_VALUE, matrix.getDefaultGrouping());
 
             // parse user defined groupings
@@ -91,11 +95,14 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
             for(Element conn : groupings) {
                 Integer uid = Integer.parseInt(conn.getChild("uid").getText());
                 String name = conn.getChild("name").getText();
-                double r = Double.parseDouble(conn.getChild("r").getText());
-                double g = Double.parseDouble(conn.getChild("g").getText());
-                double b = Double.parseDouble(conn.getChild("b").getText());
+                double group_r = Double.parseDouble(conn.getChild("gr").getText());
+                double group_g = Double.parseDouble(conn.getChild("gg").getText());
+                double group_b = Double.parseDouble(conn.getChild("gb").getText());
+                double font_r = Double.parseDouble(conn.getChild("fr").getText());
+                double font_g = Double.parseDouble(conn.getChild("fg").getText());
+                double font_b = Double.parseDouble(conn.getChild("fb").getText());
 
-                Grouping group = new Grouping(uid, name, Color.color(r, g, b));
+                Grouping group = new Grouping(uid, name, Color.color(group_r, group_g, group_b), Color.color(font_r, font_g, font_b));
                 matrix.addGrouping(group);
                 matrixGroupings.put(uid, group);
             }
@@ -308,17 +315,23 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
                 Element groupElement = new Element("group");
                 groupElement.addContent(new Element("uid").setText(group.getUid().toString()));
                 groupElement.addContent(new Element("name").setText(group.getName()));
-                groupElement.addContent(new Element("r").setText(Double.valueOf(group.getColor().getRed()).toString()));
-                groupElement.addContent(new Element("g").setText(Double.valueOf(group.getColor().getGreen()).toString()));
-                groupElement.addContent(new Element("b").setText(Double.valueOf(group.getColor().getBlue()).toString()));
+                groupElement.addContent(new Element("gr").setText(Double.valueOf(group.getColor().getRed()).toString()));
+                groupElement.addContent(new Element("gg").setText(Double.valueOf(group.getColor().getGreen()).toString()));
+                groupElement.addContent(new Element("gb").setText(Double.valueOf(group.getColor().getBlue()).toString()));
+                groupElement.addContent(new Element("fr").setText(Double.valueOf(group.getFontColor().getRed()).toString()));
+                groupElement.addContent(new Element("fg").setText(Double.valueOf(group.getFontColor().getGreen()).toString()));
+                groupElement.addContent(new Element("fb").setText(Double.valueOf(group.getFontColor().getBlue()).toString()));
 
                 groupingsElement.addContent(groupElement);
             }
             // don't write uid for default grouping element because it is always the same
             defaultGroupingElement.addContent(new Element("name").setText(matrix.getDefaultGrouping().getName()));
-            defaultGroupingElement.addContent(new Element("r").setText(Double.valueOf(matrix.getDefaultGrouping().getColor().getRed()).toString()));
-            defaultGroupingElement.addContent(new Element("g").setText(Double.valueOf(matrix.getDefaultGrouping().getColor().getGreen()).toString()));
-            defaultGroupingElement.addContent(new Element("b").setText(Double.valueOf(matrix.getDefaultGrouping().getColor().getBlue()).toString()));
+            defaultGroupingElement.addContent(new Element("gr").setText(Double.valueOf(matrix.getDefaultGrouping().getColor().getRed()).toString()));
+            defaultGroupingElement.addContent(new Element("gg").setText(Double.valueOf(matrix.getDefaultGrouping().getColor().getGreen()).toString()));
+            defaultGroupingElement.addContent(new Element("gb").setText(Double.valueOf(matrix.getDefaultGrouping().getColor().getBlue()).toString()));
+            defaultGroupingElement.addContent(new Element("fr").setText(Double.valueOf(matrix.getDefaultGrouping().getFontColor().getRed()).toString()));
+            defaultGroupingElement.addContent(new Element("fg").setText(Double.valueOf(matrix.getDefaultGrouping().getFontColor().getGreen()).toString()));
+            defaultGroupingElement.addContent(new Element("fb").setText(Double.valueOf(matrix.getDefaultGrouping().getFontColor().getBlue()).toString()));
 
             doc.getRootElement().addContent(infoElement);
             doc.getRootElement().addContent(colsElement);

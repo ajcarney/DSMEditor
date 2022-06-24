@@ -20,6 +20,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Text;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Pair;
@@ -311,8 +312,9 @@ public abstract class TemplateMatrixHandler<T extends TemplateDSM> {
      * @param colUid         the uid of the column item
      * @param gridRowIndex   the row index the cell will be placed in
      * @param gridColIndex   the column index the cell will be placed in
+     * @return               the label that was created inside the hbox so that its text color can be updated later
      */
-    public void getEditableConnectionCell(HBox cell, Label locationLabel, int rowUid, int colUid, int gridRowIndex, int gridColIndex) {
+    public Label getEditableConnectionCell(HBox cell, Label locationLabel, int rowUid, int colUid, int gridRowIndex, int gridColIndex) {
         DSMConnection conn = matrix.getConnection(rowUid, colUid);
         final Label label = new Label();
         label.textProperty().bind(Bindings.createStringBinding(() -> {  // bind so that either weights or name can be shown
@@ -455,6 +457,7 @@ public abstract class TemplateMatrixHandler<T extends TemplateDSM> {
         //endregion
 
         cell.getChildren().add(label);
+        return label;
     }
 
 

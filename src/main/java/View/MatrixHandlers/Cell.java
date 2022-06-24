@@ -1,6 +1,14 @@
 package View.MatrixHandlers;
 
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+import javafx.collections.ListChangeListener;
 import javafx.geometry.Insets;
+import javafx.scene.Node;
+import javafx.scene.control.Label;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.CornerRadii;
@@ -18,6 +26,10 @@ import java.util.HashMap;
 public class Cell {
     protected Pair<Integer, Integer> gridLocation;
     protected HBox guiCell;
+    protected Label label;
+
+    protected DoubleProperty fontSize;
+    protected StringProperty fontColorCss = new SimpleStringProperty("-fx-text-fill: rgb(0, 0, 0);");
 
     protected Boolean crossHighlightEnabled = false;
 
@@ -35,12 +47,21 @@ public class Cell {
     /**
      * Creates a new cell object
      *
-     * @param gridLocation a pair of row, column of the location of the cell in the grid layout
-     * @param guiCell      the HBox object of the cell
+     * @param gridLocation  a pair of row, column of the location of the cell in the grid layout
+     * @param guiCell       the HBox object of the cell
+     * @param label         the label object so that the font color of it can be updated if desired
+     * @param fontSize      an observable double for the font size
      */
-    public Cell(Pair<Integer, Integer> gridLocation, HBox guiCell) {
+    public Cell(Pair<Integer, Integer> gridLocation, HBox guiCell, Label label, DoubleProperty fontSize) {
         this.gridLocation = gridLocation;
         this.guiCell = guiCell;
+        this.fontSize = fontSize;
+        this.label = label;
+
+        this.guiCell.styleProperty().bind(Bindings.concat("-fx-font-size: ", fontSize));
+        if(this.label != null) {
+            this.label.styleProperty().bind(fontColorCss);
+        }
     }
 
 
@@ -61,6 +82,16 @@ public class Cell {
      */
     public void setCellHighlight(Background bg) {
         guiCell.setBackground(bg);
+    }
+
+
+    /**
+     * Sets the text color of a cell
+     *
+     * @param color  the new text color
+     */
+    public void setCellTextColor(Color color) {
+        fontColorCss.set("-fx-text-fill: rgb(" + 255 * color.getRed() + ", " + 255 * color.getGreen() + ", " + 255 * color.getBlue() + ");");
     }
 
 

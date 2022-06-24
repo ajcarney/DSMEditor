@@ -13,6 +13,9 @@ public class Grouping {
     private final Integer uid;
     private String name;
     private Color color;
+    private Color fontColor;
+    public static final Color defaultFontColor = Color.color(0, 0, 0);
+
 
     /**
      * Creates a new Grouping with a given color
@@ -24,6 +27,21 @@ public class Grouping {
         this.uid = java.util.UUID.randomUUID().hashCode();
         this.name = name;
         this.color = color;
+        this.fontColor = defaultFontColor;
+    }
+
+
+    /**
+     * Creates a new Grouping with a given color
+     *
+     * @param name  the starting name of the item
+     * @param color the starting index of the item
+     */
+    public Grouping(String name, Color color, Color fontColor) {
+        this.uid = java.util.UUID.randomUUID().hashCode();
+        this.name = name;
+        this.color = color;
+        this.fontColor = fontColor;
     }
 
 
@@ -34,10 +52,11 @@ public class Grouping {
      * @param name     the name of the group
      * @param color    the color of the group
      */
-    public Grouping(Integer uid, String name, Color color) {
+    public Grouping(Integer uid, String name, Color color, Color fontColor) {
         this.uid = uid;
         this.name = name;
         this.color = color;
+        this.fontColor = fontColor;
     }
 
 
@@ -50,6 +69,7 @@ public class Grouping {
         uid = copy.getUid();
         name = copy.getName();
         color = copy.getColor();
+        fontColor = copy.getFontColor();
     }
 
 
@@ -84,6 +104,16 @@ public class Grouping {
 
 
     /**
+     * Getter function for the font color of the grouping
+     *
+     * @return the font color of the grouping
+     */
+    public Color getFontColor() {
+        return fontColor;
+    }
+
+
+    /**
      * Setter function for the name of the grouping
      *
      * @param name the new name of the grouping
@@ -96,11 +126,22 @@ public class Grouping {
     /**
      * Setter function for the color of the grouping
      *
-     * @param color the new group of the grouping
+     * @param color the new color of the grouping
      */
     public void setColor(Color color) {
         this.color = color;
     }
+
+
+    /**
+     * Setter function for the font color of the grouping
+     *
+     * @param fontColor  the new fontColor of the grouping
+     */
+    public void setFontColor(Color fontColor) {
+        this.fontColor = fontColor;
+    }
+
 
 
     /**
