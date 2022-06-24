@@ -5,6 +5,7 @@ import Data.DSMItem;
 import Data.Grouping;
 import Data.SymmetricDSM;
 import View.MatrixHandlers.SymmetricMatrixHandler;
+import View.MatrixHandlers.TemplateMatrixHandler;
 import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
@@ -417,6 +418,35 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
 
 
     /**
+     * Styles a cell in an excel workbook in place
+     *
+     * @param wb         the workbook object of the spreadsheet that contains the cell
+     * @param cell       the cell created from the workbook to style
+     * @param bgColor    the background color for the cell
+     * @param fontColor  the font color for the cell
+     * @param rotation   the degrees rotation for the cell (to change horizontal vs vertical text)
+     */
+    private void styleExcelCell(XSSFWorkbook wb, Cell cell, Color bgColor, Color fontColor, short rotation) {
+        XSSFCellStyle style = wb.createCellStyle();
+        // background color
+        if(bgColor != null) {
+            style.setFillForegroundColor(new XSSFColor(new java.awt.Color((float) (bgColor.getRed()), (float) (bgColor.getGreen()), (float) (bgColor.getBlue())), new DefaultIndexedColorMap()));
+            style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        }
+        // font color
+        if(fontColor != null) {
+            XSSFFont font = wb.createFont();
+            font.setColor(new XSSFColor(new java.awt.Color((float) (fontColor.getRed()), (float) (fontColor.getGreen()), (float) (fontColor.getBlue())), new DefaultIndexedColorMap()));
+            style.setFont(font);
+        }
+        // rotation
+        style.setRotation(rotation);
+
+        cell.setCellStyle(style);
+    }
+
+
+    /**
      * Saves a matrix to an Excel Spreadsheet file. The spreadsheet includes the matrix metadata.
      * Cells are highlighted and auto sized. The matrix itself is shifted by ROW_START and COL_START (in function body)
      * so that the sizing for it is not impacted by the matrix metadata
@@ -463,109 +493,107 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
                 for (int c=0; c<columns; c++) {
                     Pair<String, Object> item = template.get(r).get(c);
 
-                    if (item.getKey().equals("plain_text")) {
-                        Cell cell = row.createCell(c + COL_START);
-                        cell.setCellValue(item.getValue().toString());
+                    switch (item.getKey()) {
+                        case "plain_text" -> {
+                            Cell cell = row.createCell(c + COL_START);
+                            cell.setCellValue(item.getValue().toString());
 
-                        CellStyle cellStyle = workbook.createCellStyle();
-                        cellStyle.setRotation(HORIZONTAL_ROTATION);
-                        cell.setCellStyle(cellStyle);
-                    } else if(item.getKey().equals("plain_text_v")) {
-                        Cell cell = row.createCell(c + COL_START);
-                        cell.setCellValue(item.getValue().toString());
-
-                        CellStyle cellStyle = workbook.createCellStyle();
-                        cellStyle.setAlignment(HorizontalAlignment.RIGHT);
-                        cellStyle.setVerticalAlignment(VerticalAlignment.BOTTOM);
-                        cellStyle.setRotation(VERTICAL_ROTATION);
-                        cell.setCellStyle(cellStyle);
-                    } else if (item.getKey().equals("item_name")) {
-                        Cell cell = row.createCell(c + COL_START);
-                        cell.setCellValue(((DSMItem)item.getValue()).getName().getValue());
-
-                        javafx.scene.paint.Color cellColor = ((DSMItem)item.getValue()).getGroup1().getColor();
-                        XSSFCellStyle style = workbook.createCellStyle();
-                        style.setFillForegroundColor(new XSSFColor(new java.awt.Color((float) (cellColor.getRed()), (float) (cellColor.getGreen()), (float) (cellColor.getBlue())), new DefaultIndexedColorMap()));
-                        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-                        style.setRotation(HORIZONTAL_ROTATION);
-                        cell.setCellStyle(style);
-                    } else if(item.getKey().equals("item_name_v")) {
-                        Cell cell = row.createCell(c + COL_START);
-                        System.out.println(item);
-                        cell.setCellValue(((DSMItem)item.getValue()).getName().getValue());
-
-                        javafx.scene.paint.Color cellColor = ((DSMItem)item.getValue()).getGroup1().getColor();
-                        XSSFCellStyle style = workbook.createCellStyle();
-                        style.setRotation(VERTICAL_ROTATION);
-                        style.setFillForegroundColor(new XSSFColor(new java.awt.Color((float) (cellColor.getRed()), (float) (cellColor.getGreen()), (float) (cellColor.getBlue())), new DefaultIndexedColorMap()));
-                        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-                        cell.setCellStyle(style);
-                    } else if (item.getKey().equals("grouping_item")) {
-                        Cell cell = row.createCell(c + COL_START);
-                        cell.setCellValue(((DSMItem)item.getValue()).getGroup1().getName());
-
-                        javafx.scene.paint.Color cellColor = ((DSMItem)item.getValue()).getGroup1().getColor();
-                        XSSFCellStyle style = workbook.createCellStyle();
-                        style.setFillForegroundColor(new XSSFColor(new java.awt.Color((float) (cellColor.getRed()), (float) (cellColor.getGreen()), (float) (cellColor.getBlue())), new DefaultIndexedColorMap()));
-                        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-                        style.setRotation(HORIZONTAL_ROTATION);
-                        cell.setCellStyle(style);
-                    } else if (item.getKey().equals("grouping_item_v")) {
-                        Cell cell = row.createCell(c + COL_START);
-                        cell.setCellValue(((DSMItem)item.getValue()).getGroup1().getName());
-
-                        javafx.scene.paint.Color cellColor = ((DSMItem)item.getValue()).getGroup1().getColor();
-                        XSSFCellStyle style = workbook.createCellStyle();
-                        style.setFillForegroundColor(new XSSFColor(new java.awt.Color((float) (cellColor.getRed()), (float) (cellColor.getGreen()), (float) (cellColor.getBlue())), new DefaultIndexedColorMap()));
-                        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-                        style.setRotation(VERTICAL_ROTATION);
-                        cell.setCellStyle(style);
-                    } else if (item.getKey().equals("index_item")) {
-                        Cell cell = row.createCell(c + COL_START);
-                        cell.setCellValue(((DSMItem)item.getValue()).getSortIndex());
-
-                        javafx.scene.paint.Color cellColor = ((DSMItem)item.getValue()).getGroup1().getColor();
-                        XSSFCellStyle style = workbook.createCellStyle();
-                        style.setFillForegroundColor(new XSSFColor(new java.awt.Color((float) (cellColor.getRed()), (float) (cellColor.getGreen()), (float) (cellColor.getBlue())), new DefaultIndexedColorMap()));
-                        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-                        style.setRotation(HORIZONTAL_ROTATION);
-                        cell.setCellStyle(style);
-                    } else if (item.getKey().equals("uneditable_connection")) {
-                        Cell cell = row.createCell(c + COL_START);
-                        cell.setCellValue("");
-
-                        XSSFCellStyle style = workbook.createCellStyle();
-                        style.setFillForegroundColor(new XSSFColor(new java.awt.Color(0, 0, 0), new DefaultIndexedColorMap()));  // TODO: set this to the color defined in MatrixGuiHandler
-                        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-                        style.setRotation(HORIZONTAL_ROTATION);
-                        cell.setCellStyle(style);
-                    } else if (item.getKey().equals("editable_connection")) {
-                        Integer rowUid = ((Pair<DSMItem, DSMItem>)item.getValue()).getKey().getUid();
-                        Integer colUid = ((Pair<DSMItem, DSMItem>)item.getValue()).getValue().getUid();
-
-                        Cell cell = row.createCell(c + COL_START);
-                        if(matrix.getConnection(rowUid, colUid) != null) {
-                            cell.setCellValue(matrix.getConnection(rowUid, colUid).getConnectionName());
+                            styleExcelCell(workbook, cell, null, null, HORIZONTAL_ROTATION);
+                            break;
                         }
+                        case "plain_text_v" -> {
+                            Cell cell = row.createCell(c + COL_START);
+                            cell.setCellValue(item.getValue().toString());
 
-                        // highlight cell
-                        javafx.scene.paint.Color rowColor = matrix.getItem(rowUid).getGroup1().getColor();
-                        if (rowColor == null) rowColor = javafx.scene.paint.Color.color(1.0, 1.0, 1.0);
-
-                        javafx.scene.paint.Color colColor = matrix.getItem(colUid).getGroup1().getColor();
-                        if (colColor == null) colColor = Color.color(1.0, 1.0, 1.0);
-
-                        double red = (rowColor.getRed() + colColor.getRed()) / 2;
-                        double green = (rowColor.getGreen() + colColor.getGreen()) / 2;
-                        double blue = (rowColor.getBlue() + colColor.getBlue()) / 2;
-
-                        XSSFCellStyle style = workbook.createCellStyle();
-                        if (!rowUid.equals(matrix.getItem(colUid).getAliasUid()) && matrix.getItem(rowUid).getGroup1().equals(matrix.getItem(colUid).getGroup1())) {  // associated row and column are same group
-                            style.setFillForegroundColor(new XSSFColor(new java.awt.Color((float)(red), (float)(green), (float)(blue)), new DefaultIndexedColorMap()));
-                            style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+                            CellStyle cellStyle = workbook.createCellStyle();
+                            cellStyle.setAlignment(HorizontalAlignment.RIGHT);
+                            cellStyle.setVerticalAlignment(VerticalAlignment.BOTTOM);
+                            cellStyle.setRotation(VERTICAL_ROTATION);
+                            cell.setCellStyle(cellStyle);
+                            break;
                         }
-                        style.setRotation(HORIZONTAL_ROTATION);
-                        cell.setCellStyle(style);
+                        case "item_name" -> {
+                            Cell cell = row.createCell(c + COL_START);
+                            cell.setCellValue(((DSMItem) item.getValue()).getName().getValue());
+
+                            Color bgColor = ((DSMItem) item.getValue()).getGroup1().getColor();
+                            Color fontColor = ((DSMItem) item.getValue()).getGroup1().getFontColor();
+                            styleExcelCell(workbook, cell, bgColor, fontColor, HORIZONTAL_ROTATION);
+
+                            break;
+                        }
+                        case "item_name_v" -> {
+                            Cell cell = row.createCell(c + COL_START);
+                            System.out.println(item);
+                            cell.setCellValue(((DSMItem) item.getValue()).getName().getValue());
+
+                            Color bgColor = ((DSMItem) item.getValue()).getGroup1().getColor();
+                            Color fontColor = ((DSMItem) item.getValue()).getGroup1().getFontColor();
+                            styleExcelCell(workbook, cell, bgColor, fontColor, VERTICAL_ROTATION);
+
+                            break;
+                        }
+                        case "grouping_item" -> {
+                            Cell cell = row.createCell(c + COL_START);
+                            cell.setCellValue(((DSMItem) item.getValue()).getGroup1().getName());
+
+                            Color bgColor = ((DSMItem) item.getValue()).getGroup1().getColor();
+                            Color fontColor = ((DSMItem) item.getValue()).getGroup1().getFontColor();
+                            styleExcelCell(workbook, cell, bgColor, fontColor, HORIZONTAL_ROTATION);
+
+                            break;
+                        }
+                        case "grouping_item_v" -> {
+                            Cell cell = row.createCell(c + COL_START);
+                            cell.setCellValue(((DSMItem) item.getValue()).getGroup1().getName());
+
+                            Color bgColor = ((DSMItem) item.getValue()).getGroup1().getColor();
+                            Color fontColor = ((DSMItem) item.getValue()).getGroup1().getFontColor();
+                            styleExcelCell(workbook, cell, bgColor, fontColor, VERTICAL_ROTATION);
+
+                            break;
+                        }
+                        case "index_item" -> {
+                            Cell cell = row.createCell(c + COL_START);
+                            cell.setCellValue(((DSMItem) item.getValue()).getSortIndex());
+
+                            Color bgColor = ((DSMItem) item.getValue()).getGroup1().getColor();
+                            Color fontColor = ((DSMItem) item.getValue()).getGroup1().getFontColor();
+                            styleExcelCell(workbook, cell, bgColor, fontColor, HORIZONTAL_ROTATION);
+
+                            break;
+                        }
+                        case "uneditable_connection" -> {
+                            Cell cell = row.createCell(c + COL_START);
+                            cell.setCellValue("");
+
+                            Color bgColor = (Color) TemplateMatrixHandler.UNEDITABLE_CONNECTION_BACKGROUND.getFills().get(0).getFill();
+                            styleExcelCell(workbook, cell, bgColor, null, HORIZONTAL_ROTATION);
+
+                            break;
+                        }
+                        case "editable_connection" -> {
+                            Integer rowUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getKey().getUid();
+                            Integer colUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getValue().getUid();
+
+                            Cell cell = row.createCell(c + COL_START);
+                            if (matrix.getConnection(rowUid, colUid) != null) {
+                                cell.setCellValue(matrix.getConnection(rowUid, colUid).getConnectionName());
+                            }
+
+
+                            if (matrix.getItem(rowUid).getGroup1().equals(matrix.getItem(colUid).getGroup1())) {  // groups are the same
+                                Color bgColor = matrix.getItem(rowUid).getGroup1().getColor();
+                                Color fontColor = matrix.getItem(rowUid).getGroup1().getFontColor();
+                                styleExcelCell(workbook, cell, bgColor, fontColor, HORIZONTAL_ROTATION);
+                            } else {
+                                Color bgColor = (Color) TemplateMatrixHandler.DEFAULT_BACKGROUND.getFills().get(0).getFill();
+                                Color fontColor = Grouping.defaultFontColor;
+                                styleExcelCell(workbook, cell, bgColor, fontColor, HORIZONTAL_ROTATION);
+                            }
+
+                            break;
+                        }
                     }
                     sheet.autoSizeColumn(c + COL_START);
                 }

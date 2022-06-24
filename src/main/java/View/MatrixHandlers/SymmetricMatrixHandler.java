@@ -5,22 +5,19 @@ import Data.DSMItem;
 import Data.Grouping;
 import Data.SymmetricDSM;
 import View.Widgets.FreezeGrid;
-import View.Widgets.MiscWidgets;
 import View.Widgets.NumericTextField;
-import javafx.beans.binding.Bindings;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.stage.Modality;
-import javafx.stage.Stage;
 import javafx.util.Callback;
 import javafx.util.Pair;
 
@@ -75,9 +72,11 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
             Integer colUid = getUidsFromGridLoc(cell.getGridLocation()).getValue();
             if (rowUid == null && colUid != null) {  // highlight with column color
                 cell.setCellHighlight(matrix.getItem(colUid).getGroup1().getColor());
+                cell.setCellTextColor(matrix.getItem(colUid).getGroup1().getFontColor());
                 return;
             } else if (rowUid != null && colUid == null) {  // highlight with row color
                 cell.setCellHighlight(matrix.getItem(rowUid).getGroup1().getColor());
+                cell.setCellTextColor(matrix.getItem(rowUid).getGroup1().getFontColor());
                 return;
             } else if (
                     rowUid != null && colUid != null
@@ -103,8 +102,8 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
     public void refreshMatrixEditor() {
         cells = new Vector<>();
         gridUidLookup = new HashMap<>();
-        gridUidLookup.put("rows", new HashMap<Integer, Integer>());
-        gridUidLookup.put("cols", new HashMap<Integer, Integer>());
+        gridUidLookup.put("rows", new HashMap<>());
+        gridUidLookup.put("cols", new HashMap<>());
 
         rootLayout.getChildren().removeAll(rootLayout.getChildren());
         rootLayout.setAlignment(Pos.CENTER);
@@ -145,7 +144,7 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
                     case "plain_text" -> {
                         label = new Label((String) item.getValue());
                         label.setMinWidth(Region.USE_PREF_SIZE);
-                        cell.getChildren().add((Node) label);
+                        cell.getChildren().add(label);
 
                         break;
                     }
@@ -206,7 +205,7 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
                         Callback<ListView<Grouping>, ListCell<Grouping>> cellFactory = new Callback<>() {
                             @Override
                             public ListCell<Grouping> call(ListView<Grouping> l) {
-                                return new ListCell<Grouping>() {
+                                return new ListCell<>() {
 
                                     @Override
                                     protected void updateItem(Grouping group, boolean empty) {
@@ -262,9 +261,9 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
                                     Double newSortIndex = entry.getNumericValue();
                                     matrix.setItemSortIndex((DSMItem) item.getValue(), newSortIndex);
                                     matrix.setCurrentStateAsCheckpoint();
-                                    clearCellHighlight(new Pair<Integer, Integer>(finalR, finalC), "errorHighlight");
+                                    clearCellHighlight(new Pair<>(finalR, finalC), "errorHighlight");
                                 } else {
-                                    setCellHighlight(new Pair<Integer, Integer>(finalR, finalC), ERROR_BACKGROUND, "errorHighlight");
+                                    setCellHighlight(new Pair<>(finalR, finalC), ERROR_BACKGROUND, "errorHighlight");
                                 }
                             }
                         });

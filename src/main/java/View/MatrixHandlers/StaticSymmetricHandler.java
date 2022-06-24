@@ -2,6 +2,7 @@ package View.MatrixHandlers;
 
 import Data.DSMConnection;
 import Data.DSMItem;
+import Data.Grouping;
 import Data.SymmetricDSM;
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
@@ -43,18 +44,23 @@ public class StaticSymmetricHandler extends TemplateMatrixHandler<SymmetricDSM> 
     public void refreshCellHighlight(Cell cell) {
         if (cell.getHighlightBG("error") != null) {
             cell.setCellHighlight(cell.getHighlightBG("error"));
+            cell.setCellTextColor(Grouping.defaultFontColor);
 
         } else if(cell.getHighlightBG("symmetryError") != null) {
             cell.setCellHighlight(cell.getHighlightBG("symmetryError"));
+            cell.setCellTextColor(Grouping.defaultFontColor);
 
         } else if(cell.getHighlightBG("search") != null) {
             cell.setCellHighlight(cell.getHighlightBG("search"));
+            cell.setCellTextColor(Grouping.defaultFontColor);
 
         } else if (cell.getHighlightBG("cross") != null && cell.getCrossHighlightEnabled()) {
             cell.setCellHighlight(cell.getHighlightBG("cross"));
+            cell.setCellTextColor(Grouping.defaultFontColor);
 
         } else if (cell.getHighlightBG("user") != null) {
             cell.setCellHighlight(cell.getHighlightBG("user"));
+            cell.setCellTextColor(Grouping.defaultFontColor);
 
         } else {  // default background determined by groupings
             Integer rowUid = getUidsFromGridLoc(cell.getGridLocation()).getKey();
@@ -63,10 +69,12 @@ public class StaticSymmetricHandler extends TemplateMatrixHandler<SymmetricDSM> 
             if (rowUid == null && colUid != null) {  // highlight with column color
                 mergedColor = matrix.getItem(colUid).getGroup1().getColor();
                 cell.setCellHighlight(mergedColor);
+                cell.setCellTextColor(matrix.getItem(colUid).getGroup1().getFontColor());
                 return;
             } else if (rowUid != null && colUid == null) {  // highlight with row color
                 mergedColor = matrix.getItem(rowUid).getGroup1().getColor();
                 cell.setCellHighlight(mergedColor);
+                cell.setCellTextColor(matrix.getItem(rowUid).getGroup1().getFontColor());
                 return;
             } else if (
                     rowUid != null && colUid != null
@@ -74,7 +82,7 @@ public class StaticSymmetricHandler extends TemplateMatrixHandler<SymmetricDSM> 
                             && matrix.getItem(rowUid).getGroup1().equals(matrix.getItem(colUid).getGroup1())
             ) {  // highlight with merged color
                 cell.setCellHighlight(matrix.getItem(rowUid).getGroup1().getColor());  // row and column color will be the same because row and column
-                // have same group in symmetric matrix
+                cell.setCellTextColor(matrix.getItem(rowUid).getGroup1().getFontColor());
                 return;
             }
 

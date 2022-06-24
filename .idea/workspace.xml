@@ -5,24 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="1e933d21-0475-41e8-afc7-e2d68df7d37d" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/artifacts/DSMEditor_jar.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/runConfigurations/DSMEditor__debug_.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/runConfigurations/DSMEditor__debug_.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/uiDesigner.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DSMEditor.iml" beforeDir="false" afterPath="$PROJECT_DIR$/DSMEditor.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/DSMApplication.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/DSMApplication.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/Data/Grouping.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/Data/Grouping.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/Data/SymmetricDSM.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/Data/SymmetricDSM.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/IOHandler/SymmetricIOHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/IOHandler/SymmetricIOHandler.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/View/MatrixHandlers/Cell.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/View/MatrixHandlers/Cell.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/View/MatrixHandlers/StaticSymmetricHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/View/MatrixHandlers/StaticSymmetricHandler.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/View/MatrixHandlers/SymmetricMatrixHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/View/MatrixHandlers/SymmetricMatrixHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/View/MatrixHandlers/TemplateMatrixHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/View/MatrixHandlers/TemplateMatrixHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/View/SideBarTools/SymmetricSideBar.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/View/SideBarTools/SymmetricSideBar.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
