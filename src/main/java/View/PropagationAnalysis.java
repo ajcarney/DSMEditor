@@ -133,7 +133,7 @@ public class PropagationAnalysis {
                             setText(null);
                             setGraphic(null);
                         } else {
-                            setText(matrix.getItem(item).getName());
+                            setText(matrix.getItem(item).getName().getValue());
                         }
                     }
                 };

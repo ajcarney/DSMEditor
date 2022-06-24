@@ -55,7 +55,7 @@ public class DSMApplication extends Application {
 
         // start with a tab open (used for debugging, remove or comment out for release)
         if(cliArgs.contains("debug=true")) {
-            SymmetricIOHandler ioHandler = new SymmetricIOHandler(new File("/home/aiden/Documents/DSMEditor/test2.dsm"));
+            SymmetricIOHandler ioHandler = new SymmetricIOHandler(new File("/home/aiden/Documents/DSMEditor/test3.dsm"));
             SymmetricDSM matrix = ioHandler.readFile();
             this.editor.addTab(
                     matrix,

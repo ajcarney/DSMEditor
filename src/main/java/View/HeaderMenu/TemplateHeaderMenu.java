@@ -31,7 +31,7 @@ public abstract class TemplateHeaderMenu {
 
     protected final Menu fileMenu = new Menu("_File");
     protected final Menu newFileMenu = new Menu("New...");
-    protected final Menu openMenu = new Menu("Open...");
+    protected final MenuItem openMenu = new MenuItem("Open");
     protected final Menu importMenu = new Menu("Import...");
     protected final Menu exitMenu = new Menu("Exit");
 

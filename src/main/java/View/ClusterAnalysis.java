@@ -212,12 +212,12 @@ public class ClusterAnalysis {
 
         VBox intraBreakDown = new VBox();
         ScrollPane intraScroll = new ScrollPane(intraBreakDown);
-        for(Map.Entry<String, Double> b : ((HashMap<String, Double>)coordinationScore.get("IntraBreakdown")).entrySet()) {
+        for(Map.Entry<Grouping, Double> b : ((HashMap<Grouping, Double>)coordinationScore.get("IntraBreakdown")).entrySet()) {
             HBox breakdown = new HBox();
             Label value = new Label(b.getValue().toString());
             value.setStyle(value.getStyle() + "-fx-font-weight: bold;");
 
-            breakdown.getChildren().addAll(new Label(b.getKey()), value);
+            breakdown.getChildren().addAll(new Label(b.getKey().getName()), value);
             breakdown.setPadding(new Insets(10));
             breakdown.setSpacing(10);
 
@@ -265,14 +265,14 @@ public class ClusterAnalysis {
         for(int r = 0; r < items.size(); r++) {
             ArrayList<String> rowBids = new ArrayList<>();
             double maxBid = 0;
-            double minBid = 0;
-            Grouping maxBidGroup = null;
-            Grouping minBidGroup = null;
+            double minBid = Double.MAX_VALUE;
+            Grouping maxBidGroup = new Grouping("", Color.color(1.0, 1.0, 1.0));
+            Grouping minBidGroup = new Grouping("", Color.color(1.0, 1.0, 1.0));
             for(int c = 0; c < groupOrder.size() + 2; c++) {  // add two to include header columns
                 if(c == 0) {
                     rowBids.add(items.get(r).getGroup1().getName());
                 } else if(c == 1) {
-                    rowBids.add(items.get(r).getName());
+                    rowBids.add(items.get(r).getName().getValue());
                 } else {
                     HashMap<Integer, Double> groupBids = SymmetricDSM.calculateClusterBids(matrix, groupOrder.get(c - 2), optimalSizeCluster.doubleValue(), powdep.doubleValue(), powbid.doubleValue(), countByWeight.isSelected());
 
@@ -329,7 +329,7 @@ public class ClusterAnalysis {
             } else if (c == 1) {
                 label.setText("Item Name");
             } else {
-                label.setText(groupOrder.get(c - 2) + " Bids");
+                label.setText(groupOrder.get(c - 2).getName() + " Bids");
             }
             label.setStyle(label.getStyle() + "-fx-font-weight: bold;" + "-fx-font-size: 18;");
             label.setAlignment(Pos.CENTER);

@@ -2,6 +2,7 @@ package View.MatrixHandlers;
 
 import Data.DSMConnection;
 import Data.DSMItem;
+import Data.Grouping;
 import Data.SymmetricDSM;
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
@@ -43,18 +44,23 @@ public class StaticSymmetricHandler extends TemplateMatrixHandler<SymmetricDSM> 
     public void refreshCellHighlight(Cell cell) {
         if (cell.getHighlightBG("error") != null) {
             cell.setCellHighlight(cell.getHighlightBG("error"));
+            cell.setCellTextColor(Grouping.defaultFontColor);
 
         } else if(cell.getHighlightBG("symmetryError") != null) {
             cell.setCellHighlight(cell.getHighlightBG("symmetryError"));
+            cell.setCellTextColor(Grouping.defaultFontColor);
 
         } else if(cell.getHighlightBG("search") != null) {
             cell.setCellHighlight(cell.getHighlightBG("search"));
+            cell.setCellTextColor(Grouping.defaultFontColor);
 
         } else if (cell.getHighlightBG("cross") != null && cell.getCrossHighlightEnabled()) {
             cell.setCellHighlight(cell.getHighlightBG("cross"));
+            cell.setCellTextColor(Grouping.defaultFontColor);
 
         } else if (cell.getHighlightBG("user") != null) {
             cell.setCellHighlight(cell.getHighlightBG("user"));
+            cell.setCellTextColor(Grouping.defaultFontColor);
 
         } else {  // default background determined by groupings
             Integer rowUid = getUidsFromGridLoc(cell.getGridLocation()).getKey();
@@ -63,10 +69,12 @@ public class StaticSymmetricHandler extends TemplateMatrixHandler<SymmetricDSM> 
             if (rowUid == null && colUid != null) {  // highlight with column color
                 mergedColor = matrix.getItem(colUid).getGroup1().getColor();
                 cell.setCellHighlight(mergedColor);
+                cell.setCellTextColor(matrix.getItem(colUid).getGroup1().getFontColor());
                 return;
             } else if (rowUid != null && colUid == null) {  // highlight with row color
                 mergedColor = matrix.getItem(rowUid).getGroup1().getColor();
                 cell.setCellHighlight(mergedColor);
+                cell.setCellTextColor(matrix.getItem(rowUid).getGroup1().getFontColor());
                 return;
             } else if (
                     rowUid != null && colUid != null
@@ -74,7 +82,7 @@ public class StaticSymmetricHandler extends TemplateMatrixHandler<SymmetricDSM> 
                             && matrix.getItem(rowUid).getGroup1().equals(matrix.getItem(colUid).getGroup1())
             ) {  // highlight with merged color
                 cell.setCellHighlight(matrix.getItem(rowUid).getGroup1().getColor());  // row and column color will be the same because row and column
-                // have same group in symmetric matrix
+                cell.setCellTextColor(matrix.getItem(rowUid).getGroup1().getFontColor());
                 return;
             }
 
@@ -111,18 +119,19 @@ public class StaticSymmetricHandler extends TemplateMatrixHandler<SymmetricDSM> 
             for(int c=0; c<columns; c++) {
                 Pair<String, Object> item = template.get(r).get(c);
                 HBox cell = new HBox();  // wrap everything in an HBox so a border can be added easily
+                Label label = null;
 
                 Background defaultBackground = DEFAULT_BACKGROUND;
 
                 switch (item.getKey()) {
                     case "plain_text" -> {
-                        Label label = new Label((String) item.getValue());
+                        label = new Label((String) item.getValue());
                         label.setMinWidth(Region.USE_PREF_SIZE);
                         cell.getChildren().add((Node) label);
                         break;
                     }
                     case "plain_text_v" -> {
-                        Label label = new Label((String) item.getValue());
+                        label = new Label((String) item.getValue());
                         label.setRotate(-90);
                         cell.setAlignment(Pos.BOTTOM_RIGHT);
                         Group g = new Group();  // label will be added to a group so that it will be formatted correctly if it is vertical
@@ -132,14 +141,14 @@ public class StaticSymmetricHandler extends TemplateMatrixHandler<SymmetricDSM> 
                         break;
                     }
                     case "item_name" -> {
-                        Label label = new Label(((DSMItem) item.getValue()).getName());
+                        label = new Label(((DSMItem) item.getValue()).getName().getValue());
                         cell.setAlignment(Pos.BOTTOM_RIGHT);
                         label.setMinWidth(Region.USE_PREF_SIZE);
                         cell.getChildren().add(label);
                         break;
                     }
                     case "item_name_v" -> {
-                        Label label = new Label(((DSMItem) item.getValue()).getName());
+                        label = new Label(((DSMItem) item.getValue()).getName().getValue());
                         label.setRotate(-90);
                         cell.setAlignment(Pos.BOTTOM_RIGHT);
                         Group g = new Group();  // label will be added to a group so that it will be formatted correctly if it is vertical
@@ -149,14 +158,14 @@ public class StaticSymmetricHandler extends TemplateMatrixHandler<SymmetricDSM> 
                         break;
                     }
                     case "grouping_item" -> {
-                        Label label = new Label(((DSMItem) item.getValue()).getGroup1().getName());
+                        label = new Label(((DSMItem) item.getValue()).getGroup1().getName());
                         cell.setAlignment(Pos.BOTTOM_RIGHT);
                         label.setMinWidth(Region.USE_PREF_SIZE);
                         cell.getChildren().add(label);
                         break;
                     }
                     case "index_item" -> {
-                        Label label = new Label(String.valueOf(((DSMItem) item.getValue()).getSortIndex()));
+                        label = new Label(String.valueOf(((DSMItem) item.getValue()).getSortIndex()));
                         cell.setAlignment(Pos.BOTTOM_RIGHT);
                         label.setMinWidth(Region.USE_PREF_SIZE);
                         cell.getChildren().add(label);
@@ -168,7 +177,7 @@ public class StaticSymmetricHandler extends TemplateMatrixHandler<SymmetricDSM> 
                         int rowUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getKey().getUid();
                         int colUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getValue().getUid();
                         DSMConnection conn = matrix.getConnection(rowUid, colUid);
-                        final Label label = new Label();
+                        label = new Label();
                         if (showNames.getValue() && conn != null) {
                             label.setText(conn.getConnectionName());
                         } else if (!showNames.getValue() && conn != null) {
@@ -200,7 +209,7 @@ public class StaticSymmetricHandler extends TemplateMatrixHandler<SymmetricDSM> 
                 GridPane.setConstraints(cell, c, r);
                 grid.getChildren().add(cell);
 
-                Cell cellData = new Cell(new Pair<>(r, c), cell);
+                Cell cellData = new Cell(new Pair<>(r, c), cell, label, fontSize);
                 cellData.updateHighlightBG(defaultBackground, "default");
                 cells.add(cellData);
             }

@@ -173,7 +173,7 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
                 if (empty || item == null) {
                     setText(null);
                 } else {
-                    setText(item.getName());
+                    setText(item.getName().getValue());
                 }
             }
         });
@@ -275,7 +275,7 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
             VBox connectionVBox = new VBox();
             connectionVBox.setAlignment(Pos.CENTER);
 
-            Label name = new Label(conn.getName());
+            Label name = new Label(conn.getName().getValue());
             CheckBox box = new CheckBox();
             connections.put(box, conn);
             connectionVBox.getChildren().addAll(name, box);
@@ -303,7 +303,7 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
                 if (empty || item == null) {
                     setText(null);
                 } else {
-                    setText(item.getName());
+                    setText(item.getName().getValue());
                 }
             }
         });
@@ -364,7 +364,7 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
                     VBox connectionVBox = new VBox();
                     connectionVBox.setAlignment(Pos.CENTER);
 
-                    Label name = new Label(col.getName());
+                    Label name = new Label(col.getName().getValue());
                     CheckBox box = new CheckBox();
                     connections.put(box, col);
                     connectionVBox.getChildren().addAll(name, box);
@@ -378,7 +378,7 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
                     VBox connectionVBox = new VBox();
                     connectionVBox.setAlignment(Pos.CENTER);
 
-                    Label name = new Label(row.getName());
+                    Label name = new Label(row.getName().getValue());
                     CheckBox box = new CheckBox();
                     connections.put(box, row);
                     connectionVBox.getChildren().addAll(name, box);
@@ -572,7 +572,7 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
             VBox connectionVBox = new VBox();
             connectionVBox.setAlignment(Pos.CENTER);
 
-            Label name = new Label(conn.getName());
+            Label name = new Label(conn.getName().getValue());
             CheckBox box = new CheckBox();
             connections.put(box, conn);
             connectionVBox.getChildren().addAll(name, box);
@@ -600,7 +600,7 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
                 if (empty || item == null) {
                     setText(null);
                 } else {
-                    setText(item.getName());
+                    setText(item.getName().getValue());
                 }
             }
         });
@@ -661,7 +661,7 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
                     VBox connectionVBox = new VBox();
                     connectionVBox.setAlignment(Pos.CENTER);
 
-                    Label name = new Label(col.getName());
+                    Label name = new Label(col.getName().getValue());
                     CheckBox box = new CheckBox();
                     connections.put(box, col);
                     connectionVBox.getChildren().addAll(name, box);
@@ -675,7 +675,7 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
                     VBox connectionVBox = new VBox();
                     connectionVBox.setAlignment(Pos.CENTER);
 
-                    Label name = new Label(row.getName());
+                    Label name = new Label(row.getName().getValue());
                     CheckBox box = new CheckBox();
                     connections.put(box, row);
                     connectionVBox.getChildren().addAll(name, box);
@@ -1227,6 +1227,9 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
             }
         });
 
+        Label groupingColorPickerLabel = new Label("Grouping Color: ");
+        groupingColorPickerLabel.setPadding(new Insets(10, 10, 10, 10));
+        groupingColorPickerLabel.setAlignment(Pos.TOP_RIGHT);
         ColorPicker groupingColorPicker = new ColorPicker(grouping.getColor());
         groupingColorPicker.setOnAction(e -> {
             Color newColor = Color.color(groupingColorPicker.getValue().getRed(), groupingColorPicker.getValue().getGreen(), groupingColorPicker.getValue().getBlue());
@@ -1235,15 +1238,29 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
             }
         });
 
-        Button deleteButton = new Button("Delete Grouping");
+        Label fontColorPickerLabel = new Label("Font Color: ");
+        fontColorPickerLabel.setPadding(new Insets(10, 10, 10, 30));
+        fontColorPickerLabel.setAlignment(Pos.TOP_RIGHT);
+        ColorPicker groupingFontColorPicker = new ColorPicker(grouping.getFontColor());
+        groupingFontColorPicker.setOnAction(e -> {
+            Color newColor = Color.color(groupingFontColorPicker.getValue().getRed(), groupingFontColorPicker.getValue().getGreen(), groupingFontColorPicker.getValue().getBlue());
+            if(!newColor.equals(grouping.getFontColor())) {
+                matrix.updateGroupingFontColor(grouping, newColor);
+            }
+        });
+
+        HBox deleteButtonSpace = new HBox();
+        deleteButtonSpace.setPadding(new Insets(0, 0, 0, 50));
+        Button deleteButton = new Button("Delete Grouping");  // wrap in HBox to add padding (doesn't work right otherwise)
         deleteButton.setOnAction(e -> {
             parent.getChildren().remove(display);  // delete the display item
             matrix.removeGrouping(grouping);       // delete the grouping from the matrix
         });
+        deleteButtonSpace.getChildren().add(deleteButton);
 
-        display.getChildren().addAll(groupingName, MiscWidgets.getHorizontalSpacer(), groupingColorPicker);
+        display.getChildren().addAll(groupingName, MiscWidgets.getHorizontalSpacer(), groupingColorPickerLabel, groupingColorPicker, fontColorPickerLabel, groupingFontColorPicker);
         if(deletable) {
-            display.getChildren().add(deleteButton);
+            display.getChildren().add(deleteButtonSpace);
         }
 
         return display;
@@ -1307,7 +1324,7 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
 
 
         //Display window and wait for it to be closed before returning
-        Scene scene = new Scene(layout, 500, 300);
+        Scene scene = new Scene(layout, 900, 300);
         window.setScene(scene);
         scene.getWindow().setOnHidden(e -> {  // TODO: 6/17/2020 changed from setOnCloseRequest when it was working before and idk why this fixed it
             window.close();                        // changes have already been made so just close and refresh the screen

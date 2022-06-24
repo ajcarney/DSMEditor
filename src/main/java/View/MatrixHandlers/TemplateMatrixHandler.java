@@ -1,7 +1,9 @@
 package View.MatrixHandlers;
 
 import Data.DSMConnection;
+import Data.DSMItem;
 import Data.TemplateDSM;
+import View.Widgets.MiscWidgets;
 import View.Widgets.NumericTextField;
 import View.Widgets.FreezeGrid;
 import javafx.beans.binding.Bindings;
@@ -18,6 +20,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Text;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Pair;
@@ -64,8 +67,8 @@ public abstract class TemplateMatrixHandler<T extends TemplateDSM> {
         this.matrix = matrix;
         cells = new Vector<>();
         gridUidLookup = new HashMap<>();
-        gridUidLookup.put("rows", new HashMap<Integer, Integer>());
-        gridUidLookup.put("cols", new HashMap<Integer, Integer>());
+        gridUidLookup.put("rows", new HashMap<>());
+        gridUidLookup.put("cols", new HashMap<>());
 
         rootLayout = new VBox();
         grid = new FreezeGrid();
@@ -86,7 +89,7 @@ public abstract class TemplateMatrixHandler<T extends TemplateDSM> {
      */
     protected Cell getCellByLoc(Pair<Integer, Integer> cellLoc) {
         for(Cell cell : (Vector<Cell>)cells.clone()) {  // use a clone so we don't run into concurrent modification exceptions
-            if(cell.getGridLocation().getKey() == cellLoc.getKey() && cell.getGridLocation().getValue() == cellLoc.getValue()) {
+            if(cell.getGridLocation().getKey().equals(cellLoc.getKey()) && cell.getGridLocation().getValue().equals(cellLoc.getValue())) {
                 return cell;
             }
         }
@@ -309,9 +312,9 @@ public abstract class TemplateMatrixHandler<T extends TemplateDSM> {
      * @param colUid         the uid of the column item
      * @param gridRowIndex   the row index the cell will be placed in
      * @param gridColIndex   the column index the cell will be placed in
-     * @return               the HBox object that contains all the callbacks and data
+     * @return               the label that was created inside the hbox so that its text color can be updated later
      */
-    public void getEditableConnectionCell(HBox cell, Label locationLabel, int rowUid, int colUid, int gridRowIndex, int gridColIndex) {
+    public Label getEditableConnectionCell(HBox cell, Label locationLabel, int rowUid, int colUid, int gridRowIndex, int gridColIndex) {
         DSMConnection conn = matrix.getConnection(rowUid, colUid);
         final Label label = new Label();
         label.textProperty().bind(Bindings.createStringBinding(() -> {  // bind so that either weights or name can be shown
@@ -352,7 +355,7 @@ public abstract class TemplateMatrixHandler<T extends TemplateDSM> {
                 VBox layout = new VBox();
 
                 // row 0
-                Label titleLabel = new Label("Connection From " + matrix.getItem(rowUid).getName() + " to " + matrix.getItem(colUid).getName());
+                Label titleLabel = new Label("Connection From " + matrix.getItem(rowUid).getName().getValue() + " to " + matrix.getItem(colUid).getName().getValue());
                 GridPane.setConstraints(titleLabel, 0, 0, 3, 1);  // span 3 columns
 
                 // row 1
@@ -361,7 +364,7 @@ public abstract class TemplateMatrixHandler<T extends TemplateDSM> {
                 row1.setSpacing(10);
                 Label nameLabel = new Label("Connection Type:  ");
 
-                String currentName = null;
+                String currentName;
                 if(matrix.getConnection(rowUid, colUid) != null) {
                     currentName = matrix.getConnection(rowUid, colUid).getConnectionName();
                 } else {
@@ -378,7 +381,7 @@ public abstract class TemplateMatrixHandler<T extends TemplateDSM> {
                 row2.setPadding(new Insets(10, 10, 10, 10));
                 row2.setSpacing(10);
 
-                Double currentWeight = null;
+                double currentWeight;
                 if(matrix.getConnection(rowUid, colUid) != null) {
                     currentWeight = matrix.getConnection(rowUid, colUid).getWeight();
                 } else {
@@ -395,7 +398,7 @@ public abstract class TemplateMatrixHandler<T extends TemplateDSM> {
                 Button applyButton = new Button("Apply Changes");
                 applyButton.setOnAction(ee -> {
                     if(!nameField.getText().equals("")) {
-                        Double weight = null;
+                        double weight;
                         try {
                             weight = Double.parseDouble(weightField.getText());
                         } catch(NumberFormatException nfe) {
@@ -421,15 +424,11 @@ public abstract class TemplateMatrixHandler<T extends TemplateDSM> {
                     }, showNames));
                 });
 
-                Pane spacer = new Pane();  // used as a spacer between buttons
-                HBox.setHgrow(spacer, Priority.ALWAYS);
-                spacer.setMaxWidth(Double.MAX_VALUE);
-
                 Button cancelButton = new Button("Cancel");
                 cancelButton.setOnAction(ee -> {
                     window.close();
                 });
-                closeArea.getChildren().addAll(cancelButton, spacer, applyButton);
+                closeArea.getChildren().addAll(cancelButton, MiscWidgets.getHorizontalSpacer(), applyButton);
 
                 //Display window and wait for it to be closed before returning
                 layout.getChildren().addAll(titleLabel, row1, row2, closeArea);
@@ -442,22 +441,79 @@ public abstract class TemplateMatrixHandler<T extends TemplateDSM> {
                 window.showAndWait();
 
             } else if(e.getButton().equals(MouseButton.SECONDARY)) {  // toggle highlighting
-                toggleUserHighlightCell(new Pair<Integer, Integer>(finalR, finalC), HIGHLIGHT_BACKGROUND);
+                toggleUserHighlightCell(new Pair<>(finalR, finalC), HIGHLIGHT_BACKGROUND);
             }
         });
 
         cell.setOnMouseEntered(e -> {
-            crossHighlightCell(new Pair<Integer, Integer>(finalR, finalC), true);
-            locationLabel.setText(matrix.getItem(rowUid).getName() + ":" + matrix.getItem(colUid).getName());
+            crossHighlightCell(new Pair<>(finalR, finalC), true);
+            locationLabel.setText(matrix.getItem(rowUid).getName().getValue() + ":" + matrix.getItem(colUid).getName().getValue());
         });
 
         cell.setOnMouseExited(e -> {
-            crossHighlightCell(new Pair<Integer, Integer>(finalR, finalC), false);
+            crossHighlightCell(new Pair<>(finalR, finalC), false);
             locationLabel.setText("");
         });
         //endregion
 
         cell.getChildren().add(label);
+        return label;
+    }
+
+
+    /**
+     * Opens a popup window to edit an items name in a matrix
+     *
+     * @param itemUid  the uid of the item in the matrix whose name is being changed
+     */
+    public void editItemName(int itemUid) {
+        // create popup window to edit the connection
+        Stage window = new Stage();
+
+        // Create Root window
+        window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
+        window.setTitle("Modify Item Name");
+
+        VBox layout = new VBox();
+
+        // row 1
+        HBox row1 = new HBox();
+        row1.setPadding(new Insets(10, 10, 10, 10));
+        row1.setSpacing(10);
+        Label nameLabel = new Label("Item Name:  ");
+
+        DSMItem item = matrix.getItem(itemUid);
+
+        TextField nameField = new TextField(item.getName().getValue());
+        nameField.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(nameField, Priority.ALWAYS);
+        row1.getChildren().addAll(nameLabel, nameField);
+
+        // row 3
+        // create HBox for user to close with our without changes
+        HBox closeArea = new HBox();
+        Button applyButton = new Button("Apply Changes");
+        applyButton.setOnAction(ee -> {
+            matrix.setItemName(item, nameField.getText());
+            matrix.setCurrentStateAsCheckpoint();
+            window.close();
+        });
+
+        Button cancelButton = new Button("Cancel");
+        cancelButton.setOnAction(ee -> {
+            window.close();
+        });
+        closeArea.getChildren().addAll(cancelButton, MiscWidgets.getHorizontalSpacer(), applyButton);
+
+        //Display window and wait for it to be closed before returning
+        layout.getChildren().addAll(row1, MiscWidgets.getVerticalSpacer(), closeArea);
+        layout.setAlignment(Pos.CENTER);
+        layout.setPadding(new Insets(10, 10, 10, 10));
+        layout.setSpacing(10);
+
+        Scene scene = new Scene(layout, 400, 100);
+        window.setScene(scene);
+        window.showAndWait();
     }
 
 
