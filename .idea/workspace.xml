@@ -5,24 +5,40 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="1e933d21-0475-41e8-afc7-e2d68df7d37d" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/src/main/java/Data/AsymmetricDSM.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/Data/IPropagationAnalysis.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/Data/TemplateGroupedMatrix.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/IOHandler/AsymmetricIOHandler.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/View/HeaderMenu/AsymmetricHeaderMenu.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/View/MatrixHandlers/AsymmetricMatrixHandler.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/View/MatrixHandlers/StaticAsymmetricHandler.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/View/SideBarTools/AsymmetricSideBar.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/Data/MatrixController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/Data/MatrixController.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/Data/SymmetricDSM.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/Data/SymmetricDSM.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/Data/TemplateDSM.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/Data/TemplateDSM.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/IOHandler/SymmetricIOHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/IOHandler/SymmetricIOHandler.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/IOHandler/TemplateIOHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/IOHandler/TemplateIOHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/View/ClusterAlgorithm.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/View/ClusterAlgorithmWindow.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/View/ClusterAnalysis.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/View/ClusterAnalysisWindow.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/View/EditorPane.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/View/EditorPane.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/View/HeaderMenu/SymmetricHeaderMenu.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/View/HeaderMenu/SymmetricHeaderMenu.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/View/HeaderMenu/TemplateHeaderMenu.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/View/HeaderMenu/TemplateHeaderMenu.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/View/MatrixHandlers/Cell.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/View/MatrixHandlers/Cell.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/View/MatrixHandlers/StaticSymmetricHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/View/MatrixHandlers/StaticSymmetricHandler.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/View/MatrixHandlers/SymmetricMatrixHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/View/MatrixHandlers/SymmetricMatrixHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/View/MatrixHandlers/TemplateMatrixHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/View/MatrixHandlers/TemplateMatrixHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/View/PropagationAnalysis.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/View/PropagationAnalysisWindow.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/View/SideBarTools/SymmetricSideBar.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/View/SideBarTools/SymmetricSideBar.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/View/SideBarTools/TemplateSideBar.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/View/SideBarTools/TemplateSideBar.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Class" />
+      </list>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />

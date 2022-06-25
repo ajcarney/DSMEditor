@@ -1,16 +1,11 @@
 package View.HeaderMenu;
 
-import Data.SymmetricDSM;
-import IOHandler.SymmetricIOHandler;
-import View.ClusterAlgorithmWindow;
-import View.ClusterAnalysisWindow;
+import Data.AsymmetricDSM;
 import View.EditorPane;
-import View.MatrixHandlers.StaticSymmetricHandler;
-import View.MatrixHandlers.SymmetricMatrixHandler;
+import View.MatrixHandlers.StaticAsymmetricHandler;
 import View.PropagationAnalysisWindow;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
-import javafx.scene.control.RadioMenuItem;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.stage.FileChooser;
 
@@ -22,14 +17,14 @@ import java.io.File;
  *
  * @author Aiden Carney
  */
-public class SymmetricHeaderMenu extends TemplateHeaderMenu {
+public class AsymmetricHeaderMenu extends TemplateHeaderMenu {
 
     /**
      * Creates a new instance of the header menu and instantiate widgets on it
      *
      * @param editor        the EditorPane instance
      */
-    public SymmetricHeaderMenu(EditorPane editor) {
+    public AsymmetricHeaderMenu(EditorPane editor) {
         super(editor);
 
         // methods to set up buttons are already called
@@ -57,7 +52,7 @@ public class SymmetricHeaderMenu extends TemplateHeaderMenu {
                 }
             }
             int matrixUid = editor.getFocusedMatrixUid();
-            SymmetricDSM matrix = (SymmetricDSM) this.editor.getFocusedMatrix();
+            AsymmetricDSM matrix = (AsymmetricDSM) this.editor.getFocusedMatrix();
             int code = this.editor.getMatrixController().getMatrixIOHandler(matrixUid).saveMatrixToFile(matrix, this.editor.getMatrixController().getMatrixIOHandler(editor.getFocusedMatrixUid()).getSavePath());  // TODO: add checking with the return code
         });
 
@@ -71,7 +66,7 @@ public class SymmetricHeaderMenu extends TemplateHeaderMenu {
             File file = fileChooser.showSaveDialog(menuBar.getScene().getWindow());
             if(file != null) {
                 int matrixUid = editor.getFocusedMatrixUid();
-                SymmetricDSM matrix = (SymmetricDSM) this.editor.getFocusedMatrix();
+                AsymmetricDSM matrix = (AsymmetricDSM) this.editor.getFocusedMatrix();
                 int code = this.editor.getMatrixController().getMatrixIOHandler(matrixUid).saveMatrixToFile(matrix, file);  // TODO: add checking with the return code
 
                 this.editor.getMatrixController().getMatrixIOHandler(matrixUid).setSavePath(file);
@@ -85,7 +80,7 @@ public class SymmetricHeaderMenu extends TemplateHeaderMenu {
                 return;
             }
             int matrixUid = editor.getFocusedMatrixUid();
-            SymmetricDSM matrix = (SymmetricDSM) this.editor.getFocusedMatrix();
+            AsymmetricDSM matrix = (AsymmetricDSM) this.editor.getFocusedMatrix();
             this.editor.getMatrixController().getMatrixIOHandler(matrixUid).promptExportToCSV(matrix, menuBar.getScene().getWindow());
         });
         MenuItem exportXLSX = new MenuItem("Micro$oft Excel File (.xlsx)");
@@ -94,16 +89,8 @@ public class SymmetricHeaderMenu extends TemplateHeaderMenu {
                 return;
             }
             int matrixUid = editor.getFocusedMatrixUid();
-            SymmetricDSM matrix = (SymmetricDSM) this.editor.getFocusedMatrix();
+            AsymmetricDSM matrix = (AsymmetricDSM) this.editor.getFocusedMatrix();
             this.editor.getMatrixController().getMatrixIOHandler(matrixUid).promptExportToExcel(matrix, menuBar.getScene().getWindow());
-        });
-        MenuItem exportThebeau = new MenuItem("Thebeau Matlab File (.m)");
-        exportThebeau.setOnAction(e -> {
-            if(editor.getFocusedMatrixUid() == null) {
-                return;
-            }
-            SymmetricDSM matrix = (SymmetricDSM) this.editor.getFocusedMatrix();
-            SymmetricIOHandler.promptExportToThebeau(matrix, menuBar.getScene().getWindow());
         });
         MenuItem exportImage = new MenuItem("PNG Image File (.png)");
         exportImage.setOnAction(e -> {
@@ -111,11 +98,11 @@ public class SymmetricHeaderMenu extends TemplateHeaderMenu {
                 return;
             }
             int matrixUid = editor.getFocusedMatrixUid();
-            SymmetricDSM matrix = (SymmetricDSM) this.editor.getFocusedMatrix();
-            this.editor.getMatrixController().getMatrixIOHandler(matrixUid).exportToImage(matrix, new StaticSymmetricHandler(matrix, 12.0));
+            AsymmetricDSM matrix = (AsymmetricDSM) this.editor.getFocusedMatrix();
+            this.editor.getMatrixController().getMatrixIOHandler(matrixUid).exportToImage(matrix, new StaticAsymmetricHandler(matrix, 12.0));
         });
 
-        exportMenu.getItems().addAll(exportCSV, exportXLSX, exportThebeau, exportImage);
+        exportMenu.getItems().addAll(exportCSV, exportXLSX, exportImage);
 
         fileMenu.getItems().add(newFileMenu);
         fileMenu.getItems().add(openMenu);
@@ -187,17 +174,6 @@ public class SymmetricHeaderMenu extends TemplateHeaderMenu {
      */
     @Override
     protected void setUpToolsMenu() {
-        RadioMenuItem validateSymmetry = new RadioMenuItem("Validate Symmetry");
-        validateSymmetry.setOnAction(e -> {
-            SymmetricMatrixHandler matrixHandler = (SymmetricMatrixHandler) editor.getMatrixController().getMatrixHandler(editor.getFocusedMatrixUid());
-            if(validateSymmetry.isSelected()) {
-                matrixHandler.setValidateSymmetry();
-            } else {
-                matrixHandler.clearValidateSymmetry();
-            }
-        });
-
-
         MenuItem search = new MenuItem("Find Connections");
         search.setOnAction(e -> searchWidget.open());
 
@@ -212,27 +188,8 @@ public class SymmetricHeaderMenu extends TemplateHeaderMenu {
             p.start();
         });
 
-        MenuItem coordinationScore = new MenuItem("Thebeau Cluster Analysis");
-        coordinationScore.setOnAction(e -> {
-            if(editor.getFocusedMatrixUid() == null) {
-                return;
-            }
 
-            ClusterAnalysisWindow c = new ClusterAnalysisWindow((SymmetricDSM) this.editor.getFocusedMatrix());
-            c.start();
-        });
-
-        MenuItem thebeau = new MenuItem("Thebeau Algorithm");
-        thebeau.setOnAction(e -> {
-            if(editor.getFocusedMatrixUid() == null) {
-                return;
-            }
-
-            ClusterAlgorithmWindow c = new ClusterAlgorithmWindow((SymmetricDSM) this.editor.getFocusedMatrix());
-            c.start();
-        });
-
-        toolsMenu.getItems().addAll(validateSymmetry, search, propagationAnalysis, coordinationScore, thebeau);
+        toolsMenu.getItems().addAll(search, propagationAnalysis);
 
     }
 }

@@ -1,14 +1,12 @@
 package View.SideBarTools;
 
+import Data.AsymmetricDSM;
 import Data.DSMConnection;
 import Data.DSMItem;
 import Data.Grouping;
-import Data.SymmetricDSM;
 import View.EditorPane;
 import View.Widgets.MiscWidgets;
 import View.Widgets.NumericTextField;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -20,6 +18,7 @@ import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Callback;
+import javafx.util.Pair;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,13 +26,13 @@ import java.util.Vector;
 
 
 /**
- * Creates a sidebar with methods to interact with a symmetric matrix
+ * Creates a sidebar with methods to interact with an asymmetric matrix
  */
-public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
+public class AsymmetricSideBar extends TemplateSideBar<AsymmetricDSM> {
 
     protected final Button configureGroupings = new Button("Configure Groupings");
 
-    public SymmetricSideBar(SymmetricDSM matrix, EditorPane editor) {
+    public AsymmetricSideBar(AsymmetricDSM matrix, EditorPane editor) {
         super(matrix, editor);
 
         addMatrixItems.setText("Add Rows/Columns");
@@ -62,17 +61,21 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
 
         // Create changes view and button for it
         Label label = new Label("Changes to be made");
-        ListView<String> changesToMakeView = new ListView<>();
+        ListView<Pair<String, String>> changesToMakeView = new ListView<>();  // item name, row/column
         changesToMakeView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         changesToMakeView.setCellFactory(param -> new ListCell<>() {  // item name
             @Override
-            protected void updateItem(String item, boolean empty) {
+            protected void updateItem(Pair<String, String> item, boolean empty) {
                 super.updateItem(item, empty);
 
                 if (empty || item == null) {
                     setText(null);
                 } else {
-                    setText(item + " (Row/Column)");
+                    if(item.getValue().equals("row")) {
+                        setText(item + " Row");
+                    } else {
+                        setText(item + " Column");
+                    }
                 }
             }
         });
@@ -90,11 +93,15 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
         textField.setPromptText("Row/Column Name");
         HBox.setHgrow(textField, Priority.ALWAYS);
 
-        Button addItem = new Button("Add Item");
-        addItem.setOnAction(e -> {
-            changesToMakeView.getItems().add(textField.getText());
+        Button addRow = new Button("Add as Row");
+        addRow.setOnAction(e -> {
+            changesToMakeView.getItems().add(new Pair<>(textField.getText(), "row"));
         });
-        entryArea.getChildren().addAll(textField, addItem);
+        Button addCol = new Button("Add as Column");
+        addCol.setOnAction(e -> {
+            changesToMakeView.getItems().add(new Pair<>(textField.getText(), "col"));
+        });
+        entryArea.getChildren().addAll(textField, addRow, addCol);
         entryArea.setPadding(new Insets(10, 10, 10, 10));
         entryArea.setSpacing(20);
 
@@ -102,8 +109,9 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
         HBox closeArea = new HBox();
         Button applyButton = new Button("Apply Changes");
         applyButton.setOnAction(e -> {
-            for(String item : changesToMakeView.getItems()) {
-                matrix.createItem(item, true);
+            for(Pair<String, String> item : changesToMakeView.getItems()) {
+                boolean isRow = item.getValue().equals("row");
+                matrix.createItem(item.getKey(), isRow);
             }
             matrix.setCurrentStateAsCheckpoint();
             window.close();
@@ -150,7 +158,7 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
                 if (empty || item == null) {
                     setText(null);
                 } else {
-                    setText(matrix.getItem(item).getName() + " (Row/Column)");
+                    setText(matrix.getItem(item).getName().getValue());
                 }
             }
         });
@@ -181,6 +189,7 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
         HBox.setHgrow(itemSelector, Priority.ALWAYS);
         itemSelector.setPromptText("Item Name");
         itemSelector.getItems().addAll(matrix.getRows());
+        itemSelector.getItems().addAll(matrix.getCols());
 
         Button deleteItem = new Button("Delete Item");
         deleteItem.setOnAction(e -> {
@@ -250,9 +259,9 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
                     setText(null);
                 } else {
                     setText(
-                        matrix.getItem(connection.getRowUid()).getName().getValue() + " (Row):" +
-                        matrix.getItem(connection.getColUid()).getName().getValue() + " (Col)" +
-                        "  {" + connection.getConnectionName() + ", " + connection.getWeight() + "}"
+                            matrix.getItem(connection.getRowUid()).getName().getValue() + " (Row):" +
+                            matrix.getItem(connection.getColUid()).getName().getValue() + " (Col)" +
+                            "  {" + connection.getConnectionName() + ", " + connection.getWeight() + "}"
                     );
                 }
             }
@@ -359,9 +368,6 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
             connections.clear();
             if (rb.equals(selectByRow)) {  // clear all items and add rows to it
                 for(DSMItem col : matrix.getCols()) {  // create the checkboxes
-                    if(itemSelector.getValue() != null && col.getAliasUid().equals(itemSelector.getValue().getUid())) {  // don't allow creating connections between same row and column pair
-                        continue;
-                    }
                     VBox connectionVBox = new VBox();
                     connectionVBox.setAlignment(Pos.CENTER);
 
@@ -373,9 +379,6 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
                 }
             } else if (rb.equals(selectByCol)) {
                 for(DSMItem row : matrix.getRows()) {  // create the checkboxes
-                    if(itemSelector.getValue() != null && row.getAliasUid().equals(itemSelector.getValue().getUid())) {  // don't allow creating connections between same row and column pair
-                        continue;
-                    }
                     VBox connectionVBox = new VBox();
                     connectionVBox.setAlignment(Pos.CENTER);
 
@@ -437,48 +440,7 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
             }
         });
 
-        Button applySymmetricButton = new Button("Modify Connections Symmetrically");
-        applySymmetricButton.setOnAction(ee -> {
-            if(itemSelector.getValue() == null || connectionName.getText().isEmpty() || weight.getText().isEmpty()) {  // ensure connection can be added
-                return;
-            }
-            for (Map.Entry<CheckBox, DSMItem> entry : connections.entrySet()) {
-                if(entry.getKey().isSelected()) {
-                    if(tg.getSelectedToggle().equals(selectByRow)) {  // selecting by row
-                        DSMItem rowItem = matrix.getItem(itemSelector.getValue().getUid());
-                        DSMItem colItem = matrix.getItemByAlias(entry.getValue().getUid());
-                        DSMItem symmetricRowItem = matrix.getItemByAlias(rowItem.getUid());
-                        DSMItem symmetricColItem = matrix.getItemByAlias(colItem.getUid());
-
-                        DSMConnection conn1 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), rowItem.getUid(), colItem.getUid());
-                        DSMConnection conn2 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), symmetricRowItem.getUid(), symmetricColItem.getUid());
-
-                        if(!changesToMakeView.getItems().contains(conn1)) {  // ensure no duplicates
-                            changesToMakeView.getItems().add(conn1);
-                        }
-                        if(!changesToMakeView.getItems().contains(conn2)) {  // ensure no duplicates
-                            changesToMakeView.getItems().add(conn2);
-                        }
-                    } else if(tg.getSelectedToggle().equals(selectByCol)) {  // selecting by column
-                        DSMItem rowItem = matrix.getItem(entry.getValue().getUid());
-                        DSMItem colItem = matrix.getItemByAlias(itemSelector.getValue().getUid());
-                        DSMItem symmetricRowItem = matrix.getItemByAlias(rowItem.getUid());
-                        DSMItem symmetricColItem = matrix.getItemByAlias(colItem.getUid());
-
-                        DSMConnection conn1 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), rowItem.getUid(), colItem.getUid());
-                        DSMConnection conn2 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), symmetricRowItem.getUid(), symmetricColItem.getUid());
-
-                        if(!changesToMakeView.getItems().contains(conn1)) {  // ensure no duplicates
-                            changesToMakeView.getItems().add(conn1);
-                        }
-                        if(!changesToMakeView.getItems().contains(conn2)) {  // ensure no duplicates
-                            changesToMakeView.getItems().add(conn2);
-                        }
-                    }
-                }
-            }
-        });
-        modifyPane.getChildren().addAll(applyButton, applySymmetricButton);
+        modifyPane.getChildren().addAll(applyButton);
 
 
         // create HBox for user to close with our without changes
@@ -486,7 +448,7 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
         Button applyAllButton = new Button("Apply All Changes");
         applyAllButton.setOnAction(ee -> {
             for(DSMConnection conn : changesToMakeView.getItems()) {  // rowUid | colUid | name | weight
-               matrix.modifyConnection(conn.getRowUid(), conn.getColUid(), conn.getConnectionName(), conn.getWeight());
+                matrix.modifyConnection(conn.getRowUid(), conn.getColUid(), conn.getConnectionName(), conn.getWeight());
             }
             window.close();
             editor.refreshTab();
@@ -539,15 +501,15 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
                     setText(null);
                 } else if (!connection.getConnectionName().isEmpty() && connection.getWeight() != Double.MAX_VALUE) {
                     setText(
-                        matrix.getItem(connection.getRowUid()).getName().getValue() + " (Row):" +
-                        matrix.getItem(connection.getColUid()).getName().getValue() + " (Col)" +
-                        "  {" + connection.getConnectionName() + ", " + connection.getWeight() + "}"
+                            matrix.getItem(connection.getRowUid()).getName().getValue() + " (Row):" +
+                            matrix.getItem(connection.getColUid()).getName().getValue() + " (Col)" +
+                            "  {" + connection.getConnectionName() + ", " + connection.getWeight() + "}"
                     );
                 } else {
                     setText(
-                        "Delete " +
-                        matrix.getItem(connection.getRowUid()).getName().getValue() + " (Row):" +
-                        matrix.getItem(connection.getColUid()).getName().getValue() + " (Col)"
+                            "Delete " +
+                            matrix.getItem(connection.getRowUid()).getName() + " (Row):" +
+                            matrix.getItem(connection.getColUid()).getName() + " (Col)"
                     );
                 }
             }
@@ -635,18 +597,16 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
         selectByRow.setSelected(true);  // default to selectByRow
 
         // add a change listener
-        tg.selectedToggleProperty().addListener(new ChangeListener<>() {
-            public void changed(ObservableValue<? extends Toggle> ob, Toggle o, Toggle n) {
-                RadioButton rb = (RadioButton) tg.getSelectedToggle();
-                if (rb.equals(selectByRow)) {  // clear all items and add rows to it
-                    itemSelector.getItems().removeAll(itemSelector.getItems());
-                    itemSelector.getItems().addAll(matrix.getRows());  // populate combobox with the rows
-                } else if (rb.equals(selectByCol)) {  // clear all items and add cols to it
-                    itemSelector.getItems().removeAll(itemSelector.getItems());
-                    itemSelector.getItems().addAll(matrix.getCols());  // populate combobox with the columns
-                } else {  // clear all items
-                    itemSelector.getItems().removeAll(itemSelector.getItems());
-                }
+        tg.selectedToggleProperty().addListener((ob, o, n) -> {
+            RadioButton rb = (RadioButton) tg.getSelectedToggle();
+            if (rb.equals(selectByRow)) {  // clear all items and add rows to it
+                itemSelector.getItems().removeAll(itemSelector.getItems());
+                itemSelector.getItems().addAll(matrix.getRows());  // populate combobox with the rows
+            } else if (rb.equals(selectByCol)) {  // clear all items and add cols to it
+                itemSelector.getItems().removeAll(itemSelector.getItems());
+                itemSelector.getItems().addAll(matrix.getCols());  // populate combobox with the columns
+            } else {  // clear all items
+                itemSelector.getItems().removeAll(itemSelector.getItems());
             }
         });
 
@@ -656,9 +616,6 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
             connections.clear();
             if (rb.equals(selectByRow)) {  // clear all items and add rows to it
                 for(DSMItem col : matrix.getCols()) {  // create the checkboxes
-                    if(itemSelector.getValue() != null && col.getAliasUid().equals(itemSelector.getValue().getUid())) {  // don't allow creating connections between same row and column pair
-                        continue;
-                    }
                     VBox connectionVBox = new VBox();
                     connectionVBox.setAlignment(Pos.CENTER);
 
@@ -670,9 +627,6 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
                 }
             } else if (rb.equals(selectByCol)) {
                 for(DSMItem row : matrix.getRows()) {  // create the checkboxes
-                    if(itemSelector.getValue() != null && row.getAliasUid().equals(itemSelector.getValue().getUid())) {  // don't allow creating connections between same row and column pair
-                        continue;
-                    }
                     VBox connectionVBox = new VBox();
                     connectionVBox.setAlignment(Pos.CENTER);
 
@@ -763,80 +717,7 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
             }
         });
 
-        Button applySymmetricButton = new Button("Modify Connections Symmetrically");
-        applySymmetricButton.setOnAction(ee -> {
-            if(itemSelector.getValue() == null || connectionName.getText().isEmpty() || weight.getText().isEmpty()) {  // ensure connection can be added
-                return;
-            }
-            for (Map.Entry<CheckBox, DSMItem> entry : connections.entrySet()) {
-                if(entry.getKey().isSelected()) {
-                    if(tg.getSelectedToggle().equals(selectByRow)) {  // selecting by row
-                        DSMItem rowItem = matrix.getItem(itemSelector.getValue().getUid());
-                        DSMItem colItem = matrix.getItemByAlias(entry.getValue().getUid());
-                        DSMItem symmetricRowItem = matrix.getItemByAlias(rowItem.getUid());
-                        DSMItem symmetricColItem = matrix.getItemByAlias(colItem.getUid());
-
-                        DSMConnection conn1 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), rowItem.getUid(), colItem.getUid());
-                        DSMConnection conn2 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), symmetricRowItem.getUid(), symmetricColItem.getUid());
-
-                        if(!changesToMakeView.getItems().contains(conn1)) {  // ensure no duplicates
-                            changesToMakeView.getItems().add(conn1);
-                        }
-                        if(!changesToMakeView.getItems().contains(conn2)) {  // ensure no duplicates
-                            changesToMakeView.getItems().add(conn2);
-                        }
-                    } else if(tg.getSelectedToggle().equals(selectByCol)) {  // selecting by column
-                        DSMItem rowItem = matrix.getItem(entry.getValue().getUid());
-                        DSMItem colItem = matrix.getItemByAlias(itemSelector.getValue().getUid());
-                        DSMItem symmetricRowItem = matrix.getItemByAlias(rowItem.getUid());
-                        DSMItem symmetricColItem = matrix.getItemByAlias(colItem.getUid());
-
-                        DSMConnection conn1 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), rowItem.getUid(), colItem.getUid());
-                        DSMConnection conn2 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), symmetricRowItem.getUid(), symmetricColItem.getUid());
-
-                        if(!changesToMakeView.getItems().contains(conn1)) {  // ensure no duplicates
-                            changesToMakeView.getItems().add(conn1);
-                        }
-                        if(!changesToMakeView.getItems().contains(conn2)) {  // ensure no duplicates
-                            changesToMakeView.getItems().add(conn2);
-                        }
-                    }
-                } else {
-                    if(tg.getSelectedToggle().equals(selectByRow)) {  // selecting by row
-                        DSMItem rowItem = matrix.getItem(itemSelector.getValue().getUid());
-                        DSMItem colItem = matrix.getItemByAlias(entry.getValue().getUid());
-                        DSMItem symmetricRowItem = matrix.getItemByAlias(rowItem.getUid());
-                        DSMItem symmetricColItem = matrix.getItemByAlias(colItem.getUid());
-
-                        DSMConnection conn1 = new DSMConnection("", Double.MAX_VALUE, rowItem.getUid(), colItem.getUid());
-                        DSMConnection conn2 = new DSMConnection("", Double.MAX_VALUE, symmetricRowItem.getUid(), symmetricColItem.getUid());
-
-                        if(!changesToMakeView.getItems().contains(conn1)) {  // ensure no duplicates
-                            changesToMakeView.getItems().add(conn1);
-                        }
-                        if(!changesToMakeView.getItems().contains(conn2)) {  // ensure no duplicates
-                            changesToMakeView.getItems().add(conn2);
-                        }
-                    } else if(tg.getSelectedToggle().equals(selectByCol)) {  // selecting by column
-                        DSMItem rowItem = matrix.getItem(entry.getValue().getUid());
-                        DSMItem colItem = matrix.getItemByAlias(itemSelector.getValue().getUid());
-                        DSMItem symmetricRowItem = matrix.getItemByAlias(rowItem.getUid());
-                        DSMItem symmetricColItem = matrix.getItemByAlias(colItem.getUid());
-
-                        DSMConnection conn1 = new DSMConnection("", Double.MAX_VALUE, rowItem.getUid(), colItem.getUid());
-                        DSMConnection conn2 = new DSMConnection("", Double.MAX_VALUE, symmetricRowItem.getUid(), symmetricColItem.getUid());
-
-                        if (!changesToMakeView.getItems().contains(conn1)) {  // ensure no duplicates
-                            changesToMakeView.getItems().add(conn1);
-                        }
-                        if (!changesToMakeView.getItems().contains(conn2)) {  // ensure no duplicates
-                            changesToMakeView.getItems().add(conn2);
-                        }
-                    }
-                }
-            }
-        });
-        modifyPane.getChildren().addAll(applyButton, applySymmetricButton);
+        modifyPane.getChildren().addAll(applyButton);
 
 
         // create HBox for user to close with our without changes
@@ -844,7 +725,7 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
         Button applyAllButton = new Button("Apply All Changes");
         applyAllButton.setOnAction(ee -> {
             for(DSMConnection conn : changesToMakeView.getItems()) {
-                if(!conn.getConnectionName().isEmpty() && conn.getWeight() != Double.MAX_VALUE) {
+                if(conn.getConnectionName() != null && conn.getWeight() != Double.MAX_VALUE) {
                     matrix.modifyConnection(conn.getRowUid(), conn.getColUid(), conn.getConnectionName(), conn.getWeight());
                 } else {
                     matrix.deleteConnection(conn.getRowUid(), conn.getColUid());
@@ -901,9 +782,9 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
                     setText(null);
                 } else {
                     setText(
-                        "DELETE " +
-                        matrix.getItem(conn.getRowUid()).getName() + ":" +
-                        matrix.getItem(conn.getColUid()).getName()
+                            "DELETE " +
+                                    matrix.getItem(conn.getRowUid()).getName() + ":" +
+                                    matrix.getItem(conn.getColUid()).getName()
                     );
                 }
             }
@@ -1001,11 +882,8 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
         deleteConnection.setMaxWidth(Double.MAX_VALUE);
         HBox.setHgrow(deleteConnection, Priority.ALWAYS);
 
-        Button deleteConnectionSymmetrically = new Button("Delete Connection Symmetrically");
-        deleteConnectionSymmetrically.setMaxWidth(Double.MAX_VALUE);
-        HBox.setHgrow(deleteConnectionSymmetrically, Priority.ALWAYS);
 
-        entryArea.getChildren().addAll(firstItemSelector, secondItemSelector, deleteConnection, deleteConnectionSymmetrically);
+        entryArea.getChildren().addAll(firstItemSelector, secondItemSelector, deleteConnection);
         entryArea.setPadding(new Insets(10, 10, 10, 10));
         entryArea.setSpacing(20);
 
@@ -1073,94 +951,6 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
                 }
             }
         });
-        deleteConnectionSymmetrically.setOnAction(ee -> {
-            if(firstItemSelector.getValue() == null || secondItemSelector.getValue() == null) return;  // have to have a value selected
-
-
-            if(firstItemSelector.getValue() == Integer.MAX_VALUE && secondItemSelector.getValue() == Integer.MAX_VALUE) {  // delete all connections
-                for(DSMConnection conn : matrix.getConnections()) {
-                    if(!changesToMakeView.getItems().contains(conn)) {
-                        changesToMakeView.getItems().add(conn);
-                    }
-                }
-            } else if(firstItemSelector.getValue() == Integer.MAX_VALUE && secondItemSelector.getValue() != Integer.MAX_VALUE) {
-                boolean secondIsRow = matrix.isRow(secondItemSelector.getValue());
-                if(secondIsRow) {  // delete all columns going to a row
-                    DSMItem row = matrix.getItem(secondItemSelector.getValue());
-                    for(DSMItem col : matrix.getCols()) {
-                        DSMConnection conn = matrix.getConnection(row.getUid(), col.getUid());
-                        DSMConnection symmetricConn = matrix.getSymmetricConnection(row.getUid(), col.getUid());
-                        if(conn != null && !changesToMakeView.getItems().contains(conn)) {
-                            changesToMakeView.getItems().add(conn);
-                        }
-                        if(symmetricConn != null && !changesToMakeView.getItems().contains(symmetricConn)) {
-                            changesToMakeView.getItems().add(symmetricConn);
-                        }
-                    }
-
-                } else {  // delete all rows going to a column
-                    DSMItem col = matrix.getItem(secondItemSelector.getValue());
-                    for(DSMItem row : matrix.getRows()) {
-                        DSMConnection conn = matrix.getConnection(row.getUid(), col.getUid());
-                        DSMConnection symmetricConn = matrix.getSymmetricConnection(row.getUid(), col.getUid());
-                        if(conn != null && !changesToMakeView.getItems().contains(conn)) {
-                            changesToMakeView.getItems().add(conn);
-                        }
-                        if(symmetricConn != null && !changesToMakeView.getItems().contains(symmetricConn)) {
-                            changesToMakeView.getItems().add(symmetricConn);
-                        }
-                    }
-                }
-
-            } else if(firstItemSelector.getValue() != Integer.MAX_VALUE && secondItemSelector.getValue() == Integer.MAX_VALUE) {
-                boolean firstIsRow = matrix.isRow(firstItemSelector.getValue());
-                if(firstIsRow) {  // delete all columns going to a row
-                    DSMItem row = matrix.getItem(firstItemSelector.getValue());
-                    for(DSMItem col : matrix.getCols()) {
-                        DSMConnection conn = matrix.getConnection(row.getUid(), col.getUid());
-                        DSMConnection symmetricConn = matrix.getSymmetricConnection(row.getUid(), col.getUid());
-                        if(conn != null && !changesToMakeView.getItems().contains(conn)) {
-                            changesToMakeView.getItems().add(conn);
-                        }
-                        if(symmetricConn != null && !changesToMakeView.getItems().contains(symmetricConn)) {
-                            changesToMakeView.getItems().add(symmetricConn);
-                        }
-                    }
-
-                } else {  // delete all rows going to a column
-                    DSMItem col = matrix.getItem(firstItemSelector.getValue());
-                    for(DSMItem row : matrix.getRows()) {
-                        DSMConnection conn = matrix.getConnection(row.getUid(), col.getUid());
-                        DSMConnection symmetricConn = matrix.getSymmetricConnection(row.getUid(), col.getUid());
-                        if(conn != null && !changesToMakeView.getItems().contains(conn)) {
-                            changesToMakeView.getItems().add(conn);
-                        }
-                        if(symmetricConn != null && !changesToMakeView.getItems().contains(symmetricConn)) {
-                            changesToMakeView.getItems().add(symmetricConn);
-                        }
-                    }
-                }
-
-            } else if(matrix.isRow(firstItemSelector.getValue())) {
-                DSMConnection conn = matrix.getConnection(firstItemSelector.getValue(), secondItemSelector.getValue());
-                DSMConnection symmetricConn = matrix.getSymmetricConnection(firstItemSelector.getValue(), secondItemSelector.getValue());
-                if(conn != null && !changesToMakeView.getItems().contains(conn)) {
-                    changesToMakeView.getItems().add(conn);
-                }
-                if(symmetricConn != null && !changesToMakeView.getItems().contains(symmetricConn)) {
-                    changesToMakeView.getItems().add(symmetricConn);
-                }
-            } else {
-                DSMConnection conn = matrix.getConnection(secondItemSelector.getValue(), firstItemSelector.getValue());
-                DSMConnection symmetricConn = matrix.getSymmetricConnection(secondItemSelector.getValue(), firstItemSelector.getValue());
-                if(conn != null && !changesToMakeView.getItems().contains(conn)) {
-                    changesToMakeView.getItems().add(conn);
-                }
-                if(symmetricConn != null && !changesToMakeView.getItems().contains(symmetricConn)) {
-                    changesToMakeView.getItems().add(symmetricConn);
-                }
-            }
-        });
 
 
         // create HBox for user to close with our without changes
@@ -1214,7 +1004,7 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
      *
      * @return           the HBox that contains the row with all the widgets configured
      */
-    private static HBox configureGroupingEditorRow(SymmetricDSM matrix, Grouping grouping, VBox parent, boolean deletable) {
+    private static HBox configureGroupingEditorRow(AsymmetricDSM matrix, Grouping grouping, VBox parent, boolean deletable) {
         HBox display = new HBox();
 
         TextField groupingName = new TextField();     // use a text field to display the name so that it can be renamed easily

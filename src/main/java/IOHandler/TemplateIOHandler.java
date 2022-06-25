@@ -12,10 +12,14 @@ import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.xssf.usermodel.*;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.input.SAXBuilder;
@@ -230,6 +234,35 @@ public abstract class TemplateIOHandler<T1 extends TemplateDSM, T2 extends Templ
         if(fileName != null) {
             int code = exportMatrixToCSV(matrix, fileName);
         }
+    }
+
+
+    /**
+     * Styles a cell in an excel workbook in place
+     *
+     * @param wb         the workbook object of the spreadsheet that contains the cell
+     * @param cell       the cell created from the workbook to style
+     * @param bgColor    the background color for the cell
+     * @param fontColor  the font color for the cell
+     * @param rotation   the degrees rotation for the cell (to change horizontal vs vertical text)
+     */
+    protected void styleExcelCell(XSSFWorkbook wb, Cell cell, Color bgColor, Color fontColor, short rotation) {
+        XSSFCellStyle style = wb.createCellStyle();
+        // background color
+        if(bgColor != null) {
+            style.setFillForegroundColor(new XSSFColor(new java.awt.Color((float) (bgColor.getRed()), (float) (bgColor.getGreen()), (float) (bgColor.getBlue())), new DefaultIndexedColorMap()));
+            style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        }
+        // font color
+        if(fontColor != null) {
+            XSSFFont font = wb.createFont();
+            font.setColor(new XSSFColor(new java.awt.Color((float) (fontColor.getRed()), (float) (fontColor.getGreen()), (float) (fontColor.getBlue())), new DefaultIndexedColorMap()));
+            style.setFont(font);
+        }
+        // rotation
+        style.setRotation(rotation);
+
+        cell.setCellStyle(style);
     }
 
 

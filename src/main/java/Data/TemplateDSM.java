@@ -6,7 +6,8 @@ import java.util.*;
 
 /**
  * A class that contains generic data and functions about a matrix. All operations to a matrix come through
- * this class. Will be used as a base class for all other types of matrices
+ * this class. Will be used as a base class for all other types of matrices. All matrices that are to
+ * be used by the application must extend from this class
  *
  * @author: Aiden Carney
  */
