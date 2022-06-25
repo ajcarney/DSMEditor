@@ -96,9 +96,7 @@ public abstract class TemplateSideBar<T extends TemplateDSM> {
      * Sets up the button callback for sorting the matrix
      */
     protected void sortCallback() {
-        sort.setOnAction(e -> {
-            editor.refreshTab();
-        });
+        sort.setOnAction(e -> editor.refreshTab());
         sort.setMaxWidth(Double.MAX_VALUE);
     }
 

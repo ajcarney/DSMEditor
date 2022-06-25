@@ -26,23 +26,21 @@ import java.util.HashMap;
  * @author Aiden Carney
  */
 public class EditorPane {
-    private BorderPane rootLayout;
+    private final BorderPane rootLayout;
 
     private final TabPane tabPane = new TabPane();
     private final HashMap<DraggableTab, Integer> tabs = new HashMap<>();  // tab object, matrix uid
 
     private static int currentMatrixUid = 0;
-    private MatrixController matrices;
+    private final MatrixController matrices;
 
-    private MatrixMetaDataPane matrixMetaDataPane;
+    private final MatrixMetaDataPane matrixMetaDataPane;
 
     private static final double[] fontSizes = {
         5.0, 6.0, 8.0, 9.0, 9.5, 10.0, 10.5, 11.0, 12.0, 12.5, 14.0, 16.0, 18.0, 24.0, 30.0, 36.0, 60.0
     };
     private static final double DEFAULT_FONT_SIZE = 12.0;
     private static int currentFontSizeIndex;
-
-    private Thread nameHandlerThread;
 
 
     /**
@@ -64,21 +62,20 @@ public class EditorPane {
 
         tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.ALL_TABS);  // any tab can be closed, but add event to be called on close
 
-        this.nameHandlerThread = new Thread(() -> {  // TODO: this should be set up as a binding
-            while(true) {  // go through and update names
-                for(HashMap.Entry<DraggableTab, Integer> entry : tabs.entrySet()) {
+        // TODO: this should be set up as a binding
+        // go through and update names
+        // this allows a thread to update the gui
+        Thread nameHandlerThread = new Thread(() -> {  // TODO: this should be set up as a binding
+            while (true) {  // go through and update names
+                for (HashMap.Entry<DraggableTab, Integer> entry : tabs.entrySet()) {
                     String title = matrices.getMatrixIOHandler(entry.getValue()).getSavePath().getName();
-                    if(!matrices.isMatrixSaved(entry.getValue())) {
+                    if (!matrices.isMatrixSaved(entry.getValue())) {
                         title += "*";
                     }
-                    if(!entry.getKey().getLabelText().equals(title)) {
+                    if (!entry.getKey().getLabelText().equals(title)) {
                         String finalTitle = title;
-                        Platform.runLater(new Runnable(){  // this allows a thread to update the gui
-                            @Override
-                            public void run() {
-                                entry.getKey().setLabelText(finalTitle);
-                            }
-                        });
+                        // this allows a thread to update the gui
+                        Platform.runLater(() -> entry.getKey().setLabelText(finalTitle));
                     }
                 }
 
@@ -109,7 +106,7 @@ public class EditorPane {
      */
     public Integer getFocusedMatrixUid() {
         try {
-            return tabs.get(tabPane.getSelectionModel().getSelectedItem());
+            return tabs.get((DraggableTab)tabPane.getSelectionModel().getSelectedItem());  // explicit cast to fail sooner if type issue
         } catch(Exception e) {
             return null;
         }
@@ -180,7 +177,13 @@ public class EditorPane {
      *
      * @param  matrix  the matrix to add a tab for
      */
-    public void addTab(TemplateDSM matrix, TemplateIOHandler ioHandler, TemplateMatrixHandler matrixHandler, TemplateHeaderMenu headerMenu, TemplateSideBar sideBar) {
+    public void addTab(
+            TemplateDSM matrix,
+            TemplateIOHandler<? extends TemplateDSM, ? extends TemplateMatrixHandler<?>> ioHandler,
+            TemplateMatrixHandler<? extends TemplateDSM> matrixHandler,
+            TemplateHeaderMenu headerMenu,
+            TemplateSideBar<? extends TemplateDSM> sideBar)
+    {
         int matrixUid = currentMatrixUid;
         currentMatrixUid += 1;
 

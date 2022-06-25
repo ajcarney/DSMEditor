@@ -4,12 +4,10 @@ import Data.DSMConnection;
 import Data.DSMItem;
 import Data.Grouping;
 import Data.SymmetricDSM;
-import View.Widgets.FreezeGrid;
 import View.Widgets.NumericTextField;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
-import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
@@ -145,8 +143,6 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
                         label = new Label((String) item.getValue());
                         label.setMinWidth(Region.USE_PREF_SIZE);
                         cell.getChildren().add(label);
-
-                        break;
                     }
                     case "plain_text_v" -> {
                         label = new Label((String) item.getValue());
@@ -156,8 +152,6 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
 
                         g.getChildren().add(label);
                         cell.getChildren().add(g);
-
-                        break;
                     }
                     case "item_name" -> {
                         label = new Label();
@@ -172,8 +166,6 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
                                 grid.updateGrid();
                             }
                         });
-
-                        break;
                     }
                     case "item_name_v" -> {
                         label = new Label();
@@ -193,8 +185,6 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
                         });
                         cell.setMinWidth(maxHeight);  // set a min width so that the matrix is less boxy (all connection items will follow this even if not
                                                       // explicitly set due to how the freeze grid is set up)
-
-                        break;
                     }
                     case "grouping_item" -> {  // dropdown box for choosing group
                         ComboBox<Grouping> groupings = new ComboBox<>();
@@ -246,7 +236,6 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
                         });
 
                         cell.getChildren().add(groupings);
-                        break;
                     }
                     case "index_item" -> {
                         NumericTextField entry = new NumericTextField(((DSMItem) item.getValue()).getSortIndex());

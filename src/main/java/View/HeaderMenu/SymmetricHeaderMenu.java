@@ -199,9 +199,7 @@ public class SymmetricHeaderMenu extends TemplateHeaderMenu {
 
 
         MenuItem search = new MenuItem("Find Connections");
-        search.setOnAction(e -> {
-            searchWidget.open();
-        });
+        search.setOnAction(e -> searchWidget.open());
 
 
         MenuItem propagationAnalysis = new MenuItem("Propagation Analysis");

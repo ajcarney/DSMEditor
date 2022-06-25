@@ -1,6 +1,5 @@
 package IOHandler;
 
-import Data.SymmetricDSM;
 import Data.TemplateDSM;
 import View.MatrixHandlers.TemplateMatrixHandler;
 import View.Widgets.MiscWidgets;
@@ -91,25 +90,21 @@ public abstract class TemplateIOHandler<T1 extends TemplateDSM, T2 extends Templ
      * Reads a file into memory to determine what type of matrix it is
      *
      * @param file  the file to read in
-     * @return      type string of the dsm type the file contains
+     * @return      type string of the dsm type the file contains. Empty string if error occurred
      */
     public static String getFileDSMType(File file) {
         try {
-            SymmetricDSM matrix = new SymmetricDSM();
-
             SAXBuilder saxBuilder = new SAXBuilder();
             Document document = saxBuilder.build(file);  // read file into memory
             Element rootElement = document.getRootElement();
             Element info = rootElement.getChild("info");
 
             return info.getChild("type").getText();
-
         } catch(Exception e) {
             // TODO: add alert box that says the file was corrupted in some way and could not be read in
             System.out.println("Error checking DSM file type");
-            System.out.println(e);
             e.printStackTrace();
-            return null;
+            return "";
         }
     }
 
@@ -354,7 +349,7 @@ public abstract class TemplateIOHandler<T1 extends TemplateDSM, T2 extends Templ
 
         Button saveButton = new Button("Save");
         saveButton.setOnAction(e -> {
-            if(saveLocation.getText() != ""){
+            if(!saveLocation.getText().equals("")){
                 File file = new File(saveLocation.getText());
                 BufferedImage img = SwingFXUtils.fromFXImage(preview.snapshot(new SnapshotParameters(), null), null);
                 try {
@@ -368,9 +363,7 @@ public abstract class TemplateIOHandler<T1 extends TemplateDSM, T2 extends Templ
         });
 
         Button cancelButton = new Button("Cancel");
-        cancelButton.setOnAction(e -> {
-            window.close();
-        });
+        cancelButton.setOnAction(e -> window.close());
 
         saveButtonArea.getChildren().addAll(MiscWidgets.getHorizontalSpacer(), cancelButton, saveButton);
 
@@ -430,18 +423,10 @@ public abstract class TemplateIOHandler<T1 extends TemplateDSM, T2 extends Templ
         };
 
         // set up listeners to update the preview
-        addInfo.selectedProperty().addListener((observable, oldValue, newValue) -> {
-            updatePreview.run();
-        });
-        bigTitle.selectedProperty().addListener((observable, oldValue, newValue) -> {
-            updatePreview.run();
-        });
-        showConnectionNames.selectedProperty().addListener((observable, oldValue, newValue) -> {
-            updatePreview.run();
-        });
-        addAnnotation.selectedProperty().addListener((observable, oldValue, newValue) -> {
-            updatePreview.run();
-        });
+        addInfo.selectedProperty().addListener((observable, oldValue, newValue) -> updatePreview.run());
+        bigTitle.selectedProperty().addListener((observable, oldValue, newValue) -> updatePreview.run());
+        showConnectionNames.selectedProperty().addListener((observable, oldValue, newValue) -> updatePreview.run());
+        addAnnotation.selectedProperty().addListener((observable, oldValue, newValue) -> updatePreview.run());
         annotation.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
             if (!newPropertyValue) {  // TextField changed to be not focused so update the view
              updatePreview.run();

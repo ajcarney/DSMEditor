@@ -20,7 +20,6 @@ import javafx.scene.control.TextField;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.scene.text.Text;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Pair;
@@ -174,16 +173,15 @@ public abstract class TemplateMatrixHandler<T extends TemplateDSM> {
 //region Highlight Functions
     /**
      * Toggles user highlight for a cell
+     *  @param cellLoc the grid location of the cell (row, column)
      *
-     * @param cellLoc the grid location of the cell (row, column)
-     * @param bg      the background to set the highlight to
      */
-    protected void toggleUserHighlightCell(Pair<Integer, Integer> cellLoc, Background bg) {
+    protected void toggleUserHighlightCell(Pair<Integer, Integer> cellLoc) {
         Cell cell = getCellByLoc(cellLoc);
         if(cell == null) return;
 
         if(cell.getHighlightBG("user") == null) {  // is not highlighted, so highlight it
-            cell.updateHighlightBG(bg, "user");
+            cell.updateHighlightBG(TemplateMatrixHandler.HIGHLIGHT_BACKGROUND, "user");
         } else {
             cell.updateHighlightBG(null, "user");
         }
@@ -441,7 +439,7 @@ public abstract class TemplateMatrixHandler<T extends TemplateDSM> {
                 window.showAndWait();
 
             } else if(e.getButton().equals(MouseButton.SECONDARY)) {  // toggle highlighting
-                toggleUserHighlightCell(new Pair<>(finalR, finalC), HIGHLIGHT_BACKGROUND);
+                toggleUserHighlightCell(new Pair<>(finalR, finalC));
             }
         });
 
@@ -500,9 +498,7 @@ public abstract class TemplateMatrixHandler<T extends TemplateDSM> {
         });
 
         Button cancelButton = new Button("Cancel");
-        cancelButton.setOnAction(ee -> {
-            window.close();
-        });
+        cancelButton.setOnAction(ee -> window.close());
         closeArea.getChildren().addAll(cancelButton, MiscWidgets.getHorizontalSpacer(), applyButton);
 
         //Display window and wait for it to be closed before returning

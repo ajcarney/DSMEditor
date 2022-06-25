@@ -2,12 +2,9 @@ package View.MatrixHandlers;
 
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.collections.ListChangeListener;
 import javafx.geometry.Insets;
-import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
@@ -34,7 +31,7 @@ public class Cell {
     protected Boolean crossHighlightEnabled = false;
 
     // dictionary of all the different highlight types that are supported
-    protected HashMap<String, Background> highlightBGs = new HashMap<String, Background>() {{
+    protected HashMap<String, Background> highlightBGs = new HashMap<>() {{
         put("default", null);
         put("user", null);
         put("cross", null);
@@ -132,21 +129,16 @@ public class Cell {
      * @return     the background
      */
     public Background getHighlightBG(String type) {
-        if(type.equals("default")) {
-            return highlightBGs.get("default");
-        } else if(type.equals("user")) {
-            return highlightBGs.get("user");
-        } else if(type.equals("cross")) {
-            return highlightBGs.get("cross");
-        } else if(type.equals("error")) {
-            return highlightBGs.get("error");
-        } else if(type.equals("symmetryError")) {
-            return highlightBGs.get("symmetryError");
-        } else if(type.equals("search")) {
-            return highlightBGs.get("search");
-        }
+        return switch (type) {
+            case "default" -> highlightBGs.get("default");
+            case "user" -> highlightBGs.get("user");
+            case "cross" -> highlightBGs.get("cross");
+            case "error" -> highlightBGs.get("error");
+            case "symmetryError" -> highlightBGs.get("symmetryError");
+            case "search" -> highlightBGs.get("search");
+            default -> null;
+        };
 
-        return null;
     }
 
 
@@ -166,18 +158,13 @@ public class Cell {
      * @param bg the new background of the cell
      */
     public void updateHighlightBG(Background bg, String type) {
-        if(type.equals("default")) {
-            highlightBGs.put("default", bg);
-        } else if(type.equals("user")) {
-            highlightBGs.put("user", bg);
-        } else if(type.equals("cross")) {
-            highlightBGs.put("cross", bg);
-        } else if(type.equals("error")) {
-            highlightBGs.put("error", bg);
-        } else if(type.equals("symmetryError")) {
-            highlightBGs.put("symmetryError", bg);
-        } else if(type.equals("search")) {
-            highlightBGs.put("search", bg);
+        switch (type) {
+            case "default" -> highlightBGs.put("default", bg);
+            case "user" -> highlightBGs.put("user", bg);
+            case "cross" -> highlightBGs.put("cross", bg);
+            case "error" -> highlightBGs.put("error", bg);
+            case "symmetryError" -> highlightBGs.put("symmetryError", bg);
+            case "search" -> highlightBGs.put("search", bg);
         }
     }
 

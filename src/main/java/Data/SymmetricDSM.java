@@ -66,9 +66,7 @@ public class SymmetricDSM extends TemplateDSM {
 
 
         groupings = FXCollections.observableSet();
-        for(Grouping group : copy.groupings) {
-            groupings.add(group);
-        }
+        groupings.addAll(copy.groupings);
 
         title = copy.getTitle();
         projectName = copy.getProjectName();
@@ -155,9 +153,7 @@ public class SymmetricDSM extends TemplateDSM {
      */
     public void clearGroupings() {
         ObservableSet<Grouping> oldGroupings = FXCollections.observableSet();
-        for(Grouping group : groupings) {
-            oldGroupings.add(group);
-        }
+        oldGroupings.addAll(groupings);
 
         for(DSMItem r : rows) {
             setItemGroup(r, defaultGroup);
@@ -314,7 +310,7 @@ public class SymmetricDSM extends TemplateDSM {
         DSMItem aliasedItem = getItemByAlias(item.getUid());
         String oldName = item.getName().getValue();
 
-        assert oldName.equals(aliasedItem.getName()) : "Symmetric item names were not the same";
+        assert oldName.equals(aliasedItem.getName().getValue()) : "Symmetric item names were not the same";
 
         addChangeToStack(new MatrixChange(
             () -> {  // do function
@@ -371,7 +367,7 @@ public class SymmetricDSM extends TemplateDSM {
 
         assert oldGroup.getUid().equals(aliasedItem.getGroup1().getUid()) : "Symmetric item groupings were not the same";
 
-        Boolean addedNewGroup = !groupings.contains(newGroup) && !newGroup.equals(defaultGroup);
+        boolean addedNewGroup = !groupings.contains(newGroup) && !newGroup.equals(defaultGroup);
 
         addChangeToStack(new MatrixChange(
             () -> {  // do function
@@ -437,7 +433,7 @@ public class SymmetricDSM extends TemplateDSM {
      * stack but does not set any checkpoint.
      */
     public void reDistributeSortIndicesByGroup() {
-        Collections.sort(rows, Comparator.comparing((DSMItem item) -> item.getGroup1().getName()).thenComparing((DSMItem item) -> item.getName().getValue()));
+        rows.sort(Comparator.comparing((DSMItem item) -> item.getGroup1().getName()).thenComparing((DSMItem item) -> item.getName().getValue()));
         Vector<DSMItem> newCols = new Vector<>();
 
         for(DSMItem row : rows) {  // sort the new columns according to the rows (this does not need to be on the change stack because
@@ -520,8 +516,8 @@ public class SymmetricDSM extends TemplateDSM {
         ArrayList<ArrayList<Pair<String, Object>>> grid = new ArrayList<>();
 
         // sort row and columns by sortIndex
-        Collections.sort(rows, Comparator.comparing(r -> r.getSortIndex()));
-        Collections.sort(cols, Comparator.comparing(c -> c.getSortIndex()));
+        rows.sort(Comparator.comparing(DSMItem::getSortIndex));
+        cols.sort(Comparator.comparing(DSMItem::getSortIndex));
 
         // create header row
         ArrayList<Pair< String, Object> > row0 = new ArrayList<>();
@@ -546,7 +542,7 @@ public class SymmetricDSM extends TemplateDSM {
 //        }
 
         // create third header row
-        ArrayList<Pair< String, Object> > row2 = new ArrayList<Pair< String, Object> >();
+        ArrayList<Pair< String, Object> > row2 = new ArrayList<>();
         row2.add(new Pair<>("plain_text", "Grouping"));
         row2.add(new Pair<>("plain_text", "Row Items"));
         row2.add(new Pair<>("plain_text", "Re-Sort Index"));
@@ -562,7 +558,7 @@ public class SymmetricDSM extends TemplateDSM {
 
         // create rows
         for(DSMItem r : rows) {
-            ArrayList<Pair< String, Object> > row = new ArrayList<Pair< String, Object> >();
+            ArrayList<Pair< String, Object> > row = new ArrayList<>();
             row.add(new Pair<>("grouping_item", r));
             row.add(new Pair<>("item_name", r));
             row.add(new Pair<>("index_item", r));
@@ -624,9 +620,7 @@ public class SymmetricDSM extends TemplateDSM {
 //                            resultEntryUid = col.getUid();
 //                        }
 
-                        if(results.get(currentLevel).get(resultEntryUid) == null) {
-                            results.get(currentLevel).put(resultEntryUid, 0.0);
-                        }
+                        results.get(currentLevel).putIfAbsent(resultEntryUid, 0.0);
 
                         if(countByWeight) {
                             results.get(currentLevel).put(resultEntryUid, results.get(currentLevel).get(resultEntryUid) + conn.getWeight());
@@ -653,9 +647,7 @@ public class SymmetricDSM extends TemplateDSM {
                         Integer itemUid = row.getUid();
 
 
-                        if(results.get(currentLevel).get(itemUid) == null) {
-                            results.get(currentLevel).put(itemUid, 0.0);
-                        }
+                        results.get(currentLevel).putIfAbsent(itemUid, 0.0);
 
                         if(countByWeight) {
                             results.get(currentLevel).put(itemUid, results.get(currentLevel).get(itemUid) + conn.getWeight());
@@ -697,8 +689,8 @@ public class SymmetricDSM extends TemplateDSM {
         HashMap<String, Object> results = new HashMap<>();
 
         HashMap<Grouping, Double> intraCostBreakdown = new HashMap<>();
-        Double totalIntraCost = 0.0;
-        Double totalExtraCost = 0.0;
+        double totalIntraCost = 0.0;
+        double totalExtraCost = 0.0;
         for(DSMConnection conn : matrix.getConnections()) {
             if(matrix.getItem(conn.getRowUid()).getGroup1().equals(matrix.getItem(conn.getColUid()).getGroup1())) {  // row and col groups are the same so add to intra cluster
                 Integer clusterSize = 0;  // calculate cluster size
@@ -721,7 +713,7 @@ public class SymmetricDSM extends TemplateDSM {
 
                 totalIntraCost += intraCost;
             } else {
-                Integer dsmSize = matrix.getRows().size();
+                int dsmSize = matrix.getRows().size();
                 if(calculateByWeight) {
                     totalExtraCost += conn.getWeight() * Math.pow(dsmSize, powcc);
                 } else {
@@ -762,7 +754,7 @@ public class SymmetricDSM extends TemplateDSM {
         }
 
         for(DSMItem row : matrix.getRows()) {  // calculate bid of each item in the matrix for the given cluster
-            Double inout = 0.0;  // sum of DSM interactions of the item with each of the items in the cluster
+            double inout = 0.0;  // sum of DSM interactions of the item with each of the items in the cluster
 
             for(DSMItem col : matrix.getCols()) {
                 if(col.getGroup1().equals(group) && col.getAliasUid() != row.getUid()) {  // make connection a part of inout score
@@ -840,7 +832,7 @@ public class SymmetricDSM extends TemplateDSM {
         // calculate initial coordination cost
         double coordinationCost = (Double)getCoordinationScore(matrix, optimalSizeCluster, powcc, calculateByWeight).get("TotalCost");
 
-        String debugString = "iteration,start time, elapsed time,coordination score\n";
+        StringBuilder debugString = new StringBuilder("iteration,start time, elapsed time,coordination score\n");
         Instant absStart = Instant.now();
 
         for(int i=0; i < numLevels; i++) {  // iterate numLevels times
@@ -900,7 +892,7 @@ public class SymmetricDSM extends TemplateDSM {
 
             String startTime = String.valueOf(Duration.between(absStart, start).toMillis());
             String elapsedTime = String.valueOf(Duration.between(start, Instant.now()).toMillis());
-            debugString += i + "," + startTime + "," + elapsedTime + "," + newCoordinationScore + "\n";
+            debugString.append(i).append(",").append(startTime).append(",").append(elapsedTime).append(",").append(newCoordinationScore).append("\n");
         }
 
         if(debug) {

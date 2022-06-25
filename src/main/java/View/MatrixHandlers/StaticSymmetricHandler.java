@@ -8,7 +8,6 @@ import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
-import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -78,8 +77,8 @@ public class StaticSymmetricHandler extends TemplateMatrixHandler<SymmetricDSM> 
                 return;
             } else if (
                     rowUid != null && colUid != null
-                            && !rowUid.equals(matrix.getItem(colUid).getAliasUid())
-                            && matrix.getItem(rowUid).getGroup1().equals(matrix.getItem(colUid).getGroup1())
+                    && !rowUid.equals(matrix.getItem(colUid).getAliasUid())
+                    && matrix.getItem(rowUid).getGroup1().equals(matrix.getItem(colUid).getGroup1())
             ) {  // highlight with merged color
                 cell.setCellHighlight(matrix.getItem(rowUid).getGroup1().getColor());  // row and column color will be the same because row and column
                 cell.setCellTextColor(matrix.getItem(rowUid).getGroup1().getFontColor());
@@ -98,8 +97,8 @@ public class StaticSymmetricHandler extends TemplateMatrixHandler<SymmetricDSM> 
     public void refreshMatrixEditor() {
         cells = new Vector<>();
         gridUidLookup = new HashMap<>();
-        gridUidLookup.put("rows", new HashMap<Integer, Integer>());
-        gridUidLookup.put("cols", new HashMap<Integer, Integer>());
+        gridUidLookup.put("rows", new HashMap<>());
+        gridUidLookup.put("cols", new HashMap<>());
 
         rootLayout.getChildren().removeAll(rootLayout.getChildren());
         rootLayout.setAlignment(Pos.CENTER);
@@ -127,8 +126,7 @@ public class StaticSymmetricHandler extends TemplateMatrixHandler<SymmetricDSM> 
                     case "plain_text" -> {
                         label = new Label((String) item.getValue());
                         label.setMinWidth(Region.USE_PREF_SIZE);
-                        cell.getChildren().add((Node) label);
-                        break;
+                        cell.getChildren().add(label);
                     }
                     case "plain_text_v" -> {
                         label = new Label((String) item.getValue());
@@ -138,14 +136,12 @@ public class StaticSymmetricHandler extends TemplateMatrixHandler<SymmetricDSM> 
 
                         g.getChildren().add(label);
                         cell.getChildren().add(g);
-                        break;
                     }
                     case "item_name" -> {
                         label = new Label(((DSMItem) item.getValue()).getName().getValue());
                         cell.setAlignment(Pos.BOTTOM_RIGHT);
                         label.setMinWidth(Region.USE_PREF_SIZE);
                         cell.getChildren().add(label);
-                        break;
                     }
                     case "item_name_v" -> {
                         label = new Label(((DSMItem) item.getValue()).getName().getValue());
@@ -155,22 +151,18 @@ public class StaticSymmetricHandler extends TemplateMatrixHandler<SymmetricDSM> 
 
                         g.getChildren().add(label);
                         cell.getChildren().add(g);
-                        break;
                     }
                     case "grouping_item" -> {
                         label = new Label(((DSMItem) item.getValue()).getGroup1().getName());
                         cell.setAlignment(Pos.BOTTOM_RIGHT);
                         label.setMinWidth(Region.USE_PREF_SIZE);
                         cell.getChildren().add(label);
-                        break;
                     }
                     case "index_item" -> {
                         label = new Label(String.valueOf(((DSMItem) item.getValue()).getSortIndex()));
                         cell.setAlignment(Pos.BOTTOM_RIGHT);
                         label.setMinWidth(Region.USE_PREF_SIZE);
                         cell.getChildren().add(label);
-
-                        break;
                     }
                     case "uneditable_connection" -> defaultBackground = UNEDITABLE_CONNECTION_BACKGROUND;
                     case "editable_connection" -> {
@@ -201,7 +193,6 @@ public class StaticSymmetricHandler extends TemplateMatrixHandler<SymmetricDSM> 
 
 
                         cell.getChildren().add(label);
-                        break;
                     }
                 }
                 cell.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));

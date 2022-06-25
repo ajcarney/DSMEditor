@@ -6,8 +6,18 @@
   <component name="ChangeListManager">
     <list default="true" id="1e933d21-0475-41e8-afc7-e2d68df7d37d" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/Data/MatrixController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/Data/MatrixController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/Data/SymmetricDSM.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/Data/SymmetricDSM.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/IOHandler/TemplateIOHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/IOHandler/TemplateIOHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/View/EditorPane.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/View/EditorPane.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/View/HeaderMenu/SymmetricHeaderMenu.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/View/HeaderMenu/SymmetricHeaderMenu.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/View/HeaderMenu/TemplateHeaderMenu.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/View/HeaderMenu/TemplateHeaderMenu.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/View/MatrixHandlers/Cell.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/View/MatrixHandlers/Cell.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/View/MatrixHandlers/StaticSymmetricHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/View/MatrixHandlers/StaticSymmetricHandler.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/View/MatrixHandlers/SymmetricMatrixHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/View/MatrixHandlers/SymmetricMatrixHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/View/Widgets/FreezeGrid.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/View/Widgets/FreezeGrid.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/View/MatrixHandlers/TemplateMatrixHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/View/MatrixHandlers/TemplateMatrixHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/View/SideBarTools/SymmetricSideBar.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/View/SideBarTools/SymmetricSideBar.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/View/SideBarTools/TemplateSideBar.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/View/SideBarTools/TemplateSideBar.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -48,10 +58,10 @@
     </configuration>
     <list>
       <item itemvalue="Application.Main" />
-      <item itemvalue="Maven.DSMEditor [clean]" />
-      <item itemvalue="Maven.DSMEditor [debug]" />
-      <item itemvalue="Maven.DSMEditor [package]" />
       <item itemvalue="Maven.DSMEditor [run]" />
+      <item itemvalue="Maven.DSMEditor [package]" />
+      <item itemvalue="Maven.DSMEditor [debug]" />
+      <item itemvalue="Maven.DSMEditor [clean]" />
     </list>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />

@@ -337,18 +337,16 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
         selectByRow.setSelected(true);  // default to selectByRow
 
         // add a change listener
-        tg.selectedToggleProperty().addListener(new ChangeListener<Toggle>() {
-            public void changed(ObservableValue<? extends Toggle> ob, Toggle o, Toggle n) {
-                RadioButton rb = (RadioButton)tg.getSelectedToggle();
-                if(rb.equals(selectByRow)) {  // clear all items and add rows to it
-                    itemSelector.getItems().removeAll(itemSelector.getItems());
-                    itemSelector.getItems().addAll(matrix.getRows());  // populate combobox with the rows
-                } else if(rb.equals(selectByCol)) {  // clear all items and add cols to it
-                    itemSelector.getItems().removeAll(itemSelector.getItems());
-                    itemSelector.getItems().addAll(matrix.getCols());  // populate combobox with the columns
-                } else {  // clear all items
-                    itemSelector.getItems().removeAll(itemSelector.getItems());
-                }
+        tg.selectedToggleProperty().addListener((ob, o, n) -> {  // o is old value, n is new value
+            RadioButton rb = (RadioButton)tg.getSelectedToggle();
+            if(rb.equals(selectByRow)) {  // clear all items and add rows to it
+                itemSelector.getItems().removeAll(itemSelector.getItems());
+                itemSelector.getItems().addAll(matrix.getRows());  // populate combobox with the rows
+            } else if(rb.equals(selectByCol)) {  // clear all items and add cols to it
+                itemSelector.getItems().removeAll(itemSelector.getItems());
+                itemSelector.getItems().addAll(matrix.getCols());  // populate combobox with the columns
+            } else {  // clear all items
+                itemSelector.getItems().removeAll(itemSelector.getItems());
             }
         });
 
@@ -634,13 +632,13 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
         selectByRow.setSelected(true);  // default to selectByRow
 
         // add a change listener
-        tg.selectedToggleProperty().addListener(new ChangeListener<Toggle>() {
+        tg.selectedToggleProperty().addListener(new ChangeListener<>() {
             public void changed(ObservableValue<? extends Toggle> ob, Toggle o, Toggle n) {
-                RadioButton rb = (RadioButton)tg.getSelectedToggle();
-                if(rb.equals(selectByRow)) {  // clear all items and add rows to it
+                RadioButton rb = (RadioButton) tg.getSelectedToggle();
+                if (rb.equals(selectByRow)) {  // clear all items and add rows to it
                     itemSelector.getItems().removeAll(itemSelector.getItems());
                     itemSelector.getItems().addAll(matrix.getRows());  // populate combobox with the rows
-                } else if(rb.equals(selectByCol)) {  // clear all items and add cols to it
+                } else if (rb.equals(selectByCol)) {  // clear all items and add cols to it
                     itemSelector.getItems().removeAll(itemSelector.getItems());
                     itemSelector.getItems().addAll(matrix.getCols());  // populate combobox with the columns
                 } else {  // clear all items
@@ -891,7 +889,7 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
         Label label = new Label("Changes to be made");
         ListView<DSMConnection> changesToMakeView = new ListView<>();  // rowUid | colUid
         changesToMakeView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        changesToMakeView.setCellFactory(param -> new ListCell<DSMConnection>() {
+        changesToMakeView.setCellFactory(param -> new ListCell<>() {
             @Override
             protected void updateItem(DSMConnection conn, boolean empty) {
                 super.updateItem(conn, empty);

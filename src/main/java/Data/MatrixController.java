@@ -12,9 +12,9 @@ import java.util.HashMap;
  */
 public class MatrixController {
 
-    private HashMap<Integer, TemplateDSM> matrices;
-    private HashMap<Integer, TemplateIOHandler> matrixIOHandlers;
-    private HashMap<Integer, TemplateMatrixHandler> matrixHandlers;
+    private final HashMap<Integer, TemplateDSM> matrices;
+    private final HashMap<Integer, TemplateIOHandler> matrixIOHandlers;
+    private final HashMap<Integer, TemplateMatrixHandler> matrixHandlers;
 
 
     /**
@@ -35,7 +35,11 @@ public class MatrixController {
      * @param ioHandler      the io handler object for the matrix
      * @param matrixHandler  the matrix handler object for the matrix
      */
-    public void addMatrix(int uid, TemplateDSM matrix, TemplateIOHandler ioHandler, TemplateMatrixHandler matrixHandler) {
+    public void addMatrix(
+            int uid, TemplateDSM matrix,
+            TemplateIOHandler ioHandler,
+            TemplateMatrixHandler matrixHandler)
+    {
         matrices.put(uid, matrix);
         matrixIOHandlers.put(uid, ioHandler);
         matrixHandlers.put(uid, matrixHandler);

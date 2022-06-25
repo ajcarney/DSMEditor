@@ -126,31 +126,26 @@ public abstract class TemplateHeaderMenu {
                 editor.focusTab(file);  // focus on that tab because it is already open
                 return;
             }
-            if(file != null) {  // make sure user did not just close out of the file chooser window
-                switch (TemplateIOHandler.getFileDSMType(file)) {
-                    case "symmetric" -> {
-                        SymmetricIOHandler ioHandler = new SymmetricIOHandler(file);
-                        SymmetricDSM matrix = ioHandler.readFile();
+            // make sure user did not just close out of the file chooser window
+            switch (TemplateIOHandler.getFileDSMType(file)) {
+                case "symmetric" -> {
+                    SymmetricIOHandler ioHandler = new SymmetricIOHandler(file);
+                    SymmetricDSM matrix = ioHandler.readFile();
 
-                        if(matrix != null) {
-                            this.editor.addTab(
-                                    matrix,
-                                    ioHandler,
-                                    new SymmetricMatrixHandler(matrix, 12.0),
-                                    this,
-                                    new SymmetricSideBar(matrix, editor
-                                    ));
-                        } else {
-                            // TODO: open window saying there was an error parsing the document
-                            System.out.println("there was an error reading the file " + file);
-                        }
-
-                        break;
-                    }
-                    default -> {
-                        System.out.println("the type of dsm could not be determined from the file " + file.getAbsolutePath());
+                    if(matrix != null) {
+                        this.editor.addTab(
+                                matrix,
+                                ioHandler,
+                                new SymmetricMatrixHandler(matrix, 12.0),
+                                this,
+                                new SymmetricSideBar(matrix, editor
+                                ));
+                    } else {
+                        // TODO: open window saying there was an error parsing the document
+                        System.out.println("there was an error reading the file " + file);
                     }
                 }
+                default -> System.out.println("the type of dsm could not be determined from the file " + file.getAbsolutePath());
             }
         });
     }
@@ -170,7 +165,7 @@ public abstract class TemplateHeaderMenu {
                 SymmetricDSM matrix = ioHandler.importThebeauMatlabFile(file);
                 if(matrix == null) {
                     // TODO: open window saying there was an error parsing the document
-                    System.out.println("there was an error reading the file " + file.toString());
+                    System.out.println("there was an error reading the file " + file);
                 } else if(!this.editor.getMatrixController().getMatrixFileAbsoluteSavePaths().contains(file.getAbsolutePath())) {
                     File importedFile = new File(file.getParent(), file.getName().substring(0, file.getName().lastIndexOf('.')) + ".dsm");  // convert .m extension to .dsm
                     this.editor.addTab(
@@ -222,17 +217,11 @@ public abstract class TemplateHeaderMenu {
      */
     protected void setupViewMenu() {
         MenuItem zoomIn = new MenuItem("Zoom In");
-        zoomIn.setOnAction(e -> {
-            editor.increaseFontScaling();
-        });
+        zoomIn.setOnAction(e -> editor.increaseFontScaling());
         MenuItem zoomOut = new MenuItem("Zoom Out");
-        zoomOut.setOnAction(e -> {
-            editor.decreaseFontScaling();
-        });
+        zoomOut.setOnAction(e -> editor.decreaseFontScaling());
         MenuItem zoomReset = new MenuItem("Reset Zoom");
-        zoomReset.setOnAction(e -> {
-            editor.resetFontScaling();
-        });
+        zoomReset.setOnAction(e -> editor.resetFontScaling());
 
         RadioMenuItem showNames = new RadioMenuItem("Show Connection Names");
         showNames.setSelected(true);
