@@ -1,13 +1,8 @@
-lib/
-out/
-.idea/
+target/
 .log/
 .recovery/
-*.iml
 *.dsm
 *.m
 *.csv
-prod/
 *.py
-*.MF
 *.xlsx

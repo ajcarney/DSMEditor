@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="1e933d21-0475-41e8-afc7-e2d68df7d37d" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/Data/MatrixController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/Data/MatrixController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/Data/SymmetricDSM.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/Data/SymmetricDSM.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/IOHandler/TemplateIOHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/IOHandler/TemplateIOHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/View/EditorPane.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/View/EditorPane.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/View/HeaderMenu/SymmetricHeaderMenu.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/View/HeaderMenu/SymmetricHeaderMenu.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/View/HeaderMenu/TemplateHeaderMenu.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/View/HeaderMenu/TemplateHeaderMenu.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/View/MatrixHandlers/Cell.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/View/MatrixHandlers/Cell.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/View/MatrixHandlers/StaticSymmetricHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/View/MatrixHandlers/StaticSymmetricHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/View/MatrixHandlers/SymmetricMatrixHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/View/MatrixHandlers/SymmetricMatrixHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/View/MatrixHandlers/TemplateMatrixHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/View/MatrixHandlers/TemplateMatrixHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/View/SideBarTools/SymmetricSideBar.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/View/SideBarTools/SymmetricSideBar.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/View/SideBarTools/TemplateSideBar.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/View/SideBarTools/TemplateSideBar.java" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitSEFilterConfiguration">
+    <file-type-list>
+      <filtered-out-file-type name="LOCAL_BRANCH" />
+      <filtered-out-file-type name="REMOTE_BRANCH" />
+      <filtered-out-file-type name="TAG" />
+      <filtered-out-file-type name="COMMIT_BY_MESSAGE" />
+    </file-type-list>
+  </component>
+  <component name="ProjectId" id="2AxL5rKLqfuAlWOGsu7NFcg1uhl" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
+    <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
+  </component>
+  <component name="RunManager" selected="Application.Main">
+    <configuration name="Main" type="Application" factoryName="Application" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="Main" />
+      <module name="DSMEditor" />
+      <option name="PROGRAM_PARAMETERS" value="debug=true" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <list>
+      <item itemvalue="Application.Main" />
+      <item itemvalue="Maven.DSMEditor [run]" />
+      <item itemvalue="Maven.DSMEditor [package]" />
+      <item itemvalue="Maven.DSMEditor [debug]" />
+      <item itemvalue="Maven.DSMEditor [clean]" />
+    </list>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="1e933d21-0475-41e8-afc7-e2d68df7d37d" name="Default Changelist" comment="" />
+      <created>1655946112068</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1655946112068</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="oldMeFiltersMigrated" value="true" />
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/DSMEditor$Main.ic" NAME="Main Coverage Results" MODIFIED="1655946628663" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+  </component>
+</project>
