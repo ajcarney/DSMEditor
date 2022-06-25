@@ -6,10 +6,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.CornerRadii;
-import javafx.scene.layout.HBox;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.util.Pair;
 
@@ -79,6 +76,24 @@ public class Cell {
      */
     public void setCellHighlight(Background bg) {
         guiCell.setBackground(bg);
+    }
+
+
+    /**
+     * Sets the border for a cell
+     * @param newBorder  type Border of the new border
+     */
+    public void setCellBorder(Border newBorder) {
+        guiCell.setBorder(newBorder);
+    }
+
+
+    /**
+     * Sets the color of the border for a cell. Uses solid stroke style, no corner radii, and default width
+     * @param color  the new color for the border
+     */
+    public void setCellBorder(Color color) {
+        guiCell.setBorder(new Border(new BorderStroke(color, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
     }
 
 

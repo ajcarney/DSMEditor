@@ -30,7 +30,7 @@ import java.util.Map;
  *
  * @author Aiden Carney
  */
-public class ClusterAlgorithm {
+public class ClusterAlgorithmWindow {
     SymmetricDSM matrix;
 
     Stage window;
@@ -67,7 +67,7 @@ public class ClusterAlgorithm {
      *
      * @param matrix the input matrix to perform the algorithm on
      */
-    public ClusterAlgorithm(SymmetricDSM matrix) {
+    public ClusterAlgorithmWindow(SymmetricDSM matrix) {
         this.matrix = matrix;
 
         window = new Stage();

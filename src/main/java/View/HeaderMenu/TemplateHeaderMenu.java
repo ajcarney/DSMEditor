@@ -1,12 +1,16 @@
 package View.HeaderMenu;
 
 
+import Data.AsymmetricDSM;
 import Data.SymmetricDSM;
+import IOHandler.AsymmetricIOHandler;
 import IOHandler.SymmetricIOHandler;
 import IOHandler.TemplateIOHandler;
 import View.ConnectionSearchWidget;
 import View.EditorPane;
+import View.MatrixHandlers.AsymmetricMatrixHandler;
 import View.MatrixHandlers.SymmetricMatrixHandler;
+import View.SideBarTools.AsymmetricSideBar;
 import View.SideBarTools.SymmetricSideBar;
 import Constants.Constants;
 import javafx.geometry.Insets;
@@ -100,16 +104,31 @@ public abstract class TemplateHeaderMenu {
                     new SymmetricMatrixHandler(matrix, 12.0),
                     this,
                     new SymmetricSideBar(matrix, editor
-                    ));
+            ));
 
             defaultName += 1;
         });
-//        MenuItem newNonSymmetric = new MenuItem("Non-Symmetric Matrix");
-//        newNonSymmetric.setOnAction(e -> {
-//
-//        });
+        MenuItem newNonSymmetric = new MenuItem("Non-Symmetric Matrix");
+        newNonSymmetric.setOnAction(e -> {
+            AsymmetricDSM matrix = new AsymmetricDSM();
+            File file = new File("./untitled" + defaultName);
+            while(file.exists()) {  // make sure file does not exist
+                defaultName += 1;
+                file = new File("./untitled" + defaultName);
+            }
 
-        newFileMenu.getItems().addAll(newSymmetric);
+            this.editor.addTab(
+                    matrix,
+                    new AsymmetricIOHandler(file),
+                    new AsymmetricMatrixHandler(matrix, 12.0),
+                    this,
+                    new AsymmetricSideBar(matrix, editor
+            ));
+
+            defaultName += 1;
+        });
+
+        newFileMenu.getItems().addAll(newSymmetric, newNonSymmetric);
     }
 
     /**
@@ -139,7 +158,24 @@ public abstract class TemplateHeaderMenu {
                                 new SymmetricMatrixHandler(matrix, 12.0),
                                 this,
                                 new SymmetricSideBar(matrix, editor
-                                ));
+                        ));
+                    } else {
+                        // TODO: open window saying there was an error parsing the document
+                        System.out.println("there was an error reading the file " + file);
+                    }
+                }
+                case "asymmetric" -> {
+                    AsymmetricIOHandler ioHandler = new AsymmetricIOHandler(file);
+                    AsymmetricDSM matrix = ioHandler.readFile();
+
+                    if(matrix != null) {
+                        this.editor.addTab(
+                                matrix,
+                                ioHandler,
+                                new AsymmetricMatrixHandler(matrix, 12.0),
+                                this,
+                                new AsymmetricSideBar(matrix, editor
+                        ));
                     } else {
                         // TODO: open window saying there was an error parsing the document
                         System.out.println("there was an error reading the file " + file);

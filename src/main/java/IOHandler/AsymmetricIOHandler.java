@@ -1,18 +1,17 @@
 package IOHandler;
 
+import Data.AsymmetricDSM;
 import Data.DSMConnection;
 import Data.DSMItem;
 import Data.Grouping;
-import Data.SymmetricDSM;
-import View.MatrixHandlers.SymmetricMatrixHandler;
+import View.MatrixHandlers.AsymmetricMatrixHandler;
 import View.MatrixHandlers.TemplateMatrixHandler;
 import javafx.scene.paint.Color;
-import javafx.stage.FileChooser;
-import javafx.stage.Window;
 import javafx.util.Pair;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.WorkbookUtil;
-import org.apache.poi.xssf.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.jdom2.Attribute;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -20,25 +19,27 @@ import org.jdom2.input.SAXBuilder;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.OutputStream;
 import java.util.*;
-import java.util.regex.Pattern;
 
 
 /**
- * A class with methods that handle exporting, saving, or importing a SymmetricDSM matrix object
+ * A class with methods that handle exporting, saving, or importing a AsymmetricDSM matrix object
  * Extended to support Thebeau matlab files (.m). Implements saving to CSV and Excel files
  *
  * @author Aiden Carney
  */
-public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, SymmetricMatrixHandler> {
+public class AsymmetricIOHandler extends TemplateIOHandler<AsymmetricDSM, AsymmetricMatrixHandler> {
 
     /**
      * Constructor
      *
      * @param file  the path to default to reading from and saving to
      */
-    public SymmetricIOHandler(File file) {
+    public AsymmetricIOHandler(File file) {
         super(file);
     }
 
@@ -50,9 +51,9 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
      * @return  the parsed in matrix
      */
     @Override
-    public SymmetricDSM readFile() {
+    public AsymmetricDSM readFile() {
         try {
-            SymmetricDSM matrix = new SymmetricDSM();
+            AsymmetricDSM matrix = new AsymmetricDSM();
 
             SAXBuilder saxBuilder = new SAXBuilder();
             Document document = saxBuilder.build(savePath);  // read file into memory
@@ -64,7 +65,7 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
             String customer = info.getChild("customer").getText();
             String version = info.getChild("version").getText();
             String type = info.getChild("type").getText();
-            if(!type.equals("symmetric")) {
+            if(!type.equals("asymmetric")) {
                 System.out.println("File was not of correct DSM type when trying to read it");
                 return null;
             }
@@ -119,12 +120,11 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
 
                 String name = col.getChild("name").getText();
                 double sortIndex = Double.parseDouble(col.getChild("sort_index").getText());
-                Integer aliasUid = Integer.parseInt(col.getChild("alias").getText());
 
                 Integer groupUid = Integer.parseInt(col.getChild("group").getText());
                 Grouping group = matrixGroupings.get(groupUid);
 
-                DSMItem item = new DSMItem(uid, aliasUid, sortIndex, name, group, null);
+                DSMItem item = new DSMItem(uid, null, sortIndex, name, group, null);
                 matrix.addItem(item, false);
             }
 
@@ -137,12 +137,11 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
 
                 String name = row.getChild("name").getText();
                 double sortIndex = Double.parseDouble(row.getChild("sort_index").getText());
-                Integer aliasUid = Integer.parseInt(row.getChild("alias").getText());
 
                 Integer groupUid = Integer.parseInt(row.getChild("group").getText());
                 Grouping group = matrixGroupings.get(groupUid);
 
-                DSMItem item = new DSMItem(uid, aliasUid, sortIndex, name, group, null);
+                DSMItem item = new DSMItem(uid, null, sortIndex, name, group, null);
                 matrix.addItem(item, true);
             }
 
@@ -181,73 +180,6 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
 
 
     /**
-     * Reads a matlab file in Thebeau's format and parses it as a SymmetricDSM object. Returns the SymmetricDSM object,
-     * but does not automatically add it to be handled.
-     *
-     * @param file  the file location to read from
-     * @return      SymmetricDSM object of the parsed in matrix
-     */
-    public SymmetricDSM importThebeauMatlabFile(File file) {
-        SymmetricDSM matrix = new SymmetricDSM();
-
-        ArrayList<String> lines = new ArrayList<>();
-        Scanner s;
-        try {
-            s = new Scanner(file);
-            while (s.hasNextLine()){
-                lines.add(s.nextLine());
-            }
-            s.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            return null;
-        }
-
-        ArrayList<ArrayList<Double>> connections = new ArrayList<>();
-        HashMap<Integer, DSMItem> rowItems = new HashMap<>();
-        HashMap<Integer, DSMItem> colItems = new HashMap<>();
-        int uid = 0;
-        for(String line : lines) {  // parse the relevant data
-            if(line.contains("DSM(")) {  // connection
-                double xLoc = Integer.parseInt(line.split(Pattern.quote("DSM("))[1].split(Pattern.quote(","))[0]);
-                double yLoc = Integer.parseInt(line.split(Pattern.quote(","))[1].split(Pattern.quote(")"))[0]);
-                double weight = Double.parseDouble(line.split(Pattern.quote("= "))[1].split(Pattern.quote(";"))[0]);
-                ArrayList<Double> data = new ArrayList<>();
-                data.add(xLoc);
-                data.add(yLoc);
-                data.add(weight);
-                if(xLoc != yLoc) {  // no need to add it to the connections
-                    connections.add(data);
-                }
-            } else if(line.contains("DSMLABEL{")) {
-                int loc = Integer.parseInt(line.split(Pattern.quote("DSMLABEL{"))[1].split(Pattern.quote(","))[0]);
-                String name = line.split(Pattern.quote("'"))[1];
-                double sortIndex = (uid / 2) + 1;  // this will make the sort indices appear like they are normally distributed
-                DSMItem rowItem = new DSMItem(uid, uid + 1, sortIndex, name, matrix.getDefaultGrouping(), null);
-                DSMItem colItem = new DSMItem(uid + 1, uid, sortIndex, name, matrix.getDefaultGrouping(), null);
-                uid += 2;  // add two because of column item
-
-                matrix.addItem(rowItem, true);
-                matrix.addItem(colItem, false);
-                rowItems.put(loc, rowItem);
-                colItems.put(loc, colItem);
-            }
-        }
-        // create the connections
-        for(ArrayList<Double> conn : connections) {
-            int rowUid = rowItems.get(conn.get(0).intValue()).getUid();
-            int colUid = colItems.get(conn.get(1).intValue()).getUid();
-
-            matrix.modifyConnection(rowUid, colUid, "x", conn.get(2));
-        }
-
-        matrix.clearStacks();  // make sure there are no changes when it is opened
-
-        return matrix;
-    }
-
-
-    /**
      * Saves the matrix to an xml file specified by the caller of the function. Clears
      * the matrix's wasModifiedFlag
      *
@@ -256,7 +188,7 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
      * @return          1 on success, 0 on error
      */
     @Override
-    public int saveMatrixToFile(SymmetricDSM matrix, File file) {
+    public int saveMatrixToFile(AsymmetricDSM matrix, File file) {
         try {
             // create xml
             Element rootElement = new Element("dsm");
@@ -274,7 +206,7 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
             infoElement.addContent(new Element("project").setText(matrix.getProjectName()));
             infoElement.addContent(new Element("customer").setText(matrix.getCustomer()));
             infoElement.addContent(new Element("version").setText(matrix.getVersionNumber()));
-            infoElement.addContent(new Element("type").setText("symmetric"));
+            infoElement.addContent(new Element("type").setText("asymmetric"));
 
             // create column elements
             for(DSMItem col : matrix.getCols()) {
@@ -282,9 +214,6 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
                 colElement.setAttribute(new Attribute("uid", Integer.valueOf(col.getUid()).toString()));
                 colElement.addContent(new Element("name").setText(col.getName().getValue()));
                 colElement.addContent(new Element("sort_index").setText(Double.valueOf(col.getSortIndex()).toString()));
-                if(col.getAliasUid() != null) {
-                    colElement.addContent(new Element("alias").setText(col.getAliasUid().toString()));
-                }
                 colElement.addContent(new Element("group").setText(col.getGroup1().getUid().toString()));
 
                 colsElement.addContent(colElement);
@@ -297,7 +226,6 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
                 rowElement.addContent(new Element("name").setText(row.getName().getValue()));
                 rowElement.addContent(new Element("sort_index").setText(Double.valueOf(row.getSortIndex()).toString()));
                 rowElement.addContent(new Element("group").setText(row.getGroup1().getUid().toString()));
-                rowElement.addContent(new Element("alias").setText(row.getAliasUid().toString()));
                 rowsElement.addContent(rowElement);
             }
 
@@ -366,7 +294,7 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
      * @return          1 on success, 0 on error
      */
     @Override
-    public int exportMatrixToCSV(SymmetricDSM matrix, File file) {
+    public int exportMatrixToCSV(AsymmetricDSM matrix, File file) {
         try {
             StringBuilder contents = new StringBuilder("Title," + matrix.getTitle() + "\n");
             contents.append("Project Name,").append(matrix.getProjectName()).append("\n");
@@ -418,6 +346,7 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
     }
 
 
+
     /**
      * Saves a matrix to an Excel Spreadsheet file. The spreadsheet includes the matrix metadata.
      * Cells are highlighted and auto sized. The matrix itself is shifted by ROW_START and COL_START (in function body)
@@ -428,7 +357,7 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
      * @return          1 on success, 0 on error
      */
     @Override
-    public int exportMatrixToXLSX(SymmetricDSM matrix, File file) {
+    public int exportMatrixToXLSX(AsymmetricDSM matrix, File file) {
         try {
             // set up document
             XSSFWorkbook workbook = new XSSFWorkbook();
@@ -471,7 +400,6 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
                             cell.setCellValue(item.getValue().toString());
 
                             styleExcelCell(workbook, cell, null, null, HORIZONTAL_ROTATION);
-                            break;
                         }
                         case "plain_text_v" -> {
                             Cell cell = row.createCell(c + COL_START);
@@ -482,7 +410,6 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
                             cellStyle.setVerticalAlignment(VerticalAlignment.BOTTOM);
                             cellStyle.setRotation(VERTICAL_ROTATION);
                             cell.setCellStyle(cellStyle);
-                            break;
                         }
                         case "item_name" -> {
                             Cell cell = row.createCell(c + COL_START);
@@ -491,8 +418,6 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
                             Color bgColor = ((DSMItem) item.getValue()).getGroup1().getColor();
                             Color fontColor = ((DSMItem) item.getValue()).getGroup1().getFontColor();
                             styleExcelCell(workbook, cell, bgColor, fontColor, HORIZONTAL_ROTATION);
-
-                            break;
                         }
                         case "item_name_v" -> {
                             Cell cell = row.createCell(c + COL_START);
@@ -502,8 +427,6 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
                             Color bgColor = ((DSMItem) item.getValue()).getGroup1().getColor();
                             Color fontColor = ((DSMItem) item.getValue()).getGroup1().getFontColor();
                             styleExcelCell(workbook, cell, bgColor, fontColor, VERTICAL_ROTATION);
-
-                            break;
                         }
                         case "grouping_item" -> {
                             Cell cell = row.createCell(c + COL_START);
@@ -512,8 +435,6 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
                             Color bgColor = ((DSMItem) item.getValue()).getGroup1().getColor();
                             Color fontColor = ((DSMItem) item.getValue()).getGroup1().getFontColor();
                             styleExcelCell(workbook, cell, bgColor, fontColor, HORIZONTAL_ROTATION);
-
-                            break;
                         }
                         case "grouping_item_v" -> {
                             Cell cell = row.createCell(c + COL_START);
@@ -522,8 +443,6 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
                             Color bgColor = ((DSMItem) item.getValue()).getGroup1().getColor();
                             Color fontColor = ((DSMItem) item.getValue()).getGroup1().getFontColor();
                             styleExcelCell(workbook, cell, bgColor, fontColor, VERTICAL_ROTATION);
-
-                            break;
                         }
                         case "index_item" -> {
                             Cell cell = row.createCell(c + COL_START);
@@ -532,8 +451,6 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
                             Color bgColor = ((DSMItem) item.getValue()).getGroup1().getColor();
                             Color fontColor = ((DSMItem) item.getValue()).getGroup1().getFontColor();
                             styleExcelCell(workbook, cell, bgColor, fontColor, HORIZONTAL_ROTATION);
-
-                            break;
                         }
                         case "uneditable_connection" -> {
                             Cell cell = row.createCell(c + COL_START);
@@ -541,8 +458,6 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
 
                             Color bgColor = (Color) TemplateMatrixHandler.UNEDITABLE_CONNECTION_BACKGROUND.getFills().get(0).getFill();
                             styleExcelCell(workbook, cell, bgColor, null, HORIZONTAL_ROTATION);
-
-                            break;
                         }
                         case "editable_connection" -> {
                             Integer rowUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getKey().getUid();
@@ -553,7 +468,6 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
                                 cell.setCellValue(matrix.getConnection(rowUid, colUid).getConnectionName());
                             }
 
-
                             if (matrix.getItem(rowUid).getGroup1().equals(matrix.getItem(colUid).getGroup1())) {  // groups are the same
                                 Color bgColor = matrix.getItem(rowUid).getGroup1().getColor();
                                 Color fontColor = matrix.getItem(rowUid).getGroup1().getFontColor();
@@ -563,8 +477,6 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
                                 Color fontColor = Grouping.defaultFontColor;
                                 styleExcelCell(workbook, cell, bgColor, fontColor, HORIZONTAL_ROTATION);
                             }
-
-                            break;
                         }
                     }
                     sheet.autoSizeColumn(c + COL_START);
@@ -583,81 +495,6 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
             System.out.println(e);
             e.printStackTrace();
             return 0;  // 0 means there was an error somewhere
-        }
-    }
-
-
-    /**
-     * Exports a matrix to a matlab file that can be used with Thebeau's source code
-     *
-     * @param matrix    the matrix to export
-     * @param file      the file to export the matrix to
-     * @return          1 on success, 0 on error
-     */
-    static public int exportMatrixToThebeauMatlabFile(SymmetricDSM matrix, File file) {
-        try {
-            matrix.reDistributeSortIndices();  // re-number 0 -> n
-
-            String connectionsString = "";
-            for(DSMConnection conn: matrix.getConnections()) {
-                DSMItem row = matrix.getItem(conn.getRowUid());
-                DSMItem col = matrix.getItem(conn.getColUid());
-
-                String c = "DSM("
-                        + (int)row.getSortIndex()  // add one because matlab is 1 indexed
-                        + ","
-                        + (int)col.getSortIndex()  // add one because matlab is 1 indexed
-                        + ") = "
-                        + conn.getWeight()
-                        + ";\n";
-                connectionsString += c;
-            }
-
-            String labelsString = "";
-            for(DSMItem row : matrix.getRows()) {
-                String l = "DSMLABEL{"
-                        + (int)row.getSortIndex()
-                        + ",1} = '"
-                        + row.getName()
-                        + "';\n";
-                labelsString += l;
-            }
-
-            String matlabString = "DSM_size = "
-                    + matrix.getRows().size()  // add one because of how the matlab script works
-                    + ";\nDSM = zeros(DSM_size);\n\n\n"
-                    + connectionsString
-                    + "\n\nDSMLABEL = cell(DSM_size,1);\n"
-                    + labelsString;
-
-
-            file = forceExtension(file, ".m");
-            System.out.println("Exporting to " + file.getAbsolutePath());
-            PrintWriter out = new PrintWriter(file);
-            out.println(matlabString);
-            out.close();
-
-            return 1;
-        } catch(Exception e) {  // TODO: add better error handling and bring up an alert box
-            System.out.println(e);
-            e.printStackTrace();
-            return 0;  // 0 means there was an error somewhere
-        }
-    }
-
-
-    /**
-     * Opens a file chooser window to choose a location to export a matrix to the thebeau matlab format
-     *
-     * @param matrix the matrix to save
-     * @param window the window associated with the file chooser
-     */
-    static public void promptExportToThebeau(SymmetricDSM matrix, Window window) {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Matlab File", "*.m"));  // .m is the only file type usable
-        File fileName = fileChooser.showSaveDialog(window);
-        if(fileName != null) {
-            int code = exportMatrixToThebeauMatlabFile(matrix, fileName);
         }
     }
 

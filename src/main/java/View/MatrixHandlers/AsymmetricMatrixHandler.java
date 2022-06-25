@@ -1,9 +1,6 @@
 package View.MatrixHandlers;
 
-import Data.DSMConnection;
-import Data.DSMItem;
-import Data.Grouping;
-import Data.SymmetricDSM;
+import Data.*;
 import View.Widgets.NumericTextField;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -16,6 +13,9 @@ import javafx.scene.control.ListView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.CycleMethod;
+import javafx.scene.paint.LinearGradient;
+import javafx.scene.paint.Stop;
 import javafx.util.Callback;
 import javafx.util.Pair;
 
@@ -23,9 +23,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Vector;
 
-public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> {
 
-    private boolean symmetryValidation = false;
+/**
+ * class for viewing and editing asymmetric matrices
+ */
+public class AsymmetricMatrixHandler extends TemplateMatrixHandler<AsymmetricDSM> {
 
     /**
      * Returns a MatrixGuiHandler object for a given matrix
@@ -33,7 +35,7 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
      * @param matrix   the SymmetricDSM object to display
      * @param fontSize the default font size to display the matrix with
      */
-    public SymmetricMatrixHandler(SymmetricDSM matrix, double fontSize) {
+    public AsymmetricMatrixHandler(AsymmetricDSM matrix, double fontSize) {
         super(matrix, fontSize);
     }
 
@@ -76,13 +78,11 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
                 cell.setCellHighlight(matrix.getItem(rowUid).getGroup1().getColor());
                 cell.setCellTextColor(matrix.getItem(rowUid).getGroup1().getFontColor());
                 return;
-            } else if (
-                    rowUid != null && colUid != null
-                    && !rowUid.equals(matrix.getItem(colUid).getAliasUid())
-                    && matrix.getItem(rowUid).getGroup1().equals(matrix.getItem(colUid).getGroup1())
-            ) {  // highlight with merged color
-                cell.setCellHighlight(matrix.getItem(rowUid).getGroup1().getColor());  // row and column color will be the same because row and column
-                                                                                       // have same group in symmetric matrix
+            } else if (rowUid != null && colUid != null) {  // highlight with row group color and border it with the col group color
+                Stop[] stops = new Stop[] { new Stop(0, matrix.getItem(rowUid).getGroup1().getColor()), new Stop(1, matrix.getItem(colUid).getGroup1().getColor())};
+                LinearGradient lg1 = new LinearGradient(0, 0, 1, 1, true, CycleMethod.NO_CYCLE, stops);
+
+                cell.setCellHighlight(new Background(new BackgroundFill(lg1, new CornerRadii(3), new Insets(0))));  // row and column color will be the same because row and column
                 cell.setCellTextColor(matrix.getItem(rowUid).getGroup1().getFontColor());
                 return;
             }
@@ -184,7 +184,7 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
                             }
                         });
                         cell.setMinWidth(maxHeight);  // set a min width so that the matrix is less boxy (all connection items will follow this even if not
-                                                      // explicitly set due to how the freeze grid is set up)
+                        // explicitly set due to how the freeze grid is set up)
                     }
                     case "grouping_item" -> {  // dropdown box for choosing group
                         ComboBox<Grouping> groupings = new ComboBox<>();
@@ -237,6 +237,60 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
 
                         cell.getChildren().add(groupings);
                     }
+                    case "grouping_item_v" -> {  // dropdown box for choosing group
+                        ComboBox<Grouping> groupings = new ComboBox<>();
+                        groupings.setMinWidth(Region.USE_PREF_SIZE);
+                        groupings.setPadding(new Insets(0));
+                        groupings.setStyle(
+                                "-fx-background-color: transparent;" +
+                                "-fx-padding: 0, 0, 0, 0;" +
+                                "-fx-font-size: " + (fontSize.doubleValue()) + " };"
+                        );
+                        groupings.setRotate(-90);
+
+                        Callback<ListView<Grouping>, ListCell<Grouping>> cellFactory = new Callback<>() {
+                            @Override
+                            public ListCell<Grouping> call(ListView<Grouping> l) {
+                                return new ListCell<>() {
+
+                                    @Override
+                                    protected void updateItem(Grouping group, boolean empty) {
+                                        super.updateItem(group, empty);
+
+                                        if (empty || group == null) {
+                                            setText(null);
+                                        } else {
+                                            setText(group.getName());
+                                            // this is a stupid janky hack because javafx styling is stupid and hard to work with when you want it to be dynamic
+                                            // this sets the text color of the grouping item so that the font color can be updated
+                                            if(group.equals(groupings.getValue())) {
+                                                setTextFill(group.getFontColor());
+                                            } else {
+                                                setTextFill(Grouping.defaultFontColor);
+                                            }
+                                        }
+                                    }
+                                };
+                            }
+                        };
+                        groupings.setCellFactory(cellFactory);
+                        groupings.setButtonCell(cellFactory.call(null));
+
+                        groupings.getItems().addAll(matrix.getGroupings());
+                        groupings.getItems().add(matrix.getDefaultGrouping());
+                        groupings.getSelectionModel().select(((DSMItem) item.getValue()).getGroup1());
+                        groupings.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+                            matrix.setItemGroup((DSMItem) item.getValue(), groupings.getValue());
+                            matrix.setCurrentStateAsCheckpoint();
+                            for (Cell c_ : cells) {
+                                refreshCellHighlight(c_);
+                            }
+                        });
+
+                        Group g = new Group();  // box will be added to a group so that it will be formatted correctly if it is vertical
+                        g.getChildren().add(groupings);
+                        cell.getChildren().add(g);
+                    }
                     case "index_item" -> {
                         NumericTextField entry = new NumericTextField(((DSMItem) item.getValue()).getSortIndex());
                         entry.setPrefColumnCount(3);  // set size to 3 characters fitting
@@ -262,18 +316,18 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
                         });
                         cell.getChildren().add(entry);
                     }
-                    case "uneditable_connection" -> defaultBackground = UNEDITABLE_CONNECTION_BACKGROUND;
                     case "editable_connection" -> {
                         int rowUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getKey().getUid();
                         int colUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getValue().getUid();
                         label = getEditableConnectionCell(cell, locationLabel, rowUid, colUid, r, c);
                     }
                 }
+                cell.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
                 cell.setPadding(new Insets(0));
+                //cell.styleProperty().bind(Bindings.concat("-fx-font-size: ", fontSize.asString(), "};"));
                 rowData.add(cell);
 
                 Cell cellObject = new Cell(new Pair<>(r, c), cell, label, fontSize);
-                cellObject.setCellBorder(Color.BLACK);
                 cellObject.updateHighlightBG(defaultBackground, "default");
                 cells.add(cellObject);
 
@@ -281,7 +335,6 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
             gridData.add(rowData);
         }
         for(Cell cell : cells) {
-            symmetryHighlightCell(cell.getGridLocation());
             refreshCellHighlight(cell);
         }
 
@@ -292,53 +345,4 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
         rootLayout.getChildren().addAll(grid.getGrid(), locationLabel);
     }
 
-
-    /**
-     * Sets symmetryValidation to true in order to highlight symmetry errors
-     */
-    public void setValidateSymmetry() {
-        symmetryValidation = true;
-        for(Cell cell : cells) {
-            symmetryHighlightCell(cell.getGridLocation());
-            refreshCellHighlight(cell);
-        }
-    }
-
-
-    /**
-     * Sets symmetryValidation to false in order to stop highlighting symmetry errors
-     */
-    public void clearValidateSymmetry() {
-        symmetryValidation = false;
-        for(Cell cell : cells) {
-            symmetryHighlightCell(cell.getGridLocation());
-            refreshCellHighlight(cell);
-        }
-    }
-
-
-    /**
-     * Sets or clears a cells symmetry highlight based on the symmetryValidation flag
-     *
-     * @param gridLocation  the cell's grid location to check the highlighting for
-     */
-    private void symmetryHighlightCell(Pair<Integer, Integer> gridLocation) {
-        Pair<Integer, Integer> uids = getUidsFromGridLoc(gridLocation);
-        if(uids.getKey() == null || uids.getValue() == null) {
-            return;
-        }
-
-        int rowUid = uids.getKey();
-        int colUid = uids.getValue();
-        DSMConnection conn = matrix.getConnection(rowUid, colUid);
-        DSMConnection symmetricConn = matrix.getSymmetricConnection(rowUid, colUid);
-
-        if(symmetryValidation && ((conn == null && symmetricConn != null) || (conn != null && symmetricConn == null) || (conn != null && symmetricConn != null && !conn.isSameConnectionType(symmetricConn)))) {
-            this.setCellHighlight(gridLocation, TemplateMatrixHandler.SYMMETRY_ERROR_BACKGROUND, "symmetryError");
-            this.setCellHighlight(this.getGridLocFromUids(matrix.getSymmetricConnectionUids(rowUid, colUid)), TemplateMatrixHandler.SYMMETRY_ERROR_BACKGROUND, "symmetryError");
-        } else {
-            this.clearCellHighlight(gridLocation, "symmetryError");
-            this.clearCellHighlight(this.getGridLocFromUids(matrix.getSymmetricConnectionUids(rowUid, colUid)), "symmetryError");
-        }
-    }
 }
