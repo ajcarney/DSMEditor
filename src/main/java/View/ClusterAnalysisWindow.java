@@ -25,7 +25,7 @@ import java.util.*;
  *
  * @author Aiden Carney
  */
-public class ClusterAnalysis {
+public class ClusterAnalysisWindow {
     SymmetricDSM matrix;
 
     Stage window;
@@ -54,7 +54,7 @@ public class ClusterAnalysis {
      *
      * @param matrix The matrix to be analyzed
      */
-    public ClusterAnalysis(SymmetricDSM matrix) {
+    public ClusterAnalysisWindow(SymmetricDSM matrix) {
         this.matrix = matrix;
 
         window = new Stage();

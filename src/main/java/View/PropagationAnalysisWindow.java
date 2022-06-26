@@ -1,9 +1,13 @@
 package View;
 
 import Data.DSMItem;
-import Data.SymmetricDSM;
+import Data.IPropagationAnalysis;
+import Data.TemplateDSM;
 import View.Widgets.NumericTextField;
-import javafx.beans.property.*;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -32,21 +36,18 @@ import java.util.Map;
 
 
 /**
- * Class for performing propagation analysis on a given matrix. Currently only works on symmetric matrices but could
- * needs to be refactored to support other types as well
+ * Class for performing propagation analysis on a given matrix. Only works on DSMs that implement the IPropagationAnalysis
+ * interface
  *
  * @author Aiden Carney
  */
-public class PropagationAnalysis {
-    SymmetricDSM matrix;
+public class PropagationAnalysisWindow<T extends TemplateDSM & IPropagationAnalysis> {
+    T matrix;
 
     Stage window;
-    private BorderPane rootLayout;
+    private final BorderPane rootLayout;
 
-    // layouts in the border pane
-    private MenuBar menuBar;        // top bar
     private VBox configLayout;      // side bar
-    private SplitPane mainContent;  // center
 
     // config pane widgets
     private ComboBox<Integer> startItemEntry;
@@ -54,13 +55,11 @@ public class PropagationAnalysis {
     private IntegerProperty numLevels;
     private DoubleProperty minWeight;
 
-    private ToggleGroup tg;
-    private RadioButton countByWeight;
     private RadioButton countByOccurrence;
 
     // main content widgets
-    private VBox graphLayout;
-    private VBox rawOutputLayout;
+    private final VBox graphLayout;
+    private final VBox rawOutputLayout;
 
     ListView<Integer> itemExclusions;
 
@@ -70,7 +69,7 @@ public class PropagationAnalysis {
      *
      * @param matrix the matrix to analyze
      */
-    public PropagationAnalysis(SymmetricDSM matrix) {
+    public PropagationAnalysisWindow(T matrix) {
         this.matrix = matrix;
 
         window = new Stage();
@@ -81,20 +80,21 @@ public class PropagationAnalysis {
         updateConfigWidgets();
 
     // menu
-        menuBar = new MenuBar();
+        // layouts in the border pane
+        // top bar
+        MenuBar menuBar = new MenuBar();
 
         // run menu
         Menu runMenu = new Menu("Run");
         MenuItem run = new MenuItem("Run Propagation Analysis");
-        run.setOnAction(e -> {
-            runPropagationAnalysis();
-        });
+        run.setOnAction(e -> runPropagationAnalysis());
         runMenu.getItems().addAll(run);
 
         menuBar.getMenus().addAll(runMenu);
 
     // main content
-        mainContent = new SplitPane();
+        // center
+        SplitPane mainContent = new SplitPane();
         mainContent.setOrientation(Orientation.VERTICAL);
 
         graphLayout = new VBox();
@@ -123,9 +123,9 @@ public class PropagationAnalysis {
      */
     private void updateConfigWidgets() {
         // function to set text of comboBox items, used for all ComboBoxes
-        Callback<ListView<Integer>, ListCell<Integer>> cellFactory = new Callback<ListView<Integer>, ListCell<Integer>>() {
+        Callback<ListView<Integer>, ListCell<Integer>> cellFactory = new Callback<>() {
             public ListCell<Integer> call(ListView<Integer> l) {
-                return new ListCell<Integer>() {
+                return new ListCell<>() {
                     @Override
                     protected void updateItem(Integer item, boolean empty) {
                         super.updateItem(item, empty);
@@ -204,9 +204,7 @@ public class PropagationAnalysis {
 
         minWeight = new SimpleDoubleProperty(1.0);
         NumericTextField minWeightEntry = new NumericTextField(minWeight.getValue());
-        minWeightEntry.textProperty().addListener((obs, oldText, newText) -> {
-            minWeight.setValue(minWeightEntry.getNumericValue());
-        });
+        minWeightEntry.textProperty().addListener((obs, oldText, newText) -> minWeight.setValue(minWeightEntry.getNumericValue()));
 
         minWeightLayout.getChildren().addAll(minWeightLabel, minWeightEntry);
         minWeightLayout.setSpacing(5);
@@ -220,8 +218,8 @@ public class PropagationAnalysis {
 
         Label countMethodLabel = new Label("Count Method");
 
-        tg = new ToggleGroup();
-        countByWeight = new RadioButton("Count by Weight");
+        ToggleGroup tg = new ToggleGroup();
+        RadioButton countByWeight = new RadioButton("Count by Weight");
         countByWeight.setToggleGroup(tg);
         countByWeight.setSelected(false);
         countByWeight.setMaxWidth(Double.MAX_VALUE);
@@ -243,9 +241,7 @@ public class PropagationAnalysis {
         itemExclusions.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         itemExclusions.setCellFactory(cellFactory);
         Button deleteSelected = new Button("Delete Selected Item(s)");
-        deleteSelected.setOnAction(ee -> {
-            itemExclusions.getItems().removeAll(itemExclusions.getSelectionModel().getSelectedItems());
-        });
+        deleteSelected.setOnAction(ee -> itemExclusions.getItems().removeAll(itemExclusions.getSelectionModel().getSelectedItems()));
 
         HBox exceptionSelectorLayout = new HBox();
         ComboBox<Integer> itemExceptionSelector = new ComboBox<>();
@@ -297,15 +293,9 @@ public class PropagationAnalysis {
             minimumWeight = -Double.MAX_VALUE;
         }
 
-        ArrayList<Integer> exclusions = new ArrayList();
-        for(Integer i : itemExclusions.getItems()) {
-            exclusions.add(i);
-        }
+        ArrayList<Integer> exclusions = new ArrayList<>(itemExclusions.getItems());
 
-        Boolean byWeight = true;
-        if(countByOccurrence.isSelected()) {
-            byWeight = false;
-        }
+        boolean byWeight = !countByOccurrence.isSelected();
 
         HashMap<Integer, HashMap<Integer, Double>> results = matrix.propagationAnalysis(startItem, numberLevels, exclusions, minimumWeight, byWeight);
 
@@ -313,11 +303,7 @@ public class PropagationAnalysis {
         HashMap<Integer, Double> scores = new HashMap<>();
         for(Map.Entry<Integer, HashMap<Integer, Double>> levelEntry : results.entrySet()) {
             for(Map.Entry<Integer, Double> entry : levelEntry.getValue().entrySet()) {
-                if(scores.get(entry.getKey()) == null) {
-                    scores.put(entry.getKey(), entry.getValue());
-                } else {
-                    scores.put(entry.getKey(), scores.get(entry.getKey()) + entry.getValue());
-                }
+                scores.merge(entry.getKey(), entry.getValue(), Double::sum);
             }
         }
 

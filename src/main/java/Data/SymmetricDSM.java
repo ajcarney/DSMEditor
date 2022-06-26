@@ -13,13 +13,11 @@ import java.util.*;
  * A class that contains data about a matrix. All operations to a matrix come through
  * this class. Handles both symmetrical and non-symmetrical matrices.
  * Note: items in a symmetric dsm will use the property Grouping.group1 to configure groups
- * TODO: I added double linked aliases, and it could remove some linear searches
  *
  * @author: Aiden Carney
  */
-public class SymmetricDSM extends TemplateDSM {
+public class SymmetricDSM extends TemplateGroupedMatrix implements IPropagationAnalysis {
     private ObservableSet<Grouping> groupings;  // ObservableSet is used so that any gui threads reading it will see changes without needing a callback set up
-    private final Grouping defaultGroup = new Grouping(Integer.MAX_VALUE, "(none)", Color.color(1.0, 1.0, 1.0), Grouping.defaultFontColor);  // create a default group when none is assigned (this will always have the same uid)
 
 //region Constructors
     /**
@@ -76,175 +74,6 @@ public class SymmetricDSM extends TemplateDSM {
         this.wasModified = true;
 
         clearStacks();
-    }
-//endregion
-
-
-//region Methods to Handle Groups and Grouping
-    /**
-     * Gets the default grouping object
-     *
-     * @return the default group for the matrix
-     */
-    public Grouping getDefaultGrouping() {
-        return defaultGroup;
-    }
-
-
-    /**
-     * Adds a new grouping to the matrix. Puts the change on the stack but does not set a checkpoint
-     *
-     * @param group  the object of type Grouping to add
-     */
-    public void addGrouping(Grouping group) {
-        addChangeToStack(new MatrixChange(
-            () -> {  // do function
-                groupings.add(group);
-            },
-            () -> {  // undo function
-                groupings.remove(group);
-                for(DSMItem item : rows) {
-                    if(item.getGroup1().equals(group)) {
-                        item.setGroup1(defaultGroup);
-                    }
-                }
-                for(DSMItem item : cols) {
-                    if(item.getGroup1().equals(group)) {
-                        item.setGroup1(defaultGroup);
-                    }
-                }
-            },
-            false
-        ));
-    }
-
-
-    /**
-     * Removes a grouping from the matrix. Puts the change on the stack but does not set a checkpoint
-     *
-     * @param group  the object of type Grouping to add
-     */
-    public void removeGrouping(Grouping group) {
-        for(DSMItem item : rows) {  // these changes already get put on the stack so no need to add them a second time
-            if(item.getGroup1().equals(group)) {
-                setItemGroup(item, defaultGroup);
-            }
-        }
-        for(DSMItem item : cols) {
-            if(item.getGroup1().equals(group)) {
-                setItemGroup(item, defaultGroup);
-            }
-        }
-
-        addChangeToStack(new MatrixChange(
-            () -> {  // do function
-                groupings.remove(group);
-            },
-            () -> {  // undo function
-                groupings.add(group);
-            },
-            false
-        ));
-    }
-
-
-    /**
-     * Removes all groupings from the matrix. Puts the change on the stack but does not set a checkpoint
-     */
-    public void clearGroupings() {
-        ObservableSet<Grouping> oldGroupings = FXCollections.observableSet();
-        oldGroupings.addAll(groupings);
-
-        for(DSMItem r : rows) {
-            setItemGroup(r, defaultGroup);
-        }
-        for(DSMItem c : cols) {
-            setItemGroup(c, defaultGroup);
-        }
-
-        addChangeToStack(new MatrixChange(
-            () -> {  // do function
-                groupings.clear();
-
-            },
-            () -> {  // undo function
-                groupings = oldGroupings;
-            },
-            false
-        ));
-    }
-
-
-    /**
-     * Returns the ObservableSet of the groupings that is used for gui widgets to auto update and
-     * not need a callback to update
-     *
-     * @return ObservableSet of the current groupings
-     */
-    public ObservableSet<Grouping> getGroupings() {
-        return groupings;
-    }
-
-
-    /**
-     * Renames a grouping and updates all DSMItem objects with the new grouping name. Puts the change on the stack
-     * but does not set a checkpoint
-     *
-     * @param group    the group who's name should be changed
-     * @param newName  the new name for the group
-     */
-    public void renameGrouping(Grouping group, String newName) {
-        String oldName = group.getName();
-
-        addChangeToStack(new MatrixChange(
-            () -> {  // do function
-                group.setName(newName);
-            },
-            () -> {  // undo function
-                group.setName(oldName);
-            },
-            false
-        ));
-    }
-
-
-    /**
-     * Changes a color of a grouping. Puts the change on the stack but does not set a checkpoint
-     *
-     * @param group    the group who's name should be changed
-     * @param newColor the new color of the grouping
-     */
-    public void updateGroupingColor(Grouping group, Color newColor) {
-        Color oldColor = group.getColor();
-        addChangeToStack(new MatrixChange(
-            () -> {  // do function
-                group.setColor(newColor);
-            },
-            () -> {  // undo function
-                group.setColor(oldColor);
-            },
-            false
-        ));
-    }
-
-
-    /**
-     * Changes a color of a grouping. Puts the change on the stack but does not set a checkpoint
-     *
-     * @param group    the group who's name should be changed
-     * @param newColor the new color of the grouping
-     */
-    public void updateGroupingFontColor(Grouping group, Color newColor) {
-        Color oldColor = group.getColor();
-        addChangeToStack(new MatrixChange(
-                () -> {  // do function
-                    group.setFontColor(newColor);
-                },
-                () -> {  // undo function
-                    group.setFontColor(oldColor);
-                },
-                false
-        ));
     }
 //endregion
 
@@ -361,6 +190,7 @@ public class SymmetricDSM extends TemplateDSM {
      * @param item     the item to change the name of
      * @param newGroup the new group for the item
      */
+    @Override
     public void setItemGroup(DSMItem item, Grouping newGroup) {
         DSMItem aliasedItem = getItemByAlias(item.getUid());
         Grouping oldGroup = item.getGroup1();
@@ -529,18 +359,6 @@ public class SymmetricDSM extends TemplateDSM {
         }
         grid.add(row0);
 
-//        // create second header row for groupings if it is a non-symmetrical matrix
-//        if(!isSymmetrical()) {
-//            ArrayList<Pair<String, Object>> row1 = new ArrayList<Pair<String, Object>>();
-//            row1.add(new Pair<>("plain_text_v", ""));
-//            row1.add(new Pair<>("plain_text_v", ""));
-//            row1.add(new Pair<>("plain_text_v", "Grouping"));
-//            for (DSMItem c : cols) {
-//                row1.add(new Pair<>("grouping_item_v", c));
-//            }
-//            grid.add(row1);
-//        }
-
         // create third header row
         ArrayList<Pair< String, Object> > row2 = new ArrayList<>();
         row2.add(new Pair<>("plain_text", "Grouping"));
@@ -549,10 +367,6 @@ public class SymmetricDSM extends TemplateDSM {
         for(DSMItem c : cols) {
             row2.add(new Pair<>("plain_text", ""));
         }
-
-//        for(DSMItem c : cols) {
-//            row2.add(new Pair<>("index_item", c));
-//        }
 
         grid.add(row2);
 
@@ -588,6 +402,7 @@ public class SymmetricDSM extends TemplateDSM {
      * @param countByWeight count by weight or by occurrence
      * @return              HashMap(level : Hashmap(uid, occurrences/weights))
      */
+    @Override
     public HashMap<Integer, HashMap<Integer, Double>> propagationAnalysis(Integer startItem, int numLevels, ArrayList<Integer> exclusions, double minWeight, boolean countByWeight) {
         int currentLevel = 1;
         HashMap<Integer, HashMap<Integer, Double>> results = new HashMap<>();
