@@ -96,8 +96,7 @@ public abstract class TemplateSideBar<T extends TemplateDSM> {
      * Sets up the button callback for sorting the matrix
      */
     protected void sortCallback() {
-        sort.setOnAction(e -> editor.refreshTab());
-        sort.setMaxWidth(Double.MAX_VALUE);
+        editor.refreshTab();
     }
 
 
@@ -105,15 +104,13 @@ public abstract class TemplateSideBar<T extends TemplateDSM> {
      * Sets up the button callback for re-distributing sort indices
      */
     protected void reDistributeIndicesCallback() {
-        reDistributeIndices.setOnAction(e -> {
-            if(editor.getFocusedMatrixUid() == null) {
-                return;
-            }
-            matrix.reDistributeSortIndices();
-            editor.refreshTab();
-            matrix.setCurrentStateAsCheckpoint();
-        });
-        reDistributeIndices.setMaxWidth(Double.MAX_VALUE);
+        if(editor.getFocusedMatrixUid() == null) {
+            return;
+        }
+        System.out.println("here");
+        matrix.reDistributeSortIndices();
+        editor.refreshTab();
+        matrix.setCurrentStateAsCheckpoint();
     }
 
 

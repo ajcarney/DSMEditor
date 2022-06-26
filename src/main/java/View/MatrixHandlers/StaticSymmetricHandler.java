@@ -139,12 +139,14 @@ public class StaticSymmetricHandler extends TemplateMatrixHandler<SymmetricDSM> 
                     }
                     case "item_name" -> {
                         label = new Label(((DSMItem) item.getValue()).getName().getValue());
+                        label.setPadding(new Insets(0, 5, 0, 5));
                         cell.setAlignment(Pos.BOTTOM_RIGHT);
                         label.setMinWidth(Region.USE_PREF_SIZE);
                         cell.getChildren().add(label);
                     }
                     case "item_name_v" -> {
                         label = new Label(((DSMItem) item.getValue()).getName().getValue());
+                        label.setPadding(new Insets(0, 5, 0, 5));
                         label.setRotate(-90);
                         cell.setAlignment(Pos.BOTTOM_RIGHT);
                         Group g = new Group();  // label will be added to a group so that it will be formatted correctly if it is vertical

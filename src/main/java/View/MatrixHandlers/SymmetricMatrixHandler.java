@@ -155,6 +155,7 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
                     }
                     case "item_name" -> {
                         label = new Label();
+                        label.setPadding(new Insets(0, 5, 0, 5));
                         label.textProperty().bind(((DSMItem) item.getValue()).getName());
                         cell.setAlignment(Pos.CENTER_RIGHT);
                         label.setMinWidth(Region.USE_PREF_SIZE);
@@ -170,6 +171,7 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
                     case "item_name_v" -> {
                         label = new Label();
                         label.textProperty().bind(((DSMItem) item.getValue()).getName());
+                        label.setPadding(new Insets(0, 5, 0, 5));
                         label.setRotate(-90);
                         cell.setAlignment(Pos.BOTTOM_CENTER);
                         Group g = new Group();  // label will be added to a group so that it will be formatted correctly if it is vertical
@@ -245,9 +247,10 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
                         cell.setAlignment(Pos.CENTER);
                         int finalR = r;
                         int finalC = c;
-                        entry.setOnAction(e -> {
+                        entry.setOnAction(e -> {  // remove focus when enter key is pressed
                             cell.getParent().requestFocus();
                         });
+
                         entry.focusedProperty().addListener((obs, oldVal, newVal) -> {
                             if (!newVal) {  // if changing to not focused
                                 if (entry.getNumericValue() != null) {

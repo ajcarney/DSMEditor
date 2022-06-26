@@ -2,8 +2,6 @@ package View.Widgets;
 
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.scene.control.TextField;
 
 
@@ -13,26 +11,7 @@ import javafx.scene.control.TextField;
  * @author Aiden Carney
  */
 public class NumericTextField extends TextField {
-    private DoubleProperty numericValue;
-
-    /**
-     * Getter function for the current numeric number in the TextField
-     *
-     * @return the number in the TextField
-     */
-    public Double getNumericValue() {
-        return numericValue.getValue();
-    }
-
-
-    /**
-     * Setter value for the current number in the TextField
-     *
-     * @param newValue the number to display in the TextField
-     */
-    public void setNumericValue(Double newValue) {
-        numericValue.setValue(newValue);
-    }
+    private final DoubleProperty numericValue;
 
 
     /**
@@ -51,37 +30,54 @@ public class NumericTextField extends TextField {
         }
 
         final NumericTextField numericTextField = this;
-        this.textProperty().addListener(new ChangeListener<String>() {
-            @Override
-            public void changed(ObservableValue<? extends String> observableValue, String oldValue, String newValue) {
-                if (newValue == null || "".equals(newValue)) {
-                    setNumericValue(null);
-                    return;
-                }
+        this.textProperty().addListener((observableValue, oldValue, newValue) -> {
+            if (newValue == null || "".equals(newValue)) {
+                setNumericValue(null);
+                return;
+            }
 
-                int numPeriods = 0;
-                StringBuilder modifiedValue = new StringBuilder();
-                for (int i = 0; i < newValue.length(); i++) {  // rebuild the string with no characters that are not numeric or have multiple decimal places
-                    if (newValue.charAt(i) == '.') {
-                        numPeriods += 1;
-                        if (numPeriods > 1) {
-                            modifiedValue.append("");
-                        } else {
-                            modifiedValue.append(".");
-                        }
-                    } else if (!"0123456789".contains(String.valueOf(newValue.charAt(i)))) { // char is not numeric and should be removed
+            int numPeriods = 0;
+            StringBuilder modifiedValue = new StringBuilder();
+            for (int i = 0; i < newValue.length(); i++) {  // rebuild the string with no characters that are not numeric or have multiple decimal places
+                if (newValue.charAt(i) == '.') {
+                    numPeriods += 1;
+                    if (numPeriods > 1) {
                         modifiedValue.append("");
                     } else {
-                        modifiedValue.append(newValue.charAt(i));
+                        modifiedValue.append(".");
                     }
+                } else if (!"0123456789".contains(String.valueOf(newValue.charAt(i)))) { // char is not numeric and should be removed
+                    modifiedValue.append("");
+                } else {
+                    modifiedValue.append(newValue.charAt(i));
                 }
-
-                if(!"".equals(modifiedValue.toString()) && !".".equals(modifiedValue.toString())) {
-                    numericValue.set(Double.parseDouble(modifiedValue.toString()));
-                }
-                numericTextField.setText(modifiedValue.toString());
             }
+
+            if(!"".equals(modifiedValue.toString()) && !".".equals(modifiedValue.toString())) {
+                numericValue.set(Double.parseDouble(modifiedValue.toString()));
+            }
+            numericTextField.setText(modifiedValue.toString());
         });
+    }
+
+
+    /**
+     * Getter function for the current numeric number in the TextField
+     *
+     * @return the number in the TextField
+     */
+    public Double getNumericValue() {
+        return numericValue.getValue();
+    }
+
+
+    /**
+     * Setter value for the current number in the TextField
+     *
+     * @param newValue the number to display in the TextField
+     */
+    public void setNumericValue(Double newValue) {
+        numericValue.setValue(newValue);
     }
 
 }

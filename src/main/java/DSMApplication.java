@@ -31,9 +31,7 @@ import java.util.Map;
  */
 public class DSMApplication extends Application {
     private static final BorderPane root = new BorderPane();
-
     private static final EditorPane editor = new EditorPane(new MatrixController(), root);
-
     private static ArrayList<String> cliArgs = new ArrayList<>();
 
     /**
@@ -55,15 +53,18 @@ public class DSMApplication extends Application {
 
         // start with a tab open (used for debugging, remove or comment out for release)
         if(cliArgs.contains("debug=true")) {
-            SymmetricIOHandler ioHandler = new SymmetricIOHandler(new File("/home/aiden/Documents/DSMEditor/test3.dsm"));
-            SymmetricDSM matrix = ioHandler.readFile();
-            this.editor.addTab(
-                    matrix,
-                    ioHandler,
-                    new SymmetricMatrixHandler(matrix, 12.0),
-                    new SymmetricHeaderMenu(editor),
-                    new SymmetricSideBar(matrix, editor)
-            );
+            File f = new File("/home/aiden/Documents/DSMEditor/test3.dsm");
+            if(f.exists()) {
+                SymmetricIOHandler ioHandler = new SymmetricIOHandler(f);
+                SymmetricDSM matrix = ioHandler.readFile();
+                this.editor.addTab(
+                        matrix,
+                        ioHandler,
+                        new SymmetricMatrixHandler(matrix, 12.0),
+                        new SymmetricHeaderMenu(editor),
+                        new SymmetricSideBar(matrix, editor)
+                );
+            }
         }
 
         for(int i=0; i<cliArgs.size(); i++) {

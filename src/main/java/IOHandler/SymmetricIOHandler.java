@@ -496,7 +496,6 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
                         }
                         case "item_name_v" -> {
                             Cell cell = row.createCell(c + COL_START);
-                            System.out.println(item);
                             cell.setCellValue(((DSMItem) item.getValue()).getName().getValue());
 
                             Color bgColor = ((DSMItem) item.getValue()).getGroup1().getColor();

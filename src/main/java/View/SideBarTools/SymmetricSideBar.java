@@ -445,13 +445,13 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
             for (Map.Entry<CheckBox, DSMItem> entry : connections.entrySet()) {
                 if(entry.getKey().isSelected()) {
                     if(tg.getSelectedToggle().equals(selectByRow)) {  // selecting by row
-                        DSMItem rowItem = matrix.getItem(itemSelector.getValue().getUid());
-                        DSMItem colItem = matrix.getItemByAlias(entry.getValue().getUid());
-                        DSMItem symmetricRowItem = matrix.getItemByAlias(rowItem.getUid());
-                        DSMItem symmetricColItem = matrix.getItemByAlias(colItem.getUid());
+                        int rowUid = itemSelector.getValue().getUid();
+                        int colUid = entry.getValue().getUid();
+                        int symmetricRowUid = matrix.getSymmetricConnectionUids(rowUid, colUid).getKey();
+                        int symmetricColUid = matrix.getSymmetricConnectionUids(rowUid, colUid).getValue();
 
-                        DSMConnection conn1 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), rowItem.getUid(), colItem.getUid());
-                        DSMConnection conn2 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), symmetricRowItem.getUid(), symmetricColItem.getUid());
+                        DSMConnection conn1 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), rowUid, colUid);
+                        DSMConnection conn2 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), symmetricRowUid, symmetricColUid);
 
                         if(!changesToMakeView.getItems().contains(conn1)) {  // ensure no duplicates
                             changesToMakeView.getItems().add(conn1);
@@ -460,13 +460,13 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
                             changesToMakeView.getItems().add(conn2);
                         }
                     } else if(tg.getSelectedToggle().equals(selectByCol)) {  // selecting by column
-                        DSMItem rowItem = matrix.getItem(entry.getValue().getUid());
-                        DSMItem colItem = matrix.getItemByAlias(itemSelector.getValue().getUid());
-                        DSMItem symmetricRowItem = matrix.getItemByAlias(rowItem.getUid());
-                        DSMItem symmetricColItem = matrix.getItemByAlias(colItem.getUid());
+                        int rowUid = itemSelector.getValue().getUid();
+                        int colUid = entry.getValue().getUid();
+                        int symmetricRowUid = matrix.getSymmetricConnectionUids(rowUid, colUid).getKey();
+                        int symmetricColUid = matrix.getSymmetricConnectionUids(rowUid, colUid).getValue();
 
-                        DSMConnection conn1 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), rowItem.getUid(), colItem.getUid());
-                        DSMConnection conn2 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), symmetricRowItem.getUid(), symmetricColItem.getUid());
+                        DSMConnection conn1 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), rowUid, colUid);
+                        DSMConnection conn2 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), symmetricRowUid, symmetricColUid);
 
                         if(!changesToMakeView.getItems().contains(conn1)) {  // ensure no duplicates
                             changesToMakeView.getItems().add(conn1);
@@ -765,19 +765,19 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
 
         Button applySymmetricButton = new Button("Modify Connections Symmetrically");
         applySymmetricButton.setOnAction(ee -> {
-            if(itemSelector.getValue() == null || connectionName.getText().isEmpty() || weight.getText().isEmpty()) {  // ensure connection can be added
+            if(itemSelector.getValue() == null) {  // ensure connection can be added
                 return;
             }
             for (Map.Entry<CheckBox, DSMItem> entry : connections.entrySet()) {
                 if(entry.getKey().isSelected()) {
                     if(tg.getSelectedToggle().equals(selectByRow)) {  // selecting by row
-                        DSMItem rowItem = matrix.getItem(itemSelector.getValue().getUid());
-                        DSMItem colItem = matrix.getItemByAlias(entry.getValue().getUid());
-                        DSMItem symmetricRowItem = matrix.getItemByAlias(rowItem.getUid());
-                        DSMItem symmetricColItem = matrix.getItemByAlias(colItem.getUid());
+                        int rowUid = itemSelector.getValue().getUid();
+                        int colUid = entry.getValue().getUid();
+                        int symmetricRowUid = matrix.getSymmetricConnectionUids(rowUid, colUid).getKey();
+                        int symmetricColUid = matrix.getSymmetricConnectionUids(rowUid, colUid).getValue();
 
-                        DSMConnection conn1 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), rowItem.getUid(), colItem.getUid());
-                        DSMConnection conn2 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), symmetricRowItem.getUid(), symmetricColItem.getUid());
+                        DSMConnection conn1 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), rowUid, colUid);
+                        DSMConnection conn2 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), symmetricRowUid, symmetricColUid);
 
                         if(!changesToMakeView.getItems().contains(conn1)) {  // ensure no duplicates
                             changesToMakeView.getItems().add(conn1);
@@ -786,13 +786,13 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
                             changesToMakeView.getItems().add(conn2);
                         }
                     } else if(tg.getSelectedToggle().equals(selectByCol)) {  // selecting by column
-                        DSMItem rowItem = matrix.getItem(entry.getValue().getUid());
-                        DSMItem colItem = matrix.getItemByAlias(itemSelector.getValue().getUid());
-                        DSMItem symmetricRowItem = matrix.getItemByAlias(rowItem.getUid());
-                        DSMItem symmetricColItem = matrix.getItemByAlias(colItem.getUid());
+                        int rowUid = itemSelector.getValue().getUid();
+                        int colUid = entry.getValue().getUid();
+                        int symmetricRowUid = matrix.getSymmetricConnectionUids(rowUid, colUid).getKey();
+                        int symmetricColUid = matrix.getSymmetricConnectionUids(rowUid, colUid).getValue();
 
-                        DSMConnection conn1 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), rowItem.getUid(), colItem.getUid());
-                        DSMConnection conn2 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), symmetricRowItem.getUid(), symmetricColItem.getUid());
+                        DSMConnection conn1 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), rowUid, colUid);
+                        DSMConnection conn2 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), symmetricRowUid, symmetricColUid);
 
                         if(!changesToMakeView.getItems().contains(conn1)) {  // ensure no duplicates
                             changesToMakeView.getItems().add(conn1);
@@ -803,13 +803,13 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
                     }
                 } else {
                     if(tg.getSelectedToggle().equals(selectByRow)) {  // selecting by row
-                        DSMItem rowItem = matrix.getItem(itemSelector.getValue().getUid());
-                        DSMItem colItem = matrix.getItemByAlias(entry.getValue().getUid());
-                        DSMItem symmetricRowItem = matrix.getItemByAlias(rowItem.getUid());
-                        DSMItem symmetricColItem = matrix.getItemByAlias(colItem.getUid());
+                        int rowUid = itemSelector.getValue().getUid();
+                        int colUid = entry.getValue().getUid();
+                        int symmetricRowUid = matrix.getSymmetricConnectionUids(rowUid, colUid).getKey();
+                        int symmetricColUid = matrix.getSymmetricConnectionUids(rowUid, colUid).getValue();
 
-                        DSMConnection conn1 = new DSMConnection("", Double.MAX_VALUE, rowItem.getUid(), colItem.getUid());
-                        DSMConnection conn2 = new DSMConnection("", Double.MAX_VALUE, symmetricRowItem.getUid(), symmetricColItem.getUid());
+                        DSMConnection conn1 = new DSMConnection("", Double.MAX_VALUE, rowUid, colUid);
+                        DSMConnection conn2 = new DSMConnection("", Double.MAX_VALUE, symmetricRowUid, symmetricColUid);
 
                         if(!changesToMakeView.getItems().contains(conn1)) {  // ensure no duplicates
                             changesToMakeView.getItems().add(conn1);
@@ -818,13 +818,13 @@ public class SymmetricSideBar extends TemplateSideBar<SymmetricDSM> {
                             changesToMakeView.getItems().add(conn2);
                         }
                     } else if(tg.getSelectedToggle().equals(selectByCol)) {  // selecting by column
-                        DSMItem rowItem = matrix.getItem(entry.getValue().getUid());
-                        DSMItem colItem = matrix.getItemByAlias(itemSelector.getValue().getUid());
-                        DSMItem symmetricRowItem = matrix.getItemByAlias(rowItem.getUid());
-                        DSMItem symmetricColItem = matrix.getItemByAlias(colItem.getUid());
+                        int rowUid = itemSelector.getValue().getUid();
+                        int colUid = entry.getValue().getUid();
+                        int symmetricRowUid = matrix.getSymmetricConnectionUids(rowUid, colUid).getKey();
+                        int symmetricColUid = matrix.getSymmetricConnectionUids(rowUid, colUid).getValue();
 
-                        DSMConnection conn1 = new DSMConnection("", Double.MAX_VALUE, rowItem.getUid(), colItem.getUid());
-                        DSMConnection conn2 = new DSMConnection("", Double.MAX_VALUE, symmetricRowItem.getUid(), symmetricColItem.getUid());
+                        DSMConnection conn1 = new DSMConnection("", Double.MAX_VALUE, rowUid, colUid);
+                        DSMConnection conn2 = new DSMConnection("", Double.MAX_VALUE, symmetricRowUid, symmetricColUid);
 
                         if (!changesToMakeView.getItems().contains(conn1)) {  // ensure no duplicates
                             changesToMakeView.getItems().add(conn1);

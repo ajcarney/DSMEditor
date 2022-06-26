@@ -17,6 +17,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
+import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.xssf.usermodel.*;
@@ -261,6 +262,13 @@ public abstract class TemplateIOHandler<T1 extends TemplateDSM, T2 extends Templ
         }
         // rotation
         style.setRotation(rotation);
+
+        // set up borders and wrap text
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
+        style.setWrapText(true);
 
         cell.setCellStyle(style);
     }
