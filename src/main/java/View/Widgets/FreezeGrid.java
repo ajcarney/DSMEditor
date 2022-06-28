@@ -1,5 +1,6 @@
 package View.Widgets;
 
+import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.Insets;
@@ -17,6 +18,7 @@ import javafx.stage.Stage;
 import javafx.util.Pair;
 
 import java.util.ArrayList;
+import java.util.stream.IntStream;
 
 
 /**
@@ -148,9 +150,6 @@ public class FreezeGrid {
         colPrefWidths.clear();
         rowPrefHeights.clear();
 
-        Pane ghostPane = new Pane();
-        Scene ghostScene = new Scene(ghostPane);  // a scene is needed to calculate preferred sizes of nodes
-
         ArrayList<ArrayList<Cell>> newCells = new ArrayList<>();
         for(int r=0; r<cells.size(); r++) {
             ArrayList<Cell> row = cells.get(r);
@@ -167,6 +166,8 @@ public class FreezeGrid {
 
                 // update preferred sizes
                 // add the node to a test pane with the scene set, but not visible so the preferred size gets calculated
+                Pane ghostPane = new Pane();
+                Scene ghostScene = new Scene(ghostPane);  // a scene is needed to calculate preferred sizes of nodes
                 ghostPane.getChildren().add(cells.get(r).get(c).getNode());
                 ghostPane.applyCss();
                 ghostPane.layout();
@@ -221,7 +222,6 @@ public class FreezeGrid {
         }
         resizeGrid();
         updateConstraints();
-        updateGrid();
     }
 
 
@@ -242,21 +242,37 @@ public class FreezeGrid {
             if(r >= rowPrefHeights.size()) {
                 rowPrefHeights.add(new SimpleDoubleProperty(0.0));
             }
+
             for(int c=0; c<row.size(); c++) {
                 if(c >= colPrefWidths.size()) {
                     colPrefWidths.add(new SimpleDoubleProperty(0.0));
                 }
                 Cell cell = new Cell(new Pair<>(r, c), row.get(c));
                 newRow.add(cell);
+
+                // update preferred sizes
+                // add the node to a test pane with the scene set, but not visible so the preferred size gets calculated
+                Pane ghostPane = new Pane();
+                Scene ghostScene = new Scene(ghostPane);
+                ghostPane.getChildren().add(cell.getNode());
+                ghostPane.applyCss();
+                ghostPane.layout();
+
+                double width = cell.getNode().getBoundsInLocal().getWidth();
+                double height = cell.getNode().getBoundsInLocal().getHeight();
+                if(width > colPrefWidths.get(c).doubleValue()) {
+                    colPrefWidths.get(c).set(width);
+                }
+                if(height > rowPrefHeights.get(r).doubleValue()) {
+                    rowPrefHeights.get(r).set(height);
+                }
             }
 
             cells.add(newRow);
 
             assert r <= 0 || (newRow.size() == cells.get(0).size());
         }
-        resizeGrid();
         updateConstraints();
-        updateGrid();
     }
 
 
@@ -310,7 +326,6 @@ public class FreezeGrid {
 
         // set ne end location
         neGridConstraints = new Pair<>(new Pair<>(neGridConstraints.getKey().getKey(), neGridConstraints.getKey().getValue()), new Pair<>(neGridConstraints.getValue().getKey(), endRow));
-        updateGrid();
     }
 
 
@@ -325,7 +340,6 @@ public class FreezeGrid {
 
         // set se start location
         seGridConstraints = new Pair<>(new Pair<>(seGridConstraints.getKey().getKey(), getNumRows() - endRow), new Pair<>(seGridConstraints.getValue().getKey(), seGridConstraints.getValue().getValue()));
-        updateGrid();
     }
 
 
@@ -340,7 +354,6 @@ public class FreezeGrid {
 
         // set sw end location
         swGridConstraints = new Pair<>(new Pair<>(swGridConstraints.getKey().getKey(), swGridConstraints.getKey().getValue()), new Pair<>(endCol, swGridConstraints.getValue().getValue()));
-        updateGrid();
     }
 
 
@@ -355,7 +368,6 @@ public class FreezeGrid {
 
         // set se start location
         seGridConstraints = new Pair<>(new Pair<>(getNumCols() - endCol, seGridConstraints.getKey().getValue()), new Pair<>(seGridConstraints.getValue().getKey(), seGridConstraints.getValue().getValue()));
-        updateGrid();
     }
     //endregion
 

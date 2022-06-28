@@ -11,6 +11,9 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.event.Event;
+import javafx.event.EventTarget;
+import javafx.event.EventType;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -25,7 +28,10 @@ import javafx.stage.Stage;
 import javafx.util.Pair;
 
 import java.util.HashMap;
+import java.util.Optional;
 import java.util.Vector;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.IntStream;
 
 
 /**
@@ -55,6 +61,15 @@ public abstract class TemplateMatrixHandler<T extends TemplateDSM> {
     protected HashMap<String, HashMap<Integer, Integer>> gridUidLookup;
 
 
+    protected class CellChangedEvent extends Event {
+        public CellChangedEvent(EventType<? extends Event> eventType) {
+            super(eventType);
+        }
+    }
+    // add the hashcode to it so that the event name string is unique (the name doesn't matter because it isn't used anywhere is just has to be unique)
+    protected EventType<CellChangedEvent> CELL_CHANGED_EVENT = new EventType<>("CELL_CHANGED_EVENT" + this.hashCode());
+
+
     /**
      * Constructor for MatrixGuiHandler object for a given matrix. Calls a refresh of the
      * matrix editor gui components
@@ -81,18 +96,22 @@ public abstract class TemplateMatrixHandler<T extends TemplateDSM> {
 //region Getters
     /**
      * Finds a cell by a location by iterating over all cells and determining if the grid location is the
-     * specified grid location
+     * specified grid location. Runs the search using a parallel stream
+     * to increase performance as array will generally be very large when matrices get large. Overhead is not
+     * significant enough to detriment performance of smaller matrices
      *
      * @param cellLoc the grid location to get the cell of (row, column)
      * @return        the cell object with the specified grid location
      */
     protected Cell getCellByLoc(Pair<Integer, Integer> cellLoc) {
-        for(Cell cell : (Vector<Cell>)cells.clone()) {  // use a clone so we don't run into concurrent modification exceptions
-            if(cell.getGridLocation().getKey().equals(cellLoc.getKey()) && cell.getGridLocation().getValue().equals(cellLoc.getValue())) {
-                return cell;
-            }
+        // searching in parallel can add some performance improvements once the size of the cells vector increases
+        // to a certain point and the overhead is not such that it will detriment smaller matrices significantly
+        Optional<Cell> c = cells.stream().parallel().filter(cell -> cell.getGridLocation().getKey().equals(cellLoc.getKey()) && cell.getGridLocation().getValue().equals(cellLoc.getValue())).findFirst();
+        if(c.isPresent()) {
+            return c.get();
+        } else {
+            return null;
         }
-        return null;
     }
 
 
@@ -116,24 +135,34 @@ public abstract class TemplateMatrixHandler<T extends TemplateDSM> {
 
 
     /**
-     * Finds a cell given its rowUid and colUid by doing a linear search
+     * Finds a cell given its rowUid and colUid by doing a linear search. Runs the search using a parallel stream
+     * to increase performance as array will generally be very large when matrices get large. Overhead is not
+     * significant enough to detriment performance of smaller matrices
      *
      * @param uids pair of row uid, column uid of the cell to find
      * @return     pair of row location, column location of the cell
      */
     public Pair<Integer, Integer> getGridLocFromUids(Pair<Integer, Integer> uids) {
-        Integer rowLoc = null;
-        Integer colLoc = null;
-
-        for(Cell cell : (Vector<Cell>)cells.clone()) {  // use a clone so we don't run into concurrent modification exceptions
-            Pair<Integer, Integer> testUids = getUidsFromGridLoc(cell.getGridLocation());
-            if(testUids != null && testUids.equals(uids)) {
-                rowLoc = cell.getGridLocation().getKey();
-                colLoc = cell.getGridLocation().getValue();
-            }
+        if(uids.getKey() == null || uids.getValue() == null) {  // parameter check to save some time if possible (helpful for larger matrices)
+            return new Pair<>(null, null);
         }
 
-        return new Pair<>(rowLoc, colLoc);
+        // searching in parallel can add some performance improvements once the size of the cells vector increases
+        // to a certain point and the overhead is not such that it will detriment smaller matrices significantly
+        Optional<Cell> c = cells.stream().parallel().filter(cell -> {
+            Pair<Integer, Integer> testUids = getUidsFromGridLoc(cell.getGridLocation());
+            if(testUids != null && testUids.equals(uids)) {
+                return true;
+            } else {
+                return false;
+            }
+        }).findFirst();
+        
+        if(c.isPresent()) {
+            return new Pair<>(c.get().getGridLocation().getKey(), c.get().getGridLocation().getValue());
+        } else {
+            return null;
+        }
     }
 
 
@@ -190,6 +219,21 @@ public abstract class TemplateMatrixHandler<T extends TemplateDSM> {
 
 
     /**
+     * Function to set several different types of highlight for a cell
+     *
+     * @param cell          the cell object to set the highlight for
+     * @param bg            the color to assign to a cell
+     * @param highlightType the highlight type to assign to (see Cell class for types)
+     */
+    public void setCellHighlight(Cell cell, Background bg, String highlightType) {
+        if(cell == null) return;
+
+        cell.updateHighlightBG(bg, highlightType);
+        refreshCellHighlight(cell);
+    }
+
+
+    /**
      * Function to set several different types of highlight for a cell given its grid location
      *
      * @param cellLoc       the grid location of a cell (row, column)
@@ -198,9 +242,21 @@ public abstract class TemplateMatrixHandler<T extends TemplateDSM> {
      */
     public void setCellHighlight(Pair<Integer, Integer> cellLoc, Background bg, String highlightType) {
         Cell cell = getCellByLoc(cellLoc);
+        setCellHighlight(cell, bg, highlightType);
+    }
+
+
+    /**
+     * Function to remove several different highlight types of a cell by assigning
+     * null to that highlight field
+     *
+     * @param cell          the cell object
+     * @param highlightType the highlight type to assign to (userHighlight, errorHighlight, symmetryErrorHighlight)
+     */
+    public void clearCellHighlight(Cell cell, String highlightType) {
         if(cell == null) return;
 
-        cell.updateHighlightBG(bg, highlightType);
+        cell.updateHighlightBG(null, highlightType);
         refreshCellHighlight(cell);
     }
 
@@ -214,10 +270,7 @@ public abstract class TemplateMatrixHandler<T extends TemplateDSM> {
      */
     public void clearCellHighlight(Pair<Integer, Integer> cellLoc, String highlightType) {
         Cell cell = getCellByLoc(cellLoc);
-        if(cell == null) return;
-
-        cell.updateHighlightBG(null, highlightType);
-        refreshCellHighlight(cell);
+        clearCellHighlight(cell, highlightType);
     }
 
 
@@ -437,6 +490,10 @@ public abstract class TemplateMatrixHandler<T extends TemplateDSM> {
                 Scene scene = new Scene(layout, 400, 200);
                 window.setScene(scene);
                 window.showAndWait();
+
+                // fire the event because the content could change and the cell might need to do something extra unique
+                // to a specific kind of matrix handler
+                cell.fireEvent(new CellChangedEvent(CELL_CHANGED_EVENT));
 
             } else if(e.getButton().equals(MouseButton.SECONDARY)) {  // toggle highlighting
                 toggleUserHighlightCell(new Pair<>(finalR, finalC));

@@ -270,6 +270,11 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
                         int rowUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getKey().getUid();
                         int colUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getValue().getUid();
                         label = getEditableConnectionCell(cell, locationLabel, rowUid, colUid, r, c);
+                        int finalR = r;
+                        int finalC = c;
+                        cell.addEventHandler(CELL_CHANGED_EVENT, e -> {
+                            symmetryHighlightCell(getCellByLoc(new Pair<>(finalR, finalC)));
+                        });
                     }
                 }
                 cell.setPadding(new Insets(0));
@@ -283,14 +288,16 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
             }
             gridData.add(rowData);
         }
+
+        symmetryHighlightAllCells();
         for(Cell cell : cells) {
-            symmetryHighlightCell(cell.getGridLocation());
             refreshCellHighlight(cell);
         }
 
         grid.setGridDataHBox(gridData);
         grid.setFreezeLeft(3);
         grid.setFreezeHeader(2);  // freeze top two rows for symmetric matrix
+        grid.updateGrid();
 
         rootLayout.getChildren().addAll(grid.getGrid(), locationLabel);
     }
@@ -301,8 +308,8 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
      */
     public void setValidateSymmetry() {
         symmetryValidation = true;
+        symmetryHighlightAllCells();
         for(Cell cell : cells) {
-            symmetryHighlightCell(cell.getGridLocation());
             refreshCellHighlight(cell);
         }
     }
@@ -313,8 +320,8 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
      */
     public void clearValidateSymmetry() {
         symmetryValidation = false;
+        symmetryHighlightAllCells();
         for(Cell cell : cells) {
-            symmetryHighlightCell(cell.getGridLocation());
             refreshCellHighlight(cell);
         }
     }
@@ -323,9 +330,10 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
     /**
      * Sets or clears a cells symmetry highlight based on the symmetryValidation flag
      *
-     * @param gridLocation  the cell's grid location to check the highlighting for
+     * @param cell  the cell to check the highlighting for
      */
-    private void symmetryHighlightCell(Pair<Integer, Integer> gridLocation) {
+    private void symmetryHighlightCell(Cell cell) {
+        Pair<Integer, Integer> gridLocation = cell.getGridLocation();
         Pair<Integer, Integer> uids = getUidsFromGridLoc(gridLocation);
         if(uids.getKey() == null || uids.getValue() == null) {
             return;
@@ -334,14 +342,43 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
         int rowUid = uids.getKey();
         int colUid = uids.getValue();
         DSMConnection conn = matrix.getConnection(rowUid, colUid);
-        DSMConnection symmetricConn = matrix.getSymmetricConnection(rowUid, colUid);
+        Pair<Integer, Integer> symmetricConnUids = matrix.getSymmetricConnectionUids(rowUid, colUid);
+        DSMConnection symmetricConn = matrix.getConnection(symmetricConnUids.getKey(), symmetricConnUids.getValue());
 
         if(symmetryValidation && ((conn == null && symmetricConn != null) || (conn != null && symmetricConn == null) || (conn != null && symmetricConn != null && !conn.isSameConnectionType(symmetricConn)))) {
-            this.setCellHighlight(gridLocation, TemplateMatrixHandler.SYMMETRY_ERROR_BACKGROUND, "symmetryError");
-            this.setCellHighlight(this.getGridLocFromUids(matrix.getSymmetricConnectionUids(rowUid, colUid)), TemplateMatrixHandler.SYMMETRY_ERROR_BACKGROUND, "symmetryError");
+            this.setCellHighlight(cell, TemplateMatrixHandler.SYMMETRY_ERROR_BACKGROUND, "symmetryError");
+            this.setCellHighlight(this.getGridLocFromUids(symmetricConnUids), TemplateMatrixHandler.SYMMETRY_ERROR_BACKGROUND, "symmetryError");
         } else {
-            this.clearCellHighlight(gridLocation, "symmetryError");
-            this.clearCellHighlight(this.getGridLocFromUids(matrix.getSymmetricConnectionUids(rowUid, colUid)), "symmetryError");
+            this.clearCellHighlight(cell, "symmetryError");
+            this.clearCellHighlight(this.getGridLocFromUids(symmetricConnUids), "symmetryError");
+        }
+    }
+
+
+    /**
+     * Highlights all cells symmetrically, faster than using symmetryHighlightCell in a loop because it will not double
+     * check the highlight of all cells
+     */
+    private void symmetryHighlightAllCells() {
+        for(Cell cell : cells) {
+            Pair<Integer, Integer> gridLocation = cell.getGridLocation();
+            Pair<Integer, Integer> uids = getUidsFromGridLoc(gridLocation);
+            if(uids.getKey() == null || uids.getValue() == null) {
+                continue;
+            }
+
+            int rowUid = uids.getKey();
+            int colUid = uids.getValue();
+            DSMConnection conn = matrix.getConnection(rowUid, colUid);
+            Pair<Integer, Integer> symmetricConnUids = matrix.getSymmetricConnectionUids(rowUid, colUid);
+            DSMConnection symmetricConn = matrix.getConnection(symmetricConnUids.getKey(), symmetricConnUids.getValue());
+
+            // ignore the symmetric connection because it will be hit later in the loop
+            if(symmetryValidation && ((conn == null && symmetricConn != null) || (conn != null && symmetricConn == null) || (conn != null && symmetricConn != null && !conn.isSameConnectionType(symmetricConn)))) {
+                this.setCellHighlight(cell, TemplateMatrixHandler.SYMMETRY_ERROR_BACKGROUND, "symmetryError");
+            } else {
+                this.clearCellHighlight(cell, "symmetryError");
+            }
         }
     }
 }
