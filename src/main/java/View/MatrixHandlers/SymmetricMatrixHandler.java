@@ -4,17 +4,19 @@ import Data.DSMConnection;
 import Data.DSMItem;
 import Data.Grouping;
 import Data.SymmetricDSM;
+import View.Widgets.Misc;
 import View.Widgets.NumericTextField;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
-import javafx.scene.Scene;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.input.MouseButton;
-import javafx.scene.layout.*;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.util.Callback;
 import javafx.util.Pair;
@@ -120,20 +122,14 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
         _groupings.setMinWidth(Region.USE_PREF_SIZE);
         _groupings.setPadding(new Insets(0));
         _groupings.setStyle("-fx-background-color: transparent; -fx-padding: 0, 0, 0, 0; -fx-font-size: " + (fontSize.doubleValue()) + " };");
-        Pane _ghostPane = new Pane();
-        Scene _ghostScene = new Scene(_ghostPane);  // a scene is needed to calculate preferred sizes of nodes
-
-        _ghostPane.getChildren().add(_groupings);
-        _ghostPane.applyCss();
-        _ghostPane.layout();
-        double maxHeight = _groupings.getBoundsInLocal().getHeight() + _groupings.getPadding().getTop() + _groupings.getPadding().getBottom();
+        double maxHeight = Misc.calculateNodeSize(_groupings).getHeight();
 
 
         for(int r=0; r<rows; r++) {
             ArrayList<HBox> rowData = new ArrayList<>();
             for(int c=0; c<columns; c++) {
                 Pair<String, Object> item = template.get(r).get(c);
-                HBox cell = new HBox();  // wrap everything in an HBox so a border can be added easily
+                final HBox cell = new HBox();  // wrap everything in an HBox so a border can be added easily
                 Label label = null;
 
                 Background defaultBackground = DEFAULT_BACKGROUND;
@@ -142,11 +138,13 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
                     case "plain_text" -> {
                         label = new Label((String) item.getValue());
                         label.setMinWidth(Region.USE_PREF_SIZE);
+                        label.setPadding(new Insets(1));
                         cell.getChildren().add(label);
                     }
                     case "plain_text_v" -> {
                         label = new Label((String) item.getValue());
                         label.setRotate(-90);
+                        label.setPadding(new Insets(1));
                         cell.setAlignment(Pos.BOTTOM_RIGHT);
                         Group g = new Group();  // label will be added to a group so that it will be formatted correctly if it is vertical
 
@@ -160,11 +158,13 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
                         cell.setAlignment(Pos.CENTER_RIGHT);
                         label.setMinWidth(Region.USE_PREF_SIZE);
                         cell.getChildren().add(label);
+                        int finalC = c;
                         cell.setOnMouseClicked(e -> {
                             if (e.getButton().equals(MouseButton.PRIMARY)) {
                                 editItemName(((DSMItem) item.getValue()).getUid());
-                                grid.resizeGrid();
-                                grid.updateGrid();
+                                grid.resizeColumn(finalC);
+                                grid.resizeRow(0);  // 0 is first row which contains the vertical names (this is cheating)
+                                //grid.updateGrid();
                             }
                         });
                     }
@@ -178,11 +178,12 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
 
                         g.getChildren().add(label);
                         cell.getChildren().add(g);
+                        int finalR = r;
                         cell.setOnMouseClicked(e -> {
                             if (e.getButton().equals(MouseButton.PRIMARY)) {
                                 editItemName(((DSMItem) item.getValue()).getUid());
-                                grid.resizeGrid();
-                                grid.updateGrid();
+                                grid.resizeRow(finalR);
+                                grid.resizeColumn(1);  // 1 is first column which contains the horizontal names (this is cheating)
                             }
                         });
                         cell.setMinWidth(maxHeight);  // set a min width so that the matrix is less boxy (all connection items will follow this even if not
@@ -198,7 +199,7 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
                                 "-fx-font-size: " + (fontSize.doubleValue()) + " };"
                         );
 
-                        Callback<ListView<Grouping>, ListCell<Grouping>> cellFactory = new Callback<>() {
+                        Callback<ListView<Grouping>, ListCell<Grouping>> groupingItemCellFactory = new Callback<>() {
                             @Override
                             public ListCell<Grouping> call(ListView<Grouping> l) {
                                 return new ListCell<>() {
@@ -223,8 +224,8 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
                                 };
                             }
                         };
-                        groupings.setCellFactory(cellFactory);
-                        groupings.setButtonCell(cellFactory.call(null));
+                        groupings.setCellFactory(groupingItemCellFactory);
+                        groupings.setButtonCell(groupingItemCellFactory.call(null));
 
                         groupings.getItems().addAll(matrix.getGroupings());
                         groupings.getItems().add(matrix.getDefaultGrouping());
@@ -276,7 +277,9 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
                             symmetryHighlightCell(getCellByLoc(new Pair<>(finalR, finalC)));
                         });
                     }
+
                 }
+
                 cell.setPadding(new Insets(0));
                 rowData.add(cell);
 
@@ -284,14 +287,19 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
                 cellObject.setCellBorder(Color.BLACK);
                 cellObject.updateHighlightBG(defaultBackground, "default");
                 cells.add(cellObject);
-
+                //refreshCellHighlight(cellObject);
             }
             gridData.add(rowData);
         }
 
-        symmetryHighlightAllCells();
-        for(Cell cell : cells) {
-            refreshCellHighlight(cell);
+        // only run this section if symmetryValidation is enabled because it cells default to not being highlighted
+        // and it is a waste of precious time to clear something that is already cleared
+        if(symmetryValidation) {
+            symmetryHighlightAllCells();
+        }
+
+        for (Cell c_ : cells) {  // this is needed outsize the render loop so that the groupings and item names are highlighted correctly
+            refreshCellHighlight(c_);
         }
 
         grid.setGridDataHBox(gridData);

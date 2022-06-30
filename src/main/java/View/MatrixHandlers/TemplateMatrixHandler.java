@@ -3,7 +3,7 @@ package View.MatrixHandlers;
 import Data.DSMConnection;
 import Data.DSMItem;
 import Data.TemplateDSM;
-import View.Widgets.MiscWidgets;
+import View.Widgets.Misc;
 import View.Widgets.NumericTextField;
 import View.Widgets.FreezeGrid;
 import javafx.beans.binding.Bindings;
@@ -12,7 +12,6 @@ import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.event.Event;
-import javafx.event.EventTarget;
 import javafx.event.EventType;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -30,8 +29,6 @@ import javafx.util.Pair;
 import java.util.HashMap;
 import java.util.Optional;
 import java.util.Vector;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.IntStream;
 
 
 /**
@@ -372,6 +369,9 @@ public abstract class TemplateMatrixHandler<T extends TemplateDSM> {
             if(conn == null) {
                 return "";
             } else if(showNames.getValue()) {
+                if(conn.getConnectionName().length() > 2) {  // replace with dots because maintaining grid squareness is very important
+                    return "...";
+                }
                 return conn.getConnectionName();
             } else{
                 return String.valueOf(conn.getWeight());
@@ -479,7 +479,7 @@ public abstract class TemplateMatrixHandler<T extends TemplateDSM> {
                 cancelButton.setOnAction(ee -> {
                     window.close();
                 });
-                closeArea.getChildren().addAll(cancelButton, MiscWidgets.getHorizontalSpacer(), applyButton);
+                closeArea.getChildren().addAll(cancelButton, Misc.getHorizontalSpacer(), applyButton);
 
                 //Display window and wait for it to be closed before returning
                 layout.getChildren().addAll(titleLabel, row1, row2, closeArea);
@@ -556,10 +556,10 @@ public abstract class TemplateMatrixHandler<T extends TemplateDSM> {
 
         Button cancelButton = new Button("Cancel");
         cancelButton.setOnAction(ee -> window.close());
-        closeArea.getChildren().addAll(cancelButton, MiscWidgets.getHorizontalSpacer(), applyButton);
+        closeArea.getChildren().addAll(cancelButton, Misc.getHorizontalSpacer(), applyButton);
 
         //Display window and wait for it to be closed before returning
-        layout.getChildren().addAll(row1, MiscWidgets.getVerticalSpacer(), closeArea);
+        layout.getChildren().addAll(row1, Misc.getVerticalSpacer(), closeArea);
         layout.setAlignment(Pos.CENTER);
         layout.setPadding(new Insets(10, 10, 10, 10));
         layout.setSpacing(10);

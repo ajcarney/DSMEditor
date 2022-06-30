@@ -2,7 +2,7 @@ package IOHandler;
 
 import Data.TemplateDSM;
 import View.MatrixHandlers.TemplateMatrixHandler;
-import View.Widgets.MiscWidgets;
+import View.Widgets.Misc;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -406,11 +406,11 @@ public abstract class TemplateIOHandler<T1 extends TemplateDSM, T2 extends Templ
         Button cancelButton = new Button("Cancel");
         cancelButton.setOnAction(e -> window.close());
 
-        saveButtonArea.getChildren().addAll(MiscWidgets.getHorizontalSpacer(), cancelButton, saveButton);
+        saveButtonArea.getChildren().addAll(Misc.getHorizontalSpacer(), cancelButton, saveButton);
 
 
         // parameter layout configuring
-        parametersLayout.getChildren().addAll(addInfo, bigTitle, showConnectionNames, addAnnotation, annotationLayout, saveArea, MiscWidgets.getVerticalSpacer(), saveButtonArea);
+        parametersLayout.getChildren().addAll(addInfo, bigTitle, showConnectionNames, addAnnotation, annotationLayout, saveArea, Misc.getVerticalSpacer(), saveButtonArea);
         addAnnotation.setSelected(false);  // set it here so annotation area is not shown
         annotationLayout.setVisible(false);
         annotationLayout.setManaged(false);
