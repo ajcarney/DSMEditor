@@ -5,7 +5,7 @@ import Data.DSMConnection;
 import Data.DSMItem;
 import Data.Grouping;
 import View.EditorPane;
-import View.Widgets.MiscWidgets;
+import View.Widgets.Misc;
 import View.Widgets.NumericTextField;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -122,10 +122,10 @@ public class AsymmetricSideBar extends TemplateSideBar<AsymmetricDSM> {
         cancelButton.setOnAction(e -> {
             window.close();
         });
-        closeArea.getChildren().addAll(cancelButton, MiscWidgets.getHorizontalSpacer(), applyButton);
+        closeArea.getChildren().addAll(cancelButton, Misc.getHorizontalSpacer(), applyButton);
 
         VBox layout = new VBox(10);
-        layout.getChildren().addAll(label, changesToMakeView, deleteSelected, entryArea, MiscWidgets.getVerticalSpacer(), closeArea);
+        layout.getChildren().addAll(label, changesToMakeView, deleteSelected, entryArea, Misc.getVerticalSpacer(), closeArea);
         layout.setAlignment(Pos.CENTER);
         layout.setPadding(new Insets(10, 10, 10, 10));
         layout.setSpacing(10);
@@ -219,10 +219,10 @@ public class AsymmetricSideBar extends TemplateSideBar<AsymmetricDSM> {
         cancelButton.setOnAction(e -> {
             window.close();
         });
-        closeArea.getChildren().addAll(cancelButton, MiscWidgets.getHorizontalSpacer(), applyButton);
+        closeArea.getChildren().addAll(cancelButton, Misc.getHorizontalSpacer(), applyButton);
 
         VBox layout = new VBox(10);
-        layout.getChildren().addAll(label, changesToMakeView, deleteSelected, entryArea, MiscWidgets.getVerticalSpacer(), closeArea);
+        layout.getChildren().addAll(label, changesToMakeView, deleteSelected, entryArea, Misc.getVerticalSpacer(), closeArea);
         layout.setAlignment(Pos.CENTER);
         layout.setPadding(new Insets(10, 10, 10, 10));
         layout.setSpacing(10);
@@ -410,7 +410,7 @@ public class AsymmetricSideBar extends TemplateSideBar<AsymmetricDSM> {
 
         connectionDetailsLayout.getChildren().addAll(connectionName, weight);
 
-        connectionsArea.getChildren().addAll(itemSelectorView, scrollPane, MiscWidgets.getHorizontalSpacer(), connectionDetailsLayout);
+        connectionsArea.getChildren().addAll(itemSelectorView, scrollPane, Misc.getHorizontalSpacer(), connectionDetailsLayout);
 
         // Pane to modify the connections
         HBox modifyPane = new HBox();
@@ -459,11 +459,11 @@ public class AsymmetricSideBar extends TemplateSideBar<AsymmetricDSM> {
         cancelButton.setOnAction(ee -> {
             window.close();
         });
-        closeArea.getChildren().addAll(cancelButton, MiscWidgets.getHorizontalSpacer(), applyAllButton);
+        closeArea.getChildren().addAll(cancelButton, Misc.getHorizontalSpacer(), applyAllButton);
 
 
         VBox layout = new VBox(10);
-        layout.getChildren().addAll(label, changesToMakeView, deleteSelected, connectionsArea, modifyPane, MiscWidgets.getVerticalSpacer(), closeArea);
+        layout.getChildren().addAll(label, changesToMakeView, deleteSelected, connectionsArea, modifyPane, Misc.getVerticalSpacer(), closeArea);
         layout.setAlignment(Pos.CENTER);
         layout.setPadding(new Insets(10, 10, 10, 10));
         layout.setSpacing(10);
@@ -674,7 +674,7 @@ public class AsymmetricSideBar extends TemplateSideBar<AsymmetricDSM> {
 
         connectionDetailsLayout.getChildren().addAll(connectionName, weight);
 
-        connectionsArea.getChildren().addAll(itemSelectorView, scrollPane, MiscWidgets.getHorizontalSpacer(), connectionDetailsLayout);
+        connectionsArea.getChildren().addAll(itemSelectorView, scrollPane, Misc.getHorizontalSpacer(), connectionDetailsLayout);
 
         // Pane to modify the connections
         HBox modifyPane = new HBox();
@@ -740,11 +740,11 @@ public class AsymmetricSideBar extends TemplateSideBar<AsymmetricDSM> {
         cancelButton.setOnAction(ee -> {
             window.close();
         });
-        closeArea.getChildren().addAll(cancelButton, MiscWidgets.getHorizontalSpacer(), applyAllButton);
+        closeArea.getChildren().addAll(cancelButton, Misc.getHorizontalSpacer(), applyAllButton);
 
 
         VBox layout = new VBox(10);
-        layout.getChildren().addAll(label, changesToMakeView, deleteSelected, connectionsArea, modifyPane, MiscWidgets.getVerticalSpacer(), closeArea);
+        layout.getChildren().addAll(label, changesToMakeView, deleteSelected, connectionsArea, modifyPane, Misc.getVerticalSpacer(), closeArea);
         layout.setAlignment(Pos.CENTER);
         layout.setPadding(new Insets(10, 10, 10, 10));
         layout.setSpacing(10);
@@ -1049,7 +1049,7 @@ public class AsymmetricSideBar extends TemplateSideBar<AsymmetricDSM> {
         });
         deleteButtonSpace.getChildren().add(deleteButton);
 
-        display.getChildren().addAll(groupingName, MiscWidgets.getHorizontalSpacer(), groupingColorPickerLabel, groupingColorPicker, fontColorPickerLabel, groupingFontColorPicker);
+        display.getChildren().addAll(groupingName, Misc.getHorizontalSpacer(), groupingColorPickerLabel, groupingColorPicker, fontColorPickerLabel, groupingFontColorPicker);
         if(deletable) {
             display.getChildren().add(deleteButtonSpace);
         }
@@ -1105,10 +1105,10 @@ public class AsymmetricSideBar extends TemplateSideBar<AsymmetricDSM> {
             window.close();        // changes have already been made so just close the window
         });
 
-        closeArea.getChildren().addAll(MiscWidgets.getHorizontalSpacer(), applyAllButton);
+        closeArea.getChildren().addAll(Misc.getHorizontalSpacer(), applyAllButton);
 
         VBox layout = new VBox(10);
-        layout.getChildren().addAll(currentGroupingsPane, modifyArea, MiscWidgets.getVerticalSpacer(), closeArea);
+        layout.getChildren().addAll(currentGroupingsPane, modifyArea, Misc.getVerticalSpacer(), closeArea);
         layout.setAlignment(Pos.CENTER);
         layout.setPadding(new Insets(10, 10, 10, 10));
         layout.setSpacing(10);

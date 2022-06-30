@@ -1,5 +1,8 @@
 package View.Widgets;
 
+import javafx.geometry.Bounds;
+import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
@@ -9,7 +12,7 @@ import javafx.scene.layout.VBox;
 /**
  * A class that contains miscellaneous widgets that do not have many functions
  */
-public class MiscWidgets {
+public class Misc {
     /**
      * Creates a JavaFx Pane that grows vertically to fill up remaining space in a window
      *
@@ -37,4 +40,17 @@ public class MiscWidgets {
         return spacer;
     }
 
+
+    public static Bounds calculateNodeSize(Node node) {
+        Pane ghostPane = new Pane();
+        Scene ghostScene = new Scene(ghostPane);  // a scene is needed to calculate preferred sizes of nodes
+
+        ghostPane.getChildren().add(node);
+        ghostPane.applyCss();
+        ghostPane.layout();
+        ghostPane.getChildren().clear();
+
+        Bounds b = node.getBoundsInLocal();
+        return b;
+    }
 }

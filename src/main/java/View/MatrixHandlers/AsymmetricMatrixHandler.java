@@ -1,11 +1,13 @@
 package View.MatrixHandlers;
 
-import Data.*;
+import Data.AsymmetricDSM;
+import Data.DSMItem;
+import Data.Grouping;
+import View.Widgets.Misc;
 import View.Widgets.NumericTextField;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
-import javafx.scene.Scene;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
@@ -120,13 +122,7 @@ public class AsymmetricMatrixHandler extends TemplateMatrixHandler<AsymmetricDSM
         _groupings.setMinWidth(Region.USE_PREF_SIZE);
         _groupings.setPadding(new Insets(0));
         _groupings.setStyle("-fx-background-color: transparent; -fx-padding: 0, 0, 0, 0; -fx-font-size: " + (fontSize.doubleValue()) + " };");
-        Pane _ghostPane = new Pane();
-        Scene _ghostScene = new Scene(_ghostPane);  // a scene is needed to calculate preferred sizes of nodes
-
-        _ghostPane.getChildren().add(_groupings);
-        _ghostPane.applyCss();
-        _ghostPane.layout();
-        double maxHeight = _groupings.getBoundsInLocal().getHeight() + _groupings.getPadding().getTop() + _groupings.getPadding().getBottom();
+        double maxHeight = Misc.calculateNodeSize(_groupings).getHeight();
 
 
         for(int r=0; r<rows; r++) {
@@ -142,12 +138,14 @@ public class AsymmetricMatrixHandler extends TemplateMatrixHandler<AsymmetricDSM
                     case "plain_text" -> {
                         label = new Label((String) item.getValue());
                         label.setMinWidth(Region.USE_PREF_SIZE);
+                        label.setPadding(new Insets(1));
                         cell.getChildren().add(label);
                     }
                     case "plain_text_v" -> {
                         label = new Label((String) item.getValue());
                         label.setRotate(-90);
                         cell.setAlignment(Pos.BOTTOM_RIGHT);
+                        label.setPadding(new Insets(1));
                         Group g = new Group();  // label will be added to a group so that it will be formatted correctly if it is vertical
 
                         g.getChildren().add(label);
@@ -160,10 +158,11 @@ public class AsymmetricMatrixHandler extends TemplateMatrixHandler<AsymmetricDSM
                         cell.setAlignment(Pos.CENTER_RIGHT);
                         label.setMinWidth(Region.USE_PREF_SIZE);
                         cell.getChildren().add(label);
+                        int finalC = c;
                         cell.setOnMouseClicked(e -> {
                             if (e.getButton().equals(MouseButton.PRIMARY)) {
                                 editItemName(((DSMItem) item.getValue()).getUid());
-                                grid.resizeGrid();
+                                grid.resizeColumn(finalC);
                                 grid.updateGrid();
                             }
                         });
@@ -178,10 +177,11 @@ public class AsymmetricMatrixHandler extends TemplateMatrixHandler<AsymmetricDSM
 
                         g.getChildren().add(label);
                         cell.getChildren().add(g);
+                        int finalR = r;
                         cell.setOnMouseClicked(e -> {
                             if (e.getButton().equals(MouseButton.PRIMARY)) {
                                 editItemName(((DSMItem) item.getValue()).getUid());
-                                grid.resizeGrid();
+                                grid.resizeRow(finalR);
                                 grid.updateGrid();
                             }
                         });
@@ -343,6 +343,7 @@ public class AsymmetricMatrixHandler extends TemplateMatrixHandler<AsymmetricDSM
         grid.setGridDataHBox(gridData);
         grid.setFreezeLeft(3);
         grid.setFreezeHeader(2);  // freeze top two rows for symmetric matrix
+        grid.updateGrid();
 
         rootLayout.getChildren().addAll(grid.getGrid(), locationLabel);
     }

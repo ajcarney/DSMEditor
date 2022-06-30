@@ -1,7 +1,7 @@
 package View;
 
 import Data.TemplateDSM;
-import View.Widgets.MiscWidgets;
+import View.Widgets.Misc;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -183,7 +183,7 @@ public class MatrixMetaDataPane {
             }
         });
 
-        layout.getChildren().addAll(new HBox(openCloseButton), MiscWidgets.getVerticalSpacer(), detailsLayout, modifyButton, MiscWidgets.getVerticalSpacer());
+        layout.getChildren().addAll(new HBox(openCloseButton), Misc.getVerticalSpacer(), detailsLayout, modifyButton, Misc.getVerticalSpacer());
         layout.setSpacing(20);
         layout.setPadding(new Insets(10, 10, 10, 10));
         layout.setAlignment(Pos.CENTER);

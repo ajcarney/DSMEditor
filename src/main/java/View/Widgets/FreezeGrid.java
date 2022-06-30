@@ -2,6 +2,7 @@ package View.Widgets;
 
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
@@ -11,7 +12,7 @@ import javafx.scene.control.ScrollBar;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.Pair;
@@ -148,31 +149,35 @@ public class FreezeGrid {
         colPrefWidths.clear();
         rowPrefHeights.clear();
 
-        Pane ghostPane = new Pane();
-        Scene ghostScene = new Scene(ghostPane);  // a scene is needed to calculate preferred sizes of nodes
+        // a dummy scene is needed to calculate preferred sizes of nodes
+        VBox ghostPane = new VBox();
+        Scene ghostScene = new Scene(ghostPane);
 
-        ArrayList<ArrayList<Cell>> newCells = new ArrayList<>();
+        // add all cells to the node for sizing
+        ArrayList<HBox> flatCells = new ArrayList<>();
         for(int r=0; r<cells.size(); r++) {
-            ArrayList<Cell> row = cells.get(r);
-            ArrayList<Cell> newRow = new ArrayList<>();
+            for(int c=0; c<cells.get(r).size(); c++) {
+                flatCells.add(cells.get(r).get(c).getNode());
+            }
+        }
+        ghostPane.getChildren().addAll(flatCells);
+        ghostPane.applyCss();
+        ghostPane.layout();
 
+
+        for(int r=0; r<cells.size(); r++) {
             if(r >= rowPrefHeights.size()) {
                 rowPrefHeights.add(new SimpleDoubleProperty(0.0));
             }
-            for (int c = 0; c < row.size(); c++) {
+
+            for (int c = 0; c < cells.get(r).size(); c++) {
                 if(c >= colPrefWidths.size()) {
                     colPrefWidths.add(new SimpleDoubleProperty(0.0));
                 }
-                newRow.add(cells.get(r).get(c));
 
-                // update preferred sizes
-                // add the node to a test pane with the scene set, but not visible so the preferred size gets calculated
-                ghostPane.getChildren().add(cells.get(r).get(c).getNode());
-                ghostPane.applyCss();
-                ghostPane.layout();
-
-                double width = cells.get(r).get(c).getNode().getBoundsInLocal().getWidth() + cells.get(r).get(c).getNode().getPadding().getLeft() + cells.get(r).get(c).getNode().getPadding().getRight();
-                double height = cells.get(r).get(c).getNode().getBoundsInLocal().getHeight() + cells.get(r).get(c).getNode().getPadding().getTop() + cells.get(r).get(c).getNode().getPadding().getBottom();
+                Bounds bounds = cells.get(r).get(c).getNode().getBoundsInLocal();
+                double width = bounds.getWidth();
+                double height = bounds.getHeight();
                 if(width > colPrefWidths.get(c).doubleValue()) {
                     colPrefWidths.get(c).set(width);
                 }
@@ -180,14 +185,8 @@ public class FreezeGrid {
                     rowPrefHeights.get(r).set(height);
                 }
             }
-
-            newCells.add(newRow);
         }
 
-        cells.clear();
-        for(ArrayList<Cell> c : newCells) {
-            cells.add(c);
-        }
     }
 
 
@@ -204,14 +203,10 @@ public class FreezeGrid {
         for(int r=0; r<data.size(); r++) {
             ArrayList<String> row = data.get(r);
             ArrayList<Cell> newRow = new ArrayList<>();
-
-            colPrefWidths.add(new SimpleDoubleProperty(0.0));
-            rowPrefHeights.add(new SimpleDoubleProperty(0.0));
             for(int c=0; c<row.size(); c++) {
-                HBox area = new HBox();
-                area.getChildren().add(new Label(row.get(c)));
-
-                Cell cell = new Cell(new Pair<>(r, c), area);
+                HBox box = new HBox();
+                box.getChildren().add(new Label(row.get(c)));
+                Cell cell = new Cell(new Pair<>(r, c), box);
                 newRow.add(cell);
             }
 
@@ -219,9 +214,10 @@ public class FreezeGrid {
 
             assert r <= 0 || (newRow.size() == cells.get(0).size());
         }
+
+
         resizeGrid();
         updateConstraints();
-        updateGrid();
     }
 
 
@@ -238,14 +234,7 @@ public class FreezeGrid {
         for(int r=0; r<data.size(); r++) {
             ArrayList<HBox> row = data.get(r);
             ArrayList<Cell> newRow = new ArrayList<>();
-
-            if(r >= rowPrefHeights.size()) {
-                rowPrefHeights.add(new SimpleDoubleProperty(0.0));
-            }
             for(int c=0; c<row.size(); c++) {
-                if(c >= colPrefWidths.size()) {
-                    colPrefWidths.add(new SimpleDoubleProperty(0.0));
-                }
                 Cell cell = new Cell(new Pair<>(r, c), row.get(c));
                 newRow.add(cell);
             }
@@ -254,9 +243,59 @@ public class FreezeGrid {
 
             assert r <= 0 || (newRow.size() == cells.get(0).size());
         }
+        
+       
         resizeGrid();
         updateConstraints();
-        updateGrid();
+    }
+
+
+    /**
+     * Updates the size of a column based on its index
+     *
+     * @param index    the index of the column starting from 0
+     */
+    public void resizeColumn(int index) {
+        colPrefWidths.get(index).set(0);  // set to 0 so that real maximum can be found
+        for(int r=0; r<cells.size(); r++) {
+            cells.get(r).get(index).getNode().resize(0, 0);  // resizing to nothing ensures that it will find the min width
+            cells.get(r).get(index).getNode().layout();  // layout so that bounds are accurate
+            Bounds bounds = cells.get(r).get(index).getNode().getBoundsInLocal();
+            double width = bounds.getWidth();
+            if (width > colPrefWidths.get(index).doubleValue()) {
+                colPrefWidths.get(index).set(width);
+            }
+        }
+
+        for(int r=0; r<cells.size(); r++) {
+            cells.get(r).get(index).getNode().setMinSize(colPrefWidths.get(index).doubleValue(), rowPrefHeights.get(r).doubleValue());
+            cells.get(r).get(index).getNode().setMaxSize(colPrefWidths.get(index).doubleValue(), rowPrefHeights.get(r).doubleValue());
+        }
+    }
+
+
+    /**
+     * Updates the size of a row based on its index
+     *
+     * @param index    the index of the row
+     */
+    public void resizeRow(int index) {
+        rowPrefHeights.get(index).set(0);  // set to 0 so that real maximum can be found
+
+        for(int c=0; c<cells.get(index).size(); c++) {
+            cells.get(index).get(c).getNode().resize(0, 0);  // resizing to nothing ensures that it will find the min width
+            cells.get(index).get(c).getNode().layout();  // layout so that bounds are accurate
+            Bounds bounds = cells.get(index).get(c).getNode().getBoundsInLocal();
+            double height = bounds.getHeight();
+            if (height > rowPrefHeights.get(index).doubleValue()) {
+                rowPrefHeights.get(index).set(height);
+            }
+        }
+
+        for(int c=0; c<cells.get(index).size(); c++) {  // update the sizes
+            cells.get(index).get(c).getNode().setMinSize(colPrefWidths.get(c).doubleValue(), rowPrefHeights.get(index).doubleValue());
+            cells.get(index).get(c).getNode().setMaxSize(colPrefWidths.get(index).doubleValue(), rowPrefHeights.get(index).doubleValue());
+        }
     }
 
 
@@ -310,7 +349,6 @@ public class FreezeGrid {
 
         // set ne end location
         neGridConstraints = new Pair<>(new Pair<>(neGridConstraints.getKey().getKey(), neGridConstraints.getKey().getValue()), new Pair<>(neGridConstraints.getValue().getKey(), endRow));
-        updateGrid();
     }
 
 
@@ -325,7 +363,6 @@ public class FreezeGrid {
 
         // set se start location
         seGridConstraints = new Pair<>(new Pair<>(seGridConstraints.getKey().getKey(), getNumRows() - endRow), new Pair<>(seGridConstraints.getValue().getKey(), seGridConstraints.getValue().getValue()));
-        updateGrid();
     }
 
 
@@ -340,7 +377,6 @@ public class FreezeGrid {
 
         // set sw end location
         swGridConstraints = new Pair<>(new Pair<>(swGridConstraints.getKey().getKey(), swGridConstraints.getKey().getValue()), new Pair<>(endCol, swGridConstraints.getValue().getValue()));
-        updateGrid();
     }
 
 
@@ -355,7 +391,6 @@ public class FreezeGrid {
 
         // set se start location
         seGridConstraints = new Pair<>(new Pair<>(getNumCols() - endCol, seGridConstraints.getKey().getValue()), new Pair<>(seGridConstraints.getValue().getKey(), seGridConstraints.getValue().getValue()));
-        updateGrid();
     }
     //endregion
 
@@ -367,7 +402,7 @@ public class FreezeGrid {
         if(cells.isEmpty()) {
             return;
         }
-        grid.getChildren().removeAll(grid.getChildren());
+        grid.getChildren().clear();
 
         HBox nBox = new HBox();
         HBox sBox = new HBox();
@@ -459,8 +494,9 @@ public class FreezeGrid {
             ArrayList<Cell> row = cells.get(r);
             for (int c = 0; c < row.size(); c++) {
                 Cell cell = row.get(c);
-                cell.getNode().setMinWidth(colPrefWidths.get(c).getValue());
-                cell.getNode().setMinHeight(rowPrefHeights.get(r).getValue());
+                cell.getNode().setMinSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+                cell.getNode().setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+                cell.getNode().setPrefSize(colPrefWidths.get(c).doubleValue(), rowPrefHeights.get(r).doubleValue());
             }
         }
 
@@ -559,7 +595,7 @@ public class FreezeGrid {
 
 
     /**
-     * A function to help debug the grid
+     * A function to help debug the grid. Opens its own window so can be called as is
      */
     public static void debug() {
         FreezeGrid grid = new FreezeGrid();
