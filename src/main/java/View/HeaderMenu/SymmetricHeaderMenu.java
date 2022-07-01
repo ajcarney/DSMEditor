@@ -5,8 +5,7 @@ import IOHandler.SymmetricIOHandler;
 import View.ClusterAlgorithmWindow;
 import View.ClusterAnalysisWindow;
 import View.EditorPane;
-import View.MatrixHandlers.StaticSymmetricHandler;
-import View.MatrixHandlers.SymmetricMatrixHandler;
+import View.MatrixViews.SymmetricView;
 import View.PropagationAnalysisWindow;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
@@ -112,7 +111,7 @@ public class SymmetricHeaderMenu extends TemplateHeaderMenu {
             }
             int matrixUid = editor.getFocusedMatrixUid();
             SymmetricDSM matrix = (SymmetricDSM) this.editor.getFocusedMatrix();
-            this.editor.getMatrixController().getMatrixIOHandler(matrixUid).exportToImage(matrix, new StaticSymmetricHandler(matrix, 12.0));
+            this.editor.getMatrixController().getMatrixIOHandler(matrixUid).exportToImage(matrix, new SymmetricView(matrix, 12.0));
         });
 
         exportMenu.getItems().addAll(exportCSV, exportXLSX, exportThebeau, exportImage);
@@ -189,11 +188,11 @@ public class SymmetricHeaderMenu extends TemplateHeaderMenu {
     protected void setUpToolsMenu() {
         RadioMenuItem validateSymmetry = new RadioMenuItem("Validate Symmetry");
         validateSymmetry.setOnAction(e -> {
-            SymmetricMatrixHandler matrixHandler = (SymmetricMatrixHandler) editor.getMatrixController().getMatrixHandler(editor.getFocusedMatrixUid());
+            SymmetricView matrixView = (SymmetricView) editor.getMatrixController().getMatrixView(editor.getFocusedMatrixUid());
             if(validateSymmetry.isSelected()) {
-                matrixHandler.setValidateSymmetry();
+                matrixView.setValidateSymmetry();
             } else {
-                matrixHandler.clearValidateSymmetry();
+                matrixView.clearValidateSymmetry();
             }
         });
 

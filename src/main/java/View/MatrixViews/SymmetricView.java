@@ -1,11 +1,13 @@
-package View.MatrixHandlers;
+package View.MatrixViews;
 
 import Data.DSMConnection;
 import Data.DSMItem;
 import Data.Grouping;
 import Data.SymmetricDSM;
+import View.Widgets.FreezeGrid;
 import View.Widgets.Misc;
 import View.Widgets.NumericTextField;
+import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
@@ -14,9 +16,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.input.MouseButton;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Region;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.util.Callback;
 import javafx.util.Pair;
@@ -25,9 +25,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Vector;
 
-public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> {
+public class SymmetricView extends TemplateMatrixView {
 
     private boolean symmetryValidation = false;
+
+    SymmetricDSM matrix;
 
     /**
      * Returns a MatrixGuiHandler object for a given matrix
@@ -35,11 +37,37 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
      * @param matrix   the SymmetricDSM object to display
      * @param fontSize the default font size to display the matrix with
      */
-    public SymmetricMatrixHandler(SymmetricDSM matrix, double fontSize) {
+    public SymmetricView(SymmetricDSM matrix, double fontSize) {
         super(matrix, fontSize);
+        this.matrix = matrix;
     }
 
 
+    /**
+     * Builder pattern method for setting the font size
+     *
+     * @param fontSize  the new font size for the matrix view
+     * @return          this
+     */
+    public SymmetricView withFontSize(double fontSize) {
+        this.fontSize.set(fontSize);
+        return this;
+    }
+
+
+    /**
+     * Builder pattern method for setting the matrix view mode
+     *
+     * @param mode  the new mode for the matrix view
+     * @return      this
+     */
+    public SymmetricView withMode(MatrixViewMode mode) {
+        this.currentMode = mode;
+        return this;
+    }
+
+
+    //region highlight methods
     /**
      * updates the background color of a cell based on the backgrounds set for it. Error highlight
      * is given the highest priority, then cross highlighting, then user highlighting, and lastly the grouping
@@ -82,9 +110,10 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
                     rowUid != null && colUid != null
                     && !rowUid.equals(matrix.getItem(colUid).getAliasUid())
                     && matrix.getItem(rowUid).getGroup1().equals(matrix.getItem(colUid).getGroup1())
-            ) {  // highlight with merged color
-                cell.setCellHighlight(matrix.getItem(rowUid).getGroup1().getColor());  // row and column color will be the same because row and column
-                                                                                       // have same group in symmetric matrix
+            ) {
+                // row and column color will be the same because row and column
+                // have same group in symmetric matrix
+                cell.setCellHighlight(matrix.getItem(rowUid).getGroup1().getColor());
                 cell.setCellTextColor(matrix.getItem(rowUid).getGroup1().getFontColor());
                 return;
             }
@@ -94,24 +123,107 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
     }
 
 
+
     /**
-     * Creates the gui that displays a matrix. Uses the SymmetricDSM's getGridArray() method to create the grid.
-     * Puts grid in a scroll pane and adds a location label (displays connection row, column) at the bottom of the VBox.
+     * Sets or clears a cells symmetry highlight based on the symmetryValidation flag
+     *
+     * @param cell  the cell to check the highlighting for
+     */
+    private void symmetryHighlightCell(Cell cell) {
+        Pair<Integer, Integer> gridLocation = cell.getGridLocation();
+        Pair<Integer, Integer> uids = getUidsFromGridLoc(gridLocation);
+        if(uids.getKey() == null || uids.getValue() == null) {
+            return;
+        }
+
+        int rowUid = uids.getKey();
+        int colUid = uids.getValue();
+        DSMConnection conn = matrix.getConnection(rowUid, colUid);
+        Pair<Integer, Integer> symmetricConnUids = matrix.getSymmetricConnectionUids(rowUid, colUid);
+        DSMConnection symmetricConn = matrix.getConnection(symmetricConnUids.getKey(), symmetricConnUids.getValue());
+
+        if(symmetryValidation && ((conn == null && symmetricConn != null) || (conn != null && symmetricConn == null) || (conn != null && symmetricConn != null && !conn.isSameConnectionType(symmetricConn)))) {
+            this.setCellHighlight(cell, TemplateMatrixView.SYMMETRY_ERROR_BACKGROUND, "symmetryError");
+            this.setCellHighlight(this.getGridLocFromUids(symmetricConnUids), TemplateMatrixView.SYMMETRY_ERROR_BACKGROUND, "symmetryError");
+        } else {
+            this.clearCellHighlight(cell, "symmetryError");
+            this.clearCellHighlight(this.getGridLocFromUids(symmetricConnUids), "symmetryError");
+        }
+    }
+
+
+    /**
+     * Highlights all cells symmetrically, faster than using symmetryHighlightCell in a loop because it will not double
+     * check the highlight of all cells
+     */
+    private void symmetryHighlightAllCells() {
+        for(Cell cell : cells) {
+            Pair<Integer, Integer> gridLocation = cell.getGridLocation();
+            Pair<Integer, Integer> uids = getUidsFromGridLoc(gridLocation);
+            if(uids.getKey() == null || uids.getValue() == null) {
+                continue;
+            }
+
+            int rowUid = uids.getKey();
+            int colUid = uids.getValue();
+            DSMConnection conn = matrix.getConnection(rowUid, colUid);
+            Pair<Integer, Integer> symmetricConnUids = matrix.getSymmetricConnectionUids(rowUid, colUid);
+            DSMConnection symmetricConn = matrix.getConnection(symmetricConnUids.getKey(), symmetricConnUids.getValue());
+
+            // ignore the symmetric connection because it will be hit later in the loop
+            if(symmetryValidation && ((conn == null && symmetricConn != null) || (conn != null && symmetricConn == null) || (conn != null && symmetricConn != null && !conn.isSameConnectionType(symmetricConn)))) {
+                this.setCellHighlight(cell, TemplateMatrixView.SYMMETRY_ERROR_BACKGROUND, "symmetryError");
+            } else {
+                this.clearCellHighlight(cell, "symmetryError");
+            }
+        }
+    }
+
+
+    /**
+     * Sets symmetryValidation to true in order to highlight symmetry errors
+     */
+    public void setValidateSymmetry() {
+        symmetryValidation = true;
+        symmetryHighlightAllCells();
+        for(Cell cell : cells) {
+            refreshCellHighlight(cell);
+        }
+    }
+
+
+    /**
+     * Sets symmetryValidation to false in order to stop highlighting symmetry errors
+     */
+    public void clearValidateSymmetry() {
+        symmetryValidation = false;
+        symmetryHighlightAllCells();
+        for(Cell cell : cells) {
+            refreshCellHighlight(cell);
+        }
+    }
+    //endregion
+
+
+    /**
+     * Creates the gui that displays a matrix with an editable view. Uses the SymmetricDSM's getGridArray() method
+     * to create the grid. Adds a location label (displays connection row, column)
+     * at the bottom of the VBox.
      */
     @Override
-    public void refreshMatrixEditor() {
+    protected void refreshEditView() {
         cells = new Vector<>();
         gridUidLookup = new HashMap<>();
         gridUidLookup.put("rows", new HashMap<>());
         gridUidLookup.put("cols", new HashMap<>());
 
-        rootLayout.getChildren().removeAll(rootLayout.getChildren());
+        rootLayout.getChildren().clear();
         rootLayout.setAlignment(Pos.CENTER);
 
         Label locationLabel = new Label("");
-        grid.clear();
+        FreezeGrid grid = new FreezeGrid();
 
-        ArrayList<ArrayList<Pair<String, Object>>> template = matrix.getGridArray();
+        ArrayList<ArrayList<Pair<RenderMode, Object>>> template = matrix.getGridArray();
         ArrayList<ArrayList<HBox>> gridData = new ArrayList<>();
 
         int rows = template.size();
@@ -128,20 +240,20 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
         for(int r=0; r<rows; r++) {
             ArrayList<HBox> rowData = new ArrayList<>();
             for(int c=0; c<columns; c++) {
-                Pair<String, Object> item = template.get(r).get(c);
+                Pair<RenderMode, Object> item = template.get(r).get(c);
                 final HBox cell = new HBox();  // wrap everything in an HBox so a border can be added easily
                 Label label = null;
 
                 Background defaultBackground = DEFAULT_BACKGROUND;
 
                 switch (item.getKey()) {
-                    case "plain_text" -> {
+                    case PLAIN_TEXT -> {
                         label = new Label((String) item.getValue());
                         label.setMinWidth(Region.USE_PREF_SIZE);
                         label.setPadding(new Insets(1));
                         cell.getChildren().add(label);
                     }
-                    case "plain_text_v" -> {
+                    case PLAIN_TEXT_V -> {
                         label = new Label((String) item.getValue());
                         label.setRotate(-90);
                         label.setPadding(new Insets(1));
@@ -151,7 +263,7 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
                         g.getChildren().add(label);
                         cell.getChildren().add(g);
                     }
-                    case "item_name" -> {
+                    case ITEM_NAME -> {
                         label = new Label();
                         label.setPadding(new Insets(0, 5, 0, 5));
                         label.textProperty().bind(((DSMItem) item.getValue()).getName());
@@ -168,7 +280,7 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
                             }
                         });
                     }
-                    case "item_name_v" -> {
+                    case ITEM_NAME_V -> {
                         label = new Label();
                         label.textProperty().bind(((DSMItem) item.getValue()).getName());
                         label.setPadding(new Insets(0, 5, 0, 5));
@@ -187,16 +299,16 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
                             }
                         });
                         cell.setMinWidth(maxHeight);  // set a min width so that the matrix is less boxy (all connection items will follow this even if not
-                                                      // explicitly set due to how the freeze grid is set up)
+                        // explicitly set due to how the freeze grid is set up)
                     }
-                    case "grouping_item" -> {  // dropdown box for choosing group
+                    case GROUPING_ITEM -> {  // dropdown box for choosing group
                         ComboBox<Grouping> groupings = new ComboBox<>();
                         groupings.setMinWidth(Region.USE_PREF_SIZE);
                         groupings.setPadding(new Insets(0));
                         groupings.setStyle(
                                 "-fx-background-color: transparent;" +
-                                "-fx-padding: 0, 0, 0, 0;" +
-                                "-fx-font-size: " + (fontSize.doubleValue()) + " };"
+                                        "-fx-padding: 0, 0, 0, 0;" +
+                                        "-fx-font-size: " + (fontSize.doubleValue()) + " };"
                         );
 
                         Callback<ListView<Grouping>, ListCell<Grouping>> groupingItemCellFactory = new Callback<>() {
@@ -240,7 +352,7 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
 
                         cell.getChildren().add(groupings);
                     }
-                    case "index_item" -> {
+                    case INDEX_ITEM -> {
                         NumericTextField entry = new NumericTextField(((DSMItem) item.getValue()).getSortIndex());
                         entry.setPrefColumnCount(3);  // set size to 3 characters fitting
                         entry.setPadding(new Insets(0));
@@ -266,8 +378,8 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
                         });
                         cell.getChildren().add(entry);
                     }
-                    case "uneditable_connection" -> defaultBackground = UNEDITABLE_CONNECTION_BACKGROUND;
-                    case "editable_connection" -> {
+                    case UNEDITABLE_CONNECTION -> defaultBackground = UNEDITABLE_CONNECTION_BACKGROUND;
+                    case EDITABLE_CONNECTION -> {
                         int rowUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getKey().getUid();
                         int colUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getValue().getUid();
                         label = getEditableConnectionCell(cell, locationLabel, rowUid, colUid, r, c);
@@ -312,81 +424,128 @@ public class SymmetricMatrixHandler extends TemplateMatrixHandler<SymmetricDSM> 
 
 
     /**
-     * Sets symmetryValidation to true in order to highlight symmetry errors
+     * Creates the guid that displays a matrix in a static read only view. Uses the SymmetricDSM's getGridArray() method
+     * to create the grid.
      */
-    public void setValidateSymmetry() {
-        symmetryValidation = true;
-        symmetryHighlightAllCells();
+    @Override
+    protected void refreshStaticView() {
+        cells = new Vector<>();
+        gridUidLookup = new HashMap<>();
+        gridUidLookup.put("rows", new HashMap<>());
+        gridUidLookup.put("cols", new HashMap<>());
+
+        rootLayout.getChildren().removeAll(rootLayout.getChildren());
+        rootLayout.setAlignment(Pos.CENTER);
+        rootLayout.styleProperty().bind(Bindings.concat(
+                "-fx-font-size: ", fontSize.asString(), "};",
+                ".combo-box > .list-cell {-fx-padding: 0 0 0 0; -fx-border-insets: 0 0 0 0;}"
+        ));
+
+        GridPane grid = new GridPane();
+
+        grid.setAlignment(Pos.CENTER);
+        ArrayList<ArrayList<Pair<RenderMode, Object>>> template = matrix.getGridArray();
+        int rows = template.size();
+        int columns = template.get(0).size();
+
+        for(int r=0; r<rows; r++) {
+            for(int c=0; c<columns; c++) {
+                Pair<RenderMode, Object> item = template.get(r).get(c);
+                HBox cell = new HBox();  // wrap everything in an HBox so a border can be added easily
+                Label label = null;
+
+                Background defaultBackground = DEFAULT_BACKGROUND;
+
+                switch (item.getKey()) {
+                    case PLAIN_TEXT -> {
+                        label = new Label((String) item.getValue());
+                        label.setMinWidth(Region.USE_PREF_SIZE);
+                        cell.getChildren().add(label);
+                    }
+                    case PLAIN_TEXT_V -> {
+                        label = new Label((String) item.getValue());
+                        label.setRotate(-90);
+                        cell.setAlignment(Pos.BOTTOM_RIGHT);
+                        Group g = new Group();  // label will be added to a group so that it will be formatted correctly if it is vertical
+
+                        g.getChildren().add(label);
+                        cell.getChildren().add(g);
+                    }
+                    case ITEM_NAME -> {
+                        label = new Label(((DSMItem) item.getValue()).getName().getValue());
+                        label.setPadding(new Insets(0, 5, 0, 5));
+                        cell.setAlignment(Pos.BOTTOM_RIGHT);
+                        label.setMinWidth(Region.USE_PREF_SIZE);
+                        cell.getChildren().add(label);
+                    }
+                    case ITEM_NAME_V -> {
+                        label = new Label(((DSMItem) item.getValue()).getName().getValue());
+                        label.setPadding(new Insets(0, 5, 0, 5));
+                        label.setRotate(-90);
+                        cell.setAlignment(Pos.BOTTOM_RIGHT);
+                        Group g = new Group();  // label will be added to a group so that it will be formatted correctly if it is vertical
+
+                        g.getChildren().add(label);
+                        cell.getChildren().add(g);
+                    }
+                    case GROUPING_ITEM -> {
+                        label = new Label(((DSMItem) item.getValue()).getGroup1().getName());
+                        cell.setAlignment(Pos.BOTTOM_RIGHT);
+                        label.setMinWidth(Region.USE_PREF_SIZE);
+                        cell.getChildren().add(label);
+                    }
+                    case INDEX_ITEM -> {
+                        label = new Label(String.valueOf(((DSMItem) item.getValue()).getSortIndex()));
+                        cell.setAlignment(Pos.BOTTOM_RIGHT);
+                        label.setMinWidth(Region.USE_PREF_SIZE);
+                        cell.getChildren().add(label);
+                    }
+                    case UNEDITABLE_CONNECTION -> defaultBackground = UNEDITABLE_CONNECTION_BACKGROUND;
+                    case EDITABLE_CONNECTION -> {
+                        int rowUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getKey().getUid();
+                        int colUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getValue().getUid();
+                        DSMConnection conn = matrix.getConnection(rowUid, colUid);
+                        label = new Label();
+                        if (showNames.getValue() && conn != null) {
+                            label.setText(conn.getConnectionName());
+                        } else if (!showNames.getValue() && conn != null) {
+                            label.setText(String.valueOf(conn.getWeight()));
+                        } else {
+                            label.setText("");
+                        }
+
+                        cell.setAlignment(Pos.CENTER);  // center the text
+
+                        cell.setMinWidth(Region.USE_PREF_SIZE);
+
+                        // this item type will be used to create the lookup table for finding associated uid from grid location
+                        if (!gridUidLookup.get("rows").containsKey(r)) {
+                            gridUidLookup.get("rows").put(r, rowUid);
+                        }
+
+                        if (!gridUidLookup.get("cols").containsKey(c)) {
+                            gridUidLookup.get("cols").put(c, colUid);
+                        }
+
+
+                        cell.getChildren().add(label);
+                    }
+                }
+                cell.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
+                cell.setPadding(new Insets(0));
+                GridPane.setConstraints(cell, c, r);
+                grid.getChildren().add(cell);
+
+                Cell cellData = new Cell(new Pair<>(r, c), cell, label, fontSize);
+                cellData.updateHighlightBG(defaultBackground, "default");
+                cells.add(cellData);
+            }
+        }
+
         for(Cell cell : cells) {
             refreshCellHighlight(cell);
         }
-    }
 
-
-    /**
-     * Sets symmetryValidation to false in order to stop highlighting symmetry errors
-     */
-    public void clearValidateSymmetry() {
-        symmetryValidation = false;
-        symmetryHighlightAllCells();
-        for(Cell cell : cells) {
-            refreshCellHighlight(cell);
-        }
-    }
-
-
-    /**
-     * Sets or clears a cells symmetry highlight based on the symmetryValidation flag
-     *
-     * @param cell  the cell to check the highlighting for
-     */
-    private void symmetryHighlightCell(Cell cell) {
-        Pair<Integer, Integer> gridLocation = cell.getGridLocation();
-        Pair<Integer, Integer> uids = getUidsFromGridLoc(gridLocation);
-        if(uids.getKey() == null || uids.getValue() == null) {
-            return;
-        }
-
-        int rowUid = uids.getKey();
-        int colUid = uids.getValue();
-        DSMConnection conn = matrix.getConnection(rowUid, colUid);
-        Pair<Integer, Integer> symmetricConnUids = matrix.getSymmetricConnectionUids(rowUid, colUid);
-        DSMConnection symmetricConn = matrix.getConnection(symmetricConnUids.getKey(), symmetricConnUids.getValue());
-
-        if(symmetryValidation && ((conn == null && symmetricConn != null) || (conn != null && symmetricConn == null) || (conn != null && symmetricConn != null && !conn.isSameConnectionType(symmetricConn)))) {
-            this.setCellHighlight(cell, TemplateMatrixHandler.SYMMETRY_ERROR_BACKGROUND, "symmetryError");
-            this.setCellHighlight(this.getGridLocFromUids(symmetricConnUids), TemplateMatrixHandler.SYMMETRY_ERROR_BACKGROUND, "symmetryError");
-        } else {
-            this.clearCellHighlight(cell, "symmetryError");
-            this.clearCellHighlight(this.getGridLocFromUids(symmetricConnUids), "symmetryError");
-        }
-    }
-
-
-    /**
-     * Highlights all cells symmetrically, faster than using symmetryHighlightCell in a loop because it will not double
-     * check the highlight of all cells
-     */
-    private void symmetryHighlightAllCells() {
-        for(Cell cell : cells) {
-            Pair<Integer, Integer> gridLocation = cell.getGridLocation();
-            Pair<Integer, Integer> uids = getUidsFromGridLoc(gridLocation);
-            if(uids.getKey() == null || uids.getValue() == null) {
-                continue;
-            }
-
-            int rowUid = uids.getKey();
-            int colUid = uids.getValue();
-            DSMConnection conn = matrix.getConnection(rowUid, colUid);
-            Pair<Integer, Integer> symmetricConnUids = matrix.getSymmetricConnectionUids(rowUid, colUid);
-            DSMConnection symmetricConn = matrix.getConnection(symmetricConnUids.getKey(), symmetricConnUids.getValue());
-
-            // ignore the symmetric connection because it will be hit later in the loop
-            if(symmetryValidation && ((conn == null && symmetricConn != null) || (conn != null && symmetricConn == null) || (conn != null && symmetricConn != null && !conn.isSameConnectionType(symmetricConn)))) {
-                this.setCellHighlight(cell, TemplateMatrixHandler.SYMMETRY_ERROR_BACKGROUND, "symmetryError");
-            } else {
-                this.clearCellHighlight(cell, "symmetryError");
-            }
-        }
+        rootLayout.getChildren().addAll(grid);
     }
 }

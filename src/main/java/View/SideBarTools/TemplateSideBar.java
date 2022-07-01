@@ -31,6 +31,10 @@ public abstract class TemplateSideBar {
 
 
     //region Cell Factories
+    /**
+     * Cell factory for displaying DSM connections in a listview. Takes a DSMConnection and Prepends DELETE
+     * if the connection name is empty and the weight is set to Double.MAX_VALUE
+     */
     protected final Callback<ListView<DSMConnection>, ListCell<DSMConnection>> CONNECTION_CELL_FACTORY = new Callback<>() {
         @Override
         public ListCell<DSMConnection> call(ListView<DSMConnection> l) {
@@ -60,6 +64,9 @@ public abstract class TemplateSideBar {
     };
 
 
+    /**
+     * Cell factory for a deleting connections listview. Takes a DSMConnection and always prepends DELETE to it
+     */
     protected final Callback<ListView<DSMConnection>, ListCell<DSMConnection>> DELETE_CONNECTION_CELL_FACTORY = new Callback<>() {
         @Override
         public ListCell<DSMConnection> call(ListView<DSMConnection> l) {
@@ -83,6 +90,11 @@ public abstract class TemplateSideBar {
     };
 
 
+    /**
+     * Cell factory for a matrix item in a listview. Takes an integer that represents a uid in the matrix. Appends
+     * row or column to it based on if the item is in the matrix as a row or a column. If the uid is set to
+     * Integer.MAX_VALUE then the string 'All' is displayed
+     */
     protected final Callback<ListView<Integer>, ListCell<Integer>> MATRIX_ITEM_INTEGER_COMBOBOX_CELL_FACTORY = new Callback<>() {
         @Override
         public ListCell<Integer> call(ListView<Integer> l) {
@@ -107,6 +119,9 @@ public abstract class TemplateSideBar {
     };
 
 
+    /**
+     * Cell factory for a matrix item in a combobox. Takes a DSMItem and displays the name of it
+     */
     protected final Callback<ListView<DSMItem>, ListCell<DSMItem>> MATRIX_ITEM_COMBOBOX_CELL_FACTORY = new Callback<>() {
         @Override
         public ListCell<DSMItem> call(ListView<DSMItem> l) {
@@ -129,7 +144,7 @@ public abstract class TemplateSideBar {
 
     /**
      * Creates a new Sidebar object. Sets up the gui and all its widgets and puts them in the layout field.
-     * Requires an MatrixHandler object to get the matrix and a EditorPane object to get the current focused tab
+     * Requires a MatrixView object to get the matrix and a EditorPane object to get the current focused tab
      * and call updates to it.
      *
      * @param matrix  the matrix data object instance

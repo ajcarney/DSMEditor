@@ -1,10 +1,13 @@
-package View.MatrixHandlers;
+package View.MatrixViews;
 
 import Data.AsymmetricDSM;
+import Data.DSMConnection;
 import Data.DSMItem;
 import Data.Grouping;
+import View.Widgets.FreezeGrid;
 import View.Widgets.Misc;
 import View.Widgets.NumericTextField;
+import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
@@ -29,7 +32,9 @@ import java.util.Vector;
 /**
  * class for viewing and editing asymmetric matrices
  */
-public class AsymmetricMatrixHandler extends TemplateMatrixHandler<AsymmetricDSM> {
+public class AsymmetricView extends TemplateMatrixView {
+
+    AsymmetricDSM matrix;
 
     /**
      * Returns a MatrixGuiHandler object for a given matrix
@@ -37,8 +42,33 @@ public class AsymmetricMatrixHandler extends TemplateMatrixHandler<AsymmetricDSM
      * @param matrix   the SymmetricDSM object to display
      * @param fontSize the default font size to display the matrix with
      */
-    public AsymmetricMatrixHandler(AsymmetricDSM matrix, double fontSize) {
+    public AsymmetricView(AsymmetricDSM matrix, double fontSize) {
         super(matrix, fontSize);
+        this.matrix = matrix;
+    }
+
+
+    /**
+     * Builder pattern method for setting the font size
+     *
+     * @param fontSize  the new font size for the matrix view
+     * @return          this
+     */
+    public AsymmetricView withFontSize(double fontSize) {
+        this.fontSize.set(fontSize);
+        return this;
+    }
+
+
+    /**
+     * Builder pattern method for setting the matrix view mode
+     *
+     * @param mode  the new mode for the matrix view
+     * @return      this
+     */
+    public AsymmetricView withMode(MatrixViewMode mode) {
+        this.currentMode = mode;
+        return this;
     }
 
 
@@ -95,23 +125,23 @@ public class AsymmetricMatrixHandler extends TemplateMatrixHandler<AsymmetricDSM
 
 
     /**
-     * Creates the gui that displays a matrix. Uses the SymmetricDSM's getGridArray() method to create the grid.
+     * Creates the gui that displays a matrix. Uses the AsymmetricDSM's getGridArray() method to create the grid.
      * Puts grid in a scroll pane and adds a location label (displays connection row, column) at the bottom of the VBox.
      */
     @Override
-    public void refreshMatrixEditor() {
+    protected void refreshEditView() {
         cells = new Vector<>();
         gridUidLookup = new HashMap<>();
         gridUidLookup.put("rows", new HashMap<>());
         gridUidLookup.put("cols", new HashMap<>());
 
-        rootLayout.getChildren().removeAll(rootLayout.getChildren());
+        rootLayout.getChildren().clear();
         rootLayout.setAlignment(Pos.CENTER);
 
         Label locationLabel = new Label("");
-        grid.clear();
+        FreezeGrid grid = new FreezeGrid();
 
-        ArrayList<ArrayList<Pair<String, Object>>> template = matrix.getGridArray();
+        ArrayList<ArrayList<Pair<RenderMode, Object>>> template = matrix.getGridArray();
         ArrayList<ArrayList<HBox>> gridData = new ArrayList<>();
 
         int rows = template.size();
@@ -128,20 +158,20 @@ public class AsymmetricMatrixHandler extends TemplateMatrixHandler<AsymmetricDSM
         for(int r=0; r<rows; r++) {
             ArrayList<HBox> rowData = new ArrayList<>();
             for(int c=0; c<columns; c++) {
-                Pair<String, Object> item = template.get(r).get(c);
+                Pair<RenderMode, Object> item = template.get(r).get(c);
                 HBox cell = new HBox();  // wrap everything in an HBox so a border can be added easily
                 Label label = null;
 
                 Background defaultBackground = DEFAULT_BACKGROUND;
 
                 switch (item.getKey()) {
-                    case "plain_text" -> {
+                    case PLAIN_TEXT -> {
                         label = new Label((String) item.getValue());
                         label.setMinWidth(Region.USE_PREF_SIZE);
                         label.setPadding(new Insets(1));
                         cell.getChildren().add(label);
                     }
-                    case "plain_text_v" -> {
+                    case PLAIN_TEXT_V -> {
                         label = new Label((String) item.getValue());
                         label.setRotate(-90);
                         cell.setAlignment(Pos.BOTTOM_RIGHT);
@@ -151,7 +181,7 @@ public class AsymmetricMatrixHandler extends TemplateMatrixHandler<AsymmetricDSM
                         g.getChildren().add(label);
                         cell.getChildren().add(g);
                     }
-                    case "item_name" -> {
+                    case ITEM_NAME -> {
                         label = new Label();
                         label.textProperty().bind(((DSMItem) item.getValue()).getName());
                         label.setPadding(new Insets(0, 5, 0, 5));
@@ -167,7 +197,7 @@ public class AsymmetricMatrixHandler extends TemplateMatrixHandler<AsymmetricDSM
                             }
                         });
                     }
-                    case "item_name_v" -> {
+                    case ITEM_NAME_V -> {
                         label = new Label();
                         label.textProperty().bind(((DSMItem) item.getValue()).getName());
                         label.setPadding(new Insets(0, 5, 0, 5));
@@ -188,14 +218,14 @@ public class AsymmetricMatrixHandler extends TemplateMatrixHandler<AsymmetricDSM
                         cell.setMinWidth(maxHeight);  // set a min width so that the matrix is less boxy (all connection items will follow this even if not
                         // explicitly set due to how the freeze grid is set up)
                     }
-                    case "grouping_item" -> {  // dropdown box for choosing group
+                    case GROUPING_ITEM -> {  // dropdown box for choosing group
                         ComboBox<Grouping> groupings = new ComboBox<>();
                         groupings.setMinWidth(Region.USE_PREF_SIZE);
                         groupings.setPadding(new Insets(0));
                         groupings.setStyle(
                                 "-fx-background-color: transparent;" +
-                                "-fx-padding: 0, 0, 0, 0;" +
-                                "-fx-font-size: " + (fontSize.doubleValue()) + " };"
+                                        "-fx-padding: 0, 0, 0, 0;" +
+                                        "-fx-font-size: " + (fontSize.doubleValue()) + " };"
                         );
 
                         Callback<ListView<Grouping>, ListCell<Grouping>> cellFactory = new Callback<>() {
@@ -239,14 +269,14 @@ public class AsymmetricMatrixHandler extends TemplateMatrixHandler<AsymmetricDSM
 
                         cell.getChildren().add(groupings);
                     }
-                    case "grouping_item_v" -> {  // dropdown box for choosing group
+                    case GROUPING_ITEM_V -> {  // dropdown box for choosing group
                         ComboBox<Grouping> groupings = new ComboBox<>();
                         groupings.setMinWidth(Region.USE_PREF_SIZE);
                         groupings.setPadding(new Insets(0));
                         groupings.setStyle(
                                 "-fx-background-color: transparent;" +
-                                "-fx-padding: 0, 0, 0, 0;" +
-                                "-fx-font-size: " + (fontSize.doubleValue()) + " };"
+                                        "-fx-padding: 0, 0, 0, 0;" +
+                                        "-fx-font-size: " + (fontSize.doubleValue()) + " };"
                         );
                         groupings.setRotate(-90);
 
@@ -293,7 +323,7 @@ public class AsymmetricMatrixHandler extends TemplateMatrixHandler<AsymmetricDSM
                         g.getChildren().add(groupings);
                         cell.getChildren().add(g);
                     }
-                    case "index_item" -> {
+                    case INDEX_ITEM -> {
                         NumericTextField entry = new NumericTextField(((DSMItem) item.getValue()).getSortIndex());
                         entry.setPrefColumnCount(3);  // set size to 3 characters fitting
                         entry.setPadding(new Insets(0));
@@ -318,7 +348,7 @@ public class AsymmetricMatrixHandler extends TemplateMatrixHandler<AsymmetricDSM
                         });
                         cell.getChildren().add(entry);
                     }
-                    case "editable_connection" -> {
+                    case EDITABLE_CONNECTION -> {
                         int rowUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getKey().getUid();
                         int colUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getValue().getUid();
                         label = getEditableConnectionCell(cell, locationLabel, rowUid, colUid, r, c);
@@ -348,4 +378,138 @@ public class AsymmetricMatrixHandler extends TemplateMatrixHandler<AsymmetricDSM
         rootLayout.getChildren().addAll(grid.getGrid(), locationLabel);
     }
 
+
+
+    /**
+     * sets the current rootLayout to an immutable view
+     */
+    @Override
+    protected void refreshStaticView() {
+        cells = new Vector<>();
+        gridUidLookup = new HashMap<>();
+        gridUidLookup.put("rows", new HashMap<>());
+        gridUidLookup.put("cols", new HashMap<>());
+
+        rootLayout.getChildren().removeAll(rootLayout.getChildren());
+        rootLayout.setAlignment(Pos.CENTER);
+        rootLayout.styleProperty().bind(Bindings.concat(
+                "-fx-font-size: ", fontSize.asString(), "};",
+                ".combo-box > .list-cell {-fx-padding: 0 0 0 0; -fx-border-insets: 0 0 0 0;}"
+        ));
+
+        GridPane grid = new GridPane();
+
+        grid.setAlignment(Pos.CENTER);
+        ArrayList<ArrayList<Pair<RenderMode, Object>>> template = matrix.getGridArray();
+        int rows = template.size();
+        int columns = template.get(0).size();
+
+        for(int r=0; r<rows; r++) {
+            for(int c=0; c<columns; c++) {
+                Pair<RenderMode, Object> item = template.get(r).get(c);
+                HBox cell = new HBox();  // wrap everything in an HBox so a border can be added easily
+                Label label = null;
+
+                Background defaultBackground = DEFAULT_BACKGROUND;
+
+                switch (item.getKey()) {
+                    case PLAIN_TEXT -> {
+                        label = new Label((String) item.getValue());
+                        label.setMinWidth(Region.USE_PREF_SIZE);
+                        cell.getChildren().add(label);
+                    }
+                    case PLAIN_TEXT_V -> {
+                        label = new Label((String) item.getValue());
+                        label.setRotate(-90);
+                        cell.setAlignment(Pos.BOTTOM_RIGHT);
+                        Group g = new Group();  // label will be added to a group so that it will be formatted correctly if it is vertical
+
+                        g.getChildren().add(label);
+                        cell.getChildren().add(g);
+                    }
+                    case ITEM_NAME -> {
+                        label = new Label(((DSMItem) item.getValue()).getName().getValue());
+                        label.setPadding(new Insets(0, 5, 0, 5));
+                        cell.setAlignment(Pos.BOTTOM_RIGHT);
+                        label.setMinWidth(Region.USE_PREF_SIZE);
+                        cell.getChildren().add(label);
+                    }
+                    case ITEM_NAME_V -> {
+                        label = new Label(((DSMItem) item.getValue()).getName().getValue());
+                        label.setPadding(new Insets(0, 5, 0, 5));
+                        label.setRotate(-90);
+                        cell.setAlignment(Pos.BOTTOM_RIGHT);
+                        Group g = new Group();  // label will be added to a group so that it will be formatted correctly if it is vertical
+
+                        g.getChildren().add(label);
+                        cell.getChildren().add(g);
+                    }
+                    case GROUPING_ITEM -> {
+                        label = new Label(((DSMItem) item.getValue()).getGroup1().getName());
+                        cell.setAlignment(Pos.BOTTOM_RIGHT);
+                        label.setMinWidth(Region.USE_PREF_SIZE);
+                        cell.getChildren().add(label);
+                    }
+                    case GROUPING_ITEM_V -> {
+                        label = new Label(((DSMItem) item.getValue()).getGroup1().getName());
+                        label.setRotate(-90);
+                        cell.setAlignment(Pos.BOTTOM_RIGHT);
+                        label.setMinWidth(Region.USE_PREF_SIZE);
+                        Group g = new Group();  // label will be added to a group so that it will be formatted correctly if it is vertical
+                        g.getChildren().add(label);
+                        cell.getChildren().add(g);
+                    }
+                    case INDEX_ITEM -> {
+                        label = new Label(String.valueOf(((DSMItem) item.getValue()).getSortIndex()));
+                        cell.setAlignment(Pos.BOTTOM_RIGHT);
+                        label.setMinWidth(Region.USE_PREF_SIZE);
+                        cell.getChildren().add(label);
+                    }
+                    case EDITABLE_CONNECTION -> {
+                        int rowUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getKey().getUid();
+                        int colUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getValue().getUid();
+                        DSMConnection conn = matrix.getConnection(rowUid, colUid);
+                        label = new Label();
+                        if (showNames.getValue() && conn != null) {
+                            label.setText(conn.getConnectionName());
+                        } else if (!showNames.getValue() && conn != null) {
+                            label.setText(String.valueOf(conn.getWeight()));
+                        } else {
+                            label.setText("");
+                        }
+
+                        cell.setAlignment(Pos.CENTER);  // center the text
+
+                        cell.setMinWidth(Region.USE_PREF_SIZE);
+
+                        // this item type will be used to create the lookup table for finding associated uid from grid location
+                        if (!gridUidLookup.get("rows").containsKey(r)) {
+                            gridUidLookup.get("rows").put(r, rowUid);
+                        }
+
+                        if (!gridUidLookup.get("cols").containsKey(c)) {
+                            gridUidLookup.get("cols").put(c, colUid);
+                        }
+
+
+                        cell.getChildren().add(label);
+                    }
+                }
+                cell.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
+                cell.setPadding(new Insets(0));
+                GridPane.setConstraints(cell, c, r);
+                grid.getChildren().add(cell);
+
+                Cell cellData = new Cell(new Pair<>(r, c), cell, label, fontSize);
+                cellData.updateHighlightBG(defaultBackground, "default");
+                cells.add(cellData);
+            }
+        }
+
+        for(Cell cell : cells) {
+            refreshCellHighlight(cell);
+        }
+
+        rootLayout.getChildren().addAll(grid);
+    }
 }

@@ -1,5 +1,6 @@
 package Data;
 
+import View.MatrixViews.RenderMode;
 import javafx.collections.FXCollections;
 import javafx.util.Pair;
 
@@ -125,65 +126,55 @@ public class AsymmetricDSM extends TemplateGroupedMatrix implements IPropagation
 
     /**
      * Creates a 2d ArrayList of the matrix so that it can be displayed. Each cell in the grid is made
-     * up of a String, which is the key, and an Object that is different based on the key.
-     * Possible keys:
-     *   plain_text            : String -> text
-     *   plain_text_v          : String -> text
-     *   item_name             : Integer -> item uid
-     *   item_name_v           : Integer -> item uid
-     *   grouping_item         : Integer -> item uid
-     *   grouping_item_v       : Integer -> item uid
-     *   index_item            : Integer -> item uid
-     *   uneditable_connection : null
-     *   editable_connection   : Pair<Integer, Integer> -> rowUid, colUid
+     * up of a RenderMode, which is the key, and an Object that is different based on the key.
      *
      * @return 2d ArrayList of matrix
      */
-    public ArrayList<ArrayList<Pair<String, Object>>> getGridArray() {
-        ArrayList<ArrayList<Pair<String, Object>>> grid = new ArrayList<>();
+    public ArrayList<ArrayList<Pair<RenderMode, Object>>> getGridArray() {
+        ArrayList<ArrayList<Pair<RenderMode, Object>>> grid = new ArrayList<>();
 
         // sort row and columns by sortIndex
         rows.sort(Comparator.comparing(DSMItem::getSortIndex));
         cols.sort(Comparator.comparing(DSMItem::getSortIndex));
 
         // create header row
-        ArrayList<Pair< String, Object> > row0 = new ArrayList<>();
-        row0.add(new Pair<>("plain_text_v", ""));
-        row0.add(new Pair<>("plain_text_v", ""));
-        row0.add(new Pair<>("plain_text_v", "Column Items"));
+        ArrayList<Pair<RenderMode, Object>> row0 = new ArrayList<>();
+        row0.add(new Pair<>(RenderMode.PLAIN_TEXT_V, ""));
+        row0.add(new Pair<>(RenderMode.PLAIN_TEXT_V, ""));
+        row0.add(new Pair<>(RenderMode.PLAIN_TEXT_V, "Column Items"));
         for(DSMItem c : cols) {
-            row0.add(new Pair<>("item_name_v", c));
+            row0.add(new Pair<>(RenderMode.ITEM_NAME_V, c));
         }
         grid.add(row0);
 
-        ArrayList<Pair<String, Object>> row1 = new ArrayList<>();
-        row1.add(new Pair<>("plain_text_v", ""));
-        row1.add(new Pair<>("plain_text_v", ""));
-        row1.add(new Pair<>("plain_text_v", "Grouping"));
+        ArrayList<Pair<RenderMode, Object>> row1 = new ArrayList<>();
+        row1.add(new Pair<>(RenderMode.PLAIN_TEXT_V, ""));
+        row1.add(new Pair<>(RenderMode.PLAIN_TEXT_V, ""));
+        row1.add(new Pair<>(RenderMode.PLAIN_TEXT_V, "Grouping"));
         for (DSMItem c : cols) {
-            row1.add(new Pair<>("grouping_item_v", c));
+            row1.add(new Pair<>(RenderMode.GROUPING_ITEM_V, c));
         }
         grid.add(row1);
 
         // create third header row
-        ArrayList<Pair< String, Object> > row2 = new ArrayList<>();
-        row2.add(new Pair<>("plain_text", "Grouping"));
-        row2.add(new Pair<>("plain_text", "Row Items"));
-        row2.add(new Pair<>("plain_text", "Re-Sort Index"));
+        ArrayList<Pair<RenderMode, Object>> row2 = new ArrayList<>();
+        row2.add(new Pair<>(RenderMode.PLAIN_TEXT, "Grouping"));
+        row2.add(new Pair<>(RenderMode.PLAIN_TEXT, "Row Items"));
+        row2.add(new Pair<>(RenderMode.PLAIN_TEXT, "Re-Sort Index"));
         for(DSMItem c : cols) {
-            row2.add(new Pair<>("index_item", c));
+            row2.add(new Pair<>(RenderMode.INDEX_ITEM, c));
         }
 
         grid.add(row2);
 
         // create rows
         for(DSMItem r : rows) {
-            ArrayList<Pair< String, Object> > row = new ArrayList<>();
-            row.add(new Pair<>("grouping_item", r));
-            row.add(new Pair<>("item_name", r));
-            row.add(new Pair<>("index_item", r));
+            ArrayList<Pair<RenderMode, Object>> row = new ArrayList<>();
+            row.add(new Pair<>(RenderMode.GROUPING_ITEM, r));
+            row.add(new Pair<>(RenderMode.ITEM_NAME, r));
+            row.add(new Pair<>(RenderMode.INDEX_ITEM, r));
             for(DSMItem c : cols) {  // create connection items for all columns
-                row.add(new Pair<>("editable_connection", new Pair<>(r, c)));
+                row.add(new Pair<>(RenderMode.EDITABLE_CONNECTION, new Pair<>(r, c)));
             }
             grid.add(row);
         }

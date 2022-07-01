@@ -4,7 +4,7 @@ import Data.TemplateDSM;
 import IOHandler.SymmetricIOHandler;
 import View.EditorPane;
 import View.HeaderMenu.SymmetricHeaderMenu;
-import View.MatrixHandlers.SymmetricMatrixHandler;
+import View.MatrixViews.SymmetricView;
 import View.SideBarTools.SymmetricSideBar;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -56,7 +56,7 @@ public class DSMApplication extends Application {
                 editor.addTab(
                         matrix,
                         ioHandler,
-                        new SymmetricMatrixHandler(matrix, 12.0),
+                        new SymmetricView(matrix, 12.0),
                         new SymmetricHeaderMenu(editor),
                         new SymmetricSideBar(matrix, editor)
                 );

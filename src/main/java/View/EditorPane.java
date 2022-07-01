@@ -9,7 +9,7 @@ import View.HeaderMenu.AsymmetricHeaderMenu;
 import View.HeaderMenu.DefaultHeaderMenu;
 import View.HeaderMenu.SymmetricHeaderMenu;
 import View.HeaderMenu.TemplateHeaderMenu;
-import View.MatrixHandlers.TemplateMatrixHandler;
+import View.MatrixViews.TemplateMatrixView;
 import View.SideBarTools.AsymmetricSideBar;
 import View.SideBarTools.SymmetricSideBar;
 import View.SideBarTools.TemplateSideBar;
@@ -182,15 +182,15 @@ public class EditorPane {
      */
     public void addTab(
             TemplateDSM matrix,
-            TemplateIOHandler<? extends TemplateDSM, ? extends TemplateMatrixHandler<?>> ioHandler,
-            TemplateMatrixHandler<? extends TemplateDSM> matrixHandler,
+            TemplateIOHandler<? extends TemplateDSM, ? extends TemplateMatrixView> ioHandler,
+            TemplateMatrixView matrixView,
             TemplateHeaderMenu headerMenu,
             TemplateSideBar sideBar)
     {
         int matrixUid = currentMatrixUid;
         currentMatrixUid += 1;
 
-        this.matrices.addMatrix(matrixUid, matrix, ioHandler, matrixHandler);
+        this.matrices.addMatrix(matrixUid, matrix, ioHandler, matrixView);
 
         // update the root layout
         this.rootLayout.setTop(headerMenu.getMenuBar());
@@ -201,12 +201,12 @@ public class EditorPane {
             title += "*";
         }
         DraggableTab tab = new DraggableTab(title);
-        this.matrices.getMatrixHandler(matrixUid).refreshMatrixEditor();
-        tab.setContent(this.matrices.getMatrixHandler(matrixUid).getMatrixEditor());
+        this.matrices.getMatrixView(matrixUid).refreshMatrixEditor();
+        tab.setContent(this.matrices.getMatrixView(matrixUid).getMatrixEditor());
         tab.setDetachable(false);
         tabPane.getScene().setOnKeyPressed(e -> {  // add keybinding to toggle cross-highlighting on the editor
             if (e.getCode() == KeyCode.F) {
-                this.matrices.getMatrixHandler(matrixUid).toggleCrossHighlighting();
+                this.matrices.getMatrixView(matrixUid).toggleCrossHighlighting();
             }
         });
 
@@ -312,8 +312,8 @@ public class EditorPane {
      */
     public void refreshTab() {
         if(getFocusedMatrixUid() != null) {
-            this.matrices.getMatrixHandler(getFocusedMatrixUid()).refreshMatrixEditor();
-            getFocusedTab().setContent(this.matrices.getMatrixHandler(getFocusedMatrixUid()).getMatrixEditor());
+            this.matrices.getMatrixView(getFocusedMatrixUid()).refreshMatrixEditor();
+            getFocusedTab().setContent(this.matrices.getMatrixView(getFocusedMatrixUid()).getMatrixEditor());
             matrixMetaDataPane.setMatrix(this.matrices.getMatrix(getFocusedMatrixUid()));
         }
     }
@@ -338,8 +338,8 @@ public class EditorPane {
         currentFontSizeIndex += 1;
         if(currentFontSizeIndex > fontSizes.length - 1) currentFontSizeIndex = fontSizes.length - 1;
 
-        this.matrices.getMatrixHandler(getFocusedMatrixUid()).setFontSize(fontSizes[currentFontSizeIndex]);
-        this.matrices.getMatrixHandler(getFocusedMatrixUid()).refreshMatrixEditor();
+        this.matrices.getMatrixView(getFocusedMatrixUid()).setFontSize(fontSizes[currentFontSizeIndex]);
+        this.matrices.getMatrixView(getFocusedMatrixUid()).refreshMatrixEditor();
         refreshTab();
     }
 
@@ -352,8 +352,8 @@ public class EditorPane {
         currentFontSizeIndex -= 1;
         if(currentFontSizeIndex < 0) currentFontSizeIndex = 0;
 
-        this.matrices.getMatrixHandler(getFocusedMatrixUid()).setFontSize(fontSizes[currentFontSizeIndex]);
-        this.matrices.getMatrixHandler(getFocusedMatrixUid()).refreshMatrixEditor();
+        this.matrices.getMatrixView(getFocusedMatrixUid()).setFontSize(fontSizes[currentFontSizeIndex]);
+        this.matrices.getMatrixView(getFocusedMatrixUid()).refreshMatrixEditor();
         refreshTab();
     }
 
@@ -370,8 +370,8 @@ public class EditorPane {
             }
         }
 
-        this.matrices.getMatrixHandler(getFocusedMatrixUid()).setFontSize(DEFAULT_FONT_SIZE);
-        this.matrices.getMatrixHandler(getFocusedMatrixUid()).refreshMatrixEditor();
+        this.matrices.getMatrixView(getFocusedMatrixUid()).setFontSize(DEFAULT_FONT_SIZE);
+        this.matrices.getMatrixView(getFocusedMatrixUid()).refreshMatrixEditor();
         refreshTab();
     }
 

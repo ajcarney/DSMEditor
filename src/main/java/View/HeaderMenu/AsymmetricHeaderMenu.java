@@ -2,7 +2,7 @@ package View.HeaderMenu;
 
 import Data.AsymmetricDSM;
 import View.EditorPane;
-import View.MatrixHandlers.StaticAsymmetricHandler;
+import View.MatrixViews.AsymmetricView;
 import View.PropagationAnalysisWindow;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
@@ -99,7 +99,7 @@ public class AsymmetricHeaderMenu extends TemplateHeaderMenu {
             }
             int matrixUid = editor.getFocusedMatrixUid();
             AsymmetricDSM matrix = (AsymmetricDSM) this.editor.getFocusedMatrix();
-            this.editor.getMatrixController().getMatrixIOHandler(matrixUid).exportToImage(matrix, new StaticAsymmetricHandler(matrix, 12.0));
+            this.editor.getMatrixController().getMatrixIOHandler(matrixUid).exportToImage(matrix, new AsymmetricView(matrix, 12.0));
         });
 
         exportMenu.getItems().addAll(exportCSV, exportXLSX, exportImage);

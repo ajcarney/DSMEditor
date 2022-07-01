@@ -1,4 +1,4 @@
-package View.MatrixHandlers;
+package View.MatrixViews;
 
 import Data.DSMConnection;
 import Data.DSMItem;
@@ -33,10 +33,8 @@ import java.util.Vector;
 
 /**
  * Generic class for displaying a matrix
- *
- * @param <T>  the type of matrix this handler is for
  */
-public abstract class TemplateMatrixHandler<T extends TemplateDSM> {
+public abstract class TemplateMatrixView {
 
     public static final Background DEFAULT_BACKGROUND = new Background(new BackgroundFill(Color.color(1, 1, 1), new CornerRadii(3), new Insets(0)));
     public static final Background UNEDITABLE_CONNECTION_BACKGROUND = new Background(new BackgroundFill(Color.color(0, 0, 0), new CornerRadii(3), new Insets(0)));
@@ -46,13 +44,17 @@ public abstract class TemplateMatrixHandler<T extends TemplateDSM> {
     public static final Background SYMMETRY_ERROR_BACKGROUND = new Background(new BackgroundFill(Color.color(1, .5, .2), new CornerRadii(3), new Insets(0)));
     public static final Background SEARCH_BACKGROUND = new Background(new BackgroundFill(Color.color(0, 1, 1), new CornerRadii(3), new Insets(0)));
 
-    protected T matrix;
+    protected TemplateDSM matrix;
 
     protected DoubleProperty fontSize;
     protected BooleanProperty showNames;
+    protected MatrixViewMode currentMode;
+    public enum MatrixViewMode {
+        EDIT,
+        STATIC
+    }
 
     protected VBox rootLayout;
-    protected FreezeGrid grid;
 
     protected Vector<Cell> cells;  // contains information for highlighting
     protected HashMap<String, HashMap<Integer, Integer>> gridUidLookup;
@@ -74,7 +76,7 @@ public abstract class TemplateMatrixHandler<T extends TemplateDSM> {
      * @param matrix   the TemplateDSM object to display
      * @param fontSize the default font size to display the matrix with
      */
-    public TemplateMatrixHandler(T matrix, double fontSize) {
+    public TemplateMatrixView(TemplateDSM matrix, double fontSize) {
         this.matrix = matrix;
         cells = new Vector<>();
         gridUidLookup = new HashMap<>();
@@ -82,12 +84,29 @@ public abstract class TemplateMatrixHandler<T extends TemplateDSM> {
         gridUidLookup.put("cols", new HashMap<>());
 
         rootLayout = new VBox();
-        grid = new FreezeGrid();
 
         this.fontSize = new SimpleDoubleProperty(fontSize);
         showNames = new SimpleBooleanProperty(true);  // default to showing names instead of weights
-        refreshMatrixEditor();
+        currentMode = MatrixViewMode.EDIT;
     }
+
+
+    /**
+     * Builder pattern method for setting the font size
+     *
+     * @param fontSize  the new font size for the matrix view
+     * @return          this
+     */
+    public abstract <T extends TemplateMatrixView> T withFontSize(double fontSize);
+
+
+    /**
+     * Builder pattern method for setting the matrix view mode
+     *
+     * @param mode  the new mode for the matrix view
+     * @return      this
+     */
+    public abstract <T extends TemplateMatrixView> T withMode(MatrixViewMode mode);
 
 
 //region Getters
@@ -202,12 +221,12 @@ public abstract class TemplateMatrixHandler<T extends TemplateDSM> {
      *  @param cellLoc the grid location of the cell (row, column)
      *
      */
-    protected void toggleUserHighlightCell(Pair<Integer, Integer> cellLoc) {
+    private void toggleUserHighlightCell(Pair<Integer, Integer> cellLoc) {
         Cell cell = getCellByLoc(cellLoc);
         if(cell == null) return;
 
         if(cell.getHighlightBG("user") == null) {  // is not highlighted, so highlight it
-            cell.updateHighlightBG(TemplateMatrixHandler.HIGHLIGHT_BACKGROUND, "user");
+            cell.updateHighlightBG(TemplateMatrixView.HIGHLIGHT_BACKGROUND, "user");
         } else {
             cell.updateHighlightBG(null, "user");
         }
@@ -290,10 +309,10 @@ public abstract class TemplateMatrixHandler<T extends TemplateDSM> {
      * and keeping row constant and decrementing column location to minimum and then keeping column
      * constant and decrementing the row location to minimum.
      *
-     * @param endLocation     the cell passed by location (row, column) to cross highlight to, no cells will be highlighted past this cell
-     * @param shouldHighlight whether or not to cross highlight the cell
+     * @param endLocation      the cell passed by location (row, column) to cross highlight to, no cells will be highlighted past this cell
+     * @param shouldHighlight  whether or not to cross highlight the cell
      */
-    protected void crossHighlightCell(Pair<Integer, Integer> endLocation, boolean shouldHighlight) {
+    private void crossHighlightCell(Pair<Integer, Integer> endLocation, boolean shouldHighlight) {
         int endRow = endLocation.getKey();
         int endCol = endLocation.getValue();
 
@@ -362,7 +381,7 @@ public abstract class TemplateMatrixHandler<T extends TemplateDSM> {
      * @param gridColIndex   the column index the cell will be placed in
      * @return               the label that was created inside the hbox so that its text color can be updated later
      */
-    public Label getEditableConnectionCell(HBox cell, Label locationLabel, int rowUid, int colUid, int gridRowIndex, int gridColIndex) {
+    protected Label getEditableConnectionCell(HBox cell, Label locationLabel, int rowUid, int colUid, int gridRowIndex, int gridColIndex) {
         DSMConnection conn = matrix.getConnection(rowUid, colUid);
         final Label label = new Label();
         label.textProperty().bind(Bindings.createStringBinding(() -> {  // bind so that either weights or name can be shown
@@ -521,7 +540,7 @@ public abstract class TemplateMatrixHandler<T extends TemplateDSM> {
      *
      * @param itemUid  the uid of the item in the matrix whose name is being changed
      */
-    public void editItemName(int itemUid) {
+    protected void editItemName(int itemUid) {
         // create popup window to edit the connection
         Stage window = new Stage();
 
@@ -573,14 +592,42 @@ public abstract class TemplateMatrixHandler<T extends TemplateDSM> {
     /**
      * updates the background color of a cell based on the backgrounds set for it. Error highlight
      * is given the highest priority, then cross highlighting, then user highlighting, and lastly the grouping
-     * color of the cell or the default color
+     * color (if matrix supports that) of the cell or the default color
      */
-    public abstract void refreshCellHighlight(Cell cell);
+    protected abstract void refreshCellHighlight(Cell cell);
+
+
+    /**
+     * Creates the gui that displays a matrix with an editable view. Must add the view to rootLayout in order for
+     * it to be displayed
+     */
+    protected abstract void refreshEditView();
+
+
+    /**
+     * Creates the guid that displays a matrix in a static read only view.
+     */
+    protected abstract void refreshStaticView();
+
+
+    /**
+     * Sets the new current view mode for the matrix
+     *
+     * @param mode  the new mode for the matrix
+     */
+    public final void setCurrentMode(MatrixViewMode mode) {
+        currentMode = mode;
+    }
 
 
     /**
      * Creates the gui that displays a matrix.
      */
-    public abstract void refreshMatrixEditor();
+    public final void refreshMatrixEditor() {
+        switch(currentMode) {
+            case EDIT -> refreshEditView();
+            case STATIC -> refreshStaticView();
+        }
+    }
 
 }
