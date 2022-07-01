@@ -14,14 +14,10 @@ import javafx.scene.Scene;
 import javafx.scene.control.Tab;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
-import javafx.stage.WindowEvent;
 
 import java.io.*;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 
 /**
@@ -32,7 +28,7 @@ import java.util.Map;
 public class DSMApplication extends Application {
     private static final BorderPane root = new BorderPane();
     private static final EditorPane editor = new EditorPane(new MatrixController(), root);
-    private static ArrayList<String> cliArgs = new ArrayList<>();
+    private static final ArrayList<String> cliArgs = new ArrayList<>();
 
     /**
      * Starts the gui application
@@ -57,7 +53,7 @@ public class DSMApplication extends Application {
             if(f.exists()) {
                 SymmetricIOHandler ioHandler = new SymmetricIOHandler(f);
                 SymmetricDSM matrix = ioHandler.readFile();
-                this.editor.addTab(
+                editor.addTab(
                         matrix,
                         ioHandler,
                         new SymmetricMatrixHandler(matrix, 12.0),
@@ -67,28 +63,26 @@ public class DSMApplication extends Application {
             }
         }
 
-        for(int i=0; i<cliArgs.size(); i++) {
-            System.out.println(cliArgs.get(i));
+        for (String cliArg : cliArgs) {
+            System.out.println(cliArg);
         }
 
 
         // on close, iterate through each tab and run the close request to save it or not
-        scene.getWindow().setOnCloseRequest(new EventHandler<WindowEvent>() {
-            public void handle(WindowEvent ev) {
-                for (Map.Entry<Tab, Integer> entry : ((HashMap<Tab, Integer>) editor.getTabs().clone()).entrySet()) {  // iterate over clone
-                    EventHandler<Event> handler = entry.getKey().getOnCloseRequest();
-                    handler.handle(null);
+        scene.getWindow().setOnCloseRequest(ev -> {
+            for (Map.Entry<Tab, Integer> entry : ((HashMap<Tab, Integer>) editor.getTabs().clone()).entrySet()) {  // iterate over clone
+                EventHandler<Event> handler = entry.getKey().getOnCloseRequest();
+                handler.handle(null);
 
-                    if (editor.getTabs().get(entry.getKey()) != null) {
-                        ev.consume();
-                        return;
-                    }
+                if (editor.getTabs().get(entry.getKey()) != null) {
+                    ev.consume();
+                    return;
                 }
-                System.exit(0);  // terminate the program once the window is closed
             }
+            System.exit(0);  // terminate the program once the window is closed
         });
 
-//        FreezeGrid.debug();
+        //FreezeGrid.debug2();
 
     }
 
@@ -107,7 +101,7 @@ public class DSMApplication extends Application {
         System.err.println(e.getMessage());
         System.err.println("Check the log file for information");
         System.err.println("Saving files to .recovery\n\n");
-        System.err.println(e.getStackTrace());
+        System.err.println(Arrays.toString(e.getStackTrace()));
         e.printStackTrace();
 
         File logDir = new File("./.log");
@@ -125,7 +119,7 @@ public class DSMApplication extends Application {
 
             StringWriter sw = new StringWriter();
             e.printStackTrace(new PrintWriter(sw));
-            w.write(sw.toString() + "\n");
+            w.write(sw + "\n");
 
             w.close();
         } catch (IOException ioException) {
@@ -149,9 +143,7 @@ public class DSMApplication extends Application {
      * @param args any command line args used by javafx (probably not used anywhere and will be ignored)
      */
     public static void main(String[] args) {
-        for(int i=0; i<args.length; i++) {
-            cliArgs.add(args[i]);
-        }
+        cliArgs.addAll(Arrays.asList(args));
 
         launch(args);  // starts gui application
     }

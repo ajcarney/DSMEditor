@@ -185,7 +185,7 @@ public class EditorPane {
             TemplateIOHandler<? extends TemplateDSM, ? extends TemplateMatrixHandler<?>> ioHandler,
             TemplateMatrixHandler<? extends TemplateDSM> matrixHandler,
             TemplateHeaderMenu headerMenu,
-            TemplateSideBar<? extends TemplateDSM> sideBar)
+            TemplateSideBar sideBar)
     {
         int matrixUid = currentMatrixUid;
         currentMatrixUid += 1;
