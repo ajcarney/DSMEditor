@@ -223,7 +223,6 @@ public abstract class TemplateSideBar {
         if(editor.getFocusedMatrixUid() == null) {
             return;
         }
-        System.out.println("here");
         matrix.reDistributeSortIndices();
         editor.refreshTab();
         matrix.setCurrentStateAsCheckpoint();
@@ -241,7 +240,7 @@ public abstract class TemplateSideBar {
      *
      * @return           the HBox that contains the row with all the widgets configured
      */
-    protected static <T2 extends TemplateGroupedMatrix> HBox configureGroupingEditorRow(T2 matrix, Grouping grouping, VBox parent, boolean deletable) {
+    protected static <T extends TemplateGroupedMatrix> HBox configureGroupingEditorRow(T matrix, Grouping grouping, VBox parent, boolean deletable) {
         HBox display = new HBox();
 
         TextField groupingName = new TextField();     // use a text field to display the name so that it can be renamed easily

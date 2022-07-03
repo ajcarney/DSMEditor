@@ -1,10 +1,15 @@
+import Data.AsymmetricDSM;
 import Data.MatrixController;
 import Data.SymmetricDSM;
 import Data.TemplateDSM;
+import IOHandler.AsymmetricIOHandler;
 import IOHandler.SymmetricIOHandler;
 import View.EditorPane;
+import View.HeaderMenu.AsymmetricHeaderMenu;
 import View.HeaderMenu.SymmetricHeaderMenu;
+import View.MatrixViews.AsymmetricView;
 import View.MatrixViews.SymmetricView;
+import View.SideBarTools.AsymmetricSideBar;
 import View.SideBarTools.SymmetricSideBar;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -61,6 +66,18 @@ public class DSMApplication extends Application {
                         new SymmetricSideBar(matrix, editor)
                 );
             }
+//            File f = new File("/home/aiden/Documents/DSMEditor/untitled0.dsm");
+//            if(f.exists()) {
+//                AsymmetricIOHandler ioHandler = new AsymmetricIOHandler(f);
+//                AsymmetricDSM matrix = ioHandler.readFile();
+//                editor.addTab(
+//                        matrix,
+//                        ioHandler,
+//                        new AsymmetricView(matrix, 12.0),
+//                        new AsymmetricHeaderMenu(editor),
+//                        new AsymmetricSideBar(matrix, editor)
+//                );
+//            }
         }
 
         for (String cliArg : cliArgs) {

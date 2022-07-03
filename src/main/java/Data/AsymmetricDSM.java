@@ -141,18 +141,19 @@ public class AsymmetricDSM extends TemplateGroupedMatrix implements IPropagation
         ArrayList<Pair<RenderMode, Object>> row0 = new ArrayList<>();
         row0.add(new Pair<>(RenderMode.PLAIN_TEXT_V, ""));
         row0.add(new Pair<>(RenderMode.PLAIN_TEXT_V, ""));
-        row0.add(new Pair<>(RenderMode.PLAIN_TEXT_V, "Column Items"));
-        for(DSMItem c : cols) {
-            row0.add(new Pair<>(RenderMode.ITEM_NAME_V, c));
+        row0.add(new Pair<>(RenderMode.PLAIN_TEXT_V, "Grouping"));
+        for (DSMItem c : cols) {
+            row0.add(new Pair<>(RenderMode.GROUPING_ITEM_V, c));
         }
         grid.add(row0);
+
 
         ArrayList<Pair<RenderMode, Object>> row1 = new ArrayList<>();
         row1.add(new Pair<>(RenderMode.PLAIN_TEXT_V, ""));
         row1.add(new Pair<>(RenderMode.PLAIN_TEXT_V, ""));
-        row1.add(new Pair<>(RenderMode.PLAIN_TEXT_V, "Grouping"));
-        for (DSMItem c : cols) {
-            row1.add(new Pair<>(RenderMode.GROUPING_ITEM_V, c));
+        row1.add(new Pair<>(RenderMode.PLAIN_TEXT_V, "Column Items"));
+        for(DSMItem c : cols) {
+            row1.add(new Pair<>(RenderMode.ITEM_NAME_V, c));
         }
         grid.add(row1);
 

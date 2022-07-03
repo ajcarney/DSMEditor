@@ -191,6 +191,7 @@ public class FreezeGrid {
      * Re-calculates the pref widths and heights of the grid
      *
      * @param addToDummy  if all nodes need to be added to a dummy scene so that the size can be accurately calculated
+     *                    set to true if the grid has not been added to a scene yet
      */
     public void resizeGrid(boolean addToDummy) {
         if(cells.isEmpty()) {
@@ -230,7 +231,8 @@ public class FreezeGrid {
                     colPrefWidths.add(new SimpleDoubleProperty(0.0));
                 }
 
-                if(cells.get(r).get(c).getNode() == null) {
+                // skip cases where node doesn't exist or row span is increased
+                if(cells.get(r).get(c).getNode() == null || cells.get(r).get(c).getRowSpan() > 1 || cells.get(r).get(c).getColSpan() > 1) {
                     continue;
                 }
 
@@ -378,10 +380,41 @@ public class FreezeGrid {
 
         double width = 0;
         for(int i=c; i<(c + cells.get(r).get(c).getColSpan()); i++) {  // iterate from start column to column of the column span
-            width += colPrefWidths.get(i).doubleValue();
+            try {
+                width += colPrefWidths.get(i).doubleValue();
+            } catch (Exception e) {
+                System.out.println(c + " " + i + " " + cells.get(r).get(c).getColSpan());
+                e.printStackTrace();
+            }
         }
 
         return width;
+    }
+
+
+    /**
+     * Overrides a given column preferred width at a given index
+     *
+     * @param index         the index of the column to update the preferred width of
+     * @param newPrefWidth  the new preferred width for items in that column
+     */
+    public void setColPrefWidth(int index, double newPrefWidth) {
+        if(index < colPrefWidths.size()) {
+            colPrefWidths.get(index).set(newPrefWidth);
+        }
+    }
+
+
+    /**
+     * Overrides a given row preferred height at a given index
+     *
+     * @param index          the index of the row to update the preferred height of
+     * @param newPrefHeight  the new preferred height for items in that row
+     */
+    public void setRowPrefHeight(int index, double newPrefHeight) {
+        if(index < rowPrefHeights.size()) {
+            rowPrefHeights.get(index).set(newPrefHeight);
+        }
     }
 
 
@@ -439,8 +472,15 @@ public class FreezeGrid {
             assert r <= 0 || (newRow.size() == cells.get(0).size());
         }
 
+        // initialize pref width arrays
+        for(int r=0; r<cells.size(); r++) {
+            rowPrefHeights.add(new SimpleDoubleProperty(0.0));
+        }
 
-        resizeGrid(true);  // first time setting data so should add to dummy scene to calculate sizes
+        for (int c = 0; c < cells.get(0).size(); c++) {
+            colPrefWidths.add(new SimpleDoubleProperty(0.0));
+        }
+
         updateConstraints();
     }
 
@@ -467,13 +507,21 @@ public class FreezeGrid {
 
             assert r <= 0 || (newRow.size() == cells.get(0).size());
         }
-        
-       
-        resizeGrid(true);  // first time setting data so should add to dummy scene to calculate sizes
+
+
+        // initialize pref width arrays
+        for(int r=0; r<cells.size(); r++) {
+            rowPrefHeights.add(new SimpleDoubleProperty(0.0));
+        }
+
+        for (int c = 0; c < cells.get(0).size(); c++) {
+            colPrefWidths.add(new SimpleDoubleProperty(0.0));
+        }
+
         updateConstraints();
     }
 
-    
+
     //region set freeze rows/columns
     /**
      * creates default constraints for the grid

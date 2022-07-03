@@ -51,7 +51,8 @@ public abstract class TemplateMatrixView {
     protected MatrixViewMode currentMode;
     public enum MatrixViewMode {
         EDIT,
-        STATIC
+        STATIC,
+        FAST_RENDER
     }
 
     protected VBox rootLayout;
@@ -110,6 +111,22 @@ public abstract class TemplateMatrixView {
 
 
 //region Getters
+    /**
+     * @return  if the matrix is showing names or values
+     */
+    public boolean getShowNames() {
+        return showNames.getValue();
+    }
+
+
+    /**
+     * @return  the current view mode of the matrix
+     */
+    public MatrixViewMode getCurrentMode() {
+        return currentMode;
+    }
+
+
     /**
      * Finds a cell by a location by iterating over all cells and determining if the grid location is the
      * specified grid location. Runs the search using a parallel stream
@@ -211,6 +228,16 @@ public abstract class TemplateMatrixView {
      */
     public void setShowNames(Boolean newValue) {
         showNames.set(newValue);
+    }
+
+
+    /**
+     * Sets the new current view mode for the matrix
+     *
+     * @param mode  the new mode for the matrix
+     */
+    public final void setCurrentMode(MatrixViewMode mode) {
+        currentMode = mode;
     }
 //endregion
 
@@ -368,9 +395,18 @@ public abstract class TemplateMatrixView {
             refreshCellHighlight(cell);
         }
     }
+
+
+    /**
+     * updates the background color of a cell based on the backgrounds set for it. Error highlight
+     * is given the highest priority, then cross highlighting, then user highlighting, and lastly the grouping
+     * color (if matrix supports that) of the cell or the default color
+     */
+    protected abstract void refreshCellHighlight(Cell cell);
 //endregion
 
 
+//region pop-up edit windows
     /**
      * Modifies an hbox in place for a cell that when clicked will handle the editing of a DSM connection
      *
@@ -587,16 +623,10 @@ public abstract class TemplateMatrixView {
         window.setScene(scene);
         window.showAndWait();
     }
+//endregion
 
 
-    /**
-     * updates the background color of a cell based on the backgrounds set for it. Error highlight
-     * is given the highest priority, then cross highlighting, then user highlighting, and lastly the grouping
-     * color (if matrix supports that) of the cell or the default color
-     */
-    protected abstract void refreshCellHighlight(Cell cell);
-
-
+//region refresh functions
     /**
      * Creates the gui that displays a matrix with an editable view. Must add the view to rootLayout in order for
      * it to be displayed
@@ -605,19 +635,15 @@ public abstract class TemplateMatrixView {
 
 
     /**
-     * Creates the guid that displays a matrix in a static read only view.
+     * Creates the gui that displays a matrix in a static read only view.
      */
     protected abstract void refreshStaticView();
 
 
     /**
-     * Sets the new current view mode for the matrix
-     *
-     * @param mode  the new mode for the matrix
+     * Creates the gui that displays with minimal detail so it can render large matrices faster
      */
-    public final void setCurrentMode(MatrixViewMode mode) {
-        currentMode = mode;
-    }
+    protected abstract void refreshFastRenderView();
 
 
     /**
@@ -627,7 +653,9 @@ public abstract class TemplateMatrixView {
         switch(currentMode) {
             case EDIT -> refreshEditView();
             case STATIC -> refreshStaticView();
+            case FAST_RENDER -> refreshFastRenderView();
         }
     }
+//endregion
 
 }

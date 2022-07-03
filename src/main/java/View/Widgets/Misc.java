@@ -48,9 +48,9 @@ public class Misc {
         ghostPane.getChildren().add(node);
         ghostPane.applyCss();
         ghostPane.layout();
+        Bounds b = node.getBoundsInLocal();
         ghostPane.getChildren().clear();
 
-        Bounds b = node.getBoundsInLocal();
         return b;
     }
 }
