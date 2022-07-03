@@ -1,5 +1,6 @@
 package View;
 
+import Constants.Constants;
 import Data.AsymmetricDSM;
 import Data.MatrixController;
 import Data.SymmetricDSM;
@@ -9,7 +10,7 @@ import View.HeaderMenu.AsymmetricHeaderMenu;
 import View.HeaderMenu.DefaultHeaderMenu;
 import View.HeaderMenu.SymmetricHeaderMenu;
 import View.HeaderMenu.TemplateHeaderMenu;
-import View.MatrixHandlers.TemplateMatrixHandler;
+import View.MatrixViews.TemplateMatrixView;
 import View.SideBarTools.AsymmetricSideBar;
 import View.SideBarTools.SymmetricSideBar;
 import View.SideBarTools.TemplateSideBar;
@@ -33,17 +34,13 @@ public class EditorPane {
 
     private final TabPane tabPane = new TabPane();
     private final HashMap<DraggableTab, Integer> tabs = new HashMap<>();  // tab object, matrix uid
-
-    private static int currentMatrixUid = 0;
     private final MatrixController matrices;
-
     private final MatrixMetaDataPane matrixMetaDataPane;
 
-    private static final double[] fontSizes = {
-        5.0, 6.0, 8.0, 9.0, 9.5, 10.0, 10.5, 11.0, 12.0, 12.5, 14.0, 16.0, 18.0, 24.0, 30.0, 36.0, 60.0
-    };
     private static final double DEFAULT_FONT_SIZE = 12.0;
-    private static int currentFontSizeIndex;
+
+    private int currentMatrixUid = 0;
+    private int currentFontSizeIndex;
 
 
     /**
@@ -55,8 +52,8 @@ public class EditorPane {
         this.matrices = matrices;
         this.matrixMetaDataPane = new MatrixMetaDataPane();
 
-        for(int i=0; i<fontSizes.length; i++) {
-            if(fontSizes[i] == DEFAULT_FONT_SIZE) {
+        for(int i=0; i<Constants.fontSizes.length; i++) {
+            if(Constants.fontSizes[i] == DEFAULT_FONT_SIZE) {
                 currentFontSizeIndex = i;
                 break;
             }
@@ -182,31 +179,27 @@ public class EditorPane {
      */
     public void addTab(
             TemplateDSM matrix,
-            TemplateIOHandler<? extends TemplateDSM, ? extends TemplateMatrixHandler<?>> ioHandler,
-            TemplateMatrixHandler<? extends TemplateDSM> matrixHandler,
+            TemplateIOHandler<? extends TemplateDSM, ? extends TemplateMatrixView> ioHandler,
+            TemplateMatrixView matrixView,
             TemplateHeaderMenu headerMenu,
-            TemplateSideBar<? extends TemplateDSM> sideBar)
+            TemplateSideBar sideBar)
     {
         int matrixUid = currentMatrixUid;
         currentMatrixUid += 1;
 
-        this.matrices.addMatrix(matrixUid, matrix, ioHandler, matrixHandler);
-
-        // update the root layout
-        this.rootLayout.setTop(headerMenu.getMenuBar());
-        this.rootLayout.setLeft(sideBar.getLayout());
+        this.matrices.addMatrix(matrixUid, matrix, ioHandler, matrixView);
 
         String title = this.matrices.getMatrixIOHandler(matrixUid).getSavePath().getName();
         if(!matrices.isMatrixSaved(matrixUid)) {
             title += "*";
         }
         DraggableTab tab = new DraggableTab(title);
-        this.matrices.getMatrixHandler(matrixUid).refreshMatrixEditor();
-        tab.setContent(this.matrices.getMatrixHandler(matrixUid).getMatrixEditor());
+        this.matrices.getMatrixView(matrixUid).refreshMatrixEditor();
+        tab.setContent(this.matrices.getMatrixView(matrixUid).getMatrixEditor());
         tab.setDetachable(false);
         tabPane.getScene().setOnKeyPressed(e -> {  // add keybinding to toggle cross-highlighting on the editor
             if (e.getCode() == KeyCode.F) {
-                this.matrices.getMatrixHandler(matrixUid).toggleCrossHighlighting();
+                this.matrices.getMatrixView(matrixUid).toggleCrossHighlighting();
             }
         });
 
@@ -249,16 +242,19 @@ public class EditorPane {
 
         tab.setOnSelectionChanged(e -> {
             matrixMetaDataPane.setMatrix(this.matrices.getMatrix(matrixUid));
+
             if(this.matrices.getMatrix(matrixUid).getClass().equals(SymmetricDSM.class)) {
                 SymmetricHeaderMenu menu = new SymmetricHeaderMenu(this);
                 this.rootLayout.setTop(menu.getMenuBar());
                 this.rootLayout.setBottom(menu.getConnectionSearchLayout());
                 this.rootLayout.setLeft(new SymmetricSideBar((SymmetricDSM)this.matrices.getMatrix(matrixUid), this).getLayout());
+
             } else if(this.matrices.getMatrix(matrixUid).getClass().equals(AsymmetricDSM.class)) {
                 AsymmetricHeaderMenu menu = new AsymmetricHeaderMenu(this);
                 this.rootLayout.setTop(menu.getMenuBar());
                 this.rootLayout.setBottom(menu.getConnectionSearchLayout());
                 this.rootLayout.setLeft(new AsymmetricSideBar((AsymmetricDSM)this.matrices.getMatrix(matrixUid), this).getLayout());
+
             } else {
                 throw new IllegalStateException("Matrix being handled was not of a valid type");
             }
@@ -312,8 +308,8 @@ public class EditorPane {
      */
     public void refreshTab() {
         if(getFocusedMatrixUid() != null) {
-            this.matrices.getMatrixHandler(getFocusedMatrixUid()).refreshMatrixEditor();
-            getFocusedTab().setContent(this.matrices.getMatrixHandler(getFocusedMatrixUid()).getMatrixEditor());
+            this.matrices.getMatrixView(getFocusedMatrixUid()).refreshMatrixEditor();
+            getFocusedTab().setContent(this.matrices.getMatrixView(getFocusedMatrixUid()).getMatrixEditor());
             matrixMetaDataPane.setMatrix(this.matrices.getMatrix(getFocusedMatrixUid()));
         }
     }
@@ -336,10 +332,10 @@ public class EditorPane {
     public void increaseFontScaling() {
         if(getFocusedMatrixUid() == null) return;
         currentFontSizeIndex += 1;
-        if(currentFontSizeIndex > fontSizes.length - 1) currentFontSizeIndex = fontSizes.length - 1;
+        if(currentFontSizeIndex > Constants.fontSizes.length - 1) currentFontSizeIndex = Constants.fontSizes.length - 1;
 
-        this.matrices.getMatrixHandler(getFocusedMatrixUid()).setFontSize(fontSizes[currentFontSizeIndex]);
-        this.matrices.getMatrixHandler(getFocusedMatrixUid()).refreshMatrixEditor();
+        this.matrices.getMatrixView(getFocusedMatrixUid()).setFontSize(Constants.fontSizes[currentFontSizeIndex]);
+        this.matrices.getMatrixView(getFocusedMatrixUid()).refreshMatrixEditor();
         refreshTab();
     }
 
@@ -352,8 +348,8 @@ public class EditorPane {
         currentFontSizeIndex -= 1;
         if(currentFontSizeIndex < 0) currentFontSizeIndex = 0;
 
-        this.matrices.getMatrixHandler(getFocusedMatrixUid()).setFontSize(fontSizes[currentFontSizeIndex]);
-        this.matrices.getMatrixHandler(getFocusedMatrixUid()).refreshMatrixEditor();
+        this.matrices.getMatrixView(getFocusedMatrixUid()).setFontSize(Constants.fontSizes[currentFontSizeIndex]);
+        this.matrices.getMatrixView(getFocusedMatrixUid()).refreshMatrixEditor();
         refreshTab();
     }
 
@@ -363,15 +359,15 @@ public class EditorPane {
      */
     public void resetFontScaling() {
         if(getFocusedMatrixUid() == null) return;
-        for(int i=0; i<fontSizes.length; i++) {
-            if(fontSizes[i] == DEFAULT_FONT_SIZE) {
+        for(int i=0; i<Constants.fontSizes.length; i++) {
+            if(Constants.fontSizes[i] == DEFAULT_FONT_SIZE) {
                 currentFontSizeIndex = i;
                 break;
             }
         }
 
-        this.matrices.getMatrixHandler(getFocusedMatrixUid()).setFontSize(DEFAULT_FONT_SIZE);
-        this.matrices.getMatrixHandler(getFocusedMatrixUid()).refreshMatrixEditor();
+        this.matrices.getMatrixView(getFocusedMatrixUid()).setFontSize(DEFAULT_FONT_SIZE);
+        this.matrices.getMatrixView(getFocusedMatrixUid()).refreshMatrixEditor();
         refreshTab();
     }
 

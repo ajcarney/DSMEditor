@@ -1,5 +1,6 @@
 package Data;
 
+import View.MatrixViews.RenderMode;
 import javafx.util.Pair;
 
 import java.util.*;
@@ -918,19 +919,9 @@ public abstract class TemplateDSM {
 
     /**
      * Creates a 2d ArrayList of the matrix so that it can be displayed. Each cell in the grid is made
-     * up of a String, which is the key, and an Object that is different based on the key.
-     * Possible keys:
-     *   plain_text            : String -> text
-     *   plain_text_v          : String -> text
-     *   item_name             : Integer -> item uid
-     *   item_name_v           : Integer -> item uid
-     *   grouping_item         : Integer -> item uid
-     *   grouping_item_v       : Integer -> item uid
-     *   index_item            : Integer -> item uid
-     *   uneditable_connection : null
-     *   editable_connection   : Pair<Integer, Integer> -> rowUid, colUid
+     * up of a RenderMode, which is the key, and an Object that is different based on the key.
      *
      * @return 2d ArrayList of matrix
      */
-    public abstract ArrayList<ArrayList<Pair<String, Object>>> getGridArray();
+    public abstract ArrayList<ArrayList<Pair<RenderMode, Object>>> getGridArray();
 }

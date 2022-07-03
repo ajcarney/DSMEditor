@@ -1,8 +1,8 @@
 package IOHandler;
 
 import Data.TemplateDSM;
-import View.MatrixHandlers.TemplateMatrixHandler;
-import View.Widgets.MiscWidgets;
+import View.MatrixViews.TemplateMatrixView;
+import View.Widgets.Misc;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -17,6 +17,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
+import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.xssf.usermodel.*;
@@ -36,7 +37,7 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * @author Aiden Carney
  */
-public abstract class TemplateIOHandler<T1 extends TemplateDSM, T2 extends TemplateMatrixHandler> {
+public abstract class TemplateIOHandler<T1 extends TemplateDSM, T2 extends TemplateMatrixView> {
 
     protected File savePath;
 
@@ -130,7 +131,7 @@ public abstract class TemplateIOHandler<T1 extends TemplateDSM, T2 extends Templ
      * @param file      the file to save the matrix to
      * @return          1 on success, 0 on error
      */
-    abstract public int saveMatrixToFile(T1 matrix, File file);
+    public abstract int saveMatrixToFile(T1 matrix, File file);
 
 
     /**
@@ -262,6 +263,13 @@ public abstract class TemplateIOHandler<T1 extends TemplateDSM, T2 extends Templ
         // rotation
         style.setRotation(rotation);
 
+        // set up borders and wrap text
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
+        style.setWrapText(true);
+
         cell.setCellStyle(style);
     }
 
@@ -295,11 +303,10 @@ public abstract class TemplateIOHandler<T1 extends TemplateDSM, T2 extends Templ
     /**
      * Opens a window to export a matrix to a png file with different configuration options
      *
-     * @param matrix         the matrix object to save to an image
-     * @param matrixHandler  the matrix gui handler for the matrix object (this should probably be a static view
-     *                       but technically it does not have to be)
+     * @param matrix      the matrix object to save to an image
+     * @param matrixView  the matrix gui handler for the matrix object
      */
-     public void exportToImage(T1 matrix, T2 matrixHandler) {
+     public void exportToImage(T1 matrix, T2 matrixView) {
         // Create Root window
         Stage window = new Stage();
         window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
@@ -398,11 +405,11 @@ public abstract class TemplateIOHandler<T1 extends TemplateDSM, T2 extends Templ
         Button cancelButton = new Button("Cancel");
         cancelButton.setOnAction(e -> window.close());
 
-        saveButtonArea.getChildren().addAll(MiscWidgets.getHorizontalSpacer(), cancelButton, saveButton);
+        saveButtonArea.getChildren().addAll(Misc.getHorizontalSpacer(), cancelButton, saveButton);
 
 
         // parameter layout configuring
-        parametersLayout.getChildren().addAll(addInfo, bigTitle, showConnectionNames, addAnnotation, annotationLayout, saveArea, MiscWidgets.getVerticalSpacer(), saveButtonArea);
+        parametersLayout.getChildren().addAll(addInfo, bigTitle, showConnectionNames, addAnnotation, annotationLayout, saveArea, Misc.getVerticalSpacer(), saveButtonArea);
         addAnnotation.setSelected(false);  // set it here so annotation area is not shown
         annotationLayout.setVisible(false);
         annotationLayout.setManaged(false);
@@ -444,9 +451,10 @@ public abstract class TemplateIOHandler<T1 extends TemplateDSM, T2 extends Templ
             }
 
             HBox centeredMatrix = new HBox();
-            matrixHandler.setShowNames(showConnectionNames.isSelected());
-            matrixHandler.refreshMatrixEditor();
-            centeredMatrix.getChildren().add(matrixHandler.getMatrixEditor());
+            matrixView.setShowNames(showConnectionNames.isSelected());
+            matrixView.setCurrentMode(TemplateMatrixView.MatrixViewMode.STATIC);
+            matrixView.refreshMatrixEditor();
+            centeredMatrix.getChildren().add(matrixView.getMatrixEditor());
             centeredMatrix.setAlignment(Pos.CENTER);
             preview.getChildren().add(centeredMatrix);
 

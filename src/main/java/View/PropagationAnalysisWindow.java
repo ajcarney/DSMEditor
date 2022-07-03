@@ -74,7 +74,11 @@ public class PropagationAnalysisWindow<T extends TemplateDSM & IPropagationAnaly
 
         window = new Stage();
 //        window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
-        window.setTitle(matrix.getTitle() + " - Propagation Analysis");
+        if(!matrix.getTitle().isEmpty()) {
+            window.setTitle(matrix.getTitle() + " - Propagation Analysis");
+        } else {
+            window.setTitle("Propagation Analysis");
+        }
 
     // side bar
         updateConfigWidgets();
@@ -323,7 +327,7 @@ public class PropagationAnalysisWindow<T extends TemplateDSM & IPropagationAnaly
         }
 
         for(Map.Entry<Integer, Double> entry : scores.entrySet()) {
-            series1.getData().add(new XYChart.Data(matrix.getItem(entry.getKey()).getName(), entry.getValue()));
+            series1.getData().add(new XYChart.Data(matrix.getItem(entry.getKey()).getName().getValue(), entry.getValue()));
         }
 
         graph.getData().addAll(series1);
@@ -334,7 +338,7 @@ public class PropagationAnalysisWindow<T extends TemplateDSM & IPropagationAnaly
         // update raw data layout
         ObservableList<Pair<String, Double>> tableItems = FXCollections.observableArrayList();
         for(Map.Entry<Integer, Double> entry : scores.entrySet()) {
-            tableItems.add(new Pair(matrix.getItem(entry.getKey()).getName(), entry.getValue()));
+            tableItems.add(new Pair(matrix.getItem(entry.getKey()).getName().getValue(), entry.getValue()));
         }
 
         TableView<Pair<String, Double>> table = new TableView<>();
@@ -354,7 +358,7 @@ public class PropagationAnalysisWindow<T extends TemplateDSM & IPropagationAnaly
             for (Object row : table.getItems()) {
                 for (TableColumn column : table.getColumns()) {
                     if(column.getCellObservableValue(row).getValue().getClass().equals(Integer.class)) {
-                        copyString.append(matrix.getItem((Integer) column.getCellObservableValue(row).getValue()).getName()).append(",");
+                        copyString.append(matrix.getItem((Integer) column.getCellObservableValue(row).getValue()).getName().getValue()).append(",");
                     } else {
                         copyString.append(column.getCellObservableValue(row).getValue()).append(",");
                     }

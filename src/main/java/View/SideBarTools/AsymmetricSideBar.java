@@ -1,11 +1,8 @@
 package View.SideBarTools;
 
-import Data.AsymmetricDSM;
-import Data.DSMConnection;
-import Data.DSMItem;
-import Data.Grouping;
+import Data.*;
 import View.EditorPane;
-import View.Widgets.MiscWidgets;
+import View.Widgets.Misc;
 import View.Widgets.NumericTextField;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -17,9 +14,9 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import javafx.util.Callback;
 import javafx.util.Pair;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
@@ -28,12 +25,14 @@ import java.util.Vector;
 /**
  * Creates a sidebar with methods to interact with an asymmetric matrix
  */
-public class AsymmetricSideBar extends TemplateSideBar<AsymmetricDSM> {
+public class AsymmetricSideBar extends TemplateSideBar {
 
     protected final Button configureGroupings = new Button("Configure Groupings");
+    private AsymmetricDSM matrix;
 
     public AsymmetricSideBar(AsymmetricDSM matrix, EditorPane editor) {
         super(matrix, editor);
+        this.matrix = matrix;
 
         addMatrixItems.setText("Add Rows/Columns");
         deleteMatrixItems.setText("Delete Rows/Columns");
@@ -122,10 +121,10 @@ public class AsymmetricSideBar extends TemplateSideBar<AsymmetricDSM> {
         cancelButton.setOnAction(e -> {
             window.close();
         });
-        closeArea.getChildren().addAll(cancelButton, MiscWidgets.getHorizontalSpacer(), applyButton);
+        closeArea.getChildren().addAll(cancelButton, Misc.getHorizontalSpacer(), applyButton);
 
         VBox layout = new VBox(10);
-        layout.getChildren().addAll(label, changesToMakeView, deleteSelected, entryArea, MiscWidgets.getVerticalSpacer(), closeArea);
+        layout.getChildren().addAll(label, changesToMakeView, deleteSelected, entryArea, Misc.getVerticalSpacer(), closeArea);
         layout.setAlignment(Pos.CENTER);
         layout.setPadding(new Insets(10, 10, 10, 10));
         layout.setSpacing(10);
@@ -219,10 +218,10 @@ public class AsymmetricSideBar extends TemplateSideBar<AsymmetricDSM> {
         cancelButton.setOnAction(e -> {
             window.close();
         });
-        closeArea.getChildren().addAll(cancelButton, MiscWidgets.getHorizontalSpacer(), applyButton);
+        closeArea.getChildren().addAll(cancelButton, Misc.getHorizontalSpacer(), applyButton);
 
         VBox layout = new VBox(10);
-        layout.getChildren().addAll(label, changesToMakeView, deleteSelected, entryArea, MiscWidgets.getVerticalSpacer(), closeArea);
+        layout.getChildren().addAll(label, changesToMakeView, deleteSelected, entryArea, Misc.getVerticalSpacer(), closeArea);
         layout.setAlignment(Pos.CENTER);
         layout.setPadding(new Insets(10, 10, 10, 10));
         layout.setSpacing(10);
@@ -250,22 +249,8 @@ public class AsymmetricSideBar extends TemplateSideBar<AsymmetricDSM> {
         Label label = new Label("Changes to be made");
         ListView<DSMConnection> changesToMakeView = new ListView<>();
         changesToMakeView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        changesToMakeView.setCellFactory(param -> new ListCell<>() {
-            @Override
-            protected void updateItem(DSMConnection connection, boolean empty) {
-                super.updateItem(connection, empty);
+        changesToMakeView.setCellFactory(CONNECTION_CELL_FACTORY);
 
-                if (empty || connection == null) {
-                    setText(null);
-                } else {
-                    setText(
-                            matrix.getItem(connection.getRowUid()).getName().getValue() + " (Row):" +
-                            matrix.getItem(connection.getColUid()).getName().getValue() + " (Col)" +
-                            "  {" + connection.getConnectionName() + ", " + connection.getWeight() + "}"
-                    );
-                }
-            }
-        });
         Button deleteSelected = new Button("Delete Selected Item(s)");
         deleteSelected.setOnAction(ee -> {
             changesToMakeView.getItems().removeAll(changesToMakeView.getSelectionModel().getSelectedItems());
@@ -307,18 +292,7 @@ public class AsymmetricSideBar extends TemplateSideBar<AsymmetricDSM> {
 
         // ComboBox to choose which row or column to modify connections of
         ComboBox< DSMItem > itemSelector = new ComboBox<>();  // rowUid | colUid | name | weight
-        itemSelector.setCellFactory(param -> new ListCell<>() {
-            @Override
-            protected void updateItem(DSMItem item, boolean empty) {
-                super.updateItem(item, empty);
-
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    setText(item.getName().getValue());
-                }
-            }
-        });
+        itemSelector.setCellFactory(MATRIX_ITEM_COMBOBOX_CELL_FACTORY);
 
         itemSelector.getItems().addAll(matrix.getRows());  // default to choosing a row item
 
@@ -410,7 +384,7 @@ public class AsymmetricSideBar extends TemplateSideBar<AsymmetricDSM> {
 
         connectionDetailsLayout.getChildren().addAll(connectionName, weight);
 
-        connectionsArea.getChildren().addAll(itemSelectorView, scrollPane, MiscWidgets.getHorizontalSpacer(), connectionDetailsLayout);
+        connectionsArea.getChildren().addAll(itemSelectorView, scrollPane, Misc.getHorizontalSpacer(), connectionDetailsLayout);
 
         // Pane to modify the connections
         HBox modifyPane = new HBox();
@@ -459,11 +433,11 @@ public class AsymmetricSideBar extends TemplateSideBar<AsymmetricDSM> {
         cancelButton.setOnAction(ee -> {
             window.close();
         });
-        closeArea.getChildren().addAll(cancelButton, MiscWidgets.getHorizontalSpacer(), applyAllButton);
+        closeArea.getChildren().addAll(cancelButton, Misc.getHorizontalSpacer(), applyAllButton);
 
 
         VBox layout = new VBox(10);
-        layout.getChildren().addAll(label, changesToMakeView, deleteSelected, connectionsArea, modifyPane, MiscWidgets.getVerticalSpacer(), closeArea);
+        layout.getChildren().addAll(label, changesToMakeView, deleteSelected, connectionsArea, modifyPane, Misc.getVerticalSpacer(), closeArea);
         layout.setAlignment(Pos.CENTER);
         layout.setPadding(new Insets(10, 10, 10, 10));
         layout.setSpacing(10);
@@ -492,28 +466,8 @@ public class AsymmetricSideBar extends TemplateSideBar<AsymmetricDSM> {
         Label label = new Label("Changes to be made");
         ListView<DSMConnection> changesToMakeView = new ListView<>();
         changesToMakeView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        changesToMakeView.setCellFactory(param -> new ListCell<>() {
-            @Override
-            protected void updateItem(DSMConnection connection, boolean empty) {
-                super.updateItem(connection, empty);
+        changesToMakeView.setCellFactory(CONNECTION_CELL_FACTORY);
 
-                if (empty || connection == null) {
-                    setText(null);
-                } else if (!connection.getConnectionName().isEmpty() && connection.getWeight() != Double.MAX_VALUE) {
-                    setText(
-                            matrix.getItem(connection.getRowUid()).getName().getValue() + " (Row):" +
-                            matrix.getItem(connection.getColUid()).getName().getValue() + " (Col)" +
-                            "  {" + connection.getConnectionName() + ", " + connection.getWeight() + "}"
-                    );
-                } else {
-                    setText(
-                            "Delete " +
-                            matrix.getItem(connection.getRowUid()).getName() + " (Row):" +
-                            matrix.getItem(connection.getColUid()).getName() + " (Col)"
-                    );
-                }
-            }
-        });
         Button deleteSelected = new Button("Delete Selected Item(s)");
         deleteSelected.setOnAction(ee -> {
             changesToMakeView.getItems().removeAll(changesToMakeView.getSelectionModel().getSelectedItems());
@@ -555,18 +509,7 @@ public class AsymmetricSideBar extends TemplateSideBar<AsymmetricDSM> {
 
         // ComboBox to choose which row or column to modify connections of
         ComboBox< DSMItem > itemSelector = new ComboBox<>();  // rowUid | colUid | name | weight
-        itemSelector.setCellFactory(param -> new ListCell<>() {
-            @Override
-            protected void updateItem(DSMItem item, boolean empty) {
-                super.updateItem(item, empty);
-
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    setText(item.getName().getValue());
-                }
-            }
-        });
+        itemSelector.setCellFactory(MATRIX_ITEM_COMBOBOX_CELL_FACTORY);
 
         itemSelector.getItems().addAll(matrix.getRows());  // default to choosing a row item
 
@@ -674,7 +617,7 @@ public class AsymmetricSideBar extends TemplateSideBar<AsymmetricDSM> {
 
         connectionDetailsLayout.getChildren().addAll(connectionName, weight);
 
-        connectionsArea.getChildren().addAll(itemSelectorView, scrollPane, MiscWidgets.getHorizontalSpacer(), connectionDetailsLayout);
+        connectionsArea.getChildren().addAll(itemSelectorView, scrollPane, Misc.getHorizontalSpacer(), connectionDetailsLayout);
 
         // Pane to modify the connections
         HBox modifyPane = new HBox();
@@ -740,11 +683,11 @@ public class AsymmetricSideBar extends TemplateSideBar<AsymmetricDSM> {
         cancelButton.setOnAction(ee -> {
             window.close();
         });
-        closeArea.getChildren().addAll(cancelButton, MiscWidgets.getHorizontalSpacer(), applyAllButton);
+        closeArea.getChildren().addAll(cancelButton, Misc.getHorizontalSpacer(), applyAllButton);
 
 
         VBox layout = new VBox(10);
-        layout.getChildren().addAll(label, changesToMakeView, deleteSelected, connectionsArea, modifyPane, MiscWidgets.getVerticalSpacer(), closeArea);
+        layout.getChildren().addAll(label, changesToMakeView, deleteSelected, connectionsArea, modifyPane, Misc.getVerticalSpacer(), closeArea);
         layout.setAlignment(Pos.CENTER);
         layout.setPadding(new Insets(10, 10, 10, 10));
         layout.setSpacing(10);
@@ -773,22 +716,7 @@ public class AsymmetricSideBar extends TemplateSideBar<AsymmetricDSM> {
         Label label = new Label("Changes to be made");
         ListView<DSMConnection> changesToMakeView = new ListView<>();  // rowUid | colUid
         changesToMakeView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        changesToMakeView.setCellFactory(param -> new ListCell<>() {
-            @Override
-            protected void updateItem(DSMConnection conn, boolean empty) {
-                super.updateItem(conn, empty);
-
-                if (empty || conn == null) {
-                    setText(null);
-                } else {
-                    setText(
-                            "DELETE " +
-                                    matrix.getItem(conn.getRowUid()).getName() + ":" +
-                                    matrix.getItem(conn.getColUid()).getName()
-                    );
-                }
-            }
-        });
+        changesToMakeView.setCellFactory(DELETE_CONNECTION_CELL_FACTORY);
 
         Button deleteSelected = new Button("Delete Selected Item(s)");
         deleteSelected.setOnAction(ee -> {
@@ -801,31 +729,8 @@ public class AsymmetricSideBar extends TemplateSideBar<AsymmetricDSM> {
 
         // ComboBox to choose which row or column to modify connections of
         ComboBox<Integer> firstItemSelector = new ComboBox<>();
-        // function to set text of comboBox items
-        Callback<ListView<Integer>, ListCell<Integer>> cellFactory = new Callback<>() {
-            @Override
-            public ListCell<Integer> call(ListView<Integer> l) {
-                return new ListCell<>() {
-                    @Override
-                    protected void updateItem(Integer item, boolean empty) {
-                        super.updateItem(item, empty);
-                        if (item == null || empty) {
-                            setGraphic(null);
-                        } else {
-                            if(item == Integer.MAX_VALUE) {
-                                setText("All");
-                            } else if(matrix.isRow(matrix.getItem(item).getUid())) {
-                                setText(matrix.getItem(item).getName() + " (Row)");
-                            } else {
-                                setText(matrix.getItem(item).getName() + " (Column)");
-                            }
-                        }
-                    }
-                };
-            }
-        };
-        firstItemSelector.setButtonCell(cellFactory.call(null));
-        firstItemSelector.setCellFactory(cellFactory);
+        firstItemSelector.setButtonCell(MATRIX_ITEM_INTEGER_COMBOBOX_CELL_FACTORY.call(null));
+        firstItemSelector.setCellFactory(MATRIX_ITEM_INTEGER_COMBOBOX_CELL_FACTORY);
         Vector<Integer> items = new Vector<>();
         items.add(Integer.MAX_VALUE);  // this will be used for selecting all items
         for(DSMItem row : matrix.getRows()) {
@@ -846,8 +751,8 @@ public class AsymmetricSideBar extends TemplateSideBar<AsymmetricDSM> {
         ObservableList<Integer> connectionItems = FXCollections.observableArrayList();
 
         ComboBox<Integer> secondItemSelector = new ComboBox<>();
-        secondItemSelector.setButtonCell(cellFactory.call(null));
-        secondItemSelector.setCellFactory(cellFactory);
+        secondItemSelector.setButtonCell(MATRIX_ITEM_INTEGER_COMBOBOX_CELL_FACTORY.call(null));
+        secondItemSelector.setCellFactory(MATRIX_ITEM_INTEGER_COMBOBOX_CELL_FACTORY);
         secondItemSelector.setItems(connectionItems);
 
         secondItemSelector.setMaxWidth(Double.MAX_VALUE);
@@ -890,64 +795,53 @@ public class AsymmetricSideBar extends TemplateSideBar<AsymmetricDSM> {
         deleteConnection.setOnAction(ee -> {
             if(firstItemSelector.getValue() == null || secondItemSelector.getValue() == null) return;  // have to have a value selected
 
+            ArrayList<DSMItem> rowSelected = new ArrayList<>();
+            ArrayList<DSMItem> colSelected = new ArrayList<>();
 
             if(firstItemSelector.getValue() == Integer.MAX_VALUE && secondItemSelector.getValue() == Integer.MAX_VALUE) {  // delete all connections
-                for(DSMConnection conn : matrix.getConnections()) {
-                    if(!changesToMakeView.getItems().contains(conn)) {
-                        changesToMakeView.getItems().add(conn);
-                    }
-                }
+                rowSelected.addAll(matrix.getRows());
+                colSelected.addAll(matrix.getCols());
+
             } else if(firstItemSelector.getValue() == Integer.MAX_VALUE && secondItemSelector.getValue() != Integer.MAX_VALUE) {
                 boolean secondIsRow = matrix.isRow(secondItemSelector.getValue());
                 if(secondIsRow) {  // delete all columns going to a row
                     DSMItem row = matrix.getItem(secondItemSelector.getValue());
-                    for(DSMItem col : matrix.getCols()) {
-                        DSMConnection conn = matrix.getConnection(row.getUid(), col.getUid());
-                        if(conn != null && !changesToMakeView.getItems().contains(conn)) {
-                            changesToMakeView.getItems().add(conn);
-                        }
-                    }
-
+                    rowSelected.add(row);
+                    colSelected.addAll(matrix.getCols());
                 } else {  // delete all rows going to a column
                     DSMItem col = matrix.getItem(secondItemSelector.getValue());
-                    for(DSMItem row : matrix.getRows()) {
-                        DSMConnection conn = matrix.getConnection(row.getUid(), col.getUid());
-                        if(conn != null && !changesToMakeView.getItems().contains(conn)) {
-                            changesToMakeView.getItems().add(conn);
-                        }
-                    }
+                    rowSelected.addAll(matrix.getRows());
+                    colSelected.add(col);
                 }
 
             } else if(firstItemSelector.getValue() != Integer.MAX_VALUE && secondItemSelector.getValue() == Integer.MAX_VALUE) {
                 boolean firstIsRow = matrix.isRow(firstItemSelector.getValue());
                 if(firstIsRow) {  // delete all columns going to a row
                     DSMItem row = matrix.getItem(firstItemSelector.getValue());
-                    for(DSMItem col : matrix.getCols()) {
-                        DSMConnection conn = matrix.getConnection(row.getUid(), col.getUid());
-                        if(conn != null && !changesToMakeView.getItems().contains(conn)) {
-                            changesToMakeView.getItems().add(conn);
-                        }
-                    }
+                    rowSelected.add(row);
+                    colSelected.addAll(matrix.getCols());
 
                 } else {  // delete all rows going to a column
                     DSMItem col = matrix.getItem(firstItemSelector.getValue());
-                    for(DSMItem row : matrix.getRows()) {
-                        DSMConnection conn = matrix.getConnection(row.getUid(), col.getUid());
-                        if(conn != null && !changesToMakeView.getItems().contains(conn)) {
-                            changesToMakeView.getItems().add(conn);
-                        }
-                    }
+                    rowSelected.addAll(matrix.getRows());
+                    colSelected.add(col);
                 }
 
             } else if(matrix.isRow(firstItemSelector.getValue())) {
-                DSMConnection conn = matrix.getConnection(firstItemSelector.getValue(), secondItemSelector.getValue());
-                if(conn != null && !changesToMakeView.getItems().contains(conn)) {
-                    changesToMakeView.getItems().add(conn);
-                }
+                rowSelected.add(matrix.getItem(firstItemSelector.getValue()));
+                colSelected.add(matrix.getItem(secondItemSelector.getValue()));
+
             } else {
-                DSMConnection conn = matrix.getConnection(secondItemSelector.getValue(), firstItemSelector.getValue());
-                if(conn != null && !changesToMakeView.getItems().contains(conn)) {
-                    changesToMakeView.getItems().add(conn);
+                rowSelected.add(matrix.getItem(secondItemSelector.getValue()));
+                colSelected.add(matrix.getItem(firstItemSelector.getValue()));
+
+            }
+            for(DSMItem rowItem : rowSelected) {
+                for(DSMItem colItem : colSelected) {
+                    DSMConnection conn = matrix.getConnection(rowItem.getUid(), colItem.getUid());
+                    if(conn != null && !changesToMakeView.getItems().contains(conn)) {
+                        changesToMakeView.getItems().add(conn);
+                    }
                 }
             }
         });
@@ -991,70 +885,6 @@ public class AsymmetricSideBar extends TemplateSideBar<AsymmetricDSM> {
         Scene scene = new Scene(layout, 1100, 500);
         window.setScene(scene);
         window.showAndWait();
-    }
-
-
-    /**
-     * Configures a row in the edit grouping window. Does not add the row to its parent, but does not return it
-     *
-     * @param matrix     the matrix that will be updated when data about the grouping changes
-     * @param grouping   the grouping object from the matrix that this row is representing
-     * @param parent     the parent display object that will hold the row (used so that if deleted it is removed from parent)
-     * @param deletable  if the grouping is allowed to be deleted (if yes there will be a button to delete it)
-     *
-     * @return           the HBox that contains the row with all the widgets configured
-     */
-    private static HBox configureGroupingEditorRow(AsymmetricDSM matrix, Grouping grouping, VBox parent, boolean deletable) {
-        HBox display = new HBox();
-
-        TextField groupingName = new TextField();     // use a text field to display the name so that it can be renamed easily
-        groupingName.setText(grouping.getName());
-        groupingName.setMaxWidth(Double.MAX_VALUE);
-        groupingName.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
-            if (!newPropertyValue) {  // TextField changed to be not focused so update the new name in the matrix
-                if(!groupingName.getText().equals(grouping.getName())) {  // name changed
-                    matrix.renameGrouping(grouping, groupingName.getText());
-                }
-            }
-        });
-
-        Label groupingColorPickerLabel = new Label("Grouping Color: ");
-        groupingColorPickerLabel.setPadding(new Insets(10, 10, 10, 10));
-        groupingColorPickerLabel.setAlignment(Pos.TOP_RIGHT);
-        ColorPicker groupingColorPicker = new ColorPicker(grouping.getColor());
-        groupingColorPicker.setOnAction(e -> {
-            Color newColor = Color.color(groupingColorPicker.getValue().getRed(), groupingColorPicker.getValue().getGreen(), groupingColorPicker.getValue().getBlue());
-            if(!newColor.equals(grouping.getColor())) {
-                matrix.updateGroupingColor(grouping, newColor);
-            }
-        });
-
-        Label fontColorPickerLabel = new Label("Font Color: ");
-        fontColorPickerLabel.setPadding(new Insets(10, 10, 10, 30));
-        fontColorPickerLabel.setAlignment(Pos.TOP_RIGHT);
-        ColorPicker groupingFontColorPicker = new ColorPicker(grouping.getFontColor());
-        groupingFontColorPicker.setOnAction(e -> {
-            Color newColor = Color.color(groupingFontColorPicker.getValue().getRed(), groupingFontColorPicker.getValue().getGreen(), groupingFontColorPicker.getValue().getBlue());
-            if(!newColor.equals(grouping.getFontColor())) {
-                matrix.updateGroupingFontColor(grouping, newColor);
-            }
-        });
-
-        HBox deleteButtonSpace = new HBox();
-        deleteButtonSpace.setPadding(new Insets(0, 0, 0, 50));
-        Button deleteButton = new Button("Delete Grouping");  // wrap in HBox to add padding (doesn't work right otherwise)
-        deleteButton.setOnAction(e -> {
-            parent.getChildren().remove(display);  // delete the display item
-            matrix.removeGrouping(grouping);       // delete the grouping from the matrix
-        });
-        deleteButtonSpace.getChildren().add(deleteButton);
-
-        display.getChildren().addAll(groupingName, MiscWidgets.getHorizontalSpacer(), groupingColorPickerLabel, groupingColorPicker, fontColorPickerLabel, groupingFontColorPicker);
-        if(deletable) {
-            display.getChildren().add(deleteButtonSpace);
-        }
-
-        return display;
     }
 
 
@@ -1105,10 +935,10 @@ public class AsymmetricSideBar extends TemplateSideBar<AsymmetricDSM> {
             window.close();        // changes have already been made so just close the window
         });
 
-        closeArea.getChildren().addAll(MiscWidgets.getHorizontalSpacer(), applyAllButton);
+        closeArea.getChildren().addAll(Misc.getHorizontalSpacer(), applyAllButton);
 
         VBox layout = new VBox(10);
-        layout.getChildren().addAll(currentGroupingsPane, modifyArea, MiscWidgets.getVerticalSpacer(), closeArea);
+        layout.getChildren().addAll(currentGroupingsPane, modifyArea, Misc.getVerticalSpacer(), closeArea);
         layout.setAlignment(Pos.CENTER);
         layout.setPadding(new Insets(10, 10, 10, 10));
         layout.setSpacing(10);
