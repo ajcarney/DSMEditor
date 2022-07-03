@@ -1,4 +1,4 @@
-package View.MatrixHandlers;
+package View.MatrixViews;
 
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.DoubleProperty;
@@ -14,7 +14,7 @@ import java.util.HashMap;
 
 
 /**
- * Generic class to hold a data type that the matrix gui handler uses to display the matrix elements along with storing
+ * Generic class to hold a data type that matrix views use to display the matrix elements along with storing
  * metadata for them
  */
 public class Cell {
@@ -52,7 +52,9 @@ public class Cell {
         this.fontSize = fontSize;
         this.label = label;
 
-        this.guiCell.styleProperty().bind(Bindings.concat("-fx-font-size: ", fontSize));
+        if(this.guiCell != null) {
+            this.guiCell.styleProperty().bind(Bindings.concat("-fx-font-size: ", fontSize));
+        }
         if(this.label != null) {
             this.label.styleProperty().bind(fontColorCss);
         }

@@ -34,6 +34,11 @@
             <artifactId>javafx-swing</artifactId>
             <version>11-ea+24</version>
         </dependency>
+        <dependency>
+            <groupId>org.javatuples</groupId>
+            <artifactId>javatuples</artifactId>
+            <version>1.2</version>
+        </dependency>
     </dependencies>
 
     <build>  <!--javafx build for testing-->

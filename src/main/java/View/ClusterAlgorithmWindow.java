@@ -3,7 +3,7 @@ package View;
 import Data.Grouping;
 import Data.SymmetricDSM;
 import IOHandler.SymmetricIOHandler;
-import View.MatrixHandlers.StaticSymmetricHandler;
+import View.MatrixViews.SymmetricView;
 import View.Widgets.NumericTextField;
 import javafx.application.Platform;
 import javafx.beans.property.*;
@@ -495,7 +495,7 @@ public class ClusterAlgorithmWindow {
 
         popup.showAndWait();  // wait for it to finish
 
-        StaticSymmetricHandler gui = new StaticSymmetricHandler(outputMatrix, 10);
+        SymmetricView gui = new SymmetricView(outputMatrix, 10);
 
         outputMatrixLayout.getChildren().removeAll(outputMatrixLayout.getChildren());
         outputMatrixLayout.getChildren().addAll(gui.getMatrixEditor());

@@ -1,11 +1,9 @@
 package IOHandler;
 
-import Data.DSMConnection;
-import Data.DSMItem;
-import Data.Grouping;
-import Data.SymmetricDSM;
-import View.MatrixHandlers.SymmetricMatrixHandler;
-import View.MatrixHandlers.TemplateMatrixHandler;
+import Data.*;
+import View.MatrixViews.RenderMode;
+import View.MatrixViews.SymmetricView;
+import View.MatrixViews.TemplateMatrixView;
 import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
@@ -31,7 +29,7 @@ import java.util.regex.Pattern;
  *
  * @author Aiden Carney
  */
-public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, SymmetricMatrixHandler> {
+public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, SymmetricView> {
 
     /**
      * Constructor
@@ -373,31 +371,29 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
             contents.append("Customer,").append(matrix.getCustomer()).append("\n");
             contents.append("Version,").append(matrix.getVersionNumber()).append("\n");
 
-            ArrayList<ArrayList<Pair<String, Object>>> template = matrix.getGridArray();
+            ArrayList<ArrayList<Pair<RenderMode, Object>>> template = matrix.getGridArray();
             int rows = template.size();
             int columns = template.get(0).size();
 
             for(int r=0; r<rows; r++) {
                 for (int c = 0; c < columns; c++) {
-                    Pair<String, Object> item = template.get(r).get(c);
+                    Pair<RenderMode, Object> item = template.get(r).get(c);
 
-                    if (item.getKey().equals("plain_text") || item.getKey().equals("plain_text_v")) {
-                        contents.append(item.getValue()).append(",");
-                    } else if (item.getKey().equals("item_name") || item.getKey().equals("item_name_v")) {
-                        contents.append(((DSMItem) item.getValue()).getName()).append(",");
-                    } else if (item.getKey().equals("grouping_item") || item.getKey().equals("grouping_item_v")) {
-                        contents.append(((DSMItem) item.getValue()).getGroup1().getName()).append(",");
-                    } else if (item.getKey().equals("index_item")) {
-                        contents.append(((DSMItem) item.getValue()).getSortIndex()).append(",");
-                    } else if (item.getKey().equals("uneditable_connection")) {
-                        contents.append(",");
-                    } else if (item.getKey().equals("editable_connection")) {
-                        int rowUid = ((Pair<DSMItem, DSMItem>)item.getValue()).getKey().getUid();
-                        int colUid = ((Pair<DSMItem, DSMItem>)item.getValue()).getValue().getUid();
-                        if(matrix.getConnection(rowUid, colUid) != null) {
-                            contents.append(matrix.getConnection(rowUid, colUid).getConnectionName());
+                    switch(item.getKey()) {
+                        case PLAIN_TEXT, PLAIN_TEXT_V -> contents.append(item.getValue()).append(",");
+                        case ITEM_NAME, ITEM_NAME_V -> contents.append(((DSMItem) item.getValue()).getName()).append(",");
+                        case GROUPING_ITEM, GROUPING_ITEM_V -> contents.append(((DSMItem) item.getValue()).getGroup1().getName()).append(",");
+                        case INDEX_ITEM -> contents.append(((DSMItem) item.getValue()).getSortIndex()).append(",");
+                        case UNEDITABLE_CONNECTION -> contents.append(",");
+                        case EDITABLE_CONNECTION -> {
+                            int rowUid = ((Pair<DSMItem, DSMItem>)item.getValue()).getKey().getUid();
+                            int colUid = ((Pair<DSMItem, DSMItem>)item.getValue()).getValue().getUid();
+                            if(matrix.getConnection(rowUid, colUid) != null) {
+                                contents.append(matrix.getConnection(rowUid, colUid).getConnectionName());
+                            }
+                            contents.append(",");
                         }
-                        contents.append(",");
+
                     }
                 }
                 contents.append("\n");
@@ -456,24 +452,23 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
             short HORIZONTAL_ROTATION = 0;
             short VERTICAL_ROTATION = 90;
 
-            ArrayList<ArrayList<Pair<String, Object>>> template = matrix.getGridArray();
+            ArrayList<ArrayList<Pair<RenderMode, Object>>> template = matrix.getGridArray();
             int rows = template.size();
             int columns = template.get(0).size();
 
             for(int r=0; r<rows; r++) {
                 Row row = sheet.createRow(r + ROW_START);
                 for (int c=0; c<columns; c++) {
-                    Pair<String, Object> item = template.get(r).get(c);
+                    Pair<RenderMode, Object> item = template.get(r).get(c);
 
                     switch (item.getKey()) {
-                        case "plain_text" -> {
+                        case PLAIN_TEXT -> {
                             Cell cell = row.createCell(c + COL_START);
                             cell.setCellValue(item.getValue().toString());
 
                             styleExcelCell(workbook, cell, null, null, HORIZONTAL_ROTATION);
-                            break;
                         }
-                        case "plain_text_v" -> {
+                        case PLAIN_TEXT_V -> {
                             Cell cell = row.createCell(c + COL_START);
                             cell.setCellValue(item.getValue().toString());
 
@@ -482,68 +477,55 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
                             cellStyle.setVerticalAlignment(VerticalAlignment.BOTTOM);
                             cellStyle.setRotation(VERTICAL_ROTATION);
                             cell.setCellStyle(cellStyle);
-                            break;
                         }
-                        case "item_name" -> {
+                        case ITEM_NAME -> {
                             Cell cell = row.createCell(c + COL_START);
                             cell.setCellValue(((DSMItem) item.getValue()).getName().getValue());
 
                             Color bgColor = ((DSMItem) item.getValue()).getGroup1().getColor();
                             Color fontColor = ((DSMItem) item.getValue()).getGroup1().getFontColor();
                             styleExcelCell(workbook, cell, bgColor, fontColor, HORIZONTAL_ROTATION);
-
-                            break;
                         }
-                        case "item_name_v" -> {
+                        case ITEM_NAME_V -> {
                             Cell cell = row.createCell(c + COL_START);
                             cell.setCellValue(((DSMItem) item.getValue()).getName().getValue());
 
                             Color bgColor = ((DSMItem) item.getValue()).getGroup1().getColor();
                             Color fontColor = ((DSMItem) item.getValue()).getGroup1().getFontColor();
                             styleExcelCell(workbook, cell, bgColor, fontColor, VERTICAL_ROTATION);
-
-                            break;
                         }
-                        case "grouping_item" -> {
+                        case GROUPING_ITEM -> {
                             Cell cell = row.createCell(c + COL_START);
                             cell.setCellValue(((DSMItem) item.getValue()).getGroup1().getName());
 
                             Color bgColor = ((DSMItem) item.getValue()).getGroup1().getColor();
                             Color fontColor = ((DSMItem) item.getValue()).getGroup1().getFontColor();
                             styleExcelCell(workbook, cell, bgColor, fontColor, HORIZONTAL_ROTATION);
-
-                            break;
                         }
-                        case "grouping_item_v" -> {
+                        case GROUPING_ITEM_V -> {
                             Cell cell = row.createCell(c + COL_START);
                             cell.setCellValue(((DSMItem) item.getValue()).getGroup1().getName());
 
                             Color bgColor = ((DSMItem) item.getValue()).getGroup1().getColor();
                             Color fontColor = ((DSMItem) item.getValue()).getGroup1().getFontColor();
                             styleExcelCell(workbook, cell, bgColor, fontColor, VERTICAL_ROTATION);
-
-                            break;
                         }
-                        case "index_item" -> {
+                        case INDEX_ITEM -> {
                             Cell cell = row.createCell(c + COL_START);
                             cell.setCellValue(((DSMItem) item.getValue()).getSortIndex());
 
                             Color bgColor = ((DSMItem) item.getValue()).getGroup1().getColor();
                             Color fontColor = ((DSMItem) item.getValue()).getGroup1().getFontColor();
                             styleExcelCell(workbook, cell, bgColor, fontColor, HORIZONTAL_ROTATION);
-
-                            break;
                         }
-                        case "uneditable_connection" -> {
+                        case UNEDITABLE_CONNECTION -> {
                             Cell cell = row.createCell(c + COL_START);
                             cell.setCellValue("");
 
-                            Color bgColor = (Color) TemplateMatrixHandler.UNEDITABLE_CONNECTION_BACKGROUND.getFills().get(0).getFill();
+                            Color bgColor = (Color) TemplateMatrixView.UNEDITABLE_CONNECTION_BACKGROUND.getFills().get(0).getFill();
                             styleExcelCell(workbook, cell, bgColor, null, HORIZONTAL_ROTATION);
-
-                            break;
                         }
-                        case "editable_connection" -> {
+                        case EDITABLE_CONNECTION -> {
                             Integer rowUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getKey().getUid();
                             Integer colUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getValue().getUid();
 
@@ -558,12 +540,10 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
                                 Color fontColor = matrix.getItem(rowUid).getGroup1().getFontColor();
                                 styleExcelCell(workbook, cell, bgColor, fontColor, HORIZONTAL_ROTATION);
                             } else {
-                                Color bgColor = (Color) TemplateMatrixHandler.DEFAULT_BACKGROUND.getFills().get(0).getFill();
+                                Color bgColor = (Color) TemplateMatrixView.DEFAULT_BACKGROUND.getFills().get(0).getFill();
                                 Color fontColor = Grouping.defaultFontColor;
                                 styleExcelCell(workbook, cell, bgColor, fontColor, HORIZONTAL_ROTATION);
                             }
-
-                            break;
                         }
                     }
                     sheet.autoSizeColumn(c + COL_START);

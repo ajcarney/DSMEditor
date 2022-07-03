@@ -1,6 +1,6 @@
 package View.HeaderMenu;
 
-
+import Constants.Constants;
 import Data.AsymmetricDSM;
 import Data.SymmetricDSM;
 import IOHandler.AsymmetricIOHandler;
@@ -8,11 +8,11 @@ import IOHandler.SymmetricIOHandler;
 import IOHandler.TemplateIOHandler;
 import View.ConnectionSearchWidget;
 import View.EditorPane;
-import View.MatrixHandlers.AsymmetricMatrixHandler;
-import View.MatrixHandlers.SymmetricMatrixHandler;
+import View.MatrixViews.AsymmetricView;
+import View.MatrixViews.SymmetricView;
+import View.MatrixViews.TemplateMatrixView;
 import View.SideBarTools.AsymmetricSideBar;
 import View.SideBarTools.SymmetricSideBar;
-import Constants.Constants;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -24,6 +24,7 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
 import java.io.File;
+
 
 /**
  * Class to create the header of the gui. Includes menus like file, edit, and view
@@ -101,7 +102,7 @@ public abstract class TemplateHeaderMenu {
             this.editor.addTab(
                     matrix,
                     new SymmetricIOHandler(file),
-                    new SymmetricMatrixHandler(matrix, 12.0),
+                    new SymmetricView(matrix, 12.0),
                     this,
                     new SymmetricSideBar(matrix, editor
             ));
@@ -120,7 +121,7 @@ public abstract class TemplateHeaderMenu {
             this.editor.addTab(
                     matrix,
                     new AsymmetricIOHandler(file),
-                    new AsymmetricMatrixHandler(matrix, 12.0),
+                    new AsymmetricView(matrix, 12.0),
                     this,
                     new AsymmetricSideBar(matrix, editor
             ));
@@ -155,7 +156,7 @@ public abstract class TemplateHeaderMenu {
                         this.editor.addTab(
                                 matrix,
                                 ioHandler,
-                                new SymmetricMatrixHandler(matrix, 12.0),
+                                new SymmetricView(matrix, 12.0),
                                 this,
                                 new SymmetricSideBar(matrix, editor
                         ));
@@ -172,7 +173,7 @@ public abstract class TemplateHeaderMenu {
                         this.editor.addTab(
                                 matrix,
                                 ioHandler,
-                                new AsymmetricMatrixHandler(matrix, 12.0),
+                                new AsymmetricView(matrix, 12.0),
                                 this,
                                 new AsymmetricSideBar(matrix, editor
                         ));
@@ -207,7 +208,7 @@ public abstract class TemplateHeaderMenu {
                     this.editor.addTab(
                             matrix,
                             new SymmetricIOHandler(importedFile),
-                            new SymmetricMatrixHandler(matrix, 12.0),
+                            new SymmetricView(matrix, 12.0),
                             this,
                             new SymmetricSideBar(matrix, editor
                             ));
@@ -260,18 +261,39 @@ public abstract class TemplateHeaderMenu {
         zoomReset.setOnAction(e -> editor.resetFontScaling());
 
         RadioMenuItem showNames = new RadioMenuItem("Show Connection Names");
-        showNames.setSelected(true);
         showNames.setOnAction(e -> {
-            if(editor.getFocusedMatrixUid() == null) {  // TODO: this will not update to show connection names if no matrix is open
-                return;
-            }
-            editor.getMatrixController().getMatrixHandler(editor.getFocusedMatrixUid()).setShowNames(showNames.isSelected());
-            editor.getMatrixController().getMatrixHandler(editor.getFocusedMatrixUid()).refreshMatrixEditor();
+            if(editor.getFocusedMatrixUid() == null) return;
+            editor.getMatrixController().getMatrixView(editor.getFocusedMatrixUid()).setShowNames(showNames.isSelected());
+            editor.getMatrixController().getMatrixView(editor.getFocusedMatrixUid()).refreshMatrixEditor();
         });
+
+
+        RadioMenuItem fastRender = new RadioMenuItem("Fast Render");
+        fastRender.setOnAction(e -> {
+            if(editor.getFocusedMatrixUid() == null) return;
+
+            if(fastRender.isSelected()) {
+                editor.getMatrixController().getMatrixView(editor.getFocusedMatrixUid()).setCurrentMode(TemplateMatrixView.MatrixViewMode.FAST_RENDER);
+            } else {
+                editor.getMatrixController().getMatrixView(editor.getFocusedMatrixUid()).setCurrentMode(TemplateMatrixView.MatrixViewMode.EDIT);
+            }
+            editor.getMatrixController().getMatrixView(editor.getFocusedMatrixUid()).refreshMatrixEditor();
+        });
+
+        // set default values of check boxes
+        if(editor.getFocusedMatrixUid() != null) {
+            showNames.setSelected(editor.getMatrixController().getMatrixView(editor.getFocusedMatrixUid()).getShowNames());
+            fastRender.setSelected((editor.getMatrixController().getMatrixView(editor.getFocusedMatrixUid()).getCurrentMode().equals(TemplateMatrixView.MatrixViewMode.FAST_RENDER)));
+        } else {  // default to true if no matrix is open
+            showNames.setSelected(true);
+            fastRender.setSelected(false);
+        }
 
         viewMenu.getItems().addAll(zoomIn, zoomOut, zoomReset);
         viewMenu.getItems().add(new SeparatorMenuItem());
-        viewMenu.getItems().addAll(showNames);
+        viewMenu.getItems().add(showNames);
+        viewMenu.getItems().add(new SeparatorMenuItem());
+        viewMenu.getItems().add(fastRender);
     }
 
 

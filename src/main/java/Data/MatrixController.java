@@ -1,7 +1,7 @@
 package Data;
 
 import IOHandler.TemplateIOHandler;
-import View.MatrixHandlers.TemplateMatrixHandler;
+import View.MatrixViews.TemplateMatrixView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,7 +14,7 @@ public class MatrixController {
 
     private final HashMap<Integer, TemplateDSM> matrices;
     private final HashMap<Integer, TemplateIOHandler> matrixIOHandlers;
-    private final HashMap<Integer, TemplateMatrixHandler> matrixHandlers;
+    private final HashMap<Integer, TemplateMatrixView> matrixViews;
 
 
     /**
@@ -23,7 +23,7 @@ public class MatrixController {
     public MatrixController() {
         matrices = new HashMap<>();
         matrixIOHandlers = new HashMap<>();
-        matrixHandlers = new HashMap<>();
+        matrixViews = new HashMap<>();
     }
 
 
@@ -33,16 +33,16 @@ public class MatrixController {
      * @param uid            the uid to use for the matrix objects
      * @param matrix         the matrix
      * @param ioHandler      the io handler object for the matrix
-     * @param matrixHandler  the matrix handler object for the matrix
+     * @param matrixView  the matrix handler object for the matrix
      */
     public void addMatrix(
             int uid, TemplateDSM matrix,
             TemplateIOHandler ioHandler,
-            TemplateMatrixHandler matrixHandler)
+            TemplateMatrixView matrixView)
     {
         matrices.put(uid, matrix);
         matrixIOHandlers.put(uid, ioHandler);
-        matrixHandlers.put(uid, matrixHandler);
+        matrixViews.put(uid, matrixView);
     }
 
 
@@ -54,7 +54,7 @@ public class MatrixController {
     public void removeMatrix(int uid) {
         matrices.remove(uid);
         matrixIOHandlers.remove(uid);
-        matrixHandlers.remove(uid);
+        matrixViews.remove(uid);
     }
 
 
@@ -80,19 +80,19 @@ public class MatrixController {
     /**
      * @return  the hashmap for all the matrix handlers
      */
-    public HashMap<Integer, TemplateMatrixHandler> getMatrixHandlers() {
-        return this.matrixHandlers;
+    public HashMap<Integer, TemplateMatrixView> getMatrixViews() {
+        return this.matrixViews;
     }
 
 
     /**
-     * returns a matrix handler based on the matrix uid
+     * returns a matrix view based on the matrix uid
      *
      * @param matrixUid  the uid of the matrix
-     * @return           the matrix handler object associated with the uid
+     * @return           the matrix view object associated with the uid
      */
-    public TemplateMatrixHandler getMatrixHandler(int matrixUid) {
-        return this.matrixHandlers.get(matrixUid);
+    public TemplateMatrixView getMatrixView(int matrixUid) {
+        return this.matrixViews.get(matrixUid);
     }
 
 

@@ -1,7 +1,7 @@
 package View;
 
 import Data.DSMConnection;
-import View.MatrixHandlers.TemplateMatrixHandler;
+import View.MatrixViews.TemplateMatrixView;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.IntegerProperty;
@@ -105,7 +105,7 @@ public class ConnectionSearchWidget {
                 }
 
                 synchronized (editor.getFocusedMatrix()) {  // TODO: maybe this synchronization call can be removed. Idk, i was too scared to check
-                    TemplateMatrixHandler<?> m = this.editor.getMatrixController().getMatrixHandler(editor.getFocusedMatrixUid());
+                    TemplateMatrixView m = this.editor.getMatrixController().getMatrixView(editor.getFocusedMatrixUid());
 
                     matches = getMatches(searchInput.getText());
                     Set<Pair<Integer, Integer>> prevAndCurrentErrors = new HashSet<>(prevMatches);
@@ -118,7 +118,7 @@ public class ConnectionSearchWidget {
                         if (!matches.contains(pair) && prevMatches.contains(pair)) {  // old match that no longer matches, unhighlight it
                             m.clearCellHighlight(m.getGridLocFromUids(pair), "search");
                         } else {
-                            m.setCellHighlight(m.getGridLocFromUids(pair), TemplateMatrixHandler.SEARCH_BACKGROUND, "search");
+                            m.setCellHighlight(m.getGridLocFromUids(pair), TemplateMatrixView.SEARCH_BACKGROUND, "search");
                         }
                     }
 
@@ -181,7 +181,7 @@ public class ConnectionSearchWidget {
         mainLayout.setManaged(false);  // so that the layout will not take up space on the application
         searchInput.setText("");
 
-        for(TemplateMatrixHandler<?> m : this.editor.getMatrixController().getMatrixHandlers().values()) {  // clear all search highlight for all matrices for better flow when switching tabs
+        for(TemplateMatrixView m : this.editor.getMatrixController().getMatrixViews().values()) {  // clear all search highlight for all matrices for better flow when switching tabs
             m.clearAllCellsHighlight("search");
         }
     }
