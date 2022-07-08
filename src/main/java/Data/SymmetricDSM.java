@@ -18,7 +18,6 @@ import java.util.*;
  * @author: Aiden Carney
  */
 public class SymmetricDSM extends TemplateGroupedMatrix implements IPropagationAnalysis {
-    private ObservableSet<Grouping> groupings;  // ObservableSet is used so that any gui threads reading it will see changes without needing a callback set up
 
 //region Constructors
     /**

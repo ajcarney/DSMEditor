@@ -1,16 +1,18 @@
 package IOHandler;
 
-import Data.*;
+import Data.DSMConnection;
+import Data.DSMItem;
+import Data.Grouping;
+import Data.MultiDomainDSM;
+import View.MatrixViews.MultiDomainView;
 import View.MatrixViews.RenderMode;
-import View.MatrixViews.SymmetricView;
 import View.MatrixViews.TemplateMatrixView;
 import javafx.scene.paint.Color;
-import javafx.stage.FileChooser;
-import javafx.stage.Window;
 import javafx.util.Pair;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.WorkbookUtil;
-import org.apache.poi.xssf.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.jdom2.Attribute;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -18,9 +20,11 @@ import org.jdom2.input.SAXBuilder;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.OutputStream;
 import java.util.*;
-import java.util.regex.Pattern;
 
 
 /**
@@ -29,14 +33,14 @@ import java.util.regex.Pattern;
  *
  * @author Aiden Carney
  */
-public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, SymmetricView> {
+public class MultiDomainIOHandler extends TemplateIOHandler<MultiDomainDSM, MultiDomainView> {
 
     /**
      * Constructor
      *
      * @param file  the path to default to reading from and saving to
      */
-    public SymmetricIOHandler(File file) {
+    public MultiDomainIOHandler(File file) {
         super(file);
     }
 
@@ -48,10 +52,8 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
      * @return  the parsed in matrix
      */
     @Override
-    public SymmetricDSM readFile() {
+    public MultiDomainDSM readFile() {
         try {
-            SymmetricDSM matrix = new SymmetricDSM();
-
             SAXBuilder saxBuilder = new SAXBuilder();
             Document document = saxBuilder.build(savePath);  // read file into memory
             Element rootElement = document.getRootElement();
@@ -62,49 +64,57 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
             String customer = info.getChild("customer").getText();
             String version = info.getChild("version").getText();
             String type = info.getChild("type").getText();
-            if(!type.equals("symmetric")) {
+            if(!type.equals("multi-domain")) {
                 System.out.println("File was not of correct DSM type when trying to read it");
                 return null;
             }
 
+
+            // parse domains and groupings
+
+            HashMap<Integer, Grouping> matrixDomains = new HashMap<>();
+            HashMap<Integer, Grouping> matrixDomainToDomainGroupings = new HashMap<>();
+            HashMap<Integer, Grouping> matrixDomainGroupings = new HashMap<>();
+
+            // parse user defined groupings
+            List<Element> domains = rootElement.getChild("domains").getChildren();
+            for(Element domain : domains) {
+                Integer uid = Integer.parseInt(domain.getChild("uid").getText());
+                String name = domain.getChild("name").getText();
+                double group_r = Double.parseDouble(domain.getChild("gr").getText());
+                double group_g = Double.parseDouble(domain.getChild("gg").getText());
+                double group_b = Double.parseDouble(domain.getChild("gb").getText());
+                double font_r = Double.parseDouble(domain.getChild("fr").getText());
+                double font_g = Double.parseDouble(domain.getChild("fg").getText());
+                double font_b = Double.parseDouble(domain.getChild("fb").getText());
+
+                Grouping matrixDomain = new Grouping(uid, name, Color.color(group_r, group_g, group_b), Color.color(font_r, font_g, font_b));
+                matrixDomains.put(uid, matrixDomain);
+
+                List<Element> domainGroupings = rootElement.getChild("group").getChildren();
+                for(Element group : domainGroupings) {
+                    uid = Integer.parseInt(group.getChild("uid").getText());
+                    name = group.getChild("name").getText();
+                    group_r = Double.parseDouble(group.getChild("gr").getText());
+                    group_g = Double.parseDouble(group.getChild("gg").getText());
+                    group_b = Double.parseDouble(group.getChild("gb").getText());
+                    font_r = Double.parseDouble(group.getChild("fr").getText());
+                    font_g = Double.parseDouble(group.getChild("fg").getText());
+                    font_b = Double.parseDouble(group.getChild("fb").getText());
+
+                    Grouping matrixGroup = new Grouping(uid, name, Color.color(group_r, group_g, group_b), Color.color(font_r, font_g, font_b));
+                    matrixDomainToDomainGroupings.put(matrixDomain.getUid(), matrixGroup);
+                    matrixDomainGroupings.put(uid, matrixGroup);
+                }
+            }
+            MultiDomainDSM matrix = new MultiDomainDSM(new ArrayList<>(matrixDomains.values()));  // create the matrix with the given domains
+            for(Map.Entry<Integer, Grouping> domainGrouping : matrixDomainToDomainGroupings.entrySet()) {  // create the domain groupings
+                matrix.addDomainGrouping(matrixDomains.get(domainGrouping.getKey()), domainGrouping.getValue());
+            }
             matrix.setTitle(title);
             matrix.setProjectName(project);
             matrix.setCustomer(customer);
             matrix.setVersionNumber(version);
-
-            // parse groupings
-            HashMap<Integer, Grouping> matrixGroupings = new HashMap<>();
-
-            // parse default grouping
-            Element defaultGroup = rootElement.getChild("default_grouping");
-            String defaultGroupName = defaultGroup.getChild("name").getText();
-            double defaultGroupGroupColorR = Double.parseDouble(defaultGroup.getChild("gr").getText());
-            double defaultGroupGroupColorG = Double.parseDouble(defaultGroup.getChild("gg").getText());
-            double defaultGroupGroupColorB = Double.parseDouble(defaultGroup.getChild("gb").getText());
-            double defaultGroupFontColorR = Double.parseDouble(defaultGroup.getChild("fr").getText());
-            double defaultGroupFontColorG = Double.parseDouble(defaultGroup.getChild("fg").getText());
-            double defaultGroupFontColorB = Double.parseDouble(defaultGroup.getChild("fb").getText());
-            matrix.getDefaultGrouping().setName(defaultGroupName);
-            matrix.getDefaultGrouping().setColor(Color.color(defaultGroupGroupColorR, defaultGroupGroupColorG, defaultGroupGroupColorB));
-            matrix.getDefaultGrouping().setFontColor(Color.color(defaultGroupFontColorR, defaultGroupFontColorG, defaultGroupFontColorB));
-            matrixGroupings.put(Integer.MAX_VALUE, matrix.getDefaultGrouping());
-
-            // parse user defined groupings
-            List<Element> groupings = rootElement.getChild("groupings").getChildren();
-            for(Element grouping : groupings) {
-                Integer uid = Integer.parseInt(grouping.getChild("uid").getText());
-                String name = grouping.getChild("name").getText();
-                double group_r = Double.parseDouble(grouping.getChild("gr").getText());
-                double group_g = Double.parseDouble(grouping.getChild("gg").getText());
-                double group_b = Double.parseDouble(grouping.getChild("gb").getText());
-                double font_r = Double.parseDouble(grouping.getChild("fr").getText());
-                double font_g = Double.parseDouble(grouping.getChild("fg").getText());
-                double font_b = Double.parseDouble(grouping.getChild("fb").getText());
-
-                Grouping group = new Grouping(uid, name, Color.color(group_r, group_g, group_b), Color.color(font_r, font_g, font_b));
-                matrix.addGrouping(group);
-                matrixGroupings.put(uid, group);
-            }
 
 
             ArrayList<Integer> uids = new ArrayList<>();  // keep track of the uids when reading rows and columns to ensure no duplicates
@@ -119,10 +129,12 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
                 double sortIndex = Double.parseDouble(col.getChild("sort_index").getText());
                 Integer aliasUid = Integer.parseInt(col.getChild("alias").getText());
 
-                Integer groupUid = Integer.parseInt(col.getChild("group").getText());
-                Grouping group = matrixGroupings.get(groupUid);
+                Integer groupUid = Integer.parseInt(col.getChild("group1").getText());
+                Integer domainUid = Integer.parseInt(col.getChild("group2").getText());
+                Grouping domain = matrixDomains.get(domainUid);
+                Grouping group = matrixDomainGroupings.get(groupUid);
 
-                DSMItem item = new DSMItem(uid, aliasUid, sortIndex, name, group, null);
+                DSMItem item = new DSMItem(uid, aliasUid, sortIndex, name, group, domain);
                 matrix.addItem(item, false);
             }
 
@@ -137,10 +149,12 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
                 double sortIndex = Double.parseDouble(row.getChild("sort_index").getText());
                 Integer aliasUid = Integer.parseInt(row.getChild("alias").getText());
 
-                Integer groupUid = Integer.parseInt(row.getChild("group").getText());
-                Grouping group = matrixGroupings.get(groupUid);
+                Integer groupUid = Integer.parseInt(row.getChild("group1").getText());
+                Integer domainUid = Integer.parseInt(row.getChild("group2").getText());
+                Grouping domain = matrixDomains.get(domainUid);
+                Grouping group = matrixDomainGroupings.get(groupUid);
 
-                DSMItem item = new DSMItem(uid, aliasUid, sortIndex, name, group, null);
+                DSMItem item = new DSMItem(uid, aliasUid, sortIndex, name, group, domain);
                 matrix.addItem(item, true);
             }
 
@@ -178,72 +192,6 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
     }
 
 
-    /**
-     * Reads a matlab file in Thebeau's format and parses it as a SymmetricDSM object. Returns the SymmetricDSM object,
-     * but does not automatically add it to be handled.
-     *
-     * @param file  the file location to read from
-     * @return      SymmetricDSM object of the parsed in matrix
-     */
-    public SymmetricDSM importThebeauMatlabFile(File file) {
-        SymmetricDSM matrix = new SymmetricDSM();
-
-        ArrayList<String> lines = new ArrayList<>();
-        Scanner s;
-        try {
-            s = new Scanner(file);
-            while (s.hasNextLine()){
-                lines.add(s.nextLine());
-            }
-            s.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            return null;
-        }
-
-        ArrayList<ArrayList<Double>> connections = new ArrayList<>();
-        HashMap<Integer, DSMItem> rowItems = new HashMap<>();
-        HashMap<Integer, DSMItem> colItems = new HashMap<>();
-        int uid = 0;
-        for(String line : lines) {  // parse the relevant data
-            if(line.contains("DSM(")) {  // connection
-                double xLoc = Integer.parseInt(line.split(Pattern.quote("DSM("))[1].split(Pattern.quote(","))[0]);
-                double yLoc = Integer.parseInt(line.split(Pattern.quote(","))[1].split(Pattern.quote(")"))[0]);
-                double weight = Double.parseDouble(line.split(Pattern.quote("= "))[1].split(Pattern.quote(";"))[0]);
-                ArrayList<Double> data = new ArrayList<>();
-                data.add(xLoc);
-                data.add(yLoc);
-                data.add(weight);
-                if(xLoc != yLoc) {  // no need to add it to the connections
-                    connections.add(data);
-                }
-            } else if(line.contains("DSMLABEL{")) {
-                int loc = Integer.parseInt(line.split(Pattern.quote("DSMLABEL{"))[1].split(Pattern.quote(","))[0]);
-                String name = line.split(Pattern.quote("'"))[1];
-                double sortIndex = (uid / 2) + 1;  // this will make the sort indices appear like they are normally distributed
-                DSMItem rowItem = new DSMItem(uid, uid + 1, sortIndex, name, matrix.getDefaultGrouping(), null);
-                DSMItem colItem = new DSMItem(uid + 1, uid, sortIndex, name, matrix.getDefaultGrouping(), null);
-                uid += 2;  // add two because of column item
-
-                matrix.addItem(rowItem, true);
-                matrix.addItem(colItem, false);
-                rowItems.put(loc, rowItem);
-                colItems.put(loc, colItem);
-            }
-        }
-        // create the connections
-        for(ArrayList<Double> conn : connections) {
-            int rowUid = rowItems.get(conn.get(0).intValue()).getUid();
-            int colUid = colItems.get(conn.get(1).intValue()).getUid();
-
-            matrix.modifyConnection(rowUid, colUid, "x", conn.get(2));
-        }
-
-        matrix.clearStacks();  // make sure there are no changes when it is opened
-
-        return matrix;
-    }
-
 
     /**
      * Saves the matrix to an xml file specified by the caller of the function. Clears
@@ -254,7 +202,7 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
      * @return          1 on success, 0 on error
      */
     @Override
-    public int saveMatrixToFile(SymmetricDSM matrix, File file) {
+    public int saveMatrixToFile(MultiDomainDSM matrix, File file) {
         try {
             // create xml
             Element rootElement = new Element("dsm");
@@ -265,14 +213,14 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
             Element colsElement = new Element("columns");
             Element connectionsElement = new Element("connections");
             Element defaultGroupingElement = new Element("default_grouping");
-            Element groupingsElement = new Element("groupings");
+            Element groupingsElement = new Element("domains");
 
             // update metadata
             infoElement.addContent(new Element("title").setText(matrix.getTitle()));
             infoElement.addContent(new Element("project").setText(matrix.getProjectName()));
             infoElement.addContent(new Element("customer").setText(matrix.getCustomer()));
             infoElement.addContent(new Element("version").setText(matrix.getVersionNumber()));
-            infoElement.addContent(new Element("type").setText("symmetric"));
+            infoElement.addContent(new Element("type").setText("multi-domain"));
 
             // create column elements
             for(DSMItem col : matrix.getCols()) {
@@ -283,8 +231,8 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
                 if(col.getAliasUid() != null) {
                     colElement.addContent(new Element("alias").setText(col.getAliasUid().toString()));
                 }
-                colElement.addContent(new Element("group").setText(col.getGroup1().getUid().toString()));
-
+                colElement.addContent(new Element("group1").setText(col.getGroup1().getUid().toString()));
+                colElement.addContent(new Element("group2").setText(col.getGroup2().getUid().toString()));
                 colsElement.addContent(colElement);
             }
 
@@ -294,7 +242,8 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
                 rowElement.setAttribute(new Attribute("uid", Integer.valueOf(row.getUid()).toString()));
                 rowElement.addContent(new Element("name").setText(row.getName().getValue()));
                 rowElement.addContent(new Element("sort_index").setText(Double.valueOf(row.getSortIndex()).toString()));
-                rowElement.addContent(new Element("group").setText(row.getGroup1().getUid().toString()));
+                rowElement.addContent(new Element("group1").setText(row.getGroup1().getUid().toString()));
+                rowElement.addContent(new Element("group2").setText(row.getGroup2().getUid().toString()));
                 rowElement.addContent(new Element("alias").setText(row.getAliasUid().toString()));
                 rowsElement.addContent(rowElement);
             }
@@ -309,28 +258,34 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
                 connectionsElement.addContent(connElement);
             }
 
-            // create groupings elements
-            for(Grouping group: matrix.getGroupings()) {
-                Element groupElement = new Element("group");
-                groupElement.addContent(new Element("uid").setText(group.getUid().toString()));
-                groupElement.addContent(new Element("name").setText(group.getName()));
-                groupElement.addContent(new Element("gr").setText(Double.valueOf(group.getColor().getRed()).toString()));
-                groupElement.addContent(new Element("gg").setText(Double.valueOf(group.getColor().getGreen()).toString()));
-                groupElement.addContent(new Element("gb").setText(Double.valueOf(group.getColor().getBlue()).toString()));
-                groupElement.addContent(new Element("fr").setText(Double.valueOf(group.getFontColor().getRed()).toString()));
-                groupElement.addContent(new Element("fg").setText(Double.valueOf(group.getFontColor().getGreen()).toString()));
-                groupElement.addContent(new Element("fb").setText(Double.valueOf(group.getFontColor().getBlue()).toString()));
+            // create domain and domain-grouping elements
+            for(Grouping domain: matrix.getDomains()) {
+                Element domainElement = new Element("domain");
+                domainElement.addContent(new Element("uid").setText(domain.getUid().toString()));
+                domainElement.addContent(new Element("name").setText(domain.getName()));
+                domainElement.addContent(new Element("gr").setText(Double.valueOf(domain.getColor().getRed()).toString()));
+                domainElement.addContent(new Element("gg").setText(Double.valueOf(domain.getColor().getGreen()).toString()));
+                domainElement.addContent(new Element("gb").setText(Double.valueOf(domain.getColor().getBlue()).toString()));
+                domainElement.addContent(new Element("fr").setText(Double.valueOf(domain.getFontColor().getRed()).toString()));
+                domainElement.addContent(new Element("fg").setText(Double.valueOf(domain.getFontColor().getGreen()).toString()));
+                domainElement.addContent(new Element("fb").setText(Double.valueOf(domain.getFontColor().getBlue()).toString()));
 
-                groupingsElement.addContent(groupElement);
+                for(Grouping domainGroup : matrix.getDomainGroupings(domain)) {
+                    Element groupElement = new Element("group");
+                    groupElement.addContent(new Element("uid").setText(domainGroup.getUid().toString()));
+                    groupElement.addContent(new Element("name").setText(domainGroup.getName()));
+                    groupElement.addContent(new Element("gr").setText(Double.valueOf(domainGroup.getColor().getRed()).toString()));
+                    groupElement.addContent(new Element("gg").setText(Double.valueOf(domainGroup.getColor().getGreen()).toString()));
+                    groupElement.addContent(new Element("gb").setText(Double.valueOf(domainGroup.getColor().getBlue()).toString()));
+                    groupElement.addContent(new Element("fr").setText(Double.valueOf(domainGroup.getFontColor().getRed()).toString()));
+                    groupElement.addContent(new Element("fg").setText(Double.valueOf(domainGroup.getFontColor().getGreen()).toString()));
+                    groupElement.addContent(new Element("fb").setText(Double.valueOf(domainGroup.getFontColor().getBlue()).toString()));
+
+                    domainElement.addContent(groupElement);
+                }
+
+                groupingsElement.addContent(domainElement);
             }
-            // don't write uid for default grouping element because it is always the same
-            defaultGroupingElement.addContent(new Element("name").setText(matrix.getDefaultGrouping().getName()));
-            defaultGroupingElement.addContent(new Element("gr").setText(Double.valueOf(matrix.getDefaultGrouping().getColor().getRed()).toString()));
-            defaultGroupingElement.addContent(new Element("gg").setText(Double.valueOf(matrix.getDefaultGrouping().getColor().getGreen()).toString()));
-            defaultGroupingElement.addContent(new Element("gb").setText(Double.valueOf(matrix.getDefaultGrouping().getColor().getBlue()).toString()));
-            defaultGroupingElement.addContent(new Element("fr").setText(Double.valueOf(matrix.getDefaultGrouping().getFontColor().getRed()).toString()));
-            defaultGroupingElement.addContent(new Element("fg").setText(Double.valueOf(matrix.getDefaultGrouping().getFontColor().getGreen()).toString()));
-            defaultGroupingElement.addContent(new Element("fb").setText(Double.valueOf(matrix.getDefaultGrouping().getFontColor().getBlue()).toString()));
 
             doc.getRootElement().addContent(infoElement);
             doc.getRootElement().addContent(colsElement);
@@ -364,7 +319,7 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
      * @return          1 on success, 0 on error
      */
     @Override
-    public int exportMatrixToCSV(SymmetricDSM matrix, File file) {
+    public int exportMatrixToCSV(MultiDomainDSM matrix, File file) {
         try {
             StringBuilder contents = new StringBuilder("Title," + matrix.getTitle() + "\n");
             contents.append("Project Name,").append(matrix.getProjectName()).append("\n");
@@ -424,7 +379,7 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
      * @return          1 on success, 0 on error
      */
     @Override
-    public int exportMatrixToXLSX(SymmetricDSM matrix, File file) {
+    public int exportMatrixToXLSX(MultiDomainDSM matrix, File file) {
         try {
             // set up document
             XSSFWorkbook workbook = new XSSFWorkbook();
@@ -565,79 +520,5 @@ public class SymmetricIOHandler extends TemplateIOHandler<SymmetricDSM, Symmetri
         }
     }
 
-
-    /**
-     * Exports a matrix to a matlab file that can be used with Thebeau's source code
-     *
-     * @param matrix    the matrix to export
-     * @param file      the file to export the matrix to
-     * @return          1 on success, 0 on error
-     */
-    static public int exportMatrixToThebeauMatlabFile(SymmetricDSM matrix, File file) {
-        try {
-            matrix.reDistributeSortIndices();  // re-number 0 -> n
-
-            String connectionsString = "";
-            for(DSMConnection conn: matrix.getConnections()) {
-                DSMItem row = matrix.getItem(conn.getRowUid());
-                DSMItem col = matrix.getItem(conn.getColUid());
-
-                String c = "DSM("
-                        + (int)row.getSortIndex()  // add one because matlab is 1 indexed
-                        + ","
-                        + (int)col.getSortIndex()  // add one because matlab is 1 indexed
-                        + ") = "
-                        + conn.getWeight()
-                        + ";\n";
-                connectionsString += c;
-            }
-
-            String labelsString = "";
-            for(DSMItem row : matrix.getRows()) {
-                String l = "DSMLABEL{"
-                        + (int)row.getSortIndex()
-                        + ",1} = '"
-                        + row.getName()
-                        + "';\n";
-                labelsString += l;
-            }
-
-            String matlabString = "DSM_size = "
-                    + matrix.getRows().size()  // add one because of how the matlab script works
-                    + ";\nDSM = zeros(DSM_size);\n\n\n"
-                    + connectionsString
-                    + "\n\nDSMLABEL = cell(DSM_size,1);\n"
-                    + labelsString;
-
-
-            file = forceExtension(file, ".m");
-            System.out.println("Exporting to " + file.getAbsolutePath());
-            PrintWriter out = new PrintWriter(file);
-            out.println(matlabString);
-            out.close();
-
-            return 1;
-        } catch(Exception e) {  // TODO: add better error handling and bring up an alert box
-            System.out.println(e);
-            e.printStackTrace();
-            return 0;  // 0 means there was an error somewhere
-        }
-    }
-
-
-    /**
-     * Opens a file chooser window to choose a location to export a matrix to the thebeau matlab format
-     *
-     * @param matrix the matrix to save
-     * @param window the window associated with the file chooser
-     */
-    static public void promptExportToThebeau(SymmetricDSM matrix, Window window) {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Matlab File", "*.m"));  // .m is the only file type usable
-        File fileName = fileChooser.showSaveDialog(window);
-        if(fileName != null) {
-            int code = exportMatrixToThebeauMatlabFile(matrix, fileName);
-        }
-    }
 
 }

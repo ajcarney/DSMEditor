@@ -14,6 +14,7 @@ public class Grouping {
     private String name;
     private Color color;
     private Color fontColor;
+
     public static final Color defaultFontColor = Color.color(0, 0, 0);
 
 
