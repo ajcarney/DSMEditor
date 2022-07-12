@@ -1,11 +1,12 @@
 package View.SideBarTools;
 
-import Data.*;
+import Data.DSMConnection;
+import Data.DSMItem;
+import Data.Grouping;
+import Data.MultiDomainDSM;
 import View.EditorPane;
 import View.Widgets.Misc;
 import View.Widgets.NumericTextField;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -876,70 +877,193 @@ public class MultiDomainSideBar extends TemplateSideBar {
 
 
     /**
+     * Creates a row for modifying groupings (either domain or domain-grouping) for a MultiDomain matrix
+     *
+     * @param matrix          the matrix that contains the grouping
+     * @param grouping        the grouping to create the row for
+     * @param deleteFunction  the function to run when the delete button is called
+     * @param deletable       if a delete button should be present for the domain
+     * @return                HBox of the row
+     */
+    private static HBox configureGroupingEditorRow(MultiDomainDSM matrix, Grouping grouping, Runnable deleteFunction, boolean deletable) {
+        HBox display = new HBox();
+        display.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(display, Priority.ALWAYS);
+
+        TextField groupingName = new TextField();     // use a text field to display the name so that it can be renamed easily
+        groupingName.setText(grouping.getName());
+        groupingName.setMaxWidth(Double.MAX_VALUE);
+        groupingName.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
+            if (!newPropertyValue) {  // TextField changed to be not focused so update the new name in the matrix
+                if(!groupingName.getText().equals(grouping.getName())) {  // name changed
+                    matrix.renameGrouping(grouping, groupingName.getText());
+                }
+            }
+        });
+
+        Label groupingColorPickerLabel = new Label("Color: ");
+        groupingColorPickerLabel.setPadding(new Insets(10, 10, 10, 10));
+        groupingColorPickerLabel.setAlignment(Pos.TOP_RIGHT);
+        ColorPicker groupingColorPicker = new ColorPicker(grouping.getColor());
+        groupingColorPicker.setOnAction(e -> {
+            Color newColor = Color.color(groupingColorPicker.getValue().getRed(), groupingColorPicker.getValue().getGreen(), groupingColorPicker.getValue().getBlue());
+            if(!newColor.equals(grouping.getColor())) {
+                matrix.updateGroupingColor(grouping, newColor);
+            }
+        });
+
+        Label fontColorPickerLabel = new Label("Font Color: ");
+        fontColorPickerLabel.setPadding(new Insets(10, 10, 10, 30));
+        fontColorPickerLabel.setAlignment(Pos.TOP_RIGHT);
+        ColorPicker groupingFontColorPicker = new ColorPicker(grouping.getFontColor());
+        groupingFontColorPicker.setOnAction(e -> {
+            Color newColor = Color.color(groupingFontColorPicker.getValue().getRed(), groupingFontColorPicker.getValue().getGreen(), groupingFontColorPicker.getValue().getBlue());
+            if(!newColor.equals(grouping.getFontColor())) {
+                matrix.updateGroupingFontColor(grouping, newColor);
+            }
+        });
+
+        HBox deleteButtonSpace = new HBox();
+        deleteButtonSpace.setPadding(new Insets(0, 0, 0, 50));
+        Button deleteButton = new Button("Delete");  // wrap in HBox to add padding (doesn't work right otherwise)
+        deleteButton.setOnAction(e -> {
+            deleteFunction.run();
+        });
+        if(deletable) {
+            deleteButtonSpace.getChildren().add(deleteButton);
+        }
+
+        display.getChildren().addAll(groupingName, Misc.getHorizontalSpacer(), groupingColorPickerLabel, groupingColorPicker, fontColorPickerLabel, groupingFontColorPicker);
+        display.getChildren().add(deleteButtonSpace);
+
+        return display;
+    }
+
+
+    /**
+     * Creates the edit pane for a given domain
+     *
+     * @param matrix  the matrix that contains the domain
+     * @param parent  the parent VBox that will contain the created pane
+     * @param domain  the domain to create the edit view for
+     */
+    private static void configureDomainRow(MultiDomainDSM matrix, VBox parent, Grouping domain) {
+        VBox domainEditLayout = new VBox();
+        VBox groupingsLayout = new VBox();
+
+        HBox domainRow = configureGroupingEditorRow(matrix, domain, () -> {
+            if(matrix.getDomains().size() > 1) {
+                // TODO: Prompt delete confirmation
+                matrix.removeDomain(domain);  // delete the grouping from the matrix
+                parent.getChildren().remove(domainEditLayout);  // remove the domain from the view
+            }  // TODO: prompt that it can't be deleted
+        }, true);
+        groupingsLayout.getChildren().add(domainRow);
+
+        for(Grouping domainGrouping : matrix.getDomainGroupings(domain)) {
+            HBox groupingRow = new HBox();
+            groupingRow.setPadding(new Insets(0, 0, 0, 50));
+            groupingRow.setMaxWidth(Double.MAX_VALUE);
+            HBox.setHgrow(groupingRow, Priority.ALWAYS);
+            boolean deletable = !domainGrouping.getUid().equals(Integer.MAX_VALUE);
+
+            HBox groupingRowContent = configureGroupingEditorRow(matrix, domainGrouping, () -> {
+                if(matrix.getDomainGroupings(domain).size() > 1) {
+                    matrix.removeGrouping(domain, domainGrouping);  // delete the grouping from the matrix
+                    groupingsLayout.getChildren().remove(groupingRow);  // remove the domain from the view
+                }  // TODO: prompt that it can't be deleted
+            }, deletable);
+
+            groupingRow.getChildren().add(groupingRowContent);
+            groupingsLayout.getChildren().add(groupingRow);
+        }
+
+        Button addDomainGroupingButton = new Button("Add New Grouping");
+        addDomainGroupingButton.setOnAction(e -> {
+            Grouping newDomainGrouping = new Grouping("New Grouping", Color.color(1, 1, 1));
+            HBox groupingRow = new HBox();  // wrap content in another hbox to add padding for an indent
+            groupingRow.setPadding(new Insets(0, 0, 0, 50));
+            HBox groupingRowContent = configureGroupingEditorRow(matrix, newDomainGrouping, () -> {
+                if (matrix.getDomainGroupings(domain).size() > 1) {
+                    matrix.removeGrouping(domain, newDomainGrouping);  // delete the grouping from the matrix
+                    groupingsLayout.getChildren().remove(groupingRow);  // remove the domain from the view
+                }  // TODO: prompt that it can't be deleted
+            }, true);
+
+            groupingRow.getChildren().add(groupingRowContent);
+            groupingsLayout.getChildren().add(groupingRow);
+            matrix.addDomainGrouping(domain, newDomainGrouping);
+        });
+
+        domainEditLayout.setAlignment(Pos.CENTER);
+        domainEditLayout.setPadding(new Insets(5));
+        domainEditLayout.getChildren().addAll(groupingsLayout, addDomainGroupingButton);
+        domainEditLayout.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
+        parent.getChildren().add(domainEditLayout);
+    }
+
+
+
+    /**
      * Sets up the button for modifying groupings in the matrix
      */
     private void configureGroupingsCallback() {
-//        // Create Root window
-//        Stage window = new Stage();
-//        window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
-//        window.setTitle("Configure Groupings");
-//
-//        VBox allGroupings = new VBox();
-//        VBox mainGroupingsView = new VBox();
-//        ScrollPane currentGroupingsPane = new ScrollPane(allGroupings);
-//        currentGroupingsPane.setFitToWidth(true);
-//
-//        for(Grouping grouping : matrix.getGroupings()) {
-//            HBox groupRow = configureGroupingEditorRow(matrix, grouping, mainGroupingsView, true);
-//            mainGroupingsView.getChildren().add(groupRow);
-//        }
-//        HBox defaultGroupLabel = new HBox();
-//        defaultGroupLabel.setPadding(new Insets(10));
-//        defaultGroupLabel.getChildren().add(new Label("Default Grouping:"));
-//
-//        HBox defaultGroupRow = configureGroupingEditorRow(matrix, matrix.getDefaultGrouping(), mainGroupingsView, false);
-//        allGroupings.getChildren().addAll(mainGroupingsView, defaultGroupLabel, defaultGroupRow);
-//
-//        // area to add, delete, rename
-//        HBox modifyArea = new HBox();
-//        modifyArea.setAlignment(Pos.CENTER);
-//
-//        Button addButton = new Button("Add New Grouping");
-//        addButton.setOnAction(e -> {
-//            Grouping newGrouping = new Grouping("New Grouping", Color.color(1, 1, 1));
-//            HBox groupRow = configureGroupingEditorRow(matrix, newGrouping, mainGroupingsView, true);
-//            matrix.addGrouping(newGrouping);
-//            mainGroupingsView.getChildren().add(groupRow);
-//        });
-//
-//        modifyArea.getChildren().add(addButton);
-//
-//        // create HBox for user to close with changes
-//        HBox closeArea = new HBox();
-//        Button applyAllButton = new Button("Ok");
-//
-//        applyAllButton.setOnAction(e -> {
-//            window.close();        // changes have already been made so just close the window
-//        });
-//
-//        closeArea.getChildren().addAll(Misc.getHorizontalSpacer(), applyAllButton);
-//
-//        VBox layout = new VBox(10);
-//        layout.getChildren().addAll(currentGroupingsPane, modifyArea, Misc.getVerticalSpacer(), closeArea);
-//        layout.setAlignment(Pos.CENTER);
-//        layout.setPadding(new Insets(10, 10, 10, 10));
-//        layout.setSpacing(10);
-//
-//
-//        //Display window and wait for it to be closed before returning
-//        Scene scene = new Scene(layout, 900, 300);
-//        window.setScene(scene);
-//        scene.getWindow().setOnHidden(e -> {  // TODO: 6/17/2020 changed from setOnCloseRequest when it was working before and idk why this fixed it
-//            window.close();                        // changes have already been made so just close and refresh the screen
-//            matrix.setCurrentStateAsCheckpoint();
-//            editor.refreshTab();
-//        });
-//        window.showAndWait();
+        // Create Root window
+        Stage window = new Stage();
+        window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
+        window.setTitle("Configure Groupings");
+
+        VBox mainView = new VBox();
+        mainView.setSpacing(15);
+        VBox groupingsView = new VBox();
+        groupingsView.setSpacing(25);
+
+        for(Grouping domain : matrix.getDomains()) {
+            configureDomainRow(matrix, groupingsView, domain);
+        }
+
+
+        HBox addDomainButtonPane = new HBox();
+        Button addDomainButton = new Button("Add New Domain");
+        addDomainButton.setOnAction(e -> {
+            Grouping newDomain = new Grouping("New Domain", Color.color(1, 1, 1));
+            matrix.addDomain(newDomain);
+            configureDomainRow(matrix, groupingsView, newDomain);
+        });
+        addDomainButtonPane.getChildren().addAll(Misc.getHorizontalSpacer(), addDomainButton);
+
+        ScrollPane groupingsScrollView = new ScrollPane(groupingsView);
+        groupingsScrollView.setFitToWidth(true);
+        mainView.getChildren().add(groupingsScrollView);
+        mainView.getChildren().add(addDomainButtonPane);
+
+
+        // create HBox for user to close with changes
+        HBox closeArea = new HBox();
+        Button applyAllButton = new Button("Ok");
+
+        applyAllButton.setOnAction(e -> {
+            window.close();        // changes have already been made so just close the window
+        });
+
+        closeArea.getChildren().addAll(Misc.getHorizontalSpacer(), applyAllButton);
+
+        VBox layout = new VBox(10);
+        layout.getChildren().addAll(mainView, Misc.getVerticalSpacer(), closeArea);
+        layout.setAlignment(Pos.CENTER);
+        layout.setPadding(new Insets(10, 10, 10, 10));
+        layout.setSpacing(10);
+
+
+        //Display window and wait for it to be closed before returning
+        Scene scene = new Scene(layout, 1000, 400);
+        window.setScene(scene);
+        scene.getWindow().setOnHidden(e -> {  // TODO: 6/17/2020 changed from setOnCloseRequest when it was working before and idk why this fixed it
+            window.close();                        // changes have already been made so just close and refresh the screen
+            matrix.setCurrentStateAsCheckpoint();
+            editor.refreshTab();
+        });
+        window.showAndWait();
     }
 
 }

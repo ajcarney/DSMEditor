@@ -520,7 +520,11 @@ public abstract class TemplateDSM {
                     removeItem(item);
                 },
                 () -> {  // undo function
-                    addItem(item, isRow);
+                    if(isRow) {
+                        this.rows.add(item);
+                    } else {
+                        this.cols.add(item);
+                    }
                 },
                 false
         ));
@@ -693,9 +697,7 @@ public abstract class TemplateDSM {
                     }
                 },
                 () -> {  // undo function
-                    if(finalConnection == null) {
-                        removeConnection(rowUid, colUid);
-                    } else {
+                    if(finalConnection != null) {
                         finalConnection.setConnectionName(finalOldName);
                         finalConnection.setWeight(finalOldWeight);
                     }
@@ -832,10 +834,10 @@ public abstract class TemplateDSM {
      * @param title the new title data for the matrix
      */
     public final void setTitle(String title) {
-        String currentState = this.title;
+        String currentTitle = this.title;
         addChangeToStack(new MatrixChange(
                 () -> this.title = title,
-                () -> this.title = currentState,
+                () -> this.title = currentTitle,
                 false
         ));
     }
@@ -857,10 +859,10 @@ public abstract class TemplateDSM {
      * @param projectName the new project name data for the matrix
      */
     public final void setProjectName(String projectName) {
-        String currentState = this.projectName;
+        String currentName = this.projectName;
         addChangeToStack(new MatrixChange(
                 () -> this.projectName = projectName,
-                () -> this.projectName = currentState,
+                () -> this.projectName = currentName,
                 false
         ));
     }
@@ -882,10 +884,10 @@ public abstract class TemplateDSM {
      * @param customer the new customer data for the matrix
      */
     public final void setCustomer(String customer) {
-        String currentState = this.customer;
+        String currentCustomer = this.customer;
         addChangeToStack(new MatrixChange(
                 () -> this.customer = customer,
-                () -> this.customer = currentState,
+                () -> this.customer = currentCustomer,
                 false
         ));
     }
@@ -907,10 +909,10 @@ public abstract class TemplateDSM {
      * @param versionNumber the new version number data for the matrix
      */
     public final void setVersionNumber(String versionNumber) {
-        String currentState = this.versionNumber;
+        String currentVersionNumber = this.versionNumber;
         addChangeToStack(new MatrixChange(
                 () -> this.versionNumber = versionNumber,
-                () -> this.versionNumber = currentState,
+                () -> this.versionNumber = currentVersionNumber,
                 false
         ));
     }

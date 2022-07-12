@@ -9,9 +9,8 @@ import javafx.scene.paint.Color;
 import javafx.util.Pair;
 import org.javatuples.Triplet;
 
-import java.time.Duration;
-import java.time.Instant;
 import java.util.*;
+
 
 /**
  * A class that contains data about a matrix. All operations to a matrix come through
@@ -23,8 +22,33 @@ import java.util.*;
  */
 public class MultiDomainDSM extends TemplateDSM {
     private final Grouping defaultDomain = new Grouping(Integer.MAX_VALUE, "default", Color.WHITE, Grouping.defaultFontColor);
-    private final Grouping defaultDomainGroup = new Grouping(Integer.MAX_VALUE, "default", Color.WHITE, Grouping.defaultFontColor);
     private ObservableMap<Grouping, ObservableSet<Grouping>> domains;  // hashmap of domains and list of groupings corresponding to that domain
+
+
+    /**
+     * Creates a default domain-grouping and adds it to the hashmap
+     *
+     * @param domain  the domain that this is the default of
+     */
+    private void createNewDefaultDomainGroup(Grouping domain) {
+        if(getDefaultDomainGroup(domain) == null) {
+            Grouping group = new Grouping(Integer.MAX_VALUE, "default", Color.WHITE, Grouping.defaultFontColor);
+            addDomainGrouping(domain, group);
+        }
+    }
+
+    /**
+     * @return  the default domain grouping object
+     */
+    private Grouping getDefaultDomainGroup(Grouping domain) {
+        for(Grouping domainGrouping : domains.get(domain)) {
+            if(domainGrouping.getUid().equals(Integer.MAX_VALUE)) {
+                return domainGrouping;
+            }
+        }
+        return null;
+    }
+
 
 //region Constructors
     /**
@@ -36,7 +60,8 @@ public class MultiDomainDSM extends TemplateDSM {
 
         connections = new Vector<>();
         domains = FXCollections.observableHashMap();
-        domains.put(defaultDomain, FXCollections.observableSet(defaultDomainGroup));  // add the default
+        domains.put(defaultDomain, FXCollections.observableSet());  // add the default
+        createNewDefaultDomainGroup(defaultDomain);
 
         this.wasModified = true;
 
@@ -49,18 +74,22 @@ public class MultiDomainDSM extends TemplateDSM {
      * Creates the domains so that the default need not be present. If the arraylist is empty it will put
      * the default domain in so that there is always at least one domain
      */
-    public MultiDomainDSM(Collection<Grouping> domains) {
+    public MultiDomainDSM(HashMap<Grouping, Collection<Grouping>> domains) {
         super();
 
         connections = new Vector<>();
 
         this.domains = FXCollections.observableHashMap();
         if(domains.size() > 0) {
-            for(Grouping domain : domains) {
-                addDomain(domain);
+            for(Map.Entry<Grouping, Collection<Grouping>> domain : domains.entrySet()) {
+                ObservableSet<Grouping> domainGroupings = FXCollections.observableSet();
+                for(Grouping domainGrouping : domain.getValue()) {
+                    domainGroupings.add(domainGrouping);
+                }
+                this.domains.put(domain.getKey(), domainGroupings);
             }
         } else {
-            addDomain(defaultDomain);
+            this.domains.put(defaultDomain, FXCollections.observableSet());
         }
         this.wasModified = true;
 
@@ -120,9 +149,11 @@ public class MultiDomainDSM extends TemplateDSM {
      * @param domain  the object of type Grouping to add
      */
     public void addDomain(Grouping domain) {
+        Grouping group = new Grouping(Integer.MAX_VALUE, "default", Color.WHITE, Grouping.defaultFontColor);
         addChangeToStack(new MatrixChange(
                 () -> {  // do function
-                    domains.put(domain, FXCollections.observableSet(defaultDomainGroup));
+                    domains.put(domain, FXCollections.observableSet());
+                    domains.get(domain).add(group);
                 },
                 () -> {  // undo function
                     domains.remove(domain);
@@ -150,16 +181,16 @@ public class MultiDomainDSM extends TemplateDSM {
                 },
                 () -> {  // undo function
                     domains.get(domain).remove(group);
-                    for(DSMItem item : rows) {  // TODO: I don't think the rest of this is necessary, ensure that it is
-                        if(item.getGroup2().equals(domain) && item.getGroup1().equals(group)) {
-                            item.setGroup1(defaultDomainGroup);
-                        }
-                    }
-                    for(DSMItem item : cols) {
-                        if(item.getGroup2().equals(domain) && item.getGroup1().equals(group)) {
-                            item.setGroup1(defaultDomainGroup);
-                        }
-                    }
+//                    for(DSMItem item : rows) {  // TODO: I don't think the rest of this is necessary, ensure that it is
+//                        if(item.getGroup2().equals(domain) && item.getGroup1().equals(group)) {
+//                            item.setGroup1(getDefaultDomainGroup(domain, false));
+//                        }
+//                    }
+//                    for(DSMItem item : cols) {
+//                        if(item.getGroup2().equals(domain) && item.getGroup1().equals(group)) {
+//                            item.setGroup1(getDefaultDomainGroup(domain, false));
+//                        }
+//                    }
                 },
                 false
         ));
@@ -174,16 +205,15 @@ public class MultiDomainDSM extends TemplateDSM {
      * @return        -1 if the operation was not completed because there always has to be one domain, or 0 if successful
      */
     public int removeDomain(Grouping domain) {
-        if(domains.size() <=1) return -1;
+        if(domains.size() <= 1) return -1;
 
-        Vector<DSMItem> oldRows = new Vector<>(rows);
-        Vector<DSMItem> oldCols = new Vector<>(cols);
+//        final Vector<DSMItem> oldRows = new Vector<>();
+//        final Vector<DSMItem> oldCols = new Vector<>();
         ObservableSet<Grouping> domainGroupings = domains.get(domain);
+
 
         addChangeToStack(new MatrixChange(
                 () -> {  // do function
-                    domains.remove(domain);
-
                     // remove all the items with the given domain
                     ArrayList<DSMItem> rowsToDelete = new ArrayList<>();
                     for(DSMItem item : rows) {
@@ -193,10 +223,10 @@ public class MultiDomainDSM extends TemplateDSM {
                     for(DSMItem item : rowsToDelete) {  // remove all the items symmetrically
                         deleteItem(item);
                     }
+
+                    domains.remove(domain);
                 },
                 () -> {  // undo function
-                    rows = oldRows;
-                    cols = oldCols;
                     domains.put(domain, domainGroupings);
                 },
                 false
@@ -211,14 +241,18 @@ public class MultiDomainDSM extends TemplateDSM {
      * @param group  the object of type Grouping to remove
      */
     public void removeGrouping(Grouping domain, Grouping group) {
+        if(group.equals(getDefaultDomainGroup(domain))) {  // don't allow deleting the default domain-grouping
+            return;
+        }
+
         for(DSMItem item : rows) {  // these changes already get put on the stack so no need to add them a second time
             if(item.getGroup2().equals(domain) && item.getGroup1().equals(group)) {
-                setItemDomainGroup(item, domain, defaultDomainGroup);
+                setItemDomainGroup(item, domain, getDefaultDomainGroup(domain));
             }
         }
         for(DSMItem item : cols) {
             if(item.getGroup2().equals(domain) && item.getGroup1().equals(group)) {
-                setItemDomainGroup(item, domain, defaultDomainGroup);
+                setItemDomainGroup(item, domain, getDefaultDomainGroup(domain));
             }
         }
 
@@ -241,16 +275,17 @@ public class MultiDomainDSM extends TemplateDSM {
         ObservableSet<Grouping> oldGroupings = FXCollections.observableSet();
         oldGroupings.addAll(domains.get(domain));
 
-        for(DSMItem r : rows) {
-            setItemDomainGroup(r, r.getGroup2(), defaultDomainGroup);
+        for(DSMItem r : rows) {  // TODO: fix
+            setItemDomainGroup(r, r.getGroup2(), getDefaultDomainGroup(domain));
         }
         for(DSMItem c : cols) {
-            setItemDomainGroup(c, c.getGroup2(), defaultDomainGroup);
+            setItemDomainGroup(c, c.getGroup2(), getDefaultDomainGroup(domain));
         }
 
         addChangeToStack(new MatrixChange(
                 () -> {  // do function
                     domains.get(domain).clear();
+                    createNewDefaultDomainGroup(domain);  // add the default back
                 },
                 () -> {  // undo function
                     domains.put(domain, oldGroupings);
@@ -362,14 +397,14 @@ public class MultiDomainDSM extends TemplateDSM {
         addChangeToStack(new MatrixChange(
                 () -> {  // do function
                     if(addedNewGroup) {
-                        addDomainGrouping(domain, newGroup);
+                        domains.get(domain).add(newGroup);
                     }
                     item.setGroup1(newGroup);
                     aliasedItem.setGroup1(newGroup);
                 },
                 () -> {  // undo function
                     if(addedNewGroup) {
-                        removeGrouping(domain, newGroup);
+                        domains.get(domain).remove(newGroup);
                     }
                     item.setGroup1(oldGroup);
                     aliasedItem.setGroup1(oldGroup);
@@ -401,8 +436,8 @@ public class MultiDomainDSM extends TemplateDSM {
         }
         rowItem.setGroup2(domain);
         colItem.setGroup2(domain);
-        rowItem.setGroup1(defaultDomainGroup);
-        colItem.setGroup1(defaultDomainGroup);
+        rowItem.setGroup1(getDefaultDomainGroup(domain));
+        colItem.setGroup1(getDefaultDomainGroup(domain));
 
         colItem.setAliasUid(rowItem.getUid());
         rowItem.setAliasUid(colItem.getUid());
@@ -441,8 +476,13 @@ public class MultiDomainDSM extends TemplateDSM {
                     removeItem(aliasedItem);
                 },
                 () -> {  // undo function
-                    addItem(item, isRow);
-                    addItem(aliasedItem, !isRow);
+                    if(isRow) {
+                        this.rows.add(item);
+                        this.cols.add(aliasedItem);
+                    } else {
+                        this.rows.add(aliasedItem);
+                        this.cols.add(item);
+                    }
                 },
                 false
         ));

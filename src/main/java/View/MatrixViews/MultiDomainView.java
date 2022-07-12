@@ -335,9 +335,8 @@ public class MultiDomainView extends TemplateMatrixView {
                                     @Override
                                     protected void updateItem(Grouping group, boolean empty) {
                                         super.updateItem(group, empty);
-
                                         if (empty || group == null) {
-                                            setText(null);
+                                            setText("");
                                         } else {
                                             setText(group.getName());
                                             // this is a stupid janky hack because javafx styling is stupid and hard to work with when you want it to be dynamic

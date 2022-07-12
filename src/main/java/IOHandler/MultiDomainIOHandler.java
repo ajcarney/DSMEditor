@@ -73,7 +73,7 @@ public class MultiDomainIOHandler extends TemplateIOHandler<MultiDomainDSM, Mult
             // parse domains and groupings
 
             HashMap<Integer, Grouping> matrixDomains = new HashMap<>();
-            HashMap<Integer, Grouping> matrixDomainToDomainGroupings = new HashMap<>();
+            HashMap<Grouping, Collection<Grouping>> groupingConfiguration = new HashMap<>();
             HashMap<Integer, Grouping> matrixDomainGroupings = new HashMap<>();
 
             // parse user defined groupings
@@ -90,8 +90,9 @@ public class MultiDomainIOHandler extends TemplateIOHandler<MultiDomainDSM, Mult
 
                 Grouping matrixDomain = new Grouping(uid, name, Color.color(group_r, group_g, group_b), Color.color(font_r, font_g, font_b));
                 matrixDomains.put(uid, matrixDomain);
+                groupingConfiguration.put(matrixDomain, new ArrayList<>());
 
-                List<Element> domainGroupings = rootElement.getChild("group").getChildren();
+                List<Element> domainGroupings = domain.getChild("domainGroupings").getChildren();
                 for(Element group : domainGroupings) {
                     uid = Integer.parseInt(group.getChild("uid").getText());
                     name = group.getChild("name").getText();
@@ -103,14 +104,11 @@ public class MultiDomainIOHandler extends TemplateIOHandler<MultiDomainDSM, Mult
                     font_b = Double.parseDouble(group.getChild("fb").getText());
 
                     Grouping matrixGroup = new Grouping(uid, name, Color.color(group_r, group_g, group_b), Color.color(font_r, font_g, font_b));
-                    matrixDomainToDomainGroupings.put(matrixDomain.getUid(), matrixGroup);
+                    groupingConfiguration.get(matrixDomain).add(matrixGroup);
                     matrixDomainGroupings.put(uid, matrixGroup);
                 }
             }
-            MultiDomainDSM matrix = new MultiDomainDSM(new ArrayList<>(matrixDomains.values()));  // create the matrix with the given domains
-            for(Map.Entry<Integer, Grouping> domainGrouping : matrixDomainToDomainGroupings.entrySet()) {  // create the domain groupings
-                matrix.addDomainGrouping(matrixDomains.get(domainGrouping.getKey()), domainGrouping.getValue());
-            }
+            MultiDomainDSM matrix = new MultiDomainDSM(groupingConfiguration);  // create the matrix with the given domains
             matrix.setTitle(title);
             matrix.setProjectName(project);
             matrix.setCustomer(customer);
@@ -131,8 +129,8 @@ public class MultiDomainIOHandler extends TemplateIOHandler<MultiDomainDSM, Mult
 
                 Integer groupUid = Integer.parseInt(col.getChild("group1").getText());
                 Integer domainUid = Integer.parseInt(col.getChild("group2").getText());
-                Grouping domain = matrixDomains.get(domainUid);
                 Grouping group = matrixDomainGroupings.get(groupUid);
+                Grouping domain = matrixDomains.get(domainUid);
 
                 DSMItem item = new DSMItem(uid, aliasUid, sortIndex, name, group, domain);
                 matrix.addItem(item, false);
@@ -151,8 +149,8 @@ public class MultiDomainIOHandler extends TemplateIOHandler<MultiDomainDSM, Mult
 
                 Integer groupUid = Integer.parseInt(row.getChild("group1").getText());
                 Integer domainUid = Integer.parseInt(row.getChild("group2").getText());
-                Grouping domain = matrixDomains.get(domainUid);
                 Grouping group = matrixDomainGroupings.get(groupUid);
+                Grouping domain = matrixDomains.get(domainUid);
 
                 DSMItem item = new DSMItem(uid, aliasUid, sortIndex, name, group, domain);
                 matrix.addItem(item, true);
@@ -270,6 +268,7 @@ public class MultiDomainIOHandler extends TemplateIOHandler<MultiDomainDSM, Mult
                 domainElement.addContent(new Element("fg").setText(Double.valueOf(domain.getFontColor().getGreen()).toString()));
                 domainElement.addContent(new Element("fb").setText(Double.valueOf(domain.getFontColor().getBlue()).toString()));
 
+                Element domainGroupingsElement = new Element("domainGroupings");
                 for(Grouping domainGroup : matrix.getDomainGroupings(domain)) {
                     Element groupElement = new Element("group");
                     groupElement.addContent(new Element("uid").setText(domainGroup.getUid().toString()));
@@ -281,8 +280,9 @@ public class MultiDomainIOHandler extends TemplateIOHandler<MultiDomainDSM, Mult
                     groupElement.addContent(new Element("fg").setText(Double.valueOf(domainGroup.getFontColor().getGreen()).toString()));
                     groupElement.addContent(new Element("fb").setText(Double.valueOf(domainGroup.getFontColor().getBlue()).toString()));
 
-                    domainElement.addContent(groupElement);
+                    domainGroupingsElement.addContent(groupElement);
                 }
+                domainElement.addContent(domainGroupingsElement);
 
                 groupingsElement.addContent(domainElement);
             }

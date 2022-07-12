@@ -1,15 +1,16 @@
-import Data.AsymmetricDSM;
-import Data.MatrixController;
-import Data.SymmetricDSM;
-import Data.TemplateDSM;
+import Data.*;
 import IOHandler.AsymmetricIOHandler;
+import IOHandler.MultiDomainIOHandler;
 import IOHandler.SymmetricIOHandler;
 import View.EditorPane;
 import View.HeaderMenu.AsymmetricHeaderMenu;
+import View.HeaderMenu.MultiDomainHeaderMenu;
 import View.HeaderMenu.SymmetricHeaderMenu;
 import View.MatrixViews.AsymmetricView;
+import View.MatrixViews.MultiDomainView;
 import View.MatrixViews.SymmetricView;
 import View.SideBarTools.AsymmetricSideBar;
+import View.SideBarTools.MultiDomainSideBar;
 import View.SideBarTools.SymmetricSideBar;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -54,18 +55,18 @@ public class DSMApplication extends Application {
 
         // start with a tab open (used for debugging, remove or comment out for release)
         if(cliArgs.contains("debug=true")) {
-            File f = new File("/home/aiden/Documents/DSMEditor/test3.dsm");
-            if(f.exists()) {
-                SymmetricIOHandler ioHandler = new SymmetricIOHandler(f);
-                SymmetricDSM matrix = ioHandler.readFile();
-                editor.addTab(
-                        matrix,
-                        ioHandler,
-                        new SymmetricView(matrix, 12.0),
-                        new SymmetricHeaderMenu(editor),
-                        new SymmetricSideBar(matrix, editor)
-                );
-            }
+//            File f = new File("/home/aiden/Documents/DSMEditor/test3.dsm");
+//            if(f.exists()) {
+//                SymmetricIOHandler ioHandler = new SymmetricIOHandler(f);
+//                SymmetricDSM matrix = ioHandler.readFile();
+//                editor.addTab(
+//                        matrix,
+//                        ioHandler,
+//                        new SymmetricView(matrix, 12.0),
+//                        new SymmetricHeaderMenu(editor),
+//                        new SymmetricSideBar(matrix, editor)
+//                );
+//            }
 //            File f = new File("/home/aiden/Documents/DSMEditor/untitled0.dsm");
 //            if(f.exists()) {
 //                AsymmetricIOHandler ioHandler = new AsymmetricIOHandler(f);
@@ -78,6 +79,18 @@ public class DSMApplication extends Application {
 //                        new AsymmetricSideBar(matrix, editor)
 //                );
 //            }
+            File f = new File("/home/aiden/Documents/DSMEditor/test6.dsm");
+            if(f.exists()) {
+                MultiDomainIOHandler ioHandler = new MultiDomainIOHandler(f);
+                MultiDomainDSM matrix = ioHandler.readFile();
+                editor.addTab(
+                        matrix,
+                        ioHandler,
+                        new MultiDomainView(matrix, 12.0),
+                        new MultiDomainHeaderMenu(editor),
+                        new MultiDomainSideBar(matrix, editor)
+                );
+            }
         }
 
         for (String cliArg : cliArgs) {
