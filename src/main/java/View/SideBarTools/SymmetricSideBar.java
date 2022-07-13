@@ -160,7 +160,7 @@ public class SymmetricSideBar extends TemplateSideBar {
                 if (empty || item == null) {
                     setText(null);
                 } else {
-                    setText(matrix.getItem(item).getName() + " (Row/Column)");
+                    setText(matrix.getItem(item).getName().getValue() + " (Row/Column)");
                 }
             }
         });

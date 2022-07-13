@@ -17,13 +17,13 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.util.Callback;
+import javafx.util.Pair;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
-
-import static View.SideBarTools.WidgetBuilders.createConnectionsViewerScrollPane;
 
 
 /**
@@ -32,7 +32,7 @@ import static View.SideBarTools.WidgetBuilders.createConnectionsViewerScrollPane
 public class MultiDomainSideBar extends TemplateSideBar {
 
     protected final Button configureGroupings = new Button("Configure Groupings");
-    private MultiDomainDSM matrix;
+    private final MultiDomainDSM matrix;
 
     /**
      * Constructor for a new side bar for a symmetric matrix
@@ -70,17 +70,17 @@ public class MultiDomainSideBar extends TemplateSideBar {
 
         // Create changes view and button for it
         Label label = new Label("Changes to be made");
-        ListView<String> changesToMakeView = new ListView<>();
+        ListView<Pair<String, Grouping>> changesToMakeView = new ListView<>();
         changesToMakeView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         changesToMakeView.setCellFactory(param -> new ListCell<>() {  // item name
             @Override
-            protected void updateItem(String item, boolean empty) {
+            protected void updateItem(Pair<String, Grouping> item, boolean empty) {
                 super.updateItem(item, empty);
 
                 if (empty || item == null) {
                     setText(null);
                 } else {
-                    setText(item + " (Row/Column)");
+                    setText(item.getKey() + " (Row/Column)  -  " + item.getValue().getName());
                 }
             }
         });
@@ -91,18 +91,47 @@ public class MultiDomainSideBar extends TemplateSideBar {
         });
 
         // Create user input area
-        HBox entryArea = new HBox();
-
         TextField textField = new TextField();
-        textField.setMaxWidth(Double.MAX_VALUE);
+        textField.setMinWidth(500);
         textField.setPromptText("Row/Column Name");
         HBox.setHgrow(textField, Priority.ALWAYS);
 
+        ComboBox<Grouping> domainSelector = new ComboBox<>();
+        domainSelector.setPromptText("Domain");
+        domainSelector.setMinWidth(Region.USE_PREF_SIZE);
+        Callback<ListView<Grouping>, ListCell<Grouping>> groupingItemCellFactory = new Callback<>() {
+            @Override
+            public ListCell<Grouping> call(ListView<Grouping> l) {
+                return new ListCell<>() {
+
+                    @Override
+                    protected void updateItem(Grouping group, boolean empty) {
+                        super.updateItem(group, empty);
+                        if (empty || group == null) {
+                            setText("");
+                        } else {
+                            setText(group.getName());
+                        }
+                    }
+                };
+            }
+        };
+        domainSelector.setCellFactory(groupingItemCellFactory);
+        domainSelector.setButtonCell(groupingItemCellFactory.call(null));
+        domainSelector.getItems().addAll(matrix.getDomains());
+
+        VBox itemData = new VBox();
+        itemData.setSpacing(10);
+        itemData.getChildren().addAll(textField, domainSelector);
+
         Button addItem = new Button("Add Item");
         addItem.setOnAction(e -> {
-            changesToMakeView.getItems().add(textField.getText());
+            if(domainSelector.getValue() != null) {
+                changesToMakeView.getItems().add(new Pair<>(textField.getText(), domainSelector.getValue()));
+            }
         });
-        entryArea.getChildren().addAll(textField, addItem);
+        HBox entryArea = new HBox();
+        entryArea.getChildren().addAll(itemData, Misc.getHorizontalSpacer(), addItem);
         entryArea.setPadding(new Insets(10, 10, 10, 10));
         entryArea.setSpacing(20);
 
@@ -110,8 +139,8 @@ public class MultiDomainSideBar extends TemplateSideBar {
         HBox closeArea = new HBox();
         Button applyButton = new Button("Apply Changes");
         applyButton.setOnAction(e -> {
-            for(String item : changesToMakeView.getItems()) {
-                matrix.createItem(item, true);
+            for(Pair<String, Grouping> item : changesToMakeView.getItems()) {
+                matrix.createItem(item.getKey(), true, item.getValue());
             }
             matrix.setCurrentStateAsCheckpoint();
             window.close();
@@ -158,7 +187,7 @@ public class MultiDomainSideBar extends TemplateSideBar {
                 if (empty || item == null) {
                     setText(null);
                 } else {
-                    setText(matrix.getItem(item).getName() + " (Row/Column)");
+                    setText(matrix.getItem(item).getName().getValue() + " (Row/Column)");
                 }
             }
         });
@@ -268,7 +297,7 @@ public class MultiDomainSideBar extends TemplateSideBar {
         NumericTextField weight = new NumericTextField(null);
 
         // create the viewer for connections
-        createConnectionsViewerScrollPane(
+        WidgetBuilders.createConnectionsViewerScrollPane(
                 matrix,
                 connectionsArea,
                 itemSelector,
@@ -427,7 +456,7 @@ public class MultiDomainSideBar extends TemplateSideBar {
         NumericTextField weight = new NumericTextField(null);
 
         // create the viewer for connections
-        createConnectionsViewerScrollPane(
+        WidgetBuilders.createConnectionsViewerScrollPane(
                 matrix,
                 connectionsArea,
                 itemSelector,

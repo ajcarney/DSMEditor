@@ -1,24 +1,25 @@
 package View.MatrixViews;
 
-import Constants.Constants;
-import Data.*;
+import Data.DSMConnection;
+import Data.DSMItem;
+import Data.Grouping;
+import Data.MultiDomainDSM;
 import View.Widgets.FreezeGrid;
 import View.Widgets.Misc;
 import View.Widgets.NumericTextField;
-import javafx.beans.binding.Bindings;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.SimpleDoubleProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
-import javafx.scene.canvas.Canvas;
-import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.input.MouseButton;
-import javafx.scene.layout.*;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.util.Callback;
 import javafx.util.Pair;
@@ -33,6 +34,7 @@ import java.util.Vector;
 public class MultiDomainView extends TemplateMatrixView {
 
     private boolean symmetryValidation = false;
+    private Integer domainColumn;
 
     MultiDomainDSM matrix;
 
@@ -107,8 +109,13 @@ public class MultiDomainView extends TemplateMatrixView {
                 cell.setCellHighlight(matrix.getItem(colUid).getGroup1().getColor());
                 cell.setCellTextColor(matrix.getItem(colUid).getGroup1().getFontColor());
             } else if (rowUid != null && colUid == null) {  // highlight with row color
-                cell.setCellHighlight(matrix.getItem(rowUid).getGroup1().getColor());
-                cell.setCellTextColor(matrix.getItem(rowUid).getGroup1().getFontColor());
+                if(cell.getGridLocation().getValue() == domainColumn) {
+                    cell.setCellHighlight(matrix.getItem(rowUid).getGroup2().getColor());
+                    cell.setCellTextColor(matrix.getItem(rowUid).getGroup2().getFontColor());
+                } else {
+                    cell.setCellHighlight(matrix.getItem(rowUid).getGroup1().getColor());
+                    cell.setCellTextColor(matrix.getItem(rowUid).getGroup1().getFontColor());
+                }
             } else if (
                     rowUid != null && colUid != null
                     && !rowUid.equals(matrix.getItem(colUid).getAliasUid())
@@ -228,21 +235,28 @@ public class MultiDomainView extends TemplateMatrixView {
 
         ArrayList<ArrayList<Pair<RenderMode, Object>>> template = matrix.getGridArray();
         ArrayList<ArrayList<HBox>> gridData = new ArrayList<>();
-
         int rows = template.size();
         int columns = template.get(0).size();
 
+
         // create a test item to determine layout width for a vertical item cell to square up the matrix when viewed
+        // as well as to determine the width of grouping ComboBoxes because they all contain different items
         ComboBox<Grouping> _groupings = new ComboBox<>();
-        _groupings.setMinWidth(Region.USE_PREF_SIZE);
-        _groupings.setPadding(new Insets(0));
-        _groupings.setStyle("-fx-background-color: transparent; -fx-padding: 0, 0, 0, 0; -fx-font-size: " + (fontSize.doubleValue()) + " };");
+        Grouping longestGroup = matrix.getDomainGroupings().stream().max(Comparator.comparing(g -> g.getName().length())).orElse(null);
+        ObservableList<Grouping> _g = FXCollections.observableArrayList();
+        _g.add(longestGroup);
+        _groupings.setItems(_g);
+        _groupings.setMinWidth(Region.USE_COMPUTED_SIZE);
+        _groupings.setStyle("-fx-padding: 0, 0, 0, 0; -fx-font-size: " + (fontSize.doubleValue()) + " };");
         double maxHeight = Misc.calculateNodeSize(_groupings).getHeight();
+        // subtract a constant from the width to remove extra padding that javafx gives between text and the arrow
+        // of the dropdown box. See this StackOverflow issue: https://stackoverflow.com/questions/24852429/making-a-smaller-javafx-combobox
+        double groupingWidth = Misc.calculateNodeSize(_groupings).getWidth() - 60;
+
 
         // create a list to update the cell spans once the matrix has been created. Order is:
         // row location, column location, row span, column span
         ArrayList<Quartet<Integer, Integer, Integer, Integer>> cellSpans = new ArrayList<>();
-
 
         for(int r=0; r<rows; r++) {
             ArrayList<HBox> rowData = new ArrayList<>();
@@ -273,10 +287,12 @@ public class MultiDomainView extends TemplateMatrixView {
                     case MULTI_SPAN_TEXT -> {
                         Triplet<String, Integer, Integer> data = (Triplet<String, Integer, Integer>) item.getValue();
                         label = new Label(data.getValue0());
-                        label.setPadding(new Insets(1));
+                        label.setMinWidth(Region.USE_PREF_SIZE);
+                        label.setPadding(new Insets(1, 5, 1, 5));
                         cell.getChildren().add(label);
 
                         cellSpans.add(new Quartet<>(r, c, data.getValue1(), data.getValue2()));
+                        domainColumn = c;
                     }
                     case MULTI_SPAN_NULL -> cell = null;  // set cell to null so it can be expanded into
                     case ITEM_NAME -> {
@@ -319,7 +335,8 @@ public class MultiDomainView extends TemplateMatrixView {
                     case GROUPING_ITEM -> {  // dropdown box for choosing group
                         DSMItem matrixItem = ((DSMItem) item.getValue());
                         ComboBox<Grouping> groupings = new ComboBox<>();
-                        groupings.setMinWidth(Region.USE_PREF_SIZE);
+                        groupings.setMinWidth(groupingWidth);
+                        //groupings.setMinWidth(Region.USE_PREF_SIZE);
                         groupings.setPadding(new Insets(0));
                         groupings.setStyle(
                                 "-fx-background-color: transparent;" +

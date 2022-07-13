@@ -231,18 +231,17 @@ public class FreezeGrid {
                     colPrefWidths.add(new SimpleDoubleProperty(0.0));
                 }
 
-                // skip cases where node doesn't exist or row span is increased
-                if(cells.get(r).get(c).getNode() == null || cells.get(r).get(c).getRowSpan() > 1 || cells.get(r).get(c).getColSpan() > 1) {
+                if(cells.get(r).get(c).getNode() == null) {  // skip cases where node doesn't exist
                     continue;
                 }
 
                 Bounds bounds = cells.get(r).get(c).getNode().getBoundsInLocal();
                 double width = bounds.getWidth();
                 double height = bounds.getHeight();
-                if(width > colPrefWidths.get(c).doubleValue()) {
+                if(cells.get(r).get(c).getColSpan() == 1 && width > colPrefWidths.get(c).doubleValue()) {  // only update pref width if col span is 1
                     colPrefWidths.get(c).set(width);
                 }
-                if(height > rowPrefHeights.get(r).doubleValue()) {
+                if(cells.get(r).get(c).getRowSpan() == 1 && height > rowPrefHeights.get(r).doubleValue()) {  // only update pref height if row span is 1
                     rowPrefHeights.get(r).set(height);
                 }
             }

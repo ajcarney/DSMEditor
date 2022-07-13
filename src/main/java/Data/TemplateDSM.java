@@ -697,7 +697,9 @@ public abstract class TemplateDSM {
                     }
                 },
                 () -> {  // undo function
-                    if(finalConnection != null) {
+                    if(finalConnection == null) {
+                        removeConnection(rowUid, colUid);
+                    } else {
                         finalConnection.setConnectionName(finalOldName);
                         finalConnection.setWeight(finalOldWeight);
                     }

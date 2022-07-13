@@ -181,16 +181,6 @@ public class MultiDomainDSM extends TemplateDSM {
                 },
                 () -> {  // undo function
                     domains.get(domain).remove(group);
-//                    for(DSMItem item : rows) {  // TODO: I don't think the rest of this is necessary, ensure that it is
-//                        if(item.getGroup2().equals(domain) && item.getGroup1().equals(group)) {
-//                            item.setGroup1(getDefaultDomainGroup(domain, false));
-//                        }
-//                    }
-//                    for(DSMItem item : cols) {
-//                        if(item.getGroup2().equals(domain) && item.getGroup1().equals(group)) {
-//                            item.setGroup1(getDefaultDomainGroup(domain, false));
-//                        }
-//                    }
                 },
                 false
         ));
@@ -207,10 +197,7 @@ public class MultiDomainDSM extends TemplateDSM {
     public int removeDomain(Grouping domain) {
         if(domains.size() <= 1) return -1;
 
-//        final Vector<DSMItem> oldRows = new Vector<>();
-//        final Vector<DSMItem> oldCols = new Vector<>();
         ObservableSet<Grouping> domainGroupings = domains.get(domain);
-
 
         addChangeToStack(new MatrixChange(
                 () -> {  // do function
@@ -308,6 +295,18 @@ public class MultiDomainDSM extends TemplateDSM {
      */
     public ObservableSet<Grouping> getDomainGroupings(Grouping domain) {
         return domains.get(domain);
+    }
+
+
+    /**
+     * @return  an ObservableSet of all domain groupings
+     */
+    public ObservableSet<Grouping> getDomainGroupings() {
+        ObservableSet<Grouping> domainGroupings = FXCollections.observableSet();
+        for(ObservableSet<Grouping> groupings : domains.values()) {
+            domainGroupings.addAll(groupings);
+        }
+        return domainGroupings;
     }
 
 
@@ -691,8 +690,15 @@ public class MultiDomainDSM extends TemplateDSM {
 
         // create rows
         boolean firstItemInDomain = true;
+        Grouping previousItemDomain = null;
         for(DSMItem r : rows) {
             ArrayList<Pair<RenderMode, Object>> row = new ArrayList<>();
+            if(!r.getGroup2().equals(previousItemDomain)) {  // if domain switched then this is the first item in the domain
+                firstItemInDomain = true;
+            } else {
+                firstItemInDomain = false;
+            }
+
             if(firstItemInDomain) {
                 int numItemsInDomain = (int) rows.stream().filter(item -> item.getGroup2().equals(r.getGroup2())).count();
                 row.add(new Pair<>(RenderMode.MULTI_SPAN_TEXT, new Triplet<>(r.getGroup2().getName(), numItemsInDomain, 1)));  // text, row span, col span
@@ -710,7 +716,7 @@ public class MultiDomainDSM extends TemplateDSM {
                 }
             }
             grid.add(row);
-            firstItemInDomain = false;
+            previousItemDomain = r.getGroup2();
         }
 
         return grid;

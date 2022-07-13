@@ -74,7 +74,6 @@ public class MultiDomainIOHandler extends TemplateIOHandler<MultiDomainDSM, Mult
 
             HashMap<Integer, Grouping> matrixDomains = new HashMap<>();
             HashMap<Grouping, Collection<Grouping>> groupingConfiguration = new HashMap<>();
-            HashMap<Integer, Grouping> matrixDomainGroupings = new HashMap<>();
 
             // parse user defined groupings
             List<Element> domains = rootElement.getChild("domains").getChildren();
@@ -105,7 +104,6 @@ public class MultiDomainIOHandler extends TemplateIOHandler<MultiDomainDSM, Mult
 
                     Grouping matrixGroup = new Grouping(uid, name, Color.color(group_r, group_g, group_b), Color.color(font_r, font_g, font_b));
                     groupingConfiguration.get(matrixDomain).add(matrixGroup);
-                    matrixDomainGroupings.put(uid, matrixGroup);
                 }
             }
             MultiDomainDSM matrix = new MultiDomainDSM(groupingConfiguration);  // create the matrix with the given domains
@@ -129,8 +127,8 @@ public class MultiDomainIOHandler extends TemplateIOHandler<MultiDomainDSM, Mult
 
                 Integer groupUid = Integer.parseInt(col.getChild("group1").getText());
                 Integer domainUid = Integer.parseInt(col.getChild("group2").getText());
-                Grouping group = matrixDomainGroupings.get(groupUid);
                 Grouping domain = matrixDomains.get(domainUid);
+                Grouping group = groupingConfiguration.get(domain).stream().filter(g -> g.getUid().equals(groupUid)).findFirst().orElse(null);
 
                 DSMItem item = new DSMItem(uid, aliasUid, sortIndex, name, group, domain);
                 matrix.addItem(item, false);
@@ -149,8 +147,8 @@ public class MultiDomainIOHandler extends TemplateIOHandler<MultiDomainDSM, Mult
 
                 Integer groupUid = Integer.parseInt(row.getChild("group1").getText());
                 Integer domainUid = Integer.parseInt(row.getChild("group2").getText());
-                Grouping group = matrixDomainGroupings.get(groupUid);
                 Grouping domain = matrixDomains.get(domainUid);
+                Grouping group = groupingConfiguration.get(domain).stream().filter(g -> g.getUid().equals(groupUid)).findFirst().orElse(null);
 
                 DSMItem item = new DSMItem(uid, aliasUid, sortIndex, name, group, domain);
                 matrix.addItem(item, true);
