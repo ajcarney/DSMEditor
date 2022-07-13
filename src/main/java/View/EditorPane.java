@@ -1,17 +1,12 @@
 package View;
 
 import Constants.Constants;
-import Data.AsymmetricDSM;
-import Data.MatrixController;
-import Data.SymmetricDSM;
-import Data.TemplateDSM;
+import Data.*;
 import IOHandler.TemplateIOHandler;
-import View.HeaderMenu.AsymmetricHeaderMenu;
-import View.HeaderMenu.DefaultHeaderMenu;
-import View.HeaderMenu.SymmetricHeaderMenu;
-import View.HeaderMenu.TemplateHeaderMenu;
+import View.HeaderMenu.*;
 import View.MatrixViews.TemplateMatrixView;
 import View.SideBarTools.AsymmetricSideBar;
+import View.SideBarTools.MultiDomainSideBar;
 import View.SideBarTools.SymmetricSideBar;
 import View.SideBarTools.TemplateSideBar;
 import View.Widgets.DraggableTab;
@@ -254,6 +249,12 @@ public class EditorPane {
                 this.rootLayout.setTop(menu.getMenuBar());
                 this.rootLayout.setBottom(menu.getConnectionSearchLayout());
                 this.rootLayout.setLeft(new AsymmetricSideBar((AsymmetricDSM)this.matrices.getMatrix(matrixUid), this).getLayout());
+
+            } else if(this.matrices.getMatrix(matrixUid).getClass().equals(MultiDomainDSM.class)) {
+                MultiDomainHeaderMenu menu = new MultiDomainHeaderMenu(this);
+                this.rootLayout.setTop(menu.getMenuBar());
+                this.rootLayout.setBottom(menu.getConnectionSearchLayout());
+                this.rootLayout.setLeft(new MultiDomainSideBar((MultiDomainDSM)this.matrices.getMatrix(matrixUid), this).getLayout());
 
             } else {
                 throw new IllegalStateException("Matrix being handled was not of a valid type");

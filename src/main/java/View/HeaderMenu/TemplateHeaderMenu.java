@@ -2,16 +2,20 @@ package View.HeaderMenu;
 
 import Constants.Constants;
 import Data.AsymmetricDSM;
+import Data.MultiDomainDSM;
 import Data.SymmetricDSM;
 import IOHandler.AsymmetricIOHandler;
+import IOHandler.MultiDomainIOHandler;
 import IOHandler.SymmetricIOHandler;
 import IOHandler.TemplateIOHandler;
 import View.ConnectionSearchWidget;
 import View.EditorPane;
 import View.MatrixViews.AsymmetricView;
+import View.MatrixViews.MultiDomainView;
 import View.MatrixViews.SymmetricView;
 import View.MatrixViews.TemplateMatrixView;
 import View.SideBarTools.AsymmetricSideBar;
+import View.SideBarTools.MultiDomainSideBar;
 import View.SideBarTools.SymmetricSideBar;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
@@ -129,7 +133,27 @@ public abstract class TemplateHeaderMenu {
             defaultName += 1;
         });
 
-        newFileMenu.getItems().addAll(newSymmetric, newNonSymmetric);
+        MenuItem newMultiDomain = new MenuItem("Multi-Domain Matrix");
+        newMultiDomain.setOnAction(e -> {
+            MultiDomainDSM matrix = new MultiDomainDSM();
+            File file = new File("./untitled" + defaultName);
+            while(file.exists()) {  // make sure file does not exist
+                defaultName += 1;
+                file = new File("./untitled" + defaultName);
+            }
+
+            this.editor.addTab(
+                    matrix,
+                    new MultiDomainIOHandler(file),
+                    new MultiDomainView(matrix, 12.0),
+                    this,
+                    new MultiDomainSideBar(matrix, editor
+                    ));
+
+            defaultName += 1;
+        });
+
+        newFileMenu.getItems().addAll(newSymmetric, newNonSymmetric, newMultiDomain);
     }
 
     /**
@@ -182,6 +206,24 @@ public abstract class TemplateHeaderMenu {
                         System.out.println("there was an error reading the file " + file);
                     }
                 }
+                case "multi-domain" -> {
+                    MultiDomainIOHandler ioHandler = new MultiDomainIOHandler(file);
+                    MultiDomainDSM matrix = ioHandler.readFile();
+
+                    if(matrix != null) {
+                        this.editor.addTab(
+                                matrix,
+                                ioHandler,
+                                new MultiDomainView(matrix, 12.0),
+                                this,
+                                new MultiDomainSideBar(matrix, editor
+                                ));
+                    } else {
+                        // TODO: open window saying there was an error parsing the document
+                        System.out.println("there was an error reading the file " + file);
+                    }
+                }
+
                 default -> System.out.println("the type of dsm could not be determined from the file " + file.getAbsolutePath());
             }
         });

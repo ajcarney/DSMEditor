@@ -67,6 +67,7 @@ public class Cell {
      * @param color the color to set the background to
      */
     public void setCellHighlight(Color color) {
+        if(guiCell == null) return;
         guiCell.setBackground(new Background(new BackgroundFill(color, new CornerRadii(3), new Insets(0))));
     }
 
@@ -77,6 +78,7 @@ public class Cell {
      * @param bg  the background object to set the background to
      */
     public void setCellHighlight(Background bg) {
+        if(guiCell == null) return;
         guiCell.setBackground(bg);
     }
 
@@ -86,6 +88,7 @@ public class Cell {
      * @param newBorder  type Border of the new border
      */
     public void setCellBorder(Border newBorder) {
+        if(guiCell == null) return;
         guiCell.setBorder(newBorder);
     }
 
@@ -95,6 +98,7 @@ public class Cell {
      * @param color  the new color for the border
      */
     public void setCellBorder(Color color) {
+        if(guiCell == null) return;
         guiCell.setBorder(new Border(new BorderStroke(color, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
     }
 

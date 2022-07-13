@@ -59,7 +59,7 @@ public abstract class TemplateGroupedMatrix extends TemplateDSM {
     /**
      * Removes a grouping from the matrix. Puts the change on the stack but does not set a checkpoint
      *
-     * @param group  the object of type Grouping to add
+     * @param group  the object of type Grouping to remove
      */
     public void removeGrouping(Grouping group) {
         for(DSMItem item : rows) {  // these changes already get put on the stack so no need to add them a second time
@@ -167,11 +167,11 @@ public abstract class TemplateGroupedMatrix extends TemplateDSM {
     /**
      * Changes a color of a grouping. Puts the change on the stack but does not set a checkpoint
      *
-     * @param group    the group who's name should be changed
+     * @param group    the group who's font color should be changed
      * @param newColor the new color of the grouping
      */
     public void updateGroupingFontColor(Grouping group, Color newColor) {
-        Color oldColor = group.getColor();
+        Color oldColor = group.getFontColor();
         addChangeToStack(new MatrixChange(
                 () -> {  // do function
                     group.setFontColor(newColor);

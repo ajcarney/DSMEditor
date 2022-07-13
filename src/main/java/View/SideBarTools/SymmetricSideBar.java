@@ -25,6 +25,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
 
+import static View.SideBarTools.WidgetBuilders.createConnectionsViewerScrollPane;
+
 
 /**
  * Creates a sidebar with methods to interact with a symmetric matrix
@@ -158,7 +160,7 @@ public class SymmetricSideBar extends TemplateSideBar {
                 if (empty || item == null) {
                     setText(null);
                 } else {
-                    setText(matrix.getItem(item).getName() + " (Row/Column)");
+                    setText(matrix.getItem(item).getName().getValue() + " (Row/Column)");
                 }
             }
         });
@@ -257,133 +259,29 @@ public class SymmetricSideBar extends TemplateSideBar {
         });
 
 
-        // area to interact with the connections
+        // set up the items needed by the builder
         HBox connectionsArea = new HBox();
-        connectionsArea.setSpacing(10);
-        connectionsArea.setPadding(new Insets(10, 10, 10, 10));
-
-        // HBox area full of checklists to modify the connections, default to columns
-        HBox connectionsModifier = new HBox();
-        connectionsModifier.setSpacing(10);
-        connectionsModifier.setPadding(new Insets(10, 10, 10, 10));
+        ComboBox<DSMItem> itemSelector = new ComboBox<>();
         HashMap<CheckBox, DSMItem> connections = new HashMap<>();
-
-        for(DSMItem conn : matrix.getCols()) {  // will default to choosing a row item so populate the scroll window with the columns
-            VBox connectionVBox = new VBox();
-            connectionVBox.setAlignment(Pos.CENTER);
-
-            Label name = new Label(conn.getName().getValue());
-            CheckBox box = new CheckBox();
-            connections.put(box, conn);
-            connectionVBox.getChildren().addAll(name, box);
-            connectionsModifier.getChildren().add(connectionVBox);
-        }
-        ScrollPane scrollPane = new ScrollPane(connectionsModifier);
-        scrollPane.setOnScroll(event -> {  // allow vertical scrolling to scroll horizontally
-            if(event.getDeltaX() == 0 && event.getDeltaY() != 0) {
-                scrollPane.setHvalue(scrollPane.getHvalue() - event.getDeltaY() / connectionsModifier.getWidth());
-            }
-        });
-        scrollPane.setFitToHeight(true);
-
-        // vbox to choose row or column
-        VBox itemSelectorView = new VBox();
-        itemSelectorView.setMinWidth(Region.USE_PREF_SIZE);
-
-        // ComboBox to choose which row or column to modify connections of
-        ComboBox< DSMItem > itemSelector = new ComboBox<>();  // rowUid | colUid | name | weight
-        itemSelector.setCellFactory(MATRIX_ITEM_COMBOBOX_CELL_FACTORY);
-
-        itemSelector.getItems().addAll(matrix.getRows());  // default to choosing a row item
-
-        Label l = new Label("Create connections by row or column?");
-        l.setWrapText(true);
-        l.prefWidthProperty().bind(itemSelector.widthProperty());  // this will make sure the label will not be bigger than the biggest object
-        VBox.setVgrow(l, Priority.ALWAYS);
-        HBox.setHgrow(l, Priority.ALWAYS);
-        l.setMinHeight(Region.USE_PREF_SIZE);  // make sure all text will be displayed
-
-        // radio buttons
-        HBox rowColRadioButtons = new HBox();
-        HBox.setHgrow(rowColRadioButtons, Priority.ALWAYS);
-        rowColRadioButtons.setSpacing(10);
-        rowColRadioButtons.setPadding(new Insets(10, 10, 10, 10));
-        rowColRadioButtons.setMinHeight(Region.USE_PREF_SIZE);
-
         ToggleGroup tg = new ToggleGroup();
         RadioButton selectByRow = new RadioButton("Row");
         RadioButton selectByCol = new RadioButton("Column");
-        HBox.setHgrow(selectByRow, Priority.ALWAYS);
-        HBox.setHgrow(selectByCol, Priority.ALWAYS);
-        selectByRow.setMinHeight(Region.USE_PREF_SIZE);
-        selectByCol.setMinHeight(Region.USE_PREF_SIZE);
-
-        selectByRow.setToggleGroup(tg);  // add RadioButtons to toggle group
-        selectByCol.setToggleGroup(tg);
-        selectByRow.setSelected(true);  // default to selectByRow
-
-        // add a change listener for when switching from select by row or select by column
-        tg.selectedToggleProperty().addListener((ob, o, n) -> {  // o is old value, n is new value
-            RadioButton rb = (RadioButton)tg.getSelectedToggle();
-            if(rb.equals(selectByRow)) {  // clear all items and add rows to it
-                itemSelector.getItems().removeAll(itemSelector.getItems());
-                itemSelector.getItems().addAll(matrix.getRows());  // populate combobox with the rows
-            } else if(rb.equals(selectByCol)) {  // clear all items and add cols to it
-                itemSelector.getItems().removeAll(itemSelector.getItems());
-                itemSelector.getItems().addAll(matrix.getCols());  // populate combobox with the columns
-            } else {  // clear all items
-                itemSelector.getItems().removeAll(itemSelector.getItems());
-            }
-        });
-
-        itemSelector.valueProperty().addListener((options, oldValue, newValue) -> {
-            RadioButton rb = (RadioButton)tg.getSelectedToggle();
-            connectionsModifier.getChildren().removeAll(connectionsModifier.getChildren());
-            connections.clear();
-
-            ArrayList<DSMItem> items = new ArrayList<>();
-            if (rb.equals(selectByRow)) {  // clear all items and add either rows or columns to it
-                items.addAll(matrix.getCols());
-            } else if (rb.equals(selectByCol)) {
-                items.addAll(matrix.getRows());
-            }
-
-            for(DSMItem item : items) {  // create the checkboxes
-                if(itemSelector.getValue() != null && item.getAliasUid().equals(itemSelector.getValue().getUid())) {  // don't allow creating connections between same row and column pair
-                    continue;
-                }
-                VBox connectionVBox = new VBox();
-                connectionVBox.setAlignment(Pos.CENTER);
-
-                Label name = new Label(item.getName().getValue());
-                CheckBox box = new CheckBox();
-                connections.put(box, item);
-                connectionVBox.getChildren().addAll(name, box);
-                connectionsModifier.getChildren().add(connectionVBox);
-            }
-
-        });
-
-        rowColRadioButtons.getChildren().addAll(selectByRow, selectByCol);
-        itemSelectorView.getChildren().addAll(l, rowColRadioButtons, itemSelector);
-
-        // area to set details for the connection
-        VBox connectionDetailsLayout = new VBox();
-        connectionDetailsLayout.setSpacing(10);
-        connectionDetailsLayout.setPadding(new Insets(10, 10, 10, 10));
-        VBox.setVgrow(connectionDetailsLayout, Priority.ALWAYS);
-        connectionDetailsLayout.setMinWidth(Region.USE_PREF_SIZE);
-
         TextField connectionName = new TextField();
         NumericTextField weight = new NumericTextField(null);
-        connectionName.setPromptText("Connection Name");
-        weight.setPromptText("Connection Weight");
-        connectionName.setMinWidth(connectionName.getPrefWidth());
-        weight.setMinWidth(weight.getPrefWidth());
 
-        connectionDetailsLayout.getChildren().addAll(connectionName, weight);
-
-        connectionsArea.getChildren().addAll(itemSelectorView, scrollPane, Misc.getHorizontalSpacer(), connectionDetailsLayout);
+        // create the viewer for connections
+        createConnectionsViewerScrollPane(
+            matrix,
+            connectionsArea,
+            itemSelector,
+            connections,
+            tg,
+            selectByRow,
+            selectByCol,
+            connectionName,
+            weight,
+            false
+        );
 
         // Pane to modify the connections
         HBox modifyPane = new HBox();
@@ -519,158 +417,30 @@ public class SymmetricSideBar extends TemplateSideBar {
         });
 
 
-        // area to interact with the connections
+        // set up the items needed by the builder
         HBox connectionsArea = new HBox();
-        connectionsArea.setSpacing(10);
-        connectionsArea.setPadding(new Insets(10, 10, 10, 10));
-
-        // HBox area full of checklists to modify the connections, default to columns
-        HBox connectionsModifier = new HBox();
-        connectionsModifier.setSpacing(10);
-        connectionsModifier.setPadding(new Insets(10, 10, 10, 10));
+        ComboBox<DSMItem> itemSelector = new ComboBox<>();
         HashMap<CheckBox, DSMItem> connections = new HashMap<>();
-
-        for(DSMItem conn : matrix.getCols()) {  // will default to choosing a row item so populate the scroll window with the columns
-            VBox connectionVBox = new VBox();
-            connectionVBox.setAlignment(Pos.CENTER);
-
-            Label name = new Label(conn.getName().getValue());
-            CheckBox box = new CheckBox();
-            connections.put(box, conn);
-            connectionVBox.getChildren().addAll(name, box);
-            connectionsModifier.getChildren().add(connectionVBox);
-        }
-        ScrollPane scrollPane = new ScrollPane(connectionsModifier);
-        scrollPane.setOnScroll(event -> {  // allow vertical scrolling to scroll horizontally
-            if(event.getDeltaX() == 0 && event.getDeltaY() != 0) {
-                scrollPane.setHvalue(scrollPane.getHvalue() - event.getDeltaY() / connectionsModifier.getWidth());
-            }
-        });
-        scrollPane.setFitToHeight(true);
-
-        // vbox to choose row or column
-        VBox itemSelectorView = new VBox();
-        itemSelectorView.setMinWidth(Region.USE_PREF_SIZE);
-
-        // ComboBox to choose which row or column to modify connections of
-        ComboBox< DSMItem > itemSelector = new ComboBox<>();  // rowUid | colUid | name | weight
-        itemSelector.setCellFactory(MATRIX_ITEM_COMBOBOX_CELL_FACTORY);
-
-        itemSelector.getItems().addAll(matrix.getRows());  // default to choosing a row item
-
-        Label l = new Label("Create connections by row or column?");
-        l.setWrapText(true);
-        l.prefWidthProperty().bind(itemSelector.widthProperty());  // this will make sure the label will not be bigger than the biggest object
-        VBox.setVgrow(l, Priority.ALWAYS);
-        HBox.setHgrow(l, Priority.ALWAYS);
-        l.setMinHeight(Region.USE_PREF_SIZE);  // make sure all text will be displayed
-
-        // radio buttons
-        HBox rowColRadioButtons = new HBox();
-        HBox.setHgrow(rowColRadioButtons, Priority.ALWAYS);
-        rowColRadioButtons.setSpacing(10);
-        rowColRadioButtons.setPadding(new Insets(10, 10, 10, 10));
-        rowColRadioButtons.setMinHeight(Region.USE_PREF_SIZE);
-
         ToggleGroup tg = new ToggleGroup();
         RadioButton selectByRow = new RadioButton("Row");
         RadioButton selectByCol = new RadioButton("Column");
-        HBox.setHgrow(selectByRow, Priority.ALWAYS);
-        HBox.setHgrow(selectByCol, Priority.ALWAYS);
-        selectByRow.setMinHeight(Region.USE_PREF_SIZE);
-        selectByCol.setMinHeight(Region.USE_PREF_SIZE);
-
-        selectByRow.setToggleGroup(tg);  // add RadioButtons to toggle group
-        selectByCol.setToggleGroup(tg);
-        selectByRow.setSelected(true);  // default to selectByRow
-
-        // add a change listener
-        tg.selectedToggleProperty().addListener(new ChangeListener<>() {
-            public void changed(ObservableValue<? extends Toggle> ob, Toggle o, Toggle n) {
-                RadioButton rb = (RadioButton) tg.getSelectedToggle();
-                if (rb.equals(selectByRow)) {  // clear all items and add rows to it
-                    itemSelector.getItems().removeAll(itemSelector.getItems());
-                    itemSelector.getItems().addAll(matrix.getRows());  // populate combobox with the rows
-                } else if (rb.equals(selectByCol)) {  // clear all items and add cols to it
-                    itemSelector.getItems().removeAll(itemSelector.getItems());
-                    itemSelector.getItems().addAll(matrix.getCols());  // populate combobox with the columns
-                } else {  // clear all items
-                    itemSelector.getItems().removeAll(itemSelector.getItems());
-                }
-            }
-        });
-
-        itemSelector.valueProperty().addListener((options, oldValue, newValue) -> {
-            RadioButton rb = (RadioButton)tg.getSelectedToggle();
-            connectionsModifier.getChildren().removeAll(connectionsModifier.getChildren());
-            connections.clear();
-            if (rb.equals(selectByRow)) {  // clear all items and add rows to it
-                for(DSMItem col : matrix.getCols()) {  // create the checkboxes
-                    if(itemSelector.getValue() != null && col.getAliasUid().equals(itemSelector.getValue().getUid())) {  // don't allow creating connections between same row and column pair
-                        continue;
-                    }
-                    VBox connectionVBox = new VBox();
-                    connectionVBox.setAlignment(Pos.CENTER);
-
-                    Label name = new Label(col.getName().getValue());
-                    CheckBox box = new CheckBox();
-                    connections.put(box, col);
-                    connectionVBox.getChildren().addAll(name, box);
-                    connectionsModifier.getChildren().add(connectionVBox);
-                }
-            } else if (rb.equals(selectByCol)) {
-                for(DSMItem row : matrix.getRows()) {  // create the checkboxes
-                    if(itemSelector.getValue() != null && row.getAliasUid().equals(itemSelector.getValue().getUid())) {  // don't allow creating connections between same row and column pair
-                        continue;
-                    }
-                    VBox connectionVBox = new VBox();
-                    connectionVBox.setAlignment(Pos.CENTER);
-
-                    Label name = new Label(row.getName().getValue());
-                    CheckBox box = new CheckBox();
-                    connections.put(box, row);
-                    connectionVBox.getChildren().addAll(name, box);
-                    connectionsModifier.getChildren().add(connectionVBox);
-                }
-            }
-        });
-
-        rowColRadioButtons.getChildren().addAll(selectByRow, selectByCol);
-        itemSelectorView.getChildren().addAll(l, rowColRadioButtons, itemSelector);
-
-        itemSelector.setOnAction(ee -> {  // when item changes, change the connections that are selected
-            if(itemSelector.getValue() == null) {  // ensure connection can be added
-                return;
-            }
-            for (Map.Entry<CheckBox, DSMItem> entry : connections.entrySet()) {
-                RadioButton rb = (RadioButton)tg.getSelectedToggle();
-                if(rb.equals(selectByRow) && matrix.getConnection(itemSelector.getValue().getUid(), entry.getValue().getUid()) != null) {
-                    entry.getKey().setSelected(true);
-                } else if(rb.equals(selectByCol) && matrix.getConnection(entry.getValue().getUid(), itemSelector.getValue().getUid()) != null) {
-                    entry.getKey().setSelected(true);
-                } else {
-                    entry.getKey().setSelected(false);
-                }
-            }
-        });
-
-        // area to set details for the connection
-        VBox connectionDetailsLayout = new VBox();
-        connectionDetailsLayout.setSpacing(10);
-        connectionDetailsLayout.setPadding(new Insets(10, 10, 10, 10));
-        VBox.setVgrow(connectionDetailsLayout, Priority.ALWAYS);
-        connectionDetailsLayout.setMinWidth(Region.USE_PREF_SIZE);
-
         TextField connectionName = new TextField();
         NumericTextField weight = new NumericTextField(null);
-        connectionName.setPromptText("Connection Name");
-        weight.setPromptText("Connection Weight");
-        connectionName.setMinWidth(connectionName.getPrefWidth());
-        weight.setMinWidth(weight.getPrefWidth());
 
-        connectionDetailsLayout.getChildren().addAll(connectionName, weight);
+        // create the viewer for connections
+        createConnectionsViewerScrollPane(
+            matrix,
+            connectionsArea,
+            itemSelector,
+            connections,
+            tg,
+            selectByRow,
+            selectByCol,
+            connectionName,
+            weight,
+            true
+        );
 
-        connectionsArea.getChildren().addAll(itemSelectorView, scrollPane, Misc.getHorizontalSpacer(), connectionDetailsLayout);
 
         // Pane to modify the connections
         HBox modifyPane = new HBox();

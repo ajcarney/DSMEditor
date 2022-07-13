@@ -18,7 +18,6 @@ import java.util.*;
  * @author: Aiden Carney
  */
 public class SymmetricDSM extends TemplateGroupedMatrix implements IPropagationAnalysis {
-    private ObservableSet<Grouping> groupings;  // ObservableSet is used so that any gui threads reading it will see changes without needing a callback set up
 
 //region Constructors
     /**
@@ -118,8 +117,13 @@ public class SymmetricDSM extends TemplateGroupedMatrix implements IPropagationA
                 removeItem(aliasedItem);
             },
             () -> {  // undo function
-                addItem(item, isRow);
-                addItem(aliasedItem, !isRow);
+                if(isRow) {
+                    this.rows.add(item);
+                    this.cols.add(aliasedItem);
+                } else {
+                    this.rows.add(aliasedItem);
+                    this.cols.add(item);
+                }
             },
             false
         ));
@@ -202,16 +206,13 @@ public class SymmetricDSM extends TemplateGroupedMatrix implements IPropagationA
 
         addChangeToStack(new MatrixChange(
             () -> {  // do function
-                if(addedNewGroup) {
+                if(addedNewGroup) {  // no need to undo because this puts another change on the stack
                     addGrouping(newGroup);
                 }
                 item.setGroup1(newGroup);
                 aliasedItem.setGroup1(newGroup);
             },
             () -> {  // undo function
-                if(addedNewGroup) {
-                    removeGrouping(newGroup);
-                }
                 item.setGroup1(oldGroup);
                 aliasedItem.setGroup1(oldGroup);
             },
