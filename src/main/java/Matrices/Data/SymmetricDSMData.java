@@ -33,7 +33,7 @@ public class SymmetricDSMData extends AbstractGroupedDSMData implements IPropaga
         connections = new Vector<>();
         groupings = FXCollections.observableSet();
 
-        this.wasModified = true;
+        setWasModified();
 
         clearStacks();
     }
@@ -74,7 +74,7 @@ public class SymmetricDSMData extends AbstractGroupedDSMData implements IPropaga
         customer = copy.getCustomer();
         versionNumber = copy.getVersionNumber();
 
-        this.wasModified = true;
+        setWasModified();
 
         clearStacks();
     }

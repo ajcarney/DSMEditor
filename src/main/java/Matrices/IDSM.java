@@ -8,12 +8,11 @@ import Matrices.Views.IMatrixView;
 
 
 /**
- * Interface that defines how a DSM is to behave. A DSM has five components:
+ * Interface that defines how a DSM is to behave. A DSM has four components:
  *     Data
  *     View
  *     IOHandler
  *     SideBar
- *     HeaderMenu
  * This interface provides the outline for how the UI can interact with each of
  * these components of the matrix
  */

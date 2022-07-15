@@ -34,6 +34,7 @@ public class MultiDomainDSM implements IDSM {
             throw new IllegalArgumentException("There was an error reading the matrix at " + file);  // error because error occurred on file read
         }
 
+        matrixIOHandler.setMatrix(matrixData);
         matrixView = new MultiDomainView(matrixData, 12.0);
         matrixSideBar = new MultiDomainSideBar(matrixData, editor);
     }

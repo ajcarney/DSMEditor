@@ -2,6 +2,8 @@ package UI.Widgets;
 
 import java.util.HashSet;
 import java.util.Set;
+
+import javafx.beans.property.StringProperty;
 import javafx.collections.ListChangeListener;
 import javafx.event.EventHandler;
 import javafx.geometry.Point2D;
@@ -240,8 +242,8 @@ public class DraggableTab extends Tab {
         return nameLabel;
     }
 
-    public String getLabelText() {
-        return nameLabel.getText();
+    public StringProperty getLabelTextProperty() {
+        return nameLabel.textProperty();
     }
 
     private boolean betweenX(Rectangle2D r1, Rectangle2D r2, double xPoint) {

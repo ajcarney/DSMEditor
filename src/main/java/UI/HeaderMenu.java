@@ -64,6 +64,7 @@ public class HeaderMenu {
     }
 
 
+//region File Menu Items
     /**
      * sets up the Menu object for the file menu
      */
@@ -316,6 +317,7 @@ public class HeaderMenu {
         }
 
     }
+//endregion
 
 
     /**

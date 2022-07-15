@@ -31,7 +31,7 @@ public class AsymmetricDSMData extends AbstractGroupedDSMData implements IPropag
         connections = new Vector<>();
         groupings = FXCollections.observableSet();
 
-        this.wasModified = true;
+        setWasModified();
 
         clearStacks();
     }
@@ -72,7 +72,7 @@ public class AsymmetricDSMData extends AbstractGroupedDSMData implements IPropag
         customer = copy.getCustomer();
         versionNumber = copy.getVersionNumber();
 
-        this.wasModified = true;
+        setWasModified();
 
         clearStacks();
     }

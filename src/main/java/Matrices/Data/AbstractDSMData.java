@@ -3,6 +3,8 @@ package Matrices.Data;
 import Matrices.Data.Entities.DSMConnection;
 import Matrices.Data.Entities.DSMItem;
 import Matrices.Data.Entities.RenderMode;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.util.Pair;
 
 import java.util.*;
@@ -56,7 +58,7 @@ public abstract class AbstractDSMData {
     protected String customer = "";
     protected String versionNumber = "";
 
-    protected boolean wasModified;
+    private BooleanProperty wasModified = new SimpleBooleanProperty(false);;
     protected Stack<MatrixChange> undoStack;
     protected Stack<MatrixChange> redoStack;
     protected static final int MAX_UNDO_HISTORY = Integer.MAX_VALUE;  // TODO: undo history should be based on checkpoints and not this big
@@ -75,7 +77,7 @@ public abstract class AbstractDSMData {
         cols = new Vector<>();
         connections = new Vector<>();
 
-        this.wasModified = true;
+        setWasModified();
 
         clearStacks();
     }
@@ -110,7 +112,7 @@ public abstract class AbstractDSMData {
         customer = copy.getCustomer();
         versionNumber = copy.getVersionNumber();
 
-        this.wasModified = true;
+        setWasModified();
 
         clearStacks();
     }
@@ -131,7 +133,7 @@ public abstract class AbstractDSMData {
             undoStack.remove(0);
         }
 
-        this.wasModified = true;
+        setWasModified();
     }
 
 
@@ -158,7 +160,7 @@ public abstract class AbstractDSMData {
             }
         }
 
-        this.wasModified = true;
+        setWasModified();
     }
 
 
@@ -182,7 +184,7 @@ public abstract class AbstractDSMData {
             }
         }
 
-        this.wasModified = true;
+        setWasModified();
     }
 
 
@@ -231,7 +233,7 @@ public abstract class AbstractDSMData {
      * Clears the wasModified flag. Used for when matrix has been saved to a file. Does not add changes to the stack
      */
     public final void clearWasModifiedFlag() {
-        this.wasModified = false;
+        this.wasModified.set(false);
     }
 
 
@@ -239,7 +241,7 @@ public abstract class AbstractDSMData {
      * Sets the was modified flag. Does not add changes to the stack
      */
     public final void setWasModified() {
-        wasModified = true;
+        wasModified.set(true);
     }
 
 
@@ -250,6 +252,14 @@ public abstract class AbstractDSMData {
      * @return if the matrix has been modified, true if it has, false if not
      */
     public final boolean getWasModified() {
+        return wasModified.getValue();
+    }
+
+
+    /**
+     * @return  the BooleanProperty of the wasModified flag so that things can be bound to it
+     */
+    public final BooleanProperty getWasModifiedProperty() {
         return wasModified;
     }
 //endregion

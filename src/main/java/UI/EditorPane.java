@@ -1,10 +1,11 @@
 package UI;
 
 import Constants.Constants;
-import Matrices.*;
 import Matrices.Data.AbstractDSMData;
+import Matrices.IDSM;
+import Matrices.MatricesCollection;
 import UI.Widgets.DraggableTab;
-import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.scene.control.TabPane;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
@@ -54,33 +55,6 @@ public class EditorPane {
 
 
         tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.ALL_TABS);  // any tab can be closed, but add event to be called on close
-
-        // TODO: this should be set up as a binding
-        // go through and update names
-        // this allows a thread to update the gui
-        Thread nameHandlerThread = new Thread(() -> {  // TODO: this should be set up as a binding
-            while (true) {  // go through and update names
-                for (HashMap.Entry<DraggableTab, Integer> entry : tabs.entrySet()) {
-                    String title = matrices.getMatrix(entry.getValue()).getMatrixIOHandler().getSavePath().getName();
-                    if (!matrices.isMatrixSaved(entry.getValue())) {
-                        title += "*";
-                    }
-                    if (!entry.getKey().getLabelText().equals(title)) {
-                        String finalTitle = title;
-                        // this allows a thread to update the gui
-                        Platform.runLater(() -> entry.getKey().setLabelText(finalTitle));
-                    }
-                }
-
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-        nameHandlerThread.setDaemon(true);
-        nameHandlerThread.start();
 
         this.rootLayout = rootLayout;
         this.rootLayout.setTop(headerMenu.getMenuBar());
@@ -198,11 +172,18 @@ public class EditorPane {
 
         this.matrices.addMatrix(matrixUid, matrix);
 
-        String title = this.matrices.getMatrix(matrixUid).getMatrixIOHandler().getSavePath().getName();
-        if(!matrices.isMatrixSaved(matrixUid)) {
-            title += "*";
-        }
-        DraggableTab tab = new DraggableTab(title);
+        DraggableTab tab = new DraggableTab("");
+
+        // bind a "*" to the name if the matrix has not been saved
+        tab.getLabelTextProperty().bind(Bindings.createStringBinding(() -> {
+            String title = this.matrices.getMatrix(matrixUid).getMatrixIOHandler().getSavePath().getName();
+            if (matrix.getMatrixData().getWasModifiedProperty().get()) {
+                title += "*";
+            }
+            return title;
+        }, matrix.getMatrixData().getWasModifiedProperty()));
+
+
         this.matrices.getMatrix(matrixUid).getMatrixView().refreshView();
         tab.setContent(this.matrices.getMatrix(matrixUid).getMatrixView().getView());
         tab.setDetachable(false);
@@ -240,9 +221,7 @@ public class EditorPane {
             this.matrices.removeMatrix(matrixUid);
 
             if(this.tabs.isEmpty()) {
-//                DefaultHeaderMenu menu = new DefaultHeaderMenu(this);
-//                this.rootLayout.setTop(menu.getMenuBar());
-//                this.rootLayout.setBottom(menu.getConnectionSearchLayout());
+                headerMenu.refresh(null);
                 this.rootLayout.setLeft(null);
                 this.matrixMetaDataPane.setMatrix(null);
             }
@@ -253,25 +232,7 @@ public class EditorPane {
             matrixMetaDataPane.setMatrix(this.matrices.getMatrix(matrixUid).getMatrixData());
             headerMenu.refresh(this.matrices.getMatrix(matrixUid));
 
-
-            if(this.matrices.getMatrix(matrixUid).getClass().equals(SymmetricDSM.class)) {
-                //SymmetricHeaderMenu menu = new SymmetricHeaderMenu(this);
-                //this.rootLayout.setBottom(menu.getConnectionSearchLayout());
-                //this.rootLayout.setLeft(new SymmetricSideBar((SymmetricDSMData)this.matrices.getMatrix(matrixUid), this).getLayout());
-                this.rootLayout.setLeft(this.matrices.getMatrix(matrixUid).getMatrixSideBar().getLayout());
-            } else if(this.matrices.getMatrix(matrixUid).getClass().equals(AsymmetricDSM.class)) {
-                //AsymmetricHeaderMenu menu = new AsymmetricHeaderMenu(this);
-                //this.rootLayout.setBottom(menu.getConnectionSearchLayout());
-                //this.rootLayout.setLeft(new AsymmetricSideBar((AsymmetricDSMData)this.matrices.getMatrix(matrixUid), this).getLayout());
-                this.rootLayout.setLeft(this.matrices.getMatrix(matrixUid).getMatrixSideBar().getLayout());
-            } else if(this.matrices.getMatrix(matrixUid).getClass().equals(MultiDomainDSM.class)) {
-                //MultiDomainHeaderMenu menu = new MultiDomainHeaderMenu(this);
-                //this.rootLayout.setBottom(menu.getConnectionSearchLayout());
-                //this.rootLayout.setLeft(new MultiDomainSideBar((MultiDomainDSMData)this.matrices.getMatrix(matrixUid), this).getLayout());
-                this.rootLayout.setLeft(this.matrices.getMatrix(matrixUid).getMatrixSideBar().getLayout());
-            } else {
-                throw new IllegalStateException("Matrix being handled was not of a valid type");
-            }
+            this.rootLayout.setLeft(this.matrices.getMatrix(matrixUid).getMatrixSideBar().getLayout());
         });
 
         tabs.put(tab, matrixUid);

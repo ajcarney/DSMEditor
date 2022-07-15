@@ -66,7 +66,7 @@ public class MultiDomainDSMData extends AbstractDSMData {
         domains.put(defaultDomain, FXCollections.observableSet());  // add the default
         createNewDefaultDomainGroup(defaultDomain);
 
-        this.wasModified = true;
+        setWasModified();
 
         clearStacks();
     }
@@ -94,7 +94,7 @@ public class MultiDomainDSMData extends AbstractDSMData {
         } else {
             this.domains.put(defaultDomain, FXCollections.observableSet());
         }
-        this.wasModified = true;
+        setWasModified();
 
         clearStacks();
     }
@@ -137,7 +137,7 @@ public class MultiDomainDSMData extends AbstractDSMData {
         customer = copy.getCustomer();
         versionNumber = copy.getVersionNumber();
 
-        this.wasModified = true;
+        setWasModified();
 
         clearStacks();
     }

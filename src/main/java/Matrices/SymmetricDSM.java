@@ -34,6 +34,7 @@ public class SymmetricDSM implements IDSM {
             throw new IllegalArgumentException("There was an error reading the matrix at " + file);  // error because error occurred on file read
         }
 
+        matrixIOHandler.setMatrix(matrixData);
         matrixView = new SymmetricView(matrixData, 12.0);
         matrixSideBar = new SymmetricSideBar(matrixData, editor);
     }
