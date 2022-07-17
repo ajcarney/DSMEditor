@@ -17,11 +17,12 @@ import Matrices.Views.*;
 import UI.HeaderMenu;
 import UI.MatrixMetaDataPane;
 import UI.Widgets.DraggableTab;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.TabPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.util.Pair;
 
 import java.io.File;
@@ -29,10 +30,10 @@ import java.util.HashMap;
 
 public class MultiDomainEditorTab implements IEditorTab {
 
-    protected final Pane centerLayout = new Pane();
-    protected final Pane leftLayout = new Pane();
-    protected final Pane rightLayout = new Pane();
-    protected final Pane bottomLayout = new Pane();
+    protected final VBox centerLayout = new VBox();
+    protected final VBox leftLayout = new VBox();
+    protected final VBox rightLayout = new VBox();
+    protected final HBox bottomLayout = new HBox();
 
     protected final MultiDomainDSMData matrixData;
     protected final MultiDomainView matrixView;
@@ -45,6 +46,16 @@ public class MultiDomainEditorTab implements IEditorTab {
 
 
     public MultiDomainEditorTab(MultiDomainDSMData data, MultiDomainIOHandler ioHandler, HeaderMenu headerMenu) {
+        VBox.setVgrow(centerLayout, Priority.ALWAYS);
+        HBox.setHgrow(centerLayout, Priority.ALWAYS);
+        centerLayout.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+
+        VBox.setVgrow(tabPane, Priority.ALWAYS);
+        HBox.setHgrow(tabPane, Priority.ALWAYS);
+        tabPane.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+
+        leftLayout.setAlignment(Pos.CENTER);
+
         this.matrixData = data;
         this.ioHandler = ioHandler;
         this.headerMenu = headerMenu;

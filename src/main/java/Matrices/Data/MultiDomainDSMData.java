@@ -730,12 +730,32 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
     /**
      * Takes a matrix from a breakout view and merges its changes
      *
-     * @param fromGroup  the "from" grouping item that defines where the breakout view is from
-     * @param toGroup    the "to" grouping item that defines where the breakout view is from
-     * @param matrix     the breakout view matrix
+     * @param fromGroup     the "from" grouping item that defines where the breakout view is from
+     * @param toGroup       the "to" grouping item that defines where the breakout view is from
+     * @param importMatrix  the breakout view matrix
      */
     @Override
-    public void importZoom(Grouping fromGroup, Grouping toGroup, AbstractDSMData matrix) {
+    public void importZoom(Grouping fromGroup, Grouping toGroup, AbstractDSMData importMatrix) {
+        // delete all the connections for the current row items
+//        for(DSMItem row : rows) {
+//            if (rows.stream().anyMatch(r -> r.getUid() == conn.getRowUid()) && exportMatrix.getCols().stream().anyMatch(c -> c.getUid() == conn.getColUid())) {
+//                clearItemConnections(row.getUid());
+//            }
+//        }
+
+        // from grouping defines the row items. Remove all the row items for that domain and replace them
+        // with the row items from the import matrix. Do the same for the columns but with the to grouping
+        rows.removeIf(r -> r.getGroup2().equals(fromGroup));
+        rows.addAll(importMatrix.getRows());
+        cols.removeIf(r -> r.getGroup2().equals(toGroup));
+        cols.addAll(importMatrix.getRows());
+
+        // modify the connections
+//        for(DSMConnection conn : importMatrix.getConnections()) {
+//            if(rows.stream().anyMatch(r -> r.getUid() == conn.getRowUid()) && exportMatrix.getCols().stream().anyMatch(c -> c.getUid() == conn.getColUid())) {
+//                exportMatrix.modifyConnection(conn.getRowUid(), conn.getColUid(), conn.getConnectionName(), conn.getWeight());
+//            }
+//        }
 
     }
 
@@ -743,8 +763,8 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
     /**
      * Takes a matrix and creates a breakout view from it
      *
-     * @param fromGroup  the group that defines the row items
-     * @param toGroup    the group that defines the column items
+     * @param fromGroup  the domain that defines the row items
+     * @param toGroup    the domain that defines the column items
      * @return           the matrix object that is a breakout view
      */
     @Override
@@ -767,16 +787,49 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
 
             // find the connections
             for(DSMConnection conn : connections) {
-
+                if(exportMatrix.getRows().stream().anyMatch(r -> r.getUid() == conn.getRowUid()) && exportMatrix.getCols().stream().anyMatch(c -> c.getUid() == conn.getColUid())) {
+                    exportMatrix.modifyConnection(conn.getRowUid(), conn.getColUid(), conn.getConnectionName(), conn.getWeight());
+                }
             }
 
             // add the groupings
+            for(Grouping grouping : getDomainGroupings(fromGroup)) {
+                exportMatrix.addGrouping(new Grouping(grouping));
+            }
 
 
             return exportMatrix;
         } else {
             AsymmetricDSMData exportMatrix = new AsymmetricDSMData();
 
+            // find the row and column items
+            for(DSMItem item : rows) {
+                if(item.getGroup2().equals(fromGroup)) {
+                    exportMatrix.addItem(new DSMItem(item), true);
+                }
+            }
+
+            for(DSMItem item : cols) {
+                if(item.getGroup2().equals(fromGroup)) {
+                    exportMatrix.addItem(new DSMItem(item), false);
+                }
+            }
+
+            // find the connections
+            for(DSMConnection conn : connections) {
+                if(exportMatrix.getRows().stream().anyMatch(r -> r.getUid() == conn.getRowUid()) && exportMatrix.getCols().stream().anyMatch(c -> c.getUid() == conn.getColUid())) {
+                    exportMatrix.modifyConnection(conn.getRowUid(), conn.getColUid(), conn.getConnectionName(), conn.getWeight());
+                }
+            }
+
+            // add the groupings
+            for(Grouping grouping : getDomainGroupings(fromGroup)) {
+                exportMatrix.addGrouping(new Grouping(grouping));
+            }
+            // add the groupings
+            for(Grouping grouping : getDomainGroupings(toGroup)) {
+                exportMatrix.addGrouping(new Grouping(grouping));
+            }
 
             return exportMatrix;
         }

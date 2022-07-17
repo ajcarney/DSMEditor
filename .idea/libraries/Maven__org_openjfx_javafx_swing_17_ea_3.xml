@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: org.openjfx:javafx-swing:17-ea+3">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/openjfx/javafx-swing/17-ea+3/javafx-swing-17-ea+3.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/openjfx/javafx-swing/17-ea+3/javafx-swing-17-ea+3-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/openjfx/javafx-swing/17-ea+3/javafx-swing-17-ea+3-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
