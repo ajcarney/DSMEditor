@@ -25,7 +25,6 @@ public class EditorPane {
     private final TabPane tabPane = new TabPane();
     private final HashMap<DraggableTab, Integer> tabs = new HashMap<>();  // tab object, matrix uid
     private final MatricesCollection matrices;
-    private final MatrixMetaDataPane matrixMetaDataPane;
     private final HeaderMenu headerMenu;
     private final ConnectionSearchWidget searchWidget;
 
@@ -42,7 +41,6 @@ public class EditorPane {
      */
     public EditorPane(MatricesCollection matrices, BorderPane rootLayout) {
         this.matrices = matrices;
-        this.matrixMetaDataPane = new MatrixMetaDataPane();
         this.searchWidget = new ConnectionSearchWidget(this);
         this.headerMenu = new HeaderMenu(this);
 
@@ -60,7 +58,6 @@ public class EditorPane {
         this.rootLayout.setTop(headerMenu.getMenuBar());
         this.rootLayout.setBottom(searchWidget.getMainLayout());
         this.rootLayout.setCenter(getTabPane());
-        this.rootLayout.setRight(matrixMetaDataPane.getLayout());
     }
 
 
@@ -153,6 +150,14 @@ public class EditorPane {
 
 
     /**
+     * @return  the header menu object for the matrix
+     */
+    public HeaderMenu getHeaderMenu() {
+        return headerMenu;
+    }
+    
+
+    /**
      * @return  the search widget for the editor
      */
     public ConnectionSearchWidget getSearchWidget() {
@@ -185,7 +190,7 @@ public class EditorPane {
 
 
         this.matrices.getMatrix(matrixUid).getMatrixView().refreshView();
-        tab.setContent(this.matrices.getMatrix(matrixUid).getMatrixView().getView());
+        tab.setContent(this.matrices.getMatrix(matrixUid).getMatrixEditorTab().getCenterPane());
         tab.setDetachable(false);
         tabPane.getScene().setOnKeyPressed(e -> {  // add keybinding to toggle cross-highlighting on the editor
             if (e.getCode() == KeyCode.F) {
@@ -221,18 +226,18 @@ public class EditorPane {
             this.matrices.removeMatrix(matrixUid);
 
             if(this.tabs.isEmpty()) {
-                headerMenu.refresh(null);
+                headerMenu.refresh(null, null, null);
                 this.rootLayout.setLeft(null);
-                this.matrixMetaDataPane.setMatrix(null);
+                this.rootLayout.setRight(null);
             }
 
         });
 
         tab.setOnSelectionChanged(e -> {
-            matrixMetaDataPane.setMatrix(this.matrices.getMatrix(matrixUid).getMatrixData());
-            headerMenu.refresh(this.matrices.getMatrix(matrixUid));
+            headerMenu.refresh(this.matrices.getMatrix(matrixUid).getMatrixData(), this.matrices.getMatrix(matrixUid).getMatrixIOHandler(), this.matrices.getMatrix(matrixUid).getMatrixView());
 
-            this.rootLayout.setLeft(this.matrices.getMatrix(matrixUid).getMatrixSideBar().getLayout());
+            this.rootLayout.setLeft(this.matrices.getMatrix(matrixUid).getMatrixEditorTab().getLeftPane());
+            this.rootLayout.setRight(this.matrices.getMatrix(matrixUid).getMatrixEditorTab().getRightPane());
         });
 
         tabs.put(tab, matrixUid);
@@ -285,7 +290,7 @@ public class EditorPane {
         if(getFocusedMatrixUid() != null) {
             this.matrices.getMatrix(getFocusedMatrixUid()).getMatrixView().refreshView();
             getFocusedTab().setContent(this.matrices.getMatrix(getFocusedMatrixUid()).getMatrixView().getView());
-            matrixMetaDataPane.setMatrix(this.matrices.getMatrix(getFocusedMatrixUid()).getMatrixData());
+            this.rootLayout.setRight(this.matrices.getMatrix(getFocusedMatrixUid()).getMatrixEditorTab().getRightPane());
         }
     }
 

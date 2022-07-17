@@ -4,6 +4,7 @@ import Matrices.Data.Entities.DSMConnection;
 import Matrices.Data.Entities.DSMItem;
 import Matrices.Data.Entities.Grouping;
 import Matrices.Data.SymmetricDSMData;
+import Matrices.Views.SymmetricView;
 import UI.EditorPane;
 import UI.Widgets.Misc;
 import UI.Widgets.NumericTextField;
@@ -37,11 +38,11 @@ public class SymmetricSideBar extends AbstractSideBar {
     /**
      * Constructor for a new side bar for a symmetric matrix
      *
-     * @param matrix  the matrix the side bar will make changes to
-     * @param editor  the editor object so that the tab can be refreshed
+     * @param matrix      the matrix the side bar will make changes to
+     * @param matrixView  the matrix view instance for the matrix
      */
-    public SymmetricSideBar(SymmetricDSMData matrix, EditorPane editor) {
-        super(matrix, editor);
+    public SymmetricSideBar(SymmetricDSMData matrix, SymmetricView matrixView) {
+        super(matrix, matrixView);
         this.matrix = matrix;
 
         addMatrixItems.setText("Add Rows/Columns");
@@ -115,7 +116,7 @@ public class SymmetricSideBar extends AbstractSideBar {
             }
             matrix.setCurrentStateAsCheckpoint();
             window.close();
-            editor.refreshSelectedTab();
+            matrixView.refreshView();
         });
 
         Button cancelButton = new Button("Cancel");
@@ -210,7 +211,7 @@ public class SymmetricSideBar extends AbstractSideBar {
                 }
             }
             window.close();
-            editor.refreshSelectedTab();
+            matrixView.refreshView();
             matrix.setCurrentStateAsCheckpoint();
         });
 
@@ -366,7 +367,7 @@ public class SymmetricSideBar extends AbstractSideBar {
                matrix.modifyConnection(conn.getRowUid(), conn.getColUid(), conn.getConnectionName(), conn.getWeight());
             }
             window.close();
-            editor.refreshSelectedTab();
+            matrixView.refreshView();
             matrix.setCurrentStateAsCheckpoint();
         });
 
@@ -569,7 +570,7 @@ public class SymmetricSideBar extends AbstractSideBar {
                 }
             }
             window.close();
-            editor.refreshSelectedTab();
+            matrixView.refreshView();
             matrix.setCurrentStateAsCheckpoint();
         });
 
@@ -846,7 +847,7 @@ public class SymmetricSideBar extends AbstractSideBar {
                 matrix.deleteConnection(conn.getRowUid(), conn.getColUid());
             }
             window.close();
-            editor.refreshSelectedTab();
+            matrixView.refreshView();
             matrix.setCurrentStateAsCheckpoint();
         });
 
@@ -937,7 +938,7 @@ public class SymmetricSideBar extends AbstractSideBar {
         scene.getWindow().setOnHidden(e -> {  // TODO: 6/17/2020 changed from setOnCloseRequest when it was working before and idk why this fixed it
             window.close();                        // changes have already been made so just close and refresh the screen
             matrix.setCurrentStateAsCheckpoint();
-            editor.refreshSelectedTab();
+            matrixView.refreshView();
         });
         window.showAndWait();
     }

@@ -1,10 +1,10 @@
 package Matrices;
 
 import Matrices.Data.SymmetricDSMData;
+import Matrices.EditorTabs.SymmetricEditorTab;
 import Matrices.IOHandlers.SymmetricIOHandler;
 import Matrices.SideBarTools.SymmetricSideBar;
 import Matrices.Views.SymmetricView;
-import UI.EditorPane;
 
 import java.io.File;
 
@@ -18,6 +18,7 @@ public class SymmetricDSM implements IDSM {
     private SymmetricView matrixView;
     private SymmetricIOHandler matrixIOHandler;
     private SymmetricSideBar matrixSideBar;
+    private SymmetricEditorTab editorTab;
 
 
     /**
@@ -25,9 +26,8 @@ public class SymmetricDSM implements IDSM {
      * the file
      *
      * @param file    the file object that contains a symmetric dsm to read
-     * @param editor  the editor object
      */
-    public SymmetricDSM(File file, EditorPane editor) {
+    public SymmetricDSM(File file) {
         matrixIOHandler = new SymmetricIOHandler(file);
         matrixData = matrixIOHandler.readFile();
         if(matrixData == null) {
@@ -35,8 +35,9 @@ public class SymmetricDSM implements IDSM {
         }
 
         matrixIOHandler.setMatrix(matrixData);
+        editorTab = new SymmetricEditorTab(matrixData);
         matrixView = new SymmetricView(matrixData, 12.0);
-        matrixSideBar = new SymmetricSideBar(matrixData, editor);
+        matrixSideBar = new SymmetricSideBar(matrixData, matrixView);
     }
 
 
@@ -46,14 +47,14 @@ public class SymmetricDSM implements IDSM {
      *
      * @param matrixData       the matrix data object
      * @param matrixIOHandler  the IOHandler object
-     * @param editor           the editor object
      */
-    public SymmetricDSM(SymmetricDSMData matrixData, SymmetricIOHandler matrixIOHandler, EditorPane editor) {
+    public SymmetricDSM(SymmetricDSMData matrixData, SymmetricIOHandler matrixIOHandler) {
         this.matrixData = matrixData;
         this.matrixIOHandler = matrixIOHandler;
 
+        editorTab = new SymmetricEditorTab(matrixData);
         matrixView = new SymmetricView(matrixData, 12.0);
-        matrixSideBar = new SymmetricSideBar(matrixData, editor);
+        matrixSideBar = new SymmetricSideBar(matrixData, matrixView);
     }
 
 
@@ -67,11 +68,20 @@ public class SymmetricDSM implements IDSM {
 
 
     /**
+     * @return  the DSM editor tab object for the matrix
+     */
+    @Override
+    public SymmetricEditorTab getMatrixEditorTab() {
+        return editorTab;
+    }
+
+
+    /**
      * @return  the DSM View object for the matrix
      */
     @Override
     public SymmetricView getMatrixView() {
-        return matrixView;
+        return editorTab.getMatrixView();
     }
 
 
@@ -84,13 +94,13 @@ public class SymmetricDSM implements IDSM {
     }
 
 
-    /**
-     * @return  the DSM Side bar object for the matrix
-     */
-    @Override
-    public SymmetricSideBar getMatrixSideBar() {
-        return matrixSideBar;
-    }
+//    /**
+//     * @return  the DSM Side bar object for the matrix
+//     */
+//    @Override
+//    public SymmetricSideBar getMatrixSideBar() {
+//        return matrixSideBar;
+//    }
 
 
     /**

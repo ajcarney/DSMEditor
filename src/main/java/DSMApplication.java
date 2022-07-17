@@ -71,7 +71,7 @@ public class DSMApplication extends Application {
 //            }
             File f = new File("/home/aiden/Documents/DSMEditor/test6.dsm");
             if(f.exists()) {
-                editor.addTab(new MultiDomainDSM(f, editor));
+                editor.addTab(new MultiDomainDSM(f, editor.getHeaderMenu()));
             }
         }
 

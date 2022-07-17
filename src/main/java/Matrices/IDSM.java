@@ -2,6 +2,7 @@ package Matrices;
 
 
 import Matrices.Data.AbstractDSMData;
+import Matrices.EditorTabs.IEditorTab;
 import Matrices.IOHandlers.AbstractIOHandler;
 import Matrices.SideBarTools.AbstractSideBar;
 import Matrices.Views.IMatrixView;
@@ -28,6 +29,12 @@ public interface IDSM {
 
 
     /**
+     * @return  the DSM editor tab object for the matrix
+     */
+    <T extends IEditorTab> T getMatrixEditorTab();
+
+
+    /**
      * Gets the DSM View object for the matrix
      *
      * @param <T>  the type of matrix view
@@ -51,7 +58,7 @@ public interface IDSM {
      * @param <T>  the type of matrix SideBar
      * @return     the DSM SideBar object for the matrix
      */
-    <T extends AbstractSideBar> T getMatrixSideBar();
+    // <T extends AbstractSideBar> T getMatrixSideBar();
 
 
     /**

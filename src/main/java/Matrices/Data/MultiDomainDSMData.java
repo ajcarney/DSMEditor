@@ -5,6 +5,7 @@ import Matrices.Data.Entities.DSMConnection;
 import Matrices.Data.Entities.DSMItem;
 import Matrices.Data.Entities.Grouping;
 import Matrices.Data.Entities.RenderMode;
+import Matrices.Data.Flags.IZoomable;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableMap;
 import javafx.collections.ObservableSet;
@@ -23,7 +24,7 @@ import java.util.*;
  *
  * @author: Aiden Carney
  */
-public class MultiDomainDSMData extends AbstractDSMData {
+public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
     private final Grouping defaultDomain = new Grouping(Integer.MAX_VALUE, "default", Color.WHITE, Grouping.defaultFontColor);
     private ObservableMap<Grouping, ObservableSet<Grouping>> domains;  // hashmap of domains and list of groupings corresponding to that domain
 
@@ -723,6 +724,62 @@ public class MultiDomainDSMData extends AbstractDSMData {
         }
 
         return grid;
+    }
+
+
+    /**
+     * Takes a matrix from a breakout view and merges its changes
+     *
+     * @param fromGroup  the "from" grouping item that defines where the breakout view is from
+     * @param toGroup    the "to" grouping item that defines where the breakout view is from
+     * @param matrix     the breakout view matrix
+     */
+    @Override
+    public void importZoom(Grouping fromGroup, Grouping toGroup, AbstractDSMData matrix) {
+
+    }
+
+
+    /**
+     * Takes a matrix and creates a breakout view from it
+     *
+     * @param fromGroup  the group that defines the row items
+     * @param toGroup    the group that defines the column items
+     * @return           the matrix object that is a breakout view
+     */
+    @Override
+    public AbstractDSMData exportZoom(Grouping fromGroup, Grouping toGroup) {
+        if(fromGroup.equals(toGroup)) {
+            SymmetricDSMData exportMatrix = new SymmetricDSMData();
+
+            // find the row and column items
+            for(DSMItem item : rows) {
+                if(item.getGroup2().equals(fromGroup)) {
+                    exportMatrix.addItem(new DSMItem(item), true);
+                }
+            }
+
+            for(DSMItem item : cols) {
+                if(item.getGroup2().equals(fromGroup)) {
+                    exportMatrix.addItem(new DSMItem(item), false);
+                }
+            }
+
+            // find the connections
+            for(DSMConnection conn : connections) {
+
+            }
+
+            // add the groupings
+
+
+            return exportMatrix;
+        } else {
+            AsymmetricDSMData exportMatrix = new AsymmetricDSMData();
+
+
+            return exportMatrix;
+        }
     }
 
 }

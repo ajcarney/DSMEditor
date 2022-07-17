@@ -1,10 +1,11 @@
 package Matrices.SideBarTools;
 
-import Matrices.Data.*;
+import Matrices.Data.AbstractDSMData;
+import Matrices.Data.AbstractGroupedDSMData;
 import Matrices.Data.Entities.DSMConnection;
 import Matrices.Data.Entities.DSMItem;
 import Matrices.Data.Entities.Grouping;
-import UI.EditorPane;
+import Matrices.Views.AbstractMatrixView;
 import UI.Widgets.Misc;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -29,7 +30,7 @@ public abstract class AbstractSideBar {
     protected final Button sort = new Button("Sort");
     protected final Button reDistributeIndices = new Button("Re-Distribute Indices");
 
-    protected EditorPane editor;
+    protected AbstractMatrixView matrixView;
     protected AbstractDSMData matrix;
 
 
@@ -150,12 +151,12 @@ public abstract class AbstractSideBar {
      * Requires a MatrixView object to get the matrix and a EditorPane object to get the current focused tab
      * and call updates to it.
      *
-     * @param matrix  the matrix data object instance
-     * @param editor  the EditorPane instance
+     * @param matrix      the matrix data object instance
+     * @param matrixView  the matrix view instance for the matrix
      */
-    AbstractSideBar(AbstractDSMData matrix, EditorPane editor) {
+    AbstractSideBar(AbstractDSMData matrix, AbstractMatrixView matrixView) {
         layout = new VBox();
-        this.editor = editor;
+        this.matrixView = matrixView;
         this.matrix = matrix;
 
         addMatrixItems.setOnAction(e -> addMatrixItemsCallback());
@@ -215,7 +216,7 @@ public abstract class AbstractSideBar {
      * Sets up the button callback for sorting the matrix
      */
     protected void sortCallback() {
-        editor.refreshSelectedTab();
+        matrixView.refreshView();
     }
 
 
@@ -223,11 +224,8 @@ public abstract class AbstractSideBar {
      * Sets up the button callback for re-distributing sort indices
      */
     protected void reDistributeIndicesCallback() {
-        if(editor.getFocusedMatrixUid() == null) {
-            return;
-        }
         matrix.reDistributeSortIndices();
-        editor.refreshSelectedTab();
+        matrixView.refreshView();
         matrix.setCurrentStateAsCheckpoint();
     }
 

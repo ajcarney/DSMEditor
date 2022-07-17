@@ -1,10 +1,11 @@
 package Matrices;
 
 import Matrices.Data.AsymmetricDSMData;
+import Matrices.EditorTabs.AsymmetricEditorTab;
+import Matrices.EditorTabs.SymmetricEditorTab;
 import Matrices.IOHandlers.AsymmetricIOHandler;
 import Matrices.SideBarTools.AsymmetricSideBar;
 import Matrices.Views.AsymmetricView;
-import UI.EditorPane;
 
 import java.io.File;
 
@@ -18,6 +19,7 @@ public class AsymmetricDSM implements IDSM {
     private AsymmetricView matrixView;
     private AsymmetricIOHandler matrixIOHandler;
     private AsymmetricSideBar matrixSideBar;
+    private AsymmetricEditorTab editorTab;
 
 
     /**
@@ -25,9 +27,8 @@ public class AsymmetricDSM implements IDSM {
      * the file
      *
      * @param file    the file object that contains a Asymmetric dsm to read
-     * @param editor  the editor object
      */
-    public AsymmetricDSM(File file, EditorPane editor) {
+    public AsymmetricDSM(File file) {
         matrixIOHandler = new AsymmetricIOHandler(file);
         matrixData = matrixIOHandler.readFile();
         if(matrixData == null) {
@@ -35,8 +36,9 @@ public class AsymmetricDSM implements IDSM {
         }
 
         matrixIOHandler.setMatrix(matrixData);
+        editorTab = new AsymmetricEditorTab(matrixData);
         matrixView = new AsymmetricView(matrixData, 12.0);
-        matrixSideBar = new AsymmetricSideBar(matrixData, editor);
+        matrixSideBar = new AsymmetricSideBar(matrixData, matrixView);
     }
 
 
@@ -46,14 +48,14 @@ public class AsymmetricDSM implements IDSM {
      *
      * @param matrixData       the matrix data object
      * @param matrixIOHandler  the IOHandler object
-     * @param editor           the editor object
      */
-    public AsymmetricDSM(AsymmetricDSMData matrixData, AsymmetricIOHandler matrixIOHandler, EditorPane editor) {
+    public AsymmetricDSM(AsymmetricDSMData matrixData, AsymmetricIOHandler matrixIOHandler) {
         this.matrixData = matrixData;
         this.matrixIOHandler = matrixIOHandler;
 
+        editorTab = new AsymmetricEditorTab(this.matrixData);
         matrixView = new AsymmetricView(matrixData, 12.0);
-        matrixSideBar = new AsymmetricSideBar(matrixData, editor);
+        matrixSideBar = new AsymmetricSideBar(matrixData, matrixView);
     }
 
 
@@ -67,11 +69,20 @@ public class AsymmetricDSM implements IDSM {
 
 
     /**
+     * @return  the DSM editor tab object for the matrix
+     */
+    @Override
+    public AsymmetricEditorTab getMatrixEditorTab() {
+        return editorTab;
+    }
+
+
+    /**
      * @return  the DSM View object for the matrix
      */
     @Override
     public AsymmetricView getMatrixView() {
-        return matrixView;
+        return editorTab.getMatrixView();
     }
 
 
@@ -84,13 +95,13 @@ public class AsymmetricDSM implements IDSM {
     }
 
 
-    /**
-     * @return  the DSM Side bar object for the matrix
-     */
-    @Override
-    public AsymmetricSideBar getMatrixSideBar() {
-        return matrixSideBar;
-    }
+//    /**
+//     * @return  the DSM Side bar object for the matrix
+//     */
+//    @Override
+//    public AsymmetricSideBar getMatrixSideBar() {
+//        return matrixSideBar;
+//    }
 
 
     /**

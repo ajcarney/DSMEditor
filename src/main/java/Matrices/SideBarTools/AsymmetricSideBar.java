@@ -4,6 +4,8 @@ import Matrices.Data.*;
 import Matrices.Data.Entities.DSMConnection;
 import Matrices.Data.Entities.DSMItem;
 import Matrices.Data.Entities.Grouping;
+import Matrices.Views.AsymmetricView;
+import Matrices.Views.SymmetricView;
 import UI.EditorPane;
 import UI.Widgets.Misc;
 import UI.Widgets.NumericTextField;
@@ -35,8 +37,15 @@ public class AsymmetricSideBar extends AbstractSideBar {
     protected final Button configureGroupings = new Button("Configure Groupings");
     private AsymmetricDSMData matrix;
 
-    public AsymmetricSideBar(AsymmetricDSMData matrix, EditorPane editor) {
-        super(matrix, editor);
+
+    /**
+     * Constructor for a new side bar for an asymmetric matrix
+     *
+     * @param matrix      the matrix the side bar will make changes to
+     * @param matrixView  the matrix view instance for the matrix
+     */
+    public AsymmetricSideBar(AsymmetricDSMData matrix, AsymmetricView matrixView) {
+        super(matrix, matrixView);
         this.matrix = matrix;
 
         addMatrixItems.setText("Add Rows/Columns");
@@ -119,7 +128,7 @@ public class AsymmetricSideBar extends AbstractSideBar {
             }
             matrix.setCurrentStateAsCheckpoint();
             window.close();
-            editor.refreshSelectedTab();
+            matrixView.refreshView();
         });
 
         Button cancelButton = new Button("Cancel");
@@ -215,7 +224,7 @@ public class AsymmetricSideBar extends AbstractSideBar {
                 }
             }
             window.close();
-            editor.refreshSelectedTab();
+            matrixView.refreshView();
             matrix.setCurrentStateAsCheckpoint();
         });
 
@@ -326,7 +335,7 @@ public class AsymmetricSideBar extends AbstractSideBar {
                 matrix.modifyConnection(conn.getRowUid(), conn.getColUid(), conn.getConnectionName(), conn.getWeight());
             }
             window.close();
-            editor.refreshSelectedTab();
+            matrixView.refreshView();
             matrix.setCurrentStateAsCheckpoint();
         });
 
@@ -456,7 +465,7 @@ public class AsymmetricSideBar extends AbstractSideBar {
                 }
             }
             window.close();
-            editor.refreshSelectedTab();
+            matrixView.refreshView();
             matrix.setCurrentStateAsCheckpoint();
         });
 
@@ -640,7 +649,7 @@ public class AsymmetricSideBar extends AbstractSideBar {
                 matrix.deleteConnection(conn.getRowUid(), conn.getColUid());
             }
             window.close();
-            editor.refreshSelectedTab();
+            matrixView.refreshView();
             matrix.setCurrentStateAsCheckpoint();
         });
 
@@ -731,7 +740,7 @@ public class AsymmetricSideBar extends AbstractSideBar {
         scene.getWindow().setOnHidden(e -> {  // TODO: 6/17/2020 changed from setOnCloseRequest when it was working before and idk why this fixed it
             window.close();                        // changes have already been made so just close and refresh the screen
             matrix.setCurrentStateAsCheckpoint();
-            editor.refreshSelectedTab();
+            matrixView.refreshView();
         });
         window.showAndWait();
     }

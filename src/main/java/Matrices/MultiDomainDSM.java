@@ -1,10 +1,12 @@
 package Matrices;
 
 import Matrices.Data.MultiDomainDSMData;
+import Matrices.EditorTabs.MultiDomainEditorTab;
 import Matrices.IOHandlers.MultiDomainIOHandler;
 import Matrices.SideBarTools.MultiDomainSideBar;
+import Matrices.Views.IMatrixView;
 import Matrices.Views.MultiDomainView;
-import UI.EditorPane;
+import UI.HeaderMenu;
 
 import java.io.File;
 
@@ -18,6 +20,7 @@ public class MultiDomainDSM implements IDSM {
     private MultiDomainView matrixView;
     private MultiDomainIOHandler matrixIOHandler;
     private MultiDomainSideBar matrixSideBar;
+    private MultiDomainEditorTab editorTab;
 
 
     /**
@@ -25,9 +28,8 @@ public class MultiDomainDSM implements IDSM {
      * the file
      *
      * @param file    the file object that contains a MultiDomain dsm to read
-     * @param editor  the editor object
      */
-    public MultiDomainDSM(File file, EditorPane editor) {
+    public MultiDomainDSM(File file, HeaderMenu headerMenu) {
         matrixIOHandler = new MultiDomainIOHandler(file);
         matrixData = matrixIOHandler.readFile();
         if(matrixData == null) {
@@ -35,8 +37,9 @@ public class MultiDomainDSM implements IDSM {
         }
 
         matrixIOHandler.setMatrix(matrixData);
+        editorTab = new MultiDomainEditorTab(matrixData, matrixIOHandler, headerMenu);
         matrixView = new MultiDomainView(matrixData, 12.0);
-        matrixSideBar = new MultiDomainSideBar(matrixData, editor);
+        matrixSideBar = new MultiDomainSideBar(matrixData, matrixView);
     }
 
 
@@ -46,14 +49,14 @@ public class MultiDomainDSM implements IDSM {
      *
      * @param matrixData       the matrix data object
      * @param matrixIOHandler  the IOHandler object
-     * @param editor           the editor object
      */
-    public MultiDomainDSM(MultiDomainDSMData matrixData, MultiDomainIOHandler matrixIOHandler, EditorPane editor) {
+    public MultiDomainDSM(MultiDomainDSMData matrixData, MultiDomainIOHandler matrixIOHandler, HeaderMenu headerMenu) {
         this.matrixData = matrixData;
         this.matrixIOHandler = matrixIOHandler;
 
+        editorTab = new MultiDomainEditorTab(this.matrixData, this.matrixIOHandler, headerMenu);
         matrixView = new MultiDomainView(matrixData, 12.0);
-        matrixSideBar = new MultiDomainSideBar(matrixData, editor);
+        matrixSideBar = new MultiDomainSideBar(matrixData, matrixView);
     }
 
 
@@ -67,11 +70,20 @@ public class MultiDomainDSM implements IDSM {
 
 
     /**
+     * @return  the DSM editor tab object for the matrix
+     */
+    @Override
+    public MultiDomainEditorTab getMatrixEditorTab() {
+        return editorTab;
+    }
+
+
+    /**
      * @return  the DSM View object for the matrix
      */
     @Override
-    public MultiDomainView getMatrixView() {
-        return matrixView;
+    public IMatrixView getMatrixView() {
+        return editorTab.getMatrixView();
     }
 
 
@@ -84,13 +96,13 @@ public class MultiDomainDSM implements IDSM {
     }
 
 
-    /**
-     * @return  the DSM Side bar object for the matrix
-     */
-    @Override
-    public MultiDomainSideBar getMatrixSideBar() {
-        return matrixSideBar;
-    }
+//    /**
+//     * @return  the DSM Side bar object for the matrix
+//     */
+//    @Override
+//    public MultiDomainSideBar getMatrixSideBar() {
+//        return matrixSideBar;
+//    }
 
 
     /**
