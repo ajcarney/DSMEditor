@@ -18,8 +18,7 @@ public class SymmetricEditorTab implements IEditorTab {
         this.matrixData = matrixData;
         this.matrixView = new SymmetricView(this.matrixData, 12.0);
         this.sideBar = new SymmetricSideBar(this.matrixData, this.matrixView);
-        this.metadata = new MatrixMetaDataPane();
-        metadata.setMatrix(matrixData);
+        this.metadata = new MatrixMetaDataPane(this.matrixData);
     }
 
 

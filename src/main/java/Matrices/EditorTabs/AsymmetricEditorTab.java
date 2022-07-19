@@ -18,8 +18,7 @@ public class AsymmetricEditorTab implements IEditorTab {
         this.matrixData = matrixData;
         this.matrixView = new AsymmetricView(this.matrixData, 12.0);
         this.sideBar = new AsymmetricSideBar(this.matrixData, this.matrixView);
-        this.metadata = new MatrixMetaDataPane();
-        metadata.setMatrix(matrixData);
+        this.metadata = new MatrixMetaDataPane(this.matrixData);
     }
 
 

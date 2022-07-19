@@ -133,10 +133,10 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
             domains.put(entry.getKey(), entry.getValue());
         }
 
-        title = copy.getTitle();
-        projectName = copy.getProjectName();
-        customer = copy.getCustomer();
-        versionNumber = copy.getVersionNumber();
+        title = copy.getTitleProperty();
+        projectName = copy.getProjectNameProperty();
+        customer = copy.getCustomerProperty();
+        versionNumber = copy.getVersionNumberProperty();
 
         setWasModified();
 

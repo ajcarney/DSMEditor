@@ -67,10 +67,10 @@ public class AsymmetricDSMData extends AbstractGroupedDSMData implements IPropag
         groupings = FXCollections.observableSet();
         groupings.addAll(copy.groupings);
 
-        title = copy.getTitle();
-        projectName = copy.getProjectName();
-        customer = copy.getCustomer();
-        versionNumber = copy.getVersionNumber();
+        title = copy.getTitleProperty();
+        projectName = copy.getProjectNameProperty();
+        customer = copy.getCustomerProperty();
+        versionNumber = copy.getVersionNumberProperty();
 
         setWasModified();
 

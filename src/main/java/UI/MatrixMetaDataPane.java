@@ -33,13 +33,14 @@ public class MatrixMetaDataPane {
     private final VBox layout;
     private final GridPane detailsLayout;
 
-    private AbstractDSMData matrix;
+    private final AbstractDSMData matrix;
 
 
     /**
      * Creates a new object and instantiates widgets on the gui.
      */
-    public MatrixMetaDataPane() {
+    public MatrixMetaDataPane(AbstractDSMData newMatrix) {
+        matrix = newMatrix;
         layout = new VBox();
         detailsLayout = new GridPane();
 
@@ -52,6 +53,10 @@ public class MatrixMetaDataPane {
         projectNameLabel = new Label("");
         customerLabel = new Label("");
         versionNumberLabel = new Label("");
+        titleLabel.textProperty().bind(matrix.getTitleProperty());
+        projectNameLabel.textProperty().bind(matrix.getProjectNameProperty());
+        customerLabel.textProperty().bind(matrix.getCustomerProperty());
+        versionNumberLabel.textProperty().bind(matrix.getVersionNumberProperty());
 
         GridPane.setConstraints(titleHeader, 0, 0);
         GridPane.setConstraints(projectHeader, 0, 1);
@@ -67,9 +72,6 @@ public class MatrixMetaDataPane {
 
         modifyButton = new Button("Edit");
         modifyButton.setOnAction(e -> {
-            if(matrix == null) {
-                return;
-            }
             Stage window = new Stage();
 
             // Create Root window
@@ -124,11 +126,6 @@ public class MatrixMetaDataPane {
             HBox closeArea = new HBox();
             Button applyAllButton = new Button("Apply");
             applyAllButton.setOnAction(ee -> {
-                titleLabel.setText(title.getText());
-                projectNameLabel.setText(project.getText());
-                customerLabel.setText(customer.getText());
-                versionNumberLabel.setText(version.getText());
-
                 matrix.setTitle(title.getText());
                 matrix.setProjectName(project.getText());
                 matrix.setCustomer(customer.getText());
@@ -144,9 +141,7 @@ public class MatrixMetaDataPane {
             spacer.setMaxWidth(Double.MAX_VALUE);
 
             Button cancelButton = new Button("Cancel");
-            cancelButton.setOnAction(ee -> {
-                window.close();
-            });
+            cancelButton.setOnAction(ee -> window.close());
             closeArea.getChildren().addAll(cancelButton, spacer, applyAllButton);
 
             VBox rootLayout = new VBox(10);
@@ -187,27 +182,9 @@ public class MatrixMetaDataPane {
         layout.setSpacing(20);
         layout.setPadding(new Insets(10, 10, 10, 10));
         layout.setAlignment(Pos.CENTER);
-    }
-
-
-    /**
-     * Changes which matrix the gui will display the metadata of. Updates the gui as well
-     *
-     * @param  newMatrix the new matrix object to use
-     */
-    public void setMatrix(AbstractDSMData newMatrix) {
-        matrix = newMatrix;
-        if(matrix != null) {
-            titleLabel.setText(matrix.getTitle());
-            projectNameLabel.setText(matrix.getProjectName());
-            customerLabel.setText(matrix.getCustomer());
-            versionNumberLabel.setText(matrix.getVersionNumber());
-        } else {
-            titleLabel.setText("");
-            projectNameLabel.setText("");
-            customerLabel.setText("");
-            versionNumberLabel.setText("");
-        }
+        VBox.setVgrow(layout, Priority.ALWAYS);
+        HBox.setHgrow(layout, Priority.ALWAYS);
+        layout.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
     }
 
 

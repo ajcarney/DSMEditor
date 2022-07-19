@@ -13,16 +13,20 @@ import Matrices.SideBarTools.AbstractSideBar;
 import Matrices.SideBarTools.AsymmetricSideBar;
 import Matrices.SideBarTools.MultiDomainSideBar;
 import Matrices.SideBarTools.SymmetricSideBar;
-import Matrices.Views.*;
+import Matrices.Views.AsymmetricView;
+import Matrices.Views.IMatrixView;
+import Matrices.Views.MultiDomainView;
+import Matrices.Views.SymmetricView;
 import UI.HeaderMenu;
 import UI.MatrixMetaDataPane;
 import UI.Widgets.DraggableTab;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.TabPane;
-import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.util.Pair;
 
 import java.io.File;
@@ -73,8 +77,7 @@ public class MultiDomainEditorTab implements IEditorTab {
             leftLayout.getChildren().clear();
             leftLayout.getChildren().add(new MultiDomainSideBar(this.matrixData, this.matrixView).getLayout());
 
-            MatrixMetaDataPane metadata = new MatrixMetaDataPane();
-            metadata.setMatrix(this.matrixData);
+            MatrixMetaDataPane metadata = new MatrixMetaDataPane(this.matrixData);
             rightLayout.getChildren().clear();
             rightLayout.getChildren().add(metadata.getLayout());
 
@@ -119,8 +122,7 @@ public class MultiDomainEditorTab implements IEditorTab {
             leftLayout.getChildren().clear();
             leftLayout.getChildren().add(sideBar.getLayout());
 
-            MatrixMetaDataPane metadata = new MatrixMetaDataPane();
-            metadata.setMatrix(data);
+            MatrixMetaDataPane metadata = new MatrixMetaDataPane(data);
             rightLayout.getChildren().clear();
             rightLayout.getChildren().add(metadata.getLayout());
 
