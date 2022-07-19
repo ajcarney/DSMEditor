@@ -213,6 +213,8 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
     @Override
     public int saveMatrixToFile(File file) {
         try {
+            file = forceExtension(file, ".dsm");
+
             // create xml
             Element rootElement = new Element("dsm");
             Document doc = new Document(rootElement);
@@ -296,7 +298,6 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
             xmlOutput.setFormat(Format.getPrettyFormat());  // TODO: change this to getCompactFormat() for release
             xmlOutput.output(doc, new FileOutputStream(file));
 
-            file = forceExtension(file, ".dsm");
             System.out.println("Saving file " + file);
             matrix.clearWasModifiedFlag();
 

@@ -5,10 +5,12 @@ import Matrices.Data.AbstractDSMData;
 import Matrices.IDSM;
 import Matrices.MatricesCollection;
 import UI.Widgets.DraggableTab;
+import UI.Widgets.Misc;
 import javafx.beans.binding.Bindings;
 import javafx.scene.control.TabPane;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.VBox;
 
 import java.io.File;
 import java.util.HashMap;
@@ -27,6 +29,7 @@ public class EditorPane {
     private final MatricesCollection matrices;
     private final HeaderMenu headerMenu;
     private final ConnectionSearchWidget searchWidget;
+    private final VBox bottomEditorTabLayout = new VBox();
 
     private static final double DEFAULT_FONT_SIZE = 12.0;
 
@@ -56,7 +59,11 @@ public class EditorPane {
 
         this.rootLayout = rootLayout;
         this.rootLayout.setTop(headerMenu.getMenuBar());
-        this.rootLayout.setBottom(searchWidget.getMainLayout());
+
+        VBox bottomLayout = new VBox();
+        bottomLayout.getChildren().addAll(bottomEditorTabLayout, searchWidget.getMainLayout());
+        this.rootLayout.setBottom(bottomLayout);
+
         this.rootLayout.setCenter(getTabPane());
     }
 
@@ -191,6 +198,7 @@ public class EditorPane {
 
         this.matrices.getMatrix(matrixUid).getMatrixView().refreshView();
         tab.setContent(this.matrices.getMatrix(matrixUid).getMatrixEditorTab().getCenterPane());
+
         tab.setDetachable(false);
         tabPane.getScene().setOnKeyPressed(e -> {  // add keybinding to toggle cross-highlighting on the editor
             if (e.getCode() == KeyCode.F) {
@@ -238,6 +246,8 @@ public class EditorPane {
 
             this.rootLayout.setLeft(this.matrices.getMatrix(matrixUid).getMatrixEditorTab().getLeftPane());
             this.rootLayout.setRight(this.matrices.getMatrix(matrixUid).getMatrixEditorTab().getRightPane());
+            bottomEditorTabLayout.getChildren().clear();
+            bottomEditorTabLayout.getChildren().add(this.matrices.getMatrix(matrixUid).getMatrixEditorTab().getBottomPane());
         });
 
         tabs.put(tab, matrixUid);
@@ -289,8 +299,6 @@ public class EditorPane {
     public void refreshSelectedTab() {
         if(getFocusedMatrixUid() != null) {
             this.matrices.getMatrix(getFocusedMatrixUid()).getMatrixView().refreshView();
-            getFocusedTab().setContent(this.matrices.getMatrix(getFocusedMatrixUid()).getMatrixView().getView());
-            this.rootLayout.setRight(this.matrices.getMatrix(getFocusedMatrixUid()).getMatrixEditorTab().getRightPane());
         }
     }
 

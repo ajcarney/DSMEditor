@@ -20,13 +20,15 @@ import Matrices.Views.SymmetricView;
 import UI.HeaderMenu;
 import UI.MatrixMetaDataPane;
 import UI.Widgets.DraggableTab;
+import UI.Widgets.Misc;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.Button;
-import javafx.scene.control.TabPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.util.Callback;
 import javafx.util.Pair;
 
 import java.io.File;
@@ -82,7 +84,84 @@ public class MultiDomainEditorTab implements IEditorTab {
             rightLayout.getChildren().add(metadata.getLayout());
 
             bottomLayout.getChildren().clear();
-            bottomLayout.getChildren().add(new Pane());
+            bottomLayout.setAlignment(Pos.CENTER);
+            bottomLayout.setPadding(new Insets(15));
+            Button zoomButton = new Button("Zoom");
+            zoomButton.setOnAction(ee -> {
+                // Create Root window
+                Stage window = new Stage();
+                window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
+                window.setTitle("Configure Groupings");
+
+                Callback<ListView<Grouping>, ListCell<Grouping>> groupingItemCellFactory = new Callback<>() {
+                    @Override
+                    public ListCell<Grouping> call(ListView<Grouping> l) {
+                        return new ListCell<>() {
+
+                            @Override
+                            protected void updateItem(Grouping group, boolean empty) {
+                                super.updateItem(group, empty);
+
+                                if (empty || group == null) {
+                                    setText(null);
+                                } else {
+                                    setText(group.getName());
+                                }
+                            }
+                        };
+                    }
+                };
+                ComboBox<Grouping> fromDomain = new ComboBox<>();
+                fromDomain.setPromptText("From Domain");
+                fromDomain.setMinWidth(Region.USE_PREF_SIZE);
+                fromDomain.setPadding(new Insets(0));
+                fromDomain.setCellFactory(groupingItemCellFactory);
+                fromDomain.setButtonCell(groupingItemCellFactory.call(null));
+                fromDomain.getItems().addAll(this.matrixData.getDomains());
+
+                ComboBox<Grouping> toDomain = new ComboBox<>();
+                toDomain.setPromptText("To Domain");
+                toDomain.setMinWidth(Region.USE_PREF_SIZE);
+                toDomain.setPadding(new Insets(0));
+                toDomain.setCellFactory(groupingItemCellFactory);
+                toDomain.setButtonCell(groupingItemCellFactory.call(null));
+                toDomain.getItems().addAll(this.matrixData.getDomains());
+
+                HBox mainView = new HBox();
+                mainView.setSpacing(15);
+                mainView.setPadding(new Insets(15));
+                mainView.getChildren().addAll(fromDomain, Misc.getHorizontalSpacer(), toDomain);
+
+                // create HBox for user to do the zoom function or to cancel the zoom
+                HBox closeArea = new HBox();
+                Button cancelButton = new Button("Cancel");
+                Button okButton = new Button("Ok");
+
+                cancelButton.setOnAction(eee -> {
+                    window.close();  // do nothing
+                });
+
+                okButton.setOnAction(eee -> {
+                    addBreakOutView(fromDomain.getValue(), toDomain.getValue());
+                    window.close();
+                });
+
+                closeArea.getChildren().addAll(cancelButton, Misc.getHorizontalSpacer(), okButton);
+                closeArea.setPadding(new Insets(10));
+
+                // set up layout
+                VBox layout = new VBox(10);
+                layout.getChildren().addAll(mainView, Misc.getVerticalSpacer(), closeArea);
+                layout.setAlignment(Pos.CENTER);
+                layout.setPadding(new Insets(10, 10, 10, 10));
+                layout.setSpacing(10);
+
+                //Display window and wait for it to be closed before returning
+                Scene scene = new Scene(layout, 350, 125);
+                window.setScene(scene);
+                window.showAndWait();
+            });
+            bottomLayout.getChildren().add(zoomButton);
         });
 
         tabPane.getTabs().add(tab);
@@ -98,6 +177,7 @@ public class MultiDomainEditorTab implements IEditorTab {
         AbstractIOHandler ioHandler;
         if(data instanceof SymmetricDSMData symmetricData) {
             view = new SymmetricView(symmetricData, 12.0);
+            view.refreshView();
             sideBar = new SymmetricSideBar(symmetricData, (SymmetricView) view);
             ioHandler = new SymmetricIOHandler(new File(""), symmetricData);
         } else if(data instanceof AsymmetricDSMData asymmetricData) {
@@ -109,6 +189,10 @@ public class MultiDomainEditorTab implements IEditorTab {
         }
 
         DraggableTab tab = new DraggableTab("Breakout");
+        tab.setContent(view.getView());
+        tab.setDetachable(false);
+        tab.setClosable(true);
+
         tab.setOnCloseRequest(e -> {
            // TODO: ask if user wants to apply changes
             this.tabsData.remove(tab);

@@ -293,6 +293,7 @@ public class MultiDomainView extends AbstractMatrixView implements ISymmetricHig
                         label.setMinWidth(Region.USE_PREF_SIZE);
                         label.setPadding(new Insets(1, 5, 1, 5));
                         cell.getChildren().add(label);
+                        cell.setAlignment(Pos.CENTER);
 
                         cellSpans.add(new Quartet<>(r, c, data.getValue1(), data.getValue2()));
                         domainColumn = c;

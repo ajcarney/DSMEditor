@@ -5,7 +5,6 @@ import Matrices.Data.Entities.DSMItem;
 import Matrices.Data.Entities.Grouping;
 import Matrices.Data.MultiDomainDSMData;
 import Matrices.Views.MultiDomainView;
-import UI.EditorPane;
 import UI.Widgets.Misc;
 import UI.Widgets.NumericTextField;
 import javafx.collections.FXCollections;
@@ -32,7 +31,7 @@ import java.util.Vector;
  */
 public class MultiDomainSideBar extends AbstractSideBar {
 
-    protected final Button configureGroupings = new Button("Configure Groupings");
+    private final Button configureGroupings = new Button("Configure Groupings");
     private final MultiDomainDSMData matrix;
 
     /**
