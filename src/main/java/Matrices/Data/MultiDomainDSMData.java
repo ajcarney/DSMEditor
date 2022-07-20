@@ -6,6 +6,7 @@ import Matrices.Data.Entities.DSMItem;
 import Matrices.Data.Entities.Grouping;
 import Matrices.Data.Entities.RenderMode;
 import Matrices.Data.Flags.IZoomable;
+import Matrices.Views.AsymmetricView;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableMap;
 import javafx.collections.ObservableSet;
@@ -705,7 +706,7 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
 
             if(firstItemInDomain) {
                 int numItemsInDomain = (int) rows.stream().filter(item -> item.getGroup2().equals(r.getGroup2())).count();
-                row.add(new Pair<>(RenderMode.MULTI_SPAN_TEXT, new Triplet<>(r.getGroup2().getName(), numItemsInDomain, 1)));  // text, row span, col span
+                row.add(new Pair<>(RenderMode.MULTI_SPAN_TEXT, new Triplet<>(r.getGroup2(), numItemsInDomain, 1)));  // text, row span, col span
             } else {
                 row.add(new Pair<>(RenderMode.MULTI_SPAN_NULL, null));
             }
@@ -735,27 +736,110 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
      * @param importMatrix  the breakout view matrix
      */
     @Override
-    public void importZoom(Grouping fromGroup, Grouping toGroup, AbstractDSMData importMatrix) {
-        // delete all the connections for the current row items
-//        for(DSMItem row : rows) {
-//            if (rows.stream().anyMatch(r -> r.getUid() == conn.getRowUid()) && exportMatrix.getCols().stream().anyMatch(c -> c.getUid() == conn.getColUid())) {
-//                clearItemConnections(row.getUid());
-//            }
-//        }
+    public void importZoom(Grouping fromGroup, Grouping toGroup, AbstractGroupedDSMData importMatrix) {
+        // update the new groupings
+        clearGroupings(fromGroup);
+        clearGroupings(toGroup);
 
-        // from grouping defines the row items. Remove all the row items for that domain and replace them
-        // with the row items from the import matrix. Do the same for the columns but with the to grouping
-        rows.removeIf(r -> r.getGroup2().equals(fromGroup));
-        rows.addAll(importMatrix.getRows());
-        cols.removeIf(r -> r.getGroup2().equals(toGroup));
-        cols.addAll(importMatrix.getRows());
+        ObservableSet<Grouping> currentDomainGroupings = getDomainGroupings(fromGroup);
+        addChangeToStack(new MatrixChange(
+                () -> {  // do function
+                    ObservableSet<Grouping> groupings = importMatrix.getGroupings();
+                    groupings.add(importMatrix.getDefaultGrouping());
+                    domains.put(fromGroup, groupings);
+                },
+                () -> {  // undo function
+                    domains.put(fromGroup, currentDomainGroupings);
+                },
+                false
+        ));
 
-        // modify the connections
-//        for(DSMConnection conn : importMatrix.getConnections()) {
-//            if(rows.stream().anyMatch(r -> r.getUid() == conn.getRowUid()) && exportMatrix.getCols().stream().anyMatch(c -> c.getUid() == conn.getColUid())) {
-//                exportMatrix.modifyConnection(conn.getRowUid(), conn.getColUid(), conn.getConnectionName(), conn.getWeight());
-//            }
-//        }
+        // ensure all items have the correct domain
+        for(DSMItem row : importMatrix.getRows()) {
+            row.setGroup2(fromGroup);
+        }
+        for(DSMItem col : importMatrix.getCols()) {
+            col.setGroup2(toGroup);
+        }
+
+        if(importMatrix instanceof SymmetricDSMData symmetricMatrix) {  // importing a symmetric matrix
+            assert fromGroup.equals(toGroup) : "Importing a symmetric matrix, but they don't have the same domain";
+
+            // start with all the rows from the domain and remove them after they have been handled. Items left are items that need
+            // to be deleted
+            Vector<DSMItem> rowsToDelete = new Vector<>();
+            for(DSMItem row : rows) {
+                if(row.getGroup2().equals(fromGroup)) {
+                    rowsToDelete.add(row);
+                }
+            }
+            for(DSMItem importedRow : importMatrix.getRows()) {
+                if(rows.stream().anyMatch(r -> r.getUid() == importedRow.getUid())) {  // item is already contained so modify it and its connections by doing a copy replace
+                    DSMItem rowItem = getItem(importedRow.getUid());
+                    DSMItem colItem = getItemByAlias(importedRow.getUid());
+
+                    // update the item fields
+                    rowItem.copyProperties(importedRow);
+                    colItem.copyProperties(importedRow);
+
+                    // Update the connections. First remove any connections already contained by that row and in that domain
+                    ArrayList<DSMConnection> domainConnections = new ArrayList<>();
+                    for(DSMConnection conn : symmetricMatrix.getConnections()) {
+                        DSMItem connRowItem = getItem(conn.getRowUid());
+                        DSMItem connColItem = getItem(conn.getColUid());
+                        if(connRowItem == null || connColItem == null) {
+                            continue;
+                        }
+                        if(connRowItem.getUid() == rowItem.getUid() && connRowItem.getGroup2().equals(fromGroup) && connColItem.getGroup2().equals(toGroup)) {
+                            domainConnections.add(conn);
+                        }
+                    }
+                    for(DSMConnection conn : domainConnections) {
+                        removeConnection(conn.getRowUid(), conn.getColUid());
+                    }
+
+                    // add the connections
+                    for(DSMConnection conn : symmetricMatrix.getConnections()) {
+                        if(conn.getRowUid() == rowItem.getUid()) {
+                            modifyConnection(conn.getRowUid(), conn.getColUid(), conn.getConnectionName(), conn.getWeight());
+                        }
+                    }
+
+                    rowsToDelete.remove(rowItem);
+                } else {  // item is not contained so add it
+                    DSMItem col = new DSMItem();
+                    col.copyProperties(importedRow);
+                    col.setAliasUid(importedRow.getUid());
+                    importedRow.setAliasUid(col.getUid());
+
+                    addItem(importedRow, true);
+                    addItem(col, false);
+
+                    // add the connections
+                    for(DSMConnection conn : symmetricMatrix.getConnections()) {
+                        if(conn.getRowUid() == importedRow.getUid()) {
+                            modifyConnection(conn.getRowUid(), conn.getColUid(), conn.getConnectionName(), conn.getWeight());
+                        }
+                    }
+
+                    rowsToDelete.remove(getItem(importedRow.getUid()));
+                }
+            }
+
+            for(DSMItem row : rowsToDelete) {
+                deleteItem(row);
+            }
+
+
+        } else if(importMatrix instanceof AsymmetricDSMData asymmetricMatrix) {  // importing an asymmetric matrix
+
+
+
+        }
+
+
+
+
 
     }
 
@@ -768,7 +852,7 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
      * @return           the matrix object that is a breakout view
      */
     @Override
-    public AbstractDSMData exportZoom(Grouping fromGroup, Grouping toGroup) {
+    public AbstractGroupedDSMData exportZoom(Grouping fromGroup, Grouping toGroup) {
         if(fromGroup.equals(toGroup)) {
             SymmetricDSMData exportMatrix = new SymmetricDSMData();
 

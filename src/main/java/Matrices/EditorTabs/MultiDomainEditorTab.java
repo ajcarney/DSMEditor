@@ -1,10 +1,7 @@
 package Matrices.EditorTabs;
 
-import Matrices.Data.AbstractDSMData;
-import Matrices.Data.AsymmetricDSMData;
+import Matrices.Data.*;
 import Matrices.Data.Entities.Grouping;
-import Matrices.Data.MultiDomainDSMData;
-import Matrices.Data.SymmetricDSMData;
 import Matrices.IOHandlers.AbstractIOHandler;
 import Matrices.IOHandlers.AsymmetricIOHandler;
 import Matrices.IOHandlers.MultiDomainIOHandler;
@@ -75,6 +72,14 @@ public class MultiDomainEditorTab implements IEditorTab {
 
         tab.setOnSelectionChanged(e -> {
             this.headerMenu.refresh(this.matrixData, this.ioHandler, this.matrixView);
+
+            // don't allow editing if breakout views are open
+            if(tabsData.keySet().size() > 1) {
+                this.matrixView.setCurrentMode(IMatrixView.MatrixViewMode.STATIC);
+            } else {
+                this.matrixView.setCurrentMode(IMatrixView.MatrixViewMode.EDIT);
+            }
+            this.matrixView.refreshView();
 
             leftLayout.getChildren().clear();
             leftLayout.getChildren().add(new MultiDomainSideBar(this.matrixData, this.matrixView).getLayout());
@@ -171,7 +176,7 @@ public class MultiDomainEditorTab implements IEditorTab {
 
 
     public void addBreakOutView(Grouping fromGroup, Grouping toGroup) {
-        AbstractDSMData data = this.matrixData.exportZoom(fromGroup, toGroup);
+        AbstractGroupedDSMData data = this.matrixData.exportZoom(fromGroup, toGroup);
         IMatrixView view;
         AbstractSideBar sideBar;
         AbstractIOHandler ioHandler;

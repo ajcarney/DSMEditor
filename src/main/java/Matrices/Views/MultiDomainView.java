@@ -288,8 +288,8 @@ public class MultiDomainView extends AbstractMatrixView implements ISymmetricHig
                         cell.getChildren().add(g);
                     }
                     case MULTI_SPAN_TEXT -> {
-                        Triplet<String, Integer, Integer> data = (Triplet<String, Integer, Integer>) item.getValue();
-                        label = new Label(data.getValue0());
+                        Triplet<Grouping, Integer, Integer> data = (Triplet<Grouping, Integer, Integer>) item.getValue();
+                        label = new Label(data.getValue0().getName());
                         label.setMinWidth(Region.USE_PREF_SIZE);
                         label.setPadding(new Insets(1, 5, 1, 5));
                         cell.getChildren().add(label);

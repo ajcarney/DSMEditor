@@ -9,9 +9,11 @@ import Matrices.Views.AbstractMatrixView;
 import javafx.scene.paint.Color;
 import javafx.util.Pair;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.WorkbookUtil;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.javatuples.Triplet;
 import org.jdom2.Attribute;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -356,10 +358,11 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
 
                     switch(item.getKey()) {
                         case PLAIN_TEXT, PLAIN_TEXT_V -> contents.append(item.getValue()).append(",");
-                        case ITEM_NAME, ITEM_NAME_V -> contents.append(((DSMItem) item.getValue()).getName()).append(",");
+                        case MULTI_SPAN_TEXT -> contents.append(((Triplet<Grouping, Integer, Integer>)item.getValue()).getValue0().getName()).append(",");
+                        case ITEM_NAME, ITEM_NAME_V -> contents.append(((DSMItem) item.getValue()).getName().getValue()).append(",");
                         case GROUPING_ITEM, GROUPING_ITEM_V -> contents.append(((DSMItem) item.getValue()).getGroup1().getName()).append(",");
                         case INDEX_ITEM -> contents.append(((DSMItem) item.getValue()).getSortIndex()).append(",");
-                        case UNEDITABLE_CONNECTION -> contents.append(",");
+                        case UNEDITABLE_CONNECTION, MULTI_SPAN_NULL -> contents.append(",");
                         case EDITABLE_CONNECTION -> {
                             int rowUid = ((Pair<DSMItem, DSMItem>)item.getValue()).getKey().getUid();
                             int colUid = ((Pair<DSMItem, DSMItem>)item.getValue()).getValue().getUid();
@@ -451,6 +454,21 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
                             cellStyle.setVerticalAlignment(VerticalAlignment.BOTTOM);
                             cellStyle.setRotation(VERTICAL_ROTATION);
                             cell.setCellStyle(cellStyle);
+                        }
+                        case MULTI_SPAN_TEXT -> {
+                            Triplet<Grouping, Integer, Integer> data = (Triplet<Grouping, Integer, Integer>) item.getValue();
+                            Cell cell = row.createCell(c + COL_START);
+                            cell.setCellValue(data.getValue0().getName());
+
+                            CellStyle cellStyle = workbook.createCellStyle();
+                            cellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+                            cell.setCellStyle(cellStyle);
+                            Color bgColor = data.getValue0().getColor();
+                            Color fontColor = data.getValue0().getFontColor();
+                            styleExcelCell(workbook, cell, bgColor, fontColor, HORIZONTAL_ROTATION);
+
+                            // subtract 1 to account for row span vs last row
+                            sheet.addMergedRegion(new CellRangeAddress(r + ROW_START, r + ROW_START + data.getValue1() - 1, c + COL_START, c + COL_START + data.getValue2() - 1));
                         }
                         case ITEM_NAME -> {
                             Cell cell = row.createCell(c + COL_START);

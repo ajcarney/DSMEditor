@@ -19,6 +19,19 @@ public class DSMItem {
 
 
     /**
+     * creates a new DSMItem with default values for its properties. Sets a uid
+     */
+    public DSMItem() {
+        this.uid = java.util.UUID.randomUUID().hashCode();
+
+        this.name = new SimpleStringProperty("");
+        this.sortIndex = 0.0;
+        this.group1 = null;
+        this.group2 = null;
+    }
+
+
+    /**
      * Creates a new DSMItem with the index and name set
      *
      * @param index the starting index of the item
@@ -64,8 +77,8 @@ public class DSMItem {
         aliasUid = copy.getAliasUid();
         name = copy.getName();
         sortIndex = copy.getSortIndex();
-        this.group1 = copy.getGroup1();
-        this.group2 = copy.getGroup2();
+        group1 = copy.getGroup1();
+        group2 = copy.getGroup2();
     }
 
 
@@ -175,6 +188,19 @@ public class DSMItem {
      */
     public void setGroup2(Grouping group2) {
         this.group2 = group2;
+    }
+
+
+    /**
+     * Copies the properties of one DSMItem to another. Does not copy uid or alias uid
+     *
+     * @param item  the item to copy
+     */
+    public void copyProperties(DSMItem item) {
+        name = item.getName();
+        sortIndex = item.getSortIndex();
+        group1 = item.getGroup1();
+        group2 = item.getGroup2();
     }
 
 
