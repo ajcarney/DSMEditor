@@ -1,17 +1,7 @@
-import Data.*;
-import IOHandler.AsymmetricIOHandler;
-import IOHandler.MultiDomainIOHandler;
-import IOHandler.SymmetricIOHandler;
-import View.EditorPane;
-import View.HeaderMenu.AsymmetricHeaderMenu;
-import View.HeaderMenu.MultiDomainHeaderMenu;
-import View.HeaderMenu.SymmetricHeaderMenu;
-import View.MatrixViews.AsymmetricView;
-import View.MatrixViews.MultiDomainView;
-import View.MatrixViews.SymmetricView;
-import View.SideBarTools.AsymmetricSideBar;
-import View.SideBarTools.MultiDomainSideBar;
-import View.SideBarTools.SymmetricSideBar;
+import Matrices.IDSM;
+import Matrices.MatricesCollection;
+import Matrices.MultiDomainDSM;
+import UI.EditorPane;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.event.Event;
@@ -33,7 +23,7 @@ import java.util.*;
  */
 public class DSMApplication extends Application {
     private static final BorderPane root = new BorderPane();
-    private static final EditorPane editor = new EditorPane(new MatrixController(), root);
+    private static final EditorPane editor = new EditorPane(new MatricesCollection(), root);
     private static final ArrayList<String> cliArgs = new ArrayList<>();
 
     /**
@@ -58,7 +48,7 @@ public class DSMApplication extends Application {
 //            File f = new File("/home/aiden/Documents/DSMEditor/test3.dsm");
 //            if(f.exists()) {
 //                SymmetricIOHandler ioHandler = new SymmetricIOHandler(f);
-//                SymmetricDSM matrix = ioHandler.readFile();
+//                SymmetricDSMData matrix = ioHandler.readFile();
 //                editor.addTab(
 //                        matrix,
 //                        ioHandler,
@@ -70,7 +60,7 @@ public class DSMApplication extends Application {
 //            File f = new File("/home/aiden/Documents/DSMEditor/untitled0.dsm");
 //            if(f.exists()) {
 //                AsymmetricIOHandler ioHandler = new AsymmetricIOHandler(f);
-//                AsymmetricDSM matrix = ioHandler.readFile();
+//                AsymmetricDSMData matrix = ioHandler.readFile();
 //                editor.addTab(
 //                        matrix,
 //                        ioHandler,
@@ -81,15 +71,7 @@ public class DSMApplication extends Application {
 //            }
             File f = new File("/home/aiden/Documents/DSMEditor/test6.dsm");
             if(f.exists()) {
-                MultiDomainIOHandler ioHandler = new MultiDomainIOHandler(f);
-                MultiDomainDSM matrix = ioHandler.readFile();
-                editor.addTab(
-                        matrix,
-                        ioHandler,
-                        new MultiDomainView(matrix, 12.0),
-                        new MultiDomainHeaderMenu(editor),
-                        new MultiDomainSideBar(matrix, editor)
-                );
+                editor.addTab(new MultiDomainDSM(f, editor.getHeaderMenu()));
             }
         }
 
@@ -158,10 +140,10 @@ public class DSMApplication extends Application {
 
         File recoveryDir = new File("./.recovery");
         if(!recoveryDir.exists()) recoveryDir.mkdir();
-        for(Map.Entry<Integer, TemplateDSM> matrix : editor.getMatrixController().getMatrices().entrySet()) {
-            File f = new File("./.recovery/" + editor.getMatrixController().getMatrixIOHandler(matrix.getKey()).getSavePath().getName());
-            editor.getMatrixController().getMatrixIOHandler(matrix.getKey()).saveMatrixToFile(matrix.getValue(), f);
-            matrix.getValue().setWasModified();  // matrix is not saved to known location, so don't display it as saved to the user
+        for(Map.Entry<Integer, IDSM> matrix : editor.getMatricesCollection().getMatrices().entrySet()) {
+            File f = new File("./.recovery/" + matrix.getValue().getMatrixIOHandler().getSavePath().getName());
+            //matrix.getValue().getMatrixIOHandler().saveMatrixToFile(matrix.getValue().getMatrixData(), f);
+            matrix.getValue().getMatrixData().setWasModified();  // matrix is not saved to known location, so don't display it as saved to the user
         }
 
     }
