@@ -403,72 +403,36 @@ public class SymmetricDSMData extends AbstractGroupedDSMData implements IPropaga
         dependentConnections.add(startItem);
         exclusions.add(startItem);
 
-        // check if start item is a row or column item
-        boolean startIsRow = rows.contains(getItem(startItem));
-
         while(currentLevel <= numLevels) {
             ArrayList<Integer> newDependentConnections = new ArrayList<>();
             results.put(currentLevel, new HashMap<>());  // add default item
 
-            if((currentLevel % 2 == 1 && startIsRow) || (currentLevel % 2 == 0 && !startIsRow)) {  // currentLevel is odd so choose row
-                for(Integer uid : dependentConnections) {  // find dependent connections of each item from the previous level
+            for(Integer uid : dependentConnections) {  // find dependent connections of each item from the previous level
 
-                    // find connections with uid as the row item
-                    for(DSMItem col : cols) {  // iterate over column items finding the ones that match the row
-                        DSMConnection conn = getConnection(uid, col.getUid());
+                // find connections with uid as the row item
+                for(DSMItem col : cols) {  // iterate over column items finding the ones that match the row
+                    DSMConnection conn = getConnection(uid, col.getUid());
 
-                        // define exit conditions
-                        if(conn == null) continue;
-                        if(conn.getWeight() < minWeight) continue;
+                    // define exit conditions
+                    if(conn == null) continue;
+                    if(conn.getWeight() < minWeight) continue;
 
-                        Integer resultEntryUid = col.getAliasUid();
-//                        if(isSymmetrical()) {
-//                            resultEntryUid = col.getAliasUid();
-//                        } else {
-//                            resultEntryUid = col.getUid();
-//                        }
+                    Integer resultEntryUid = col.getAliasUid();
 
-                        results.get(currentLevel).putIfAbsent(resultEntryUid, 0.0);
+                    results.get(currentLevel).putIfAbsent(resultEntryUid, 0.0);
 
-                        if(countByWeight) {
-                            results.get(currentLevel).put(resultEntryUid, results.get(currentLevel).get(resultEntryUid) + conn.getWeight());
-                        } else {
-                            results.get(currentLevel).put(resultEntryUid, results.get(currentLevel).get(resultEntryUid) + 1.0);
-                        }
-
-                        if(!exclusions.contains(resultEntryUid) && !newDependentConnections.contains(resultEntryUid)) {  // add to next level if not present and not excluded
-                            newDependentConnections.add(col.getUid());  // add the actual item uid
-                        }
+                    if(countByWeight) {
+                        results.get(currentLevel).put(resultEntryUid, results.get(currentLevel).get(resultEntryUid) + conn.getWeight());
+                    } else {
+                        results.get(currentLevel).put(resultEntryUid, results.get(currentLevel).get(resultEntryUid) + 1.0);
                     }
-                }
-            } else {  // currentLevel is even so choose column
-                for(Integer uid : dependentConnections) {  // find dependent connections of each item from the previous level
 
-                    // find connections with uid as the row item
-                    for(DSMItem row : rows) {  // iterate over row items finding the ones that match the column
-                        DSMConnection conn = getConnection(row.getUid(), uid);
-
-                        // define exit conditions
-                        if(conn == null) continue;
-                        if(conn.getWeight() < minWeight) continue;
-
-                        Integer itemUid = row.getUid();
-
-
-                        results.get(currentLevel).putIfAbsent(itemUid, 0.0);
-
-                        if(countByWeight) {
-                            results.get(currentLevel).put(itemUid, results.get(currentLevel).get(itemUid) + conn.getWeight());
-                        } else {
-                            results.get(currentLevel).put(itemUid, results.get(currentLevel).get(itemUid) + 1.0);
-                        }
-
-                        if(!exclusions.contains(itemUid) && !newDependentConnections.contains(itemUid)) {  // add to next level if not present and not excluded
-                            newDependentConnections.add(itemUid);
-                        }
+                    if(!exclusions.contains(resultEntryUid) && !newDependentConnections.contains(resultEntryUid)) {  // add to next level if not present and not excluded
+                        newDependentConnections.add(resultEntryUid);  // add the actual item uid
                     }
                 }
             }
+
 
             dependentConnections.clear();
             dependentConnections = newDependentConnections;

@@ -207,14 +207,12 @@ public class HeaderMenu {
         menu.setOnAction(e -> {
             if(matrixData == null) return;
 
-            System.out.println(ioHandler.getSavePath());
-            System.out.println(ioHandler.getSavePath().getAbsolutePath());
-            System.out.println(ioHandler.getSavePath().exists());
             if(!ioHandler.getSavePath().exists() || ioHandler.getSavePath().getAbsolutePath().contains("untitled")) {
                 FileChooser fileChooser = new FileChooser();
                 fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("DSM File", "*.dsm"));  // dsm is the only file type usable
                 File fileName = fileChooser.showSaveDialog(menuBar.getScene().getWindow());
                 if(fileName != null) {
+                    fileName = AbstractIOHandler.forceExtension(fileName, ".dsm");
                     ioHandler.setSavePath(fileName);
                 } else {  // user did not select a file, so do not save it
                     return;

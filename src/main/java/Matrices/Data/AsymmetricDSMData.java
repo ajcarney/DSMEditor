@@ -251,7 +251,7 @@ public class AsymmetricDSMData extends AbstractGroupedDSMData implements IPropag
                         }
 
                         if(!exclusions.contains(resultEntryUid) && !newDependentConnections.contains(resultEntryUid)) {  // add to next level if not present and not excluded
-                            newDependentConnections.add(col.getUid());  // add the actual item uid
+                            newDependentConnections.add(resultEntryUid);  // add the actual item uid
                         }
                     }
                 }

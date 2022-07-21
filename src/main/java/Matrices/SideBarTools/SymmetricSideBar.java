@@ -86,7 +86,7 @@ public class SymmetricSideBar extends AbstractSideBar {
             }
         });
 
-        Button deleteSelected = new Button("Delete Selected Item(s)");
+        Button deleteSelected = new Button("Delete Selected from Change Stack");
         deleteSelected.setOnAction(e -> {
             changesToMakeView.getItems().removeAll(changesToMakeView.getSelectionModel().getSelectedItems());
         });
@@ -164,7 +164,7 @@ public class SymmetricSideBar extends AbstractSideBar {
             }
         });
 
-        Button deleteSelected = new Button("Delete Selected Item(s)");
+        Button deleteSelected = new Button("Delete Selected from Change Stack");
         deleteSelected.setOnAction(e -> {
             changesToMakeView.getItems().removeAll(changesToMakeView.getSelectionModel().getSelectedItems());
         });
@@ -252,7 +252,7 @@ public class SymmetricSideBar extends AbstractSideBar {
         changesToMakeView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         changesToMakeView.setCellFactory(CONNECTION_CELL_FACTORY);
 
-        Button deleteSelected = new Button("Delete Selected Item(s)");
+        Button deleteSelected = new Button("Delete Selected from Change Stack");
         deleteSelected.setOnAction(ee -> {
             changesToMakeView.getItems().removeAll(changesToMakeView.getSelectionModel().getSelectedItems());
         });
@@ -410,7 +410,7 @@ public class SymmetricSideBar extends AbstractSideBar {
         changesToMakeView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         changesToMakeView.setCellFactory(CONNECTION_CELL_FACTORY);
 
-        Button deleteSelected = new Button("Delete Selected Item(s)");
+        Button deleteSelected = new Button("Delete Selected from Change Stack");
         deleteSelected.setOnAction(ee -> {
             changesToMakeView.getItems().removeAll(changesToMakeView.getSelectionModel().getSelectedItems());
         });
@@ -613,7 +613,7 @@ public class SymmetricSideBar extends AbstractSideBar {
         changesToMakeView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         changesToMakeView.setCellFactory(DELETE_CONNECTION_CELL_FACTORY);
 
-        Button deleteSelected = new Button("Delete Selected Item(s)");
+        Button deleteSelected = new Button("Delete Selected from Change Stack");
         deleteSelected.setOnAction(ee -> {
             changesToMakeView.getItems().removeAll(changesToMakeView.getSelectionModel().getSelectedItems());
         });

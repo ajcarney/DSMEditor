@@ -324,6 +324,11 @@ public abstract class AbstractIOHandler implements IStandardExports {
         showConnectionNames.setSelected(true);
         showConnectionNames.setMaxWidth(Double.MAX_VALUE);
 
+        // show connection names
+        CheckBox fastRender = new CheckBox("Remove Detail");
+        fastRender.setSelected(false);
+        fastRender.setMaxWidth(Double.MAX_VALUE);
+
         // annotation
         CheckBox addAnnotation = new CheckBox("Add Annotation");
         addAnnotation.setMaxWidth(Double.MAX_VALUE);
@@ -391,7 +396,7 @@ public abstract class AbstractIOHandler implements IStandardExports {
 
 
         // parameter layout configuring
-        parametersLayout.getChildren().addAll(addInfo, bigTitle, showConnectionNames, addAnnotation, annotationLayout, saveArea, Misc.getVerticalSpacer(), saveButtonArea);
+        parametersLayout.getChildren().addAll(addInfo, bigTitle, showConnectionNames, fastRender, addAnnotation, annotationLayout, saveArea, Misc.getVerticalSpacer(), saveButtonArea);
         addAnnotation.setSelected(false);  // set it here so annotation area is not shown
         annotationLayout.setVisible(false);
         annotationLayout.setManaged(false);
@@ -434,8 +439,14 @@ public abstract class AbstractIOHandler implements IStandardExports {
 
             HBox centeredMatrix = new HBox();
             matrixView.setShowNames(showConnectionNames.isSelected());
-            matrixView.setCurrentMode(AbstractMatrixView.MatrixViewMode.STATIC);
+
+            if(fastRender.isSelected()) {
+                matrixView.setCurrentMode(AbstractMatrixView.MatrixViewMode.FAST_RENDER);
+            } else {
+                matrixView.setCurrentMode(AbstractMatrixView.MatrixViewMode.STATIC);
+            }
             matrixView.refreshView();
+
             centeredMatrix.getChildren().add(matrixView.getView());
             centeredMatrix.setAlignment(Pos.CENTER);
             preview.getChildren().add(centeredMatrix);
@@ -449,6 +460,7 @@ public abstract class AbstractIOHandler implements IStandardExports {
         addInfo.selectedProperty().addListener((observable, oldValue, newValue) -> updatePreview.run());
         bigTitle.selectedProperty().addListener((observable, oldValue, newValue) -> updatePreview.run());
         showConnectionNames.selectedProperty().addListener((observable, oldValue, newValue) -> updatePreview.run());
+        fastRender.selectedProperty().addListener((observable, oldValue, newValue) -> updatePreview.run());
         addAnnotation.selectedProperty().addListener((observable, oldValue, newValue) -> updatePreview.run());
         annotation.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
             if (!newPropertyValue) {  // TextField changed to be not focused so update the view

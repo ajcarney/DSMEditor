@@ -649,7 +649,6 @@ public class MultiDomainView extends AbstractMatrixView implements ISymmetricHig
      */
     @Override
     protected void refreshFastRenderView() {
-        refreshEditView();
         cells = new Vector<>();
         gridUidLookup = new HashMap<>();
         gridUidLookup.put("rows", new HashMap<>());
