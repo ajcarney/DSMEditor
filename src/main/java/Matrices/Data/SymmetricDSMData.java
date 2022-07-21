@@ -3,8 +3,8 @@ package Matrices.Data;
 import Matrices.Data.Entities.DSMConnection;
 import Matrices.Data.Entities.DSMItem;
 import Matrices.Data.Entities.Grouping;
-import Matrices.Data.Flags.IPropagationAnalysis;
 import Matrices.Data.Entities.RenderMode;
+import Matrices.Data.Flags.IPropagationAnalysis;
 import javafx.collections.FXCollections;
 import javafx.scene.paint.Color;
 import javafx.util.Pair;
@@ -42,41 +42,40 @@ public class SymmetricDSMData extends AbstractGroupedDSMData implements IPropaga
     /**
      * Copy constructor for SymmetricDSMData class. Performs a deep copy
      *
-     * @param copy SymmetricDSMData object to copy
+     * @return  the copy of the current symmetric DSM
      */
-    public SymmetricDSMData(SymmetricDSMData copy) {
-        super();
+    @Override
+    public SymmetricDSMData createCopy() {
+        SymmetricDSMData copy = new SymmetricDSMData();
 
-        undoStack = new Stack<>();
-        redoStack = new Stack<>();
-
-        rows = new Vector<>();
-        for(DSMItem row : copy.getRows()) {
-            rows.add(new DSMItem(row));
+        for(DSMItem row : getRows()) {
+            copy.rows.add(new DSMItem(row));
         }
 
-        cols = new Vector<>();
-        for(DSMItem col : copy.getCols()) {
-            cols.add(new DSMItem(col));
+        for(DSMItem col : getCols()) {
+            copy.cols.add(new DSMItem(col));
         }
 
-        connections = new Vector<>();
-        for(DSMConnection conn : copy.getConnections()) {
-            connections.add(new DSMConnection(conn));
+        for(DSMConnection conn : getConnections()) {
+            copy.connections.add(new DSMConnection(conn));
         }
 
+        for(Grouping group : getGroupings()) {
+            copy.groupings.add(new Grouping(group));
+        }
+        copy.getDefaultGrouping().setColor(defaultGroup.getColor());
+        copy.getDefaultGrouping().setFontColor(defaultGroup.getFontColor());
+        copy.getDefaultGrouping().setName(defaultGroup.getName());
 
-        groupings = FXCollections.observableSet();
-        groupings.addAll(copy.groupings);
+        copy.title = getTitleProperty();
+        copy.projectName = getProjectNameProperty();
+        copy.customer = getCustomerProperty();
+        copy.versionNumber = getVersionNumberProperty();
 
-        title = copy.getTitleProperty();
-        projectName = copy.getProjectNameProperty();
-        customer = copy.getCustomerProperty();
-        versionNumber = copy.getVersionNumberProperty();
+        copy.setWasModified();
+        copy.clearStacks();
 
-        setWasModified();
-
-        clearStacks();
+        return copy;
     }
 //endregion
 
@@ -615,7 +614,7 @@ public class SymmetricDSMData extends AbstractGroupedDSMData implements IPropaga
         Random generator = new Random(randSeed);
 
         // place each element in the matrix in its own cluster
-        SymmetricDSMData matrix = new SymmetricDSMData(inputMatrix);
+        SymmetricDSMData matrix = inputMatrix.createCopy();
         assert matrix != inputMatrix && !matrix.equals(inputMatrix): "matrices are equal and they should not be";
         matrix.clearGroupings();  // groups will be re-distributed
 
@@ -636,7 +635,7 @@ public class SymmetricDSMData extends AbstractGroupedDSMData implements IPropaga
         }
 
         // save the best solution
-        SymmetricDSMData bestSolution = new SymmetricDSMData(matrix);
+        SymmetricDSMData bestSolution = matrix.createCopy();
 
         // calculate initial coordination cost
         double coordinationCost = (Double)getCoordinationScore(matrix, optimalSizeCluster, powcc, calculateByWeight).get("TotalCost");
@@ -658,7 +657,7 @@ public class SymmetricDSMData extends AbstractGroupedDSMData implements IPropaga
             }
 
             // choose a number between 0 and randBid to determine if it should make a suboptimal change
-            SymmetricDSMData tempMatrix = new SymmetricDSMData(matrix);
+            SymmetricDSMData tempMatrix = matrix.createCopy();
             item = tempMatrix.getRows().elementAt(n);  // update item to the item from the new matrix so that it is not modifying a copy
             int nBid = (int) (generator.nextDouble() * (randBid + 1));  // add one to randBid because with truncation nBid will never be equal to randBid
 
@@ -691,10 +690,10 @@ public class SymmetricDSMData extends AbstractGroupedDSMData implements IPropaga
 
             if (nAccept == randAccept || newCoordinationScore < coordinationCost) {  // make the change permanent
                 coordinationCost = newCoordinationScore;
-                matrix = new SymmetricDSMData(tempMatrix);
+                matrix = tempMatrix.createCopy();
 
                 if (coordinationCost < (Double) getCoordinationScore(bestSolution, optimalSizeCluster, powcc, calculateByWeight).get("TotalCost")) {  // save the new solution as the best one
-                    bestSolution = new SymmetricDSMData(matrix);
+                    bestSolution = matrix.createCopy();
                 }
             }
 

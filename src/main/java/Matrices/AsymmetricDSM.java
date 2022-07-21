@@ -2,7 +2,6 @@ package Matrices;
 
 import Matrices.Data.AsymmetricDSMData;
 import Matrices.EditorTabs.AsymmetricEditorTab;
-import Matrices.EditorTabs.SymmetricEditorTab;
 import Matrices.IOHandlers.AsymmetricIOHandler;
 import Matrices.SideBarTools.AsymmetricSideBar;
 import Matrices.Views.AsymmetricView;
@@ -93,15 +92,6 @@ public class AsymmetricDSM implements IDSM {
     public AsymmetricIOHandler getMatrixIOHandler() {
         return matrixIOHandler;
     }
-
-
-//    /**
-//     * @return  the DSM Side bar object for the matrix
-//     */
-//    @Override
-//    public AsymmetricSideBar getMatrixSideBar() {
-//        return matrixSideBar;
-//    }
 
 
     /**

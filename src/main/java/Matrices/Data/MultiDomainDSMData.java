@@ -6,7 +6,6 @@ import Matrices.Data.Entities.DSMItem;
 import Matrices.Data.Entities.Grouping;
 import Matrices.Data.Entities.RenderMode;
 import Matrices.Data.Flags.IZoomable;
-import Matrices.Views.AsymmetricView;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableMap;
 import javafx.collections.ObservableSet;
@@ -14,6 +13,7 @@ import javafx.scene.paint.Color;
 import javafx.util.Pair;
 import org.javatuples.Triplet;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 
@@ -103,46 +103,47 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
 
 
     /**
-     * Copy constructor for MultiDomainDSMData class. Performs a deep copy
+     * Copy constructor for SymmetricDSMData class. Performs a deep copy
      *
-     * @param copy  MultiDomainDSMData object to copy
+     * @return  the copy of the current symmetric DSM
      */
-    public MultiDomainDSMData(MultiDomainDSMData copy) {
-        super();
+    @Override
+    public MultiDomainDSMData createCopy() {
+        MultiDomainDSMData copy = new MultiDomainDSMData();
 
-        undoStack = new Stack<>();
-        redoStack = new Stack<>();
-
-        rows = new Vector<>();
-        for(DSMItem row : copy.getRows()) {
-            rows.add(new DSMItem(row));
+        for(DSMItem row : getRows()) {
+            copy.rows.add(new DSMItem(row));
         }
 
-        cols = new Vector<>();
-        for(DSMItem col : copy.getCols()) {
-            cols.add(new DSMItem(col));
+        for(DSMItem col : getCols()) {
+            copy.cols.add(new DSMItem(col));
         }
 
-        connections = new Vector<>();
-        for(DSMConnection conn : copy.getConnections()) {
-            connections.add(new DSMConnection(conn));
+        for(DSMConnection conn : getConnections()) {
+            copy.connections.add(new DSMConnection(conn));
         }
 
 
-        domains = FXCollections.observableHashMap();
-        for(ObservableMap.Entry<Grouping, ObservableSet<Grouping>> entry : copy.domains.entrySet()) {
-            domains.put(entry.getKey(), entry.getValue());
+        copy.domains = FXCollections.observableHashMap();
+        for(ObservableMap.Entry<Grouping, ObservableSet<Grouping>> entry : domains.entrySet()) {
+            ObservableSet<Grouping> domainGroupings = FXCollections.observableSet();
+            for(Grouping domainGrouping : getDomainGroupings(entry.getKey())) {
+                domainGroupings.add(new Grouping(domainGrouping));
+            }
+            copy.domains.put(new Grouping(entry.getKey()), domainGroupings);
         }
 
-        title = copy.getTitleProperty();
-        projectName = copy.getProjectNameProperty();
-        customer = copy.getCustomerProperty();
-        versionNumber = copy.getVersionNumberProperty();
+        copy.title = getTitleProperty();
+        copy.projectName = getProjectNameProperty();
+        copy.customer = getCustomerProperty();
+        copy.versionNumber = getVersionNumberProperty();
 
-        setWasModified();
+        copy.setWasModified();
+        copy.setWasModified();
 
-        clearStacks();
+        return copy;
     }
+
 //endregion
 
 
@@ -706,7 +707,7 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
 
             if(firstItemInDomain) {
                 int numItemsInDomain = (int) rows.stream().filter(item -> item.getGroup2().equals(r.getGroup2())).count();
-                row.add(new Pair<>(RenderMode.MULTI_SPAN_TEXT, new Triplet<>(r.getGroup2(), numItemsInDomain, 1)));  // text, row span, col span
+                row.add(new Pair<>(RenderMode.MULTI_SPAN_DOMAIN_TEXT, new Triplet<>(r.getGroup2(), numItemsInDomain, 1)));  // text, row span, col span
             } else {
                 row.add(new Pair<>(RenderMode.MULTI_SPAN_NULL, null));
             }

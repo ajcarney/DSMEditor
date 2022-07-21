@@ -358,7 +358,7 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
 
                     switch(item.getKey()) {
                         case PLAIN_TEXT, PLAIN_TEXT_V -> contents.append(item.getValue()).append(",");
-                        case MULTI_SPAN_TEXT -> contents.append(((Triplet<Grouping, Integer, Integer>)item.getValue()).getValue0().getName()).append(",");
+                        case MULTI_SPAN_DOMAIN_TEXT -> contents.append(((Triplet<Grouping, Integer, Integer>)item.getValue()).getValue0().getName()).append(",");
                         case ITEM_NAME, ITEM_NAME_V -> contents.append(((DSMItem) item.getValue()).getName().getValue()).append(",");
                         case GROUPING_ITEM, GROUPING_ITEM_V -> contents.append(((DSMItem) item.getValue()).getGroup1().getName()).append(",");
                         case INDEX_ITEM -> contents.append(((DSMItem) item.getValue()).getSortIndex()).append(",");
@@ -455,7 +455,7 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
                             cellStyle.setRotation(VERTICAL_ROTATION);
                             cell.setCellStyle(cellStyle);
                         }
-                        case MULTI_SPAN_TEXT -> {
+                        case MULTI_SPAN_DOMAIN_TEXT -> {
                             Triplet<Grouping, Integer, Integer> data = (Triplet<Grouping, Integer, Integer>) item.getValue();
                             Cell cell = row.createCell(c + COL_START);
                             cell.setCellValue(data.getValue0().getName());

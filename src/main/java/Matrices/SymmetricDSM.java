@@ -94,15 +94,6 @@ public class SymmetricDSM implements IDSM {
     }
 
 
-//    /**
-//     * @return  the DSM Side bar object for the matrix
-//     */
-//    @Override
-//    public SymmetricSideBar getMatrixSideBar() {
-//        return matrixSideBar;
-//    }
-
-
     /**
      * @return  true if the latest changes (if any) in the matrix have been saved
      */

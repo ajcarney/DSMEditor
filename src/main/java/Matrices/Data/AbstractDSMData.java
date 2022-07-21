@@ -9,6 +9,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.util.Pair;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 /**
@@ -86,11 +87,11 @@ public abstract class AbstractDSMData {
 
 
     /**
-     * Copy constructor for SymmetricDSMData class. Performs a deep copy
+     * Copy constructor for AbstractDSMData class. Performs a deep copy
      *
-     * @param copy SymmetricDSMData object to copy
+     * @param copy AbstractDSMData object to copy
      */
-    public AbstractDSMData(SymmetricDSMData copy) {
+    public AbstractDSMData(AbstractDSMData copy) {
         undoStack = new Stack<>();
         redoStack = new Stack<>();
 
@@ -118,6 +119,14 @@ public abstract class AbstractDSMData {
 
         clearStacks();
     }
+
+
+    /**
+     * Method to clone this object type
+     *
+     * @return  the deep copy of the object
+     */
+    public abstract <T extends AbstractDSMData> T createCopy();
 //endregion
 
 
@@ -374,7 +383,6 @@ public abstract class AbstractDSMData {
 
     /**
      * Finds an item by an alias uid and returns it. It can be either a row item or a column item
-     * TODO: this method probably won't work correctly with the way aliases are implemented unless aliases are two way
      *
      * @param uid the alias uid of the item to return
      * @return    DSMItem of the item with uid

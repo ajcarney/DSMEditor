@@ -83,4 +83,12 @@ public interface IMatrixView {
      * @param mode  the new mode for the matrix
      */
     void setCurrentMode(MatrixViewMode mode);
+
+
+    /**
+     * Method to clone this object type
+     *
+     * @return  the deep copy of the object
+     */
+    <T extends IMatrixView> T createCopy();
 }

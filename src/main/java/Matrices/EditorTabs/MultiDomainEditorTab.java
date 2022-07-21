@@ -31,6 +31,12 @@ import javafx.util.Pair;
 import java.io.File;
 import java.util.HashMap;
 
+
+/**
+ * Used to handle a tab for a multi-domain matrix. Creates a TabPane. Opens a tab for the full view and supports
+ * adding breakout views by selecting the domains to zoom to. When breakout views are open the main view is set
+ * to the static render mode
+ */
 public class MultiDomainEditorTab implements IEditorTab {
 
     protected final VBox centerLayout = new VBox();
@@ -48,6 +54,13 @@ public class MultiDomainEditorTab implements IEditorTab {
     protected final HashMap<DraggableTab, Pair<AbstractDSMData, IMatrixView>> tabsData = new HashMap<>();  // tab object, matrix uid
 
 
+    /**
+     * Generic constructor. Creates the TabPane and sets an immutable tab for the main view
+     *
+     * @param data        the data for the multi-domain matrix
+     * @param ioHandler   the ioHandler object for the matrix
+     * @param headerMenu  the header menu instance so that it can update it for the matrix on the currently selected tab
+     */
     public MultiDomainEditorTab(MultiDomainDSMData data, MultiDomainIOHandler ioHandler, HeaderMenu headerMenu) {
         VBox.setVgrow(centerLayout, Priority.ALWAYS);
         HBox.setHgrow(centerLayout, Priority.ALWAYS);
@@ -175,6 +188,12 @@ public class MultiDomainEditorTab implements IEditorTab {
     }
 
 
+    /**
+     * Sets up a tab to add to the TabPane as a breakout view
+     *
+     * @param fromGroup  the domain for the row items
+     * @param toGroup    the domain for the column items
+     */
     public void addBreakOutView(Grouping fromGroup, Grouping toGroup) {
         AbstractGroupedDSMData data = this.matrixData.exportZoom(fromGroup, toGroup);
         IMatrixView view;
@@ -233,26 +252,45 @@ public class MultiDomainEditorTab implements IEditorTab {
     }
 
 
+    /**
+     * @return  The node to be displayed as the center content
+     */
     @Override
     public final Pane getCenterPane() {
         return centerLayout;
     }
 
+
+    /**
+     * @return  The node to be displayed as the left content
+     */
     @Override
     public final Pane getLeftPane() {
         return leftLayout;
     }
 
+
+    /**
+     * @return  The node to be displayed as the right content
+     */
     @Override
     public final Pane getRightPane() {
         return rightLayout;
     }
 
+
+    /**
+     * @return  The node to be displayed as the bottom content
+     */
     @Override
     public final Pane getBottomPane() {
         return bottomLayout;
     }
 
+
+    /**
+     * @return  The matrix view used by the tab
+     */
     @Override
     public IMatrixView getMatrixView() {
         return tabsData.get((DraggableTab)tabPane.getSelectionModel().getSelectedItem()).getValue();

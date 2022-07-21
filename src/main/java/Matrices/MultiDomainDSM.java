@@ -96,15 +96,6 @@ public class MultiDomainDSM implements IDSM {
     }
 
 
-//    /**
-//     * @return  the DSM Side bar object for the matrix
-//     */
-//    @Override
-//    public MultiDomainSideBar getMatrixSideBar() {
-//        return matrixSideBar;
-//    }
-
-
     /**
      * @return  true if the latest changes (if any) in the matrix have been saved
      */

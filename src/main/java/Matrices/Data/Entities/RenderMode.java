@@ -14,6 +14,6 @@ public enum RenderMode {
     INDEX_ITEM,
     UNEDITABLE_CONNECTION,
     EDITABLE_CONNECTION,
-    MULTI_SPAN_TEXT,        // Triplet<Grouping, Integer, Integer>  -  domain object, row span, col span
+    MULTI_SPAN_DOMAIN_TEXT,        // Triplet<Grouping, Integer, Integer>  -  domain object, row span, col span
     MULTI_SPAN_NULL         // null
 }

@@ -8,6 +8,7 @@ import Matrices.Data.Entities.RenderMode;
 import javafx.collections.FXCollections;
 import javafx.util.Pair;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 
@@ -38,43 +39,58 @@ public class AsymmetricDSMData extends AbstractGroupedDSMData implements IPropag
 
 
     /**
-     * Copy constructor for SymmetricDSMData class. Performs a deep copy
+     * Copy constructor for AsymmetricDSMData class. Performs a deep copy
      *
-     * @param copy SymmetricDSMData object to copy
+     * @return  the copy of the current Asymmetric DSM
      */
-    public AsymmetricDSMData(AsymmetricDSMData copy) {
-        super();
+    @Override
+    public AsymmetricDSMData createCopy() {
+        AsymmetricDSMData copy = new AsymmetricDSMData();
 
-        undoStack = new Stack<>();
-        redoStack = new Stack<>();
-
-        rows = new Vector<>();
-        for(DSMItem row : copy.getRows()) {
-            rows.add(new DSMItem(row));
+        for(DSMItem row : getRows()) {
+            copy.rows.add(new DSMItem(row));
         }
 
-        cols = new Vector<>();
-        for(DSMItem col : copy.getCols()) {
-            cols.add(new DSMItem(col));
+        for(DSMItem col : getCols()) {
+            copy.cols.add(new DSMItem(col));
         }
 
-        connections = new Vector<>();
-        for(DSMConnection conn : copy.getConnections()) {
-            connections.add(new DSMConnection(conn));
+        for(DSMConnection conn : getConnections()) {
+            copy.connections.add(new DSMConnection(conn));
         }
 
+        for(Grouping group : getGroupings()) {
+            copy.groupings.add(new Grouping(group));
+        }
+        copy.getDefaultGrouping().setColor(defaultGroup.getColor());
+        copy.getDefaultGrouping().setFontColor(defaultGroup.getFontColor());
+        copy.getDefaultGrouping().setName(defaultGroup.getName());
 
-        groupings = FXCollections.observableSet();
-        groupings.addAll(copy.groupings);
+        copy.title = getTitleProperty();
+        copy.projectName = getProjectNameProperty();
+        copy.customer = getCustomerProperty();
+        copy.versionNumber = getVersionNumberProperty();
 
-        title = copy.getTitleProperty();
-        projectName = copy.getProjectNameProperty();
-        customer = copy.getCustomerProperty();
-        versionNumber = copy.getVersionNumberProperty();
+        copy.setWasModified();
+        copy.clearStacks();
 
-        setWasModified();
+        return copy;
+    }
 
-        clearStacks();
+
+    /**
+     * Method to clone this object type
+     *
+     * @return  the clone of the object
+     */
+    @Override
+    public AsymmetricDSMData clone() {
+        try {
+            return getClass().getDeclaredConstructor(getClass()).newInstance(this);
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 //endregion
 

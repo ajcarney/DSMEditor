@@ -306,7 +306,7 @@ public class HeaderMenu {
             if(editor.getFocusedMatrixUid() == null) {
                 return;
             }
-            ioHandler.exportToImage(matrixData, matrixView);
+            ioHandler.exportToImage(matrixData.createCopy(), matrixView.createCopy());
         });
 
 

@@ -82,6 +82,26 @@ public class AsymmetricView extends AbstractMatrixView {
 
 
     /**
+     * Copy constructor for AsymmetricView class. Performs a deep copy on the matrix data. Everything else will be
+     * generated when the refreshView method is called
+     *
+     * @return  the copy of the current AsymmetricView
+     */
+    @Override
+    public AsymmetricView createCopy() {
+        AsymmetricView copy = new AsymmetricView(matrix.createCopy(), fontSize.doubleValue());
+
+        copy.setCurrentMode(getCurrentMode());
+        copy.setShowNames(getShowNames());
+
+        // no need to copy gridUidLookup HashMap because those values are generated from the matrix on the
+        // refreshView call which can be done later
+
+        return copy;
+    }
+
+
+    /**
      * updates the background color of a cell based on the backgrounds set for it. Error highlight
      * is given the highest priority, then cross highlighting, then user highlighting, and lastly the grouping
      * color of the cell or the default color
@@ -564,7 +584,7 @@ public class AsymmetricView extends AbstractMatrixView {
         testCell.getChildren().add(testLabel);
 
         // Start by calculating the width of column 1 and height of row 1 (groupings)
-        String longestGroupingName = matrix.getGroupings().stream().max(Comparator.comparing(Grouping::getName)).orElse(new Grouping("", Color.BLACK)).getName();
+        String longestGroupingName = matrix.getGroupings().stream().max(Comparator.comparing(g -> g.getName().length())).orElse(new Grouping("", Color.BLACK)).getName();
         longestGroupingName = longestGroupingName.length() > "Groupings".length() ? longestGroupingName: "Groupings";
         testLabel.setText(longestGroupingName);
         double col1Width = Misc.calculateNodeSize(testCell).getWidth();
@@ -575,7 +595,7 @@ public class AsymmetricView extends AbstractMatrixView {
         items.addAll(matrix.getRows());
         items.addAll(matrix.getCols());
         items.add(new DSMItem(-1.0, "Column Items"));
-        String longestItemName = items.stream().max(Comparator.comparing((DSMItem item) -> item.getName().toString())).orElse(new DSMItem(-1.0, "")).getName().getValue();
+        String longestItemName = items.stream().max(Comparator.comparing((DSMItem item) -> item.getName().toString().length())).orElse(new DSMItem(-1.0, "")).getName().getValue();
         testLabel.setText(longestItemName);
         double col2Width = Misc.calculateNodeSize(testCell).getWidth();
         double row2Height = col2Width;

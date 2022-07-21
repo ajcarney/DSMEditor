@@ -4,7 +4,6 @@ package Matrices;
 import Matrices.Data.AbstractDSMData;
 import Matrices.EditorTabs.IEditorTab;
 import Matrices.IOHandlers.AbstractIOHandler;
-import Matrices.SideBarTools.AbstractSideBar;
 import Matrices.Views.IMatrixView;
 
 
@@ -50,15 +49,6 @@ public interface IDSM {
      * @return     the DSM IOHandler object for the matrix
      */
     <T extends AbstractIOHandler> T getMatrixIOHandler();
-
-
-    /**
-     * Gets the DSM SideBar object for the matrix
-     *
-     * @param <T>  the type of matrix SideBar
-     * @return     the DSM SideBar object for the matrix
-     */
-    // <T extends AbstractSideBar> T getMatrixSideBar();
 
 
     /**

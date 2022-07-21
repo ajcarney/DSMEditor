@@ -34,7 +34,7 @@ import java.util.Vector;
 /**
  * Generic class for displaying a matrix
  */
-public abstract class AbstractMatrixView implements IMatrixView {
+public abstract class AbstractMatrixView implements IMatrixView, Cloneable {
 
     public static final Background DEFAULT_BACKGROUND = new Background(new BackgroundFill(Color.color(1, 1, 1), new CornerRadii(3), new Insets(0)));
     public static final Background UNEDITABLE_CONNECTION_BACKGROUND = new Background(new BackgroundFill(Color.color(0, 0, 0), new CornerRadii(3), new Insets(0)));
@@ -65,6 +65,7 @@ public abstract class AbstractMatrixView implements IMatrixView {
     protected EventType<CellChangedEvent> CELL_CHANGED_EVENT = new EventType<>("CELL_CHANGED_EVENT" + this.hashCode());
 
 
+//region Constructors
     /**
      * Constructor for MatrixGuiHandler object for a given matrix. Calls a refresh of the
      * matrix editor gui components
@@ -85,6 +86,8 @@ public abstract class AbstractMatrixView implements IMatrixView {
         showNames = new SimpleBooleanProperty(true);  // default to showing names instead of weights
         currentMode = MatrixViewMode.EDIT;
     }
+
+//endregion
 
 
     /**
@@ -193,6 +196,15 @@ public abstract class AbstractMatrixView implements IMatrixView {
         } else {
             return null;
         }
+    }
+
+
+    public void getCells() {
+
+    }
+
+    public void getGridUidLookup() {
+
     }
 
 
@@ -449,8 +461,6 @@ public abstract class AbstractMatrixView implements IMatrixView {
 
         //region cell callbacks
         // set up callback functions
-        int finalR = gridRowIndex;
-        int finalC = gridColIndex;
         cell.setOnMouseClicked(e -> {
             if(e.getButton().equals(MouseButton.PRIMARY)) {
                 // create popup window to edit the connection
@@ -553,17 +563,17 @@ public abstract class AbstractMatrixView implements IMatrixView {
                 cell.fireEvent(new CellChangedEvent(CELL_CHANGED_EVENT));
 
             } else if(e.getButton().equals(MouseButton.SECONDARY)) {  // toggle highlighting
-                toggleUserHighlightCell(new Pair<>(finalR, finalC));
+                toggleUserHighlightCell(new Pair<>(gridRowIndex, gridColIndex));
             }
         });
 
         cell.setOnMouseEntered(e -> {
-            crossHighlightCell(new Pair<>(finalR, finalC), true);
+            crossHighlightCell(new Pair<>(gridRowIndex, gridColIndex), true);
             locationLabel.setText(matrix.getItem(rowUid).getName().getValue() + ":" + matrix.getItem(colUid).getName().getValue());
         });
 
         cell.setOnMouseExited(e -> {
-            crossHighlightCell(new Pair<>(finalR, finalC), false);
+            crossHighlightCell(new Pair<>(gridRowIndex, gridColIndex), false);
             locationLabel.setText("");
         });
         //endregion
