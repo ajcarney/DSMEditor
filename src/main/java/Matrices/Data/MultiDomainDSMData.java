@@ -13,7 +13,6 @@ import javafx.scene.paint.Color;
 import javafx.util.Pair;
 import org.javatuples.Triplet;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 
@@ -22,6 +21,7 @@ import java.util.*;
  * this class. Handles both symmetrical and non-symmetrical matrices.
  * Note: items in a multi-domain dsm will use the property Grouping.group1 to configure groups
  * and Grouping.group2 to configure domains
+ * TODO: probably need override for adding an item to ensure item doesn't have a grouping that is not being tracked
  *
  * @author: Aiden Carney
  */
@@ -88,9 +88,7 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
         if(domains.size() > 0) {
             for(Map.Entry<Grouping, Collection<Grouping>> domain : domains.entrySet()) {
                 ObservableSet<Grouping> domainGroupings = FXCollections.observableSet();
-                for(Grouping domainGrouping : domain.getValue()) {
-                    domainGroupings.add(domainGrouping);
-                }
+                domainGroupings.addAll(domain.getValue());
                 this.domains.put(domain.getKey(), domainGroupings);
             }
         } else {
@@ -133,10 +131,10 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
             copy.domains.put(new Grouping(entry.getKey()), domainGroupings);
         }
 
-        copy.title = getTitleProperty();
-        copy.projectName = getProjectNameProperty();
-        copy.customer = getCustomerProperty();
-        copy.versionNumber = getVersionNumberProperty();
+        copy.setTitle(getTitle());
+        copy.setProjectName(getProjectName());
+        copy.setCustomer(getCustomer());
+        copy.setVersionNumber(getVersionNumber());
 
         copy.setWasModified();
         copy.setWasModified();
@@ -209,11 +207,11 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
                 () -> {  // do function
                     // remove all the items with the given domain
                     ArrayList<DSMItem> rowsToDelete = new ArrayList<>();
-                    for(DSMItem item : rows) {
-                        if(item.getGroup2().equals(domain)) rowsToDelete.add(item);
+                    for (DSMItem item : rows) {
+                        if (item.getGroup2().equals(domain)) rowsToDelete.add(item);
                     }
 
-                    for(DSMItem item : rowsToDelete) {  // remove all the items symmetrically
+                    for (DSMItem item : rowsToDelete) {  // remove all the items symmetrically
                         deleteItem(item);
                     }
 
@@ -233,7 +231,7 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
      *
      * @param group  the object of type Grouping to remove
      */
-    public void removeGrouping(Grouping domain, Grouping group) {
+    public void removeDomainGrouping(Grouping domain, Grouping group) {
         if(group.equals(getDefaultDomainGroup(domain))) {  // don't allow deleting the default domain-grouping
             return;
         }
@@ -264,7 +262,7 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
     /**
      * Removes all groupings from the matrix. Puts the change on the stack but does not set a checkpoint
      */
-    public void clearGroupings(Grouping domain) {
+    public void clearDomainGroupings(Grouping domain) {
         ObservableSet<Grouping> oldGroupings = FXCollections.observableSet();
         oldGroupings.addAll(domains.get(domain));
 
@@ -401,14 +399,14 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
 
         addChangeToStack(new MatrixChange(
                 () -> {  // do function
-                    if(addedNewGroup) {
+                    if (addedNewGroup) {
                         domains.get(domain).add(newGroup);
                     }
                     item.setGroup1(newGroup);
                     aliasedItem.setGroup1(newGroup);
                 },
                 () -> {  // undo function
-                    if(addedNewGroup) {
+                    if (addedNewGroup) {
                         domains.get(domain).remove(newGroup);
                     }
                     item.setGroup1(oldGroup);
@@ -481,7 +479,7 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
                     removeItem(aliasedItem);
                 },
                 () -> {  // undo function
-                    if(isRow) {
+                    if (isRow) {
                         this.rows.add(item);
                         this.cols.add(aliasedItem);
                     } else {
@@ -566,7 +564,7 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
     @Override
     protected void createConnection(int rowUid, int colUid, String connectionName, double weight) {
         // add assertion in this override
-        assert getItem(rowUid).getUid() == getItem(colUid).getAliasUid();  // corresponds to where row and column are same and thus connection cannot be made
+        assert getItem(rowUid).getUid() != getItem(colUid).getAliasUid();  // corresponds to where row and column are same and thus connection cannot be made
 
         DSMConnection connection = new DSMConnection(connectionName, weight, rowUid, colUid);
         connections.add(connection);
@@ -739,8 +737,8 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
     @Override
     public void importZoom(Grouping fromGroup, Grouping toGroup, AbstractGroupedDSMData importMatrix) {
         // update the new groupings
-        clearGroupings(fromGroup);
-        clearGroupings(toGroup);
+        clearDomainGroupings(fromGroup);
+        clearDomainGroupings(toGroup);
 
         ObservableSet<Grouping> currentDomainGroupings = getDomainGroupings(fromGroup);
         addChangeToStack(new MatrixChange(

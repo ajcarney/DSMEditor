@@ -998,7 +998,7 @@ public class MultiDomainSideBar extends AbstractSideBar {
 
             HBox groupingRowContent = configureGroupingEditorRow(matrix, domainGrouping, () -> {
                 if(matrix.getDomainGroupings(domain).size() > 1) {
-                    matrix.removeGrouping(domain, domainGrouping);  // delete the grouping from the matrix
+                    matrix.removeDomainGrouping(domain, domainGrouping);  // delete the grouping from the matrix
                     groupingsLayout.getChildren().remove(groupingRow);  // remove the domain from the view
                 }  // TODO: prompt that it can't be deleted
             }, deletable);
@@ -1014,7 +1014,7 @@ public class MultiDomainSideBar extends AbstractSideBar {
             groupingRow.setPadding(new Insets(0, 0, 0, 50));
             HBox groupingRowContent = configureGroupingEditorRow(matrix, newDomainGrouping, () -> {
                 if (matrix.getDomainGroupings(domain).size() > 1) {
-                    matrix.removeGrouping(domain, newDomainGrouping);  // delete the grouping from the matrix
+                    matrix.removeDomainGrouping(domain, newDomainGrouping);  // delete the grouping from the matrix
                     groupingsLayout.getChildren().remove(groupingRow);  // remove the domain from the view
                 }  // TODO: prompt that it can't be deleted
             }, true);

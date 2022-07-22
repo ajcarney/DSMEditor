@@ -67,10 +67,10 @@ public class SymmetricDSMData extends AbstractGroupedDSMData implements IPropaga
         copy.getDefaultGrouping().setFontColor(defaultGroup.getFontColor());
         copy.getDefaultGrouping().setName(defaultGroup.getName());
 
-        copy.title = getTitleProperty();
-        copy.projectName = getProjectNameProperty();
-        copy.customer = getCustomerProperty();
-        copy.versionNumber = getVersionNumberProperty();
+        copy.setTitle(getTitle());
+        copy.setProjectName(getProjectName());
+        copy.setCustomer(getCustomer());
+        copy.setVersionNumber(getVersionNumber());
 
         copy.setWasModified();
         copy.clearStacks();
@@ -82,10 +82,10 @@ public class SymmetricDSMData extends AbstractGroupedDSMData implements IPropaga
 
 //region Add and Delete Item Overrides
     /**
-     * Creates a new item and adds it to the matrix and the stack
+     * Creates a new item and adds it to the matrix and the stack. Creates both the row and the column item
      *
      * @param name   the name of the item to create and add
-     * @param isRow  is the item a row
+     * @param isRow  is the item a row (ignored)
      */
     @Override
     public void createItem(String name, boolean isRow) {
@@ -114,20 +114,20 @@ public class SymmetricDSMData extends AbstractGroupedDSMData implements IPropaga
         DSMItem aliasedItem = getItemByAlias(item.getUid());
 
         addChangeToStack(new MatrixChange(
-            () -> {  // do function
-                removeItem(item);
-                removeItem(aliasedItem);
-            },
-            () -> {  // undo function
-                if(isRow) {
-                    this.rows.add(item);
-                    this.cols.add(aliasedItem);
-                } else {
-                    this.rows.add(aliasedItem);
-                    this.cols.add(item);
-                }
-            },
-            false
+                () -> {  // do function
+                    removeItem(item);
+                    removeItem(aliasedItem);
+                },
+                () -> {  // undo function
+                    if (isRow) {
+                        this.rows.add(item);
+                        this.cols.add(aliasedItem);
+                    } else {
+                        this.rows.add(aliasedItem);
+                        this.cols.add(item);
+                    }
+                },
+                false
         ));
     }
 //endregion
@@ -149,15 +149,15 @@ public class SymmetricDSMData extends AbstractGroupedDSMData implements IPropaga
         assert oldName.equals(aliasedItem.getName().getValue()) : "Symmetric item names were not the same";
 
         addChangeToStack(new MatrixChange(
-            () -> {  // do function
-                item.setName(newName);
-                aliasedItem.setName(newName);
-            },
-            () -> {  // undo function
-                item.setName(oldName);
-                aliasedItem.setName(oldName);
-            },
-            false
+                () -> {  // do function
+                    item.setName(newName);
+                    aliasedItem.setName(newName);
+                },
+                () -> {  // undo function
+                    item.setName(oldName);
+                    aliasedItem.setName(oldName);
+                },
+                false
         ));
     }
 
@@ -177,15 +177,15 @@ public class SymmetricDSMData extends AbstractGroupedDSMData implements IPropaga
         assert oldIndex == aliasedItem.getSortIndex() : "Symmetric item sort indices were not the same";
 
         addChangeToStack(new MatrixChange(
-            () -> {  // do function
-                item.setSortIndex(newIndex);
-                aliasedItem.setSortIndex(newIndex);
-            },
-            () -> {  // undo function
-                item.setSortIndex(oldIndex);
-                aliasedItem.setSortIndex(oldIndex);
-            },
-            false
+                () -> {  // do function
+                    item.setSortIndex(newIndex);
+                    aliasedItem.setSortIndex(newIndex);
+                },
+                () -> {  // undo function
+                    item.setSortIndex(oldIndex);
+                    aliasedItem.setSortIndex(oldIndex);
+                },
+                false
         ));
     }
 
@@ -207,18 +207,18 @@ public class SymmetricDSMData extends AbstractGroupedDSMData implements IPropaga
         boolean addedNewGroup = !groupings.contains(newGroup) && !newGroup.equals(defaultGroup);
 
         addChangeToStack(new MatrixChange(
-            () -> {  // do function
-                if(addedNewGroup) {  // no need to undo because this puts another change on the stack
-                    addGrouping(newGroup);
-                }
-                item.setGroup1(newGroup);
-                aliasedItem.setGroup1(newGroup);
-            },
-            () -> {  // undo function
-                item.setGroup1(oldGroup);
-                aliasedItem.setGroup1(oldGroup);
-            },
-            false
+                () -> {  // do function
+                    if (addedNewGroup) {  // no need to undo because this puts another change on the stack
+                        addGrouping(newGroup);
+                    }
+                    item.setGroup1(newGroup);
+                    aliasedItem.setGroup1(newGroup);
+                },
+                () -> {  // undo function
+                    item.setGroup1(oldGroup);
+                    aliasedItem.setGroup1(oldGroup);
+                },
+                false
         ));
     }
 //endregion
@@ -237,7 +237,7 @@ public class SymmetricDSMData extends AbstractGroupedDSMData implements IPropaga
     @Override
     protected void createConnection(int rowUid, int colUid, String connectionName, double weight) {
         // add assertion in this override
-        assert getItem(rowUid).getUid() == getItem(colUid).getAliasUid();  // corresponds to where row and column are same and thus connection cannot be made
+        assert getItem(rowUid).getUid() != getItem(colUid).getAliasUid();  // corresponds to where row and column are same and thus connection cannot be made
 
         DSMConnection connection = new DSMConnection(connectionName, weight, rowUid, colUid);
         connections.add(connection);

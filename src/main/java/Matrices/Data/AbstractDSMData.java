@@ -9,8 +9,8 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.util.Pair;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+
 
 /**
  * A class that contains generic data and functions about a matrix. All operations to a matrix come through
@@ -20,9 +20,9 @@ import java.util.*;
  * @author: Aiden Carney
  */
 public abstract class AbstractDSMData {
-    protected class MatrixChange {
-        private Runnable doFunction;
-        private Runnable undoFunction;
+    protected static class MatrixChange {
+        private final Runnable doFunction;
+        private final Runnable undoFunction;
         private boolean checkpoint;
 
         public MatrixChange(Runnable doFunction, Runnable undoFunction, boolean checkpoint) {
@@ -317,8 +317,10 @@ public abstract class AbstractDSMData {
      * @param weight         the weight of the connection
      */
     protected void createConnection(int rowUid, int colUid, String connectionName, double weight) {
-        DSMConnection connection = new DSMConnection(connectionName, weight, rowUid, colUid);
-        connections.add(connection);
+        if(isRow(rowUid) && !isRow(colUid)) {
+            DSMConnection connection = new DSMConnection(connectionName, weight, rowUid, colUid);
+            connections.add(connection);
+        }
     }
 
 
@@ -495,7 +497,7 @@ public abstract class AbstractDSMData {
     public void addItem(DSMItem item, boolean isRow) {
         addChangeToStack(new MatrixChange(
                 () -> {  // do function
-                    if(isRow) {
+                    if (isRow) {
                         this.rows.add(item);
                     } else {
                         this.cols.add(item);
@@ -542,7 +544,7 @@ public abstract class AbstractDSMData {
                     removeItem(item);
                 },
                 () -> {  // undo function
-                    if(isRow) {
+                    if (isRow) {
                         this.rows.add(item);
                     } else {
                         this.cols.add(item);
@@ -598,59 +600,47 @@ public abstract class AbstractDSMData {
 
 
     /**
-     * Deletes the columns of the matrix. Adds changes to the stack. Clears alias uids also
+     * Modifies a connection with given row item uid and column item uid. First checks to see if the connection
+     * exists, if not it creates it. If it does exist, it will update the connection name and weight. Cannot be used to
+     * delete connections. Puts the change on the stack but does not set a checkpoint.
+     *
+     * @param rowUid         the row item uid of the connection
+     * @param colUid         the column item uid of the connection
+     * @param connectionName the new name of the connection
+     * @param weight         the weight of the connection
      */
-    public void deleteCols() {
-        Vector<DSMItem> oldCols = new Vector<>();  // deep clone old column items
-        for(DSMItem col : cols) {
-            oldCols.add(new DSMItem(col));
+    public final void modifyConnection(int rowUid, int colUid, String connectionName, double weight) {
+        DSMConnection connection = null;
+        String oldName = "";
+        double oldWeight = 0.0;
+        for(DSMConnection conn : this.connections) {
+            if(rowUid == conn.getRowUid() && colUid == conn.getColUid()) {
+                connection = conn;
+                oldName = conn.getConnectionName();
+                oldWeight = conn.getWeight();
+                break;
+            }
         }
-
-        Vector<DSMItem> oldRows = new Vector<>();  // deep clone old column items
-        for(DSMItem row : rows) {
-            oldRows.add(new DSMItem(row));
-        }
+        DSMConnection finalConnection = connection;
+        String finalOldName = oldName;
+        double finalOldWeight = oldWeight;
 
         addChangeToStack(new MatrixChange(
-                () -> {
-                    cols.clear();
-                    for(DSMItem row : rows) {
-                        row.setAliasUid(null);
+                () -> {  // do function
+                    if (finalConnection == null) {
+                        createConnection(rowUid, colUid, connectionName, weight);
+                    } else {
+                        finalConnection.setConnectionName(connectionName);
+                        finalConnection.setWeight(weight);
                     }
                 },
-                () -> {
-                    cols = oldCols;
-                    rows = oldRows;
-                },
-                false
-        ));
-    }
-
-
-    /**
-     * Deletes the rows of the matrix. Adds changes to the stack. Clears alias uids also
-     */
-    public void deleteRows() {
-        Vector<DSMItem> oldCols = new Vector<>();  // deep clone old column items
-        for(DSMItem col : cols) {
-            oldCols.add(new DSMItem(col));
-        }
-
-        Vector<DSMItem> oldRows = new Vector<>();  // deep clone old column items
-        for(DSMItem row : rows) {
-            oldRows.add(new DSMItem(row));
-        }
-
-        addChangeToStack(new MatrixChange(
-                () -> {
-                    rows.clear();
-                    for(DSMItem col : cols) {
-                        col.setAliasUid(null);
+                () -> {  // undo function
+                    if (finalConnection == null) {
+                        removeConnection(rowUid, colUid);
+                    } else {
+                        finalConnection.setConnectionName(finalOldName);
+                        finalConnection.setWeight(finalOldWeight);
                     }
-                },
-                () -> {
-                    cols = oldCols;
-                    rows = oldRows;
                 },
                 false
         ));
@@ -684,54 +674,6 @@ public abstract class AbstractDSMData {
 
 
     /**
-     * Modifies a connection with given row item uid and column item uid. First checks to see if the connection
-     * exists, if not it creates it. If it does exist, it will update the connection name and weight. Cannot be used to
-     * delete connections. Puts the change on the stack but does not set a checkpoint.
-     *
-     * @param rowUid         the row item uid of the connection
-     * @param colUid         the column item uid of the connection
-     * @param connectionName the new name of the connection
-     * @param weight         the weight of the connection
-     */
-    public final void modifyConnection(int rowUid, int colUid, String connectionName, double weight) {
-        DSMConnection connection = null;
-        String oldName = "";
-        double oldWeight = 0.0;
-        for(DSMConnection conn : this.connections) {
-            if(rowUid == conn.getRowUid() && colUid == conn.getColUid()) {
-                connection = conn;
-                oldName = conn.getConnectionName();
-                oldWeight = conn.getWeight();
-                break;
-            }
-        }
-        DSMConnection finalConnection = connection;
-        String finalOldName = oldName;
-        double finalOldWeight = oldWeight;
-
-        addChangeToStack(new MatrixChange(
-                () -> {  // do function
-                    if(finalConnection == null) {
-                        createConnection(rowUid, colUid, connectionName, weight);
-                    } else {
-                        finalConnection.setConnectionName(connectionName);
-                        finalConnection.setWeight(weight);
-                    }
-                },
-                () -> {  // undo function
-                    if(finalConnection == null) {
-                        removeConnection(rowUid, colUid);
-                    } else {
-                        finalConnection.setConnectionName(finalOldName);
-                        finalConnection.setWeight(finalOldWeight);
-                    }
-                },
-                false
-        ));
-    }
-
-
-    /**
      * Removes a connection from the matrix connections by rowUid, colUid. Puts the change on the stack but does
      * not set a checkpoint
      *
@@ -757,38 +699,11 @@ public abstract class AbstractDSMData {
 
 
     /**
-     * Deletes all connections for a given row. Adds changes to the stack, but does not set a checkpoint
-     *
-     * @param rowUid the uid of the row to clear the connections of
-     */
-    public final void deleteRowConnections(int rowUid) {
-        for(DSMConnection connection : connections) {     // check to see if uid is in the rows
-            if(connection.getRowUid() == rowUid) {
-                deleteConnection(connection.getRowUid(), connection.getColUid());
-            }
-        }
-    }
-
-
-    /**
-     * Deletes all connections for a given column. Adds changes to the stack, but does not set a checkpoint
-     *
-     * @param colUid the uid of the row to clear the connections of
-     */
-    public final void deleteColConnections(int colUid) {
-        for(DSMConnection connection : connections) {     // check to see if uid is in the rows
-            if(connection.getColUid() == colUid) {
-                deleteConnection(connection.getRowUid(), connection.getColUid());
-            }
-        }
-    }
-
-
-    /**
      * deletes all connections in the matrix. Adds changes to the stack, but does not set a checkpoint
      */
     public final void deleteAllConnections() {
-        for(DSMConnection connection : connections) {     // check to see if uid is in the rows
+        Vector<DSMConnection> connectionsClone = (Vector<DSMConnection>) connections.clone();
+        for(DSMConnection connection : connectionsClone) {     // check to see if uid is in the rows
             deleteConnection(connection.getRowUid(), connection.getColUid());
         }
     }
@@ -827,7 +742,7 @@ public abstract class AbstractDSMData {
      * such that they are now 1 to n. Used to make the sort Indices "clean" numbers. Puts multiple changes on the
      * stack but does not set any checkpoint.
      */
-    public final void reDistributeSortIndices() {
+    public void reDistributeSortIndices() {
         // sort row and columns by sortIndex
         Collections.sort(rows, Comparator.comparing(r -> r.getSortIndex()));
         Collections.sort(cols, Comparator.comparing(c -> c.getSortIndex()));
