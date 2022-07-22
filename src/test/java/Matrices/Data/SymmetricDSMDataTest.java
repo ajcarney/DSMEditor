@@ -84,11 +84,11 @@ public class SymmetricDSMDataTest {
 
         matrix.setCurrentStateAsCheckpoint();
         matrix.createItem("item1", true);
-        matrix.setCurrentStateAsCheckpoint();
 
         stressUndoRedo(matrix);
 
         Assertions.assertEquals("item1", matrix.getRows().get(0).getName().getValue());
+        Assertions.assertEquals("item1", matrix.getCols().get(0).getName().getValue());
     }
 
 
@@ -104,8 +104,7 @@ public class SymmetricDSMDataTest {
         matrix.addItem(colItem, false);
 
         matrix.setCurrentStateAsCheckpoint();
-        matrix.deleteItem(rowItem);
-        matrix.setCurrentStateAsCheckpoint();
+        matrix.deleteItem(colItem);
 
         stressUndoRedo(matrix);
 
@@ -127,7 +126,6 @@ public class SymmetricDSMDataTest {
 
         matrix.setCurrentStateAsCheckpoint();
         matrix.setItemName(rowItem, "newItem1");
-        matrix.setCurrentStateAsCheckpoint();
 
         stressUndoRedo(matrix);
 
@@ -149,7 +147,6 @@ public class SymmetricDSMDataTest {
 
         matrix.setCurrentStateAsCheckpoint();
         matrix.setItemSortIndex(rowItem, 42.0);
-        matrix.setCurrentStateAsCheckpoint();
 
         stressUndoRedo(matrix);
 
@@ -159,13 +156,15 @@ public class SymmetricDSMDataTest {
 
 
     /**
-     * Unit test for setting an item's group in the dsm
+     * Unit test for setting an item's group in the dsm to a group that is already in the dsm
      */
     @Test
     public void setItemGroupTest() {
         SymmetricDSMData matrix = new SymmetricDSMData();
         Grouping startGroup = new Grouping("group1", null);
         Grouping endGroup = new Grouping("group2", null);
+        matrix.addGrouping(startGroup);
+        matrix.addGrouping(endGroup);
         DSMItem rowItem = new DSMItem(1, 11, 1.0, "item1", startGroup, null);
         DSMItem colItem = new DSMItem(11, 1, 1.0, "item1", startGroup, null);
         matrix.addItem(rowItem, true);
@@ -173,12 +172,56 @@ public class SymmetricDSMDataTest {
 
         matrix.setCurrentStateAsCheckpoint();
         matrix.setItemGroup(rowItem, endGroup);
-        matrix.setCurrentStateAsCheckpoint();
 
         stressUndoRedo(matrix);
 
         Assertions.assertEquals(endGroup, rowItem.getGroup1());
         Assertions.assertEquals(endGroup, colItem.getGroup1());
+    }
+
+
+    /**
+     * Unit test for setting an item's group in the dsm to a group that is not already in the dsm
+     */
+    @Test
+    public void setItemToNewGroupTest() {
+        SymmetricDSMData matrix = new SymmetricDSMData();
+        Grouping startGroup = new Grouping("group1", null);
+        Grouping endGroup = new Grouping("group2", null);
+        matrix.addGrouping(startGroup);
+        DSMItem rowItem = new DSMItem(1, 11, 1.0, "item1", startGroup, null);
+        DSMItem colItem = new DSMItem(11, 1, 1.0, "item1", startGroup, null);
+        matrix.addItem(rowItem, true);
+        matrix.addItem(colItem, false);
+
+        matrix.setCurrentStateAsCheckpoint();
+        matrix.setItemGroup(rowItem, endGroup);
+
+        stressUndoRedo(matrix);
+
+        Assertions.assertEquals(endGroup, rowItem.getGroup1());
+        Assertions.assertEquals(endGroup, colItem.getGroup1());
+        Assertions.assertEquals(2, matrix.getGroupings().size());
+    }
+
+
+    /**
+     * tests creating a connection for a matrix
+     */
+    @Test
+    public void createConnectionTest() {
+        SymmetricDSMData matrix = new SymmetricDSMData();
+        matrix.createItem("item1", true);
+        matrix.createItem("item2", true);
+
+        matrix.setCurrentStateAsCheckpoint();
+        matrix.modifyConnection(matrix.getRows().get(0).getUid(), matrix.getCols().get(1).getUid(), "x", 1.0);
+
+        stressUndoRedo(matrix);
+
+        Assertions.assertEquals(1, matrix.getConnections().size());
+        Assertions.assertEquals("x", matrix.getConnections().get(0).getConnectionName());
+        Assertions.assertEquals(1.0, matrix.getConnections().get(0).getWeight());
     }
 
 
@@ -198,14 +241,13 @@ public class SymmetricDSMDataTest {
 
         matrix.setCurrentStateAsCheckpoint();
         matrix.modifyConnectionSymmetric(1, 33, "x", 1.0);
-        matrix.setCurrentStateAsCheckpoint();
 
         stressUndoRedo(matrix);
 
         ArrayList<Integer> expectedRowUids = new ArrayList<>(Arrays.asList(1, 3));
         ArrayList<Integer> expectedColUids = new ArrayList<>(Arrays.asList(11, 33));
-        ArrayList<Integer> actualRowUids = new ArrayList<>(matrix.getConnections().stream().map(DSMConnection::getRowUid).collect(Collectors.toList()));
-        ArrayList<Integer> actualColUids = new ArrayList<>(matrix.getConnections().stream().map(DSMConnection::getColUid).collect(Collectors.toList()));
+        ArrayList<Integer> actualRowUids = matrix.getConnections().stream().map(DSMConnection::getRowUid).collect(Collectors.toCollection(ArrayList::new));
+        ArrayList<Integer> actualColUids = matrix.getConnections().stream().map(DSMConnection::getColUid).collect(Collectors.toCollection(ArrayList::new));
         Collections.sort(expectedRowUids);
         Collections.sort(expectedColUids);
         Collections.sort(actualRowUids);
@@ -248,12 +290,11 @@ public class SymmetricDSMDataTest {
 
         matrix.setCurrentStateAsCheckpoint();
         matrix.reDistributeSortIndicesByGroup();
-        matrix.setCurrentStateAsCheckpoint();
 
         ArrayList<Double> expectedRowIndices = new ArrayList<>(Arrays.asList(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0));
         ArrayList<Double> expectedColIndices = new ArrayList<>(Arrays.asList(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0));
-        ArrayList<Double> actualRowIndices = new ArrayList<>(matrix.getRows().stream().map(DSMItem::getSortIndex).collect(Collectors.toList()));
-        ArrayList<Double> actualColIndices = new ArrayList<>(matrix.getCols().stream().map(DSMItem::getSortIndex).collect(Collectors.toList()));
+        ArrayList<Double> actualRowIndices = matrix.getRows().stream().map(DSMItem::getSortIndex).collect(Collectors.toCollection(ArrayList::new));
+        ArrayList<Double> actualColIndices = matrix.getCols().stream().map(DSMItem::getSortIndex).collect(Collectors.toCollection(ArrayList::new));
         Collections.sort(expectedRowIndices);
         Collections.sort(expectedColIndices);
         Collections.sort(actualRowIndices);
@@ -277,7 +318,10 @@ public class SymmetricDSMDataTest {
         matrix.addItem(new DSMItem(22, 2, 1.0, "item2", null, null), false);
         matrix.addItem(new DSMItem(33, 3, 1.0, "item3", null, null), false);
 
+        matrix.setCurrentStateAsCheckpoint();
         matrix.modifyConnectionSymmetric(1, 33, "x", 1.0);
+
+        stressUndoRedo(matrix);
 
         int expectedSymmetricRowUid = 3;
         int expectedSymmetricColUid = 11;
@@ -299,7 +343,10 @@ public class SymmetricDSMDataTest {
         matrix.addItem(new DSMItem(22, 2, 1.0, "item2", null, null), false);
         matrix.addItem(new DSMItem(33, 3, 1.0, "item3", null, null), false);
 
+        matrix.setCurrentStateAsCheckpoint();
         matrix.modifyConnectionSymmetric(1, 33, "x", 1.0);
+
+        stressUndoRedo(matrix);
 
         Assertions.assertEquals("x", matrix.getSymmetricConnection(1, 33).getConnectionName());
     }

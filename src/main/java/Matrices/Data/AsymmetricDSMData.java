@@ -112,13 +112,13 @@ public class AsymmetricDSMData extends AbstractGroupedDSMData implements IPropag
 
         addChangeToStack(new MatrixChange(
                 () -> {  // do function
-                    if(addedNewGroup) {
+                    if (addedNewGroup) {
                         addGrouping(newGroup);
                     }
                     item.setGroup1(newGroup);
                 },
                 () -> {  // undo function
-                    if(addedNewGroup) {
+                    if (addedNewGroup) {
                         removeGrouping(newGroup);
                     }
                     item.setGroup1(oldGroup);

@@ -11,6 +11,7 @@ import javafx.util.Pair;
 
 import java.util.*;
 
+
 /**
  * A class that contains generic data and functions about a matrix. All operations to a matrix come through
  * this class. Will be used as a base class for all other types of matrices. All matrices that are to
@@ -19,9 +20,9 @@ import java.util.*;
  * @author: Aiden Carney
  */
 public abstract class AbstractDSMData {
-    protected class MatrixChange {
-        private Runnable doFunction;
-        private Runnable undoFunction;
+    protected static class MatrixChange {
+        private final Runnable doFunction;
+        private final Runnable undoFunction;
         private boolean checkpoint;
 
         public MatrixChange(Runnable doFunction, Runnable undoFunction, boolean checkpoint) {
@@ -316,8 +317,10 @@ public abstract class AbstractDSMData {
      * @param weight         the weight of the connection
      */
     protected void createConnection(int rowUid, int colUid, String connectionName, double weight) {
-        DSMConnection connection = new DSMConnection(connectionName, weight, rowUid, colUid);
-        connections.add(connection);
+        if(isRow(rowUid) && !isRow(colUid)) {
+            DSMConnection connection = new DSMConnection(connectionName, weight, rowUid, colUid);
+            connections.add(connection);
+        }
     }
 
 
@@ -494,7 +497,7 @@ public abstract class AbstractDSMData {
     public void addItem(DSMItem item, boolean isRow) {
         addChangeToStack(new MatrixChange(
                 () -> {  // do function
-                    if(isRow) {
+                    if (isRow) {
                         this.rows.add(item);
                     } else {
                         this.cols.add(item);
@@ -541,7 +544,7 @@ public abstract class AbstractDSMData {
                     removeItem(item);
                 },
                 () -> {  // undo function
-                    if(isRow) {
+                    if (isRow) {
                         this.rows.add(item);
                     } else {
                         this.cols.add(item);
@@ -624,7 +627,7 @@ public abstract class AbstractDSMData {
 
         addChangeToStack(new MatrixChange(
                 () -> {  // do function
-                    if(finalConnection == null) {
+                    if (finalConnection == null) {
                         createConnection(rowUid, colUid, connectionName, weight);
                     } else {
                         finalConnection.setConnectionName(connectionName);
@@ -632,7 +635,7 @@ public abstract class AbstractDSMData {
                     }
                 },
                 () -> {  // undo function
-                    if(finalConnection == null) {
+                    if (finalConnection == null) {
                         removeConnection(rowUid, colUid);
                     } else {
                         finalConnection.setConnectionName(finalOldName);

@@ -114,20 +114,20 @@ public class SymmetricDSMData extends AbstractGroupedDSMData implements IPropaga
         DSMItem aliasedItem = getItemByAlias(item.getUid());
 
         addChangeToStack(new MatrixChange(
-            () -> {  // do function
-                removeItem(item);
-                removeItem(aliasedItem);
-            },
-            () -> {  // undo function
-                if(isRow) {
-                    this.rows.add(item);
-                    this.cols.add(aliasedItem);
-                } else {
-                    this.rows.add(aliasedItem);
-                    this.cols.add(item);
-                }
-            },
-            false
+                () -> {  // do function
+                    removeItem(item);
+                    removeItem(aliasedItem);
+                },
+                () -> {  // undo function
+                    if (isRow) {
+                        this.rows.add(item);
+                        this.cols.add(aliasedItem);
+                    } else {
+                        this.rows.add(aliasedItem);
+                        this.cols.add(item);
+                    }
+                },
+                false
         ));
     }
 //endregion
@@ -149,15 +149,15 @@ public class SymmetricDSMData extends AbstractGroupedDSMData implements IPropaga
         assert oldName.equals(aliasedItem.getName().getValue()) : "Symmetric item names were not the same";
 
         addChangeToStack(new MatrixChange(
-            () -> {  // do function
-                item.setName(newName);
-                aliasedItem.setName(newName);
-            },
-            () -> {  // undo function
-                item.setName(oldName);
-                aliasedItem.setName(oldName);
-            },
-            false
+                () -> {  // do function
+                    item.setName(newName);
+                    aliasedItem.setName(newName);
+                },
+                () -> {  // undo function
+                    item.setName(oldName);
+                    aliasedItem.setName(oldName);
+                },
+                false
         ));
     }
 
@@ -177,15 +177,15 @@ public class SymmetricDSMData extends AbstractGroupedDSMData implements IPropaga
         assert oldIndex == aliasedItem.getSortIndex() : "Symmetric item sort indices were not the same";
 
         addChangeToStack(new MatrixChange(
-            () -> {  // do function
-                item.setSortIndex(newIndex);
-                aliasedItem.setSortIndex(newIndex);
-            },
-            () -> {  // undo function
-                item.setSortIndex(oldIndex);
-                aliasedItem.setSortIndex(oldIndex);
-            },
-            false
+                () -> {  // do function
+                    item.setSortIndex(newIndex);
+                    aliasedItem.setSortIndex(newIndex);
+                },
+                () -> {  // undo function
+                    item.setSortIndex(oldIndex);
+                    aliasedItem.setSortIndex(oldIndex);
+                },
+                false
         ));
     }
 
@@ -207,18 +207,18 @@ public class SymmetricDSMData extends AbstractGroupedDSMData implements IPropaga
         boolean addedNewGroup = !groupings.contains(newGroup) && !newGroup.equals(defaultGroup);
 
         addChangeToStack(new MatrixChange(
-            () -> {  // do function
-                if(addedNewGroup) {  // no need to undo because this puts another change on the stack
-                    addGrouping(newGroup);
-                }
-                item.setGroup1(newGroup);
-                aliasedItem.setGroup1(newGroup);
-            },
-            () -> {  // undo function
-                item.setGroup1(oldGroup);
-                aliasedItem.setGroup1(oldGroup);
-            },
-            false
+                () -> {  // do function
+                    if (addedNewGroup) {  // no need to undo because this puts another change on the stack
+                        addGrouping(newGroup);
+                    }
+                    item.setGroup1(newGroup);
+                    aliasedItem.setGroup1(newGroup);
+                },
+                () -> {  // undo function
+                    item.setGroup1(oldGroup);
+                    aliasedItem.setGroup1(oldGroup);
+                },
+                false
         ));
     }
 //endregion

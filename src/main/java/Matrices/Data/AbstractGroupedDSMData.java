@@ -58,13 +58,13 @@ public abstract class AbstractGroupedDSMData extends AbstractDSMData {
                 },
                 () -> {  // undo function
                     groupings.remove(group);
-                    for(DSMItem item : rows) {
-                        if(item.getGroup1().equals(group)) {
+                    for (DSMItem item : rows) {
+                        if (item.getGroup1().equals(group)) {
                             item.setGroup1(defaultGroup);
                         }
                     }
-                    for(DSMItem item : cols) {
-                        if(item.getGroup1().equals(group)) {
+                    for (DSMItem item : cols) {
+                        if (item.getGroup1().equals(group)) {
                             item.setGroup1(defaultGroup);
                         }
                     }

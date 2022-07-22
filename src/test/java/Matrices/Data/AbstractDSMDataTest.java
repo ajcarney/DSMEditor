@@ -39,12 +39,12 @@ public class AbstractDSMDataTest {
      */
     @Test
     public void createConnectionTest() {
-        SymmetricDSMData matrix = new SymmetricDSMData();
+        AsymmetricDSMData matrix = new AsymmetricDSMData();
         matrix.createItem("item1", true);
-        matrix.createItem("item2", true);
+        matrix.createItem("item2", false);
 
         matrix.setCurrentStateAsCheckpoint();
-        matrix.modifyConnection(matrix.getRows().get(0).getUid(), matrix.getRows().get(1).getAliasUid(), "x", 1.0);
+        matrix.modifyConnection(matrix.getRows().get(0).getUid(), matrix.getCols().get(0).getUid(), "x", 1.0);
         matrix.setCurrentStateAsCheckpoint();
 
         stressUndoRedo(matrix);
