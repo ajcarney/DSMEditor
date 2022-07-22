@@ -66,31 +66,15 @@ public class AsymmetricDSMData extends AbstractGroupedDSMData implements IPropag
         copy.getDefaultGrouping().setFontColor(defaultGroup.getFontColor());
         copy.getDefaultGrouping().setName(defaultGroup.getName());
 
-        copy.title = getTitleProperty();
-        copy.projectName = getProjectNameProperty();
-        copy.customer = getCustomerProperty();
-        copy.versionNumber = getVersionNumberProperty();
+        copy.setTitle(getTitle());
+        copy.setProjectName(getProjectName());
+        copy.setCustomer(getCustomer());
+        copy.setVersionNumber(getVersionNumber());
 
         copy.setWasModified();
         copy.clearStacks();
 
         return copy;
-    }
-
-
-    /**
-     * Method to clone this object type
-     *
-     * @return  the clone of the object
-     */
-    @Override
-    public AsymmetricDSMData clone() {
-        try {
-            return getClass().getDeclaredConstructor(getClass()).newInstance(this);
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-            e.printStackTrace();
-        }
-        return null;
     }
 //endregion
 

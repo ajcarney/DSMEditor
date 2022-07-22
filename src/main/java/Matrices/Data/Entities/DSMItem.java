@@ -75,7 +75,7 @@ public class DSMItem {
     public DSMItem(DSMItem copy) {
         uid = copy.getUid();
         aliasUid = copy.getAliasUid();
-        name = copy.getName();
+        name = new SimpleStringProperty(copy.getName().getValue());
         sortIndex = copy.getSortIndex();
         group1 = copy.getGroup1();
         group2 = copy.getGroup2();
@@ -192,7 +192,7 @@ public class DSMItem {
 
 
     /**
-     * Copies the properties of one DSMItem to another. Does not copy uid or alias uid
+     * Copies the properties of one DSMItem to another. Does not copy uid or alias uid. Shallow copies the groupings
      *
      * @param item  the item to copy
      */

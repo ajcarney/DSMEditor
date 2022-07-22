@@ -67,10 +67,10 @@ public class SymmetricDSMData extends AbstractGroupedDSMData implements IPropaga
         copy.getDefaultGrouping().setFontColor(defaultGroup.getFontColor());
         copy.getDefaultGrouping().setName(defaultGroup.getName());
 
-        copy.title = getTitleProperty();
-        copy.projectName = getProjectNameProperty();
-        copy.customer = getCustomerProperty();
-        copy.versionNumber = getVersionNumberProperty();
+        copy.setTitle(getTitle());
+        copy.setProjectName(getProjectName());
+        copy.setCustomer(getCustomer());
+        copy.setVersionNumber(getVersionNumber());
 
         copy.setWasModified();
         copy.clearStacks();
@@ -82,10 +82,10 @@ public class SymmetricDSMData extends AbstractGroupedDSMData implements IPropaga
 
 //region Add and Delete Item Overrides
     /**
-     * Creates a new item and adds it to the matrix and the stack
+     * Creates a new item and adds it to the matrix and the stack. Creates both the row and the column item
      *
      * @param name   the name of the item to create and add
-     * @param isRow  is the item a row
+     * @param isRow  is the item a row (ignored)
      */
     @Override
     public void createItem(String name, boolean isRow) {
@@ -237,7 +237,7 @@ public class SymmetricDSMData extends AbstractGroupedDSMData implements IPropaga
     @Override
     protected void createConnection(int rowUid, int colUid, String connectionName, double weight) {
         // add assertion in this override
-        assert getItem(rowUid).getUid() == getItem(colUid).getAliasUid();  // corresponds to where row and column are same and thus connection cannot be made
+        assert getItem(rowUid).getUid() != getItem(colUid).getAliasUid();  // corresponds to where row and column are same and thus connection cannot be made
 
         DSMConnection connection = new DSMConnection(connectionName, weight, rowUid, colUid);
         connections.add(connection);

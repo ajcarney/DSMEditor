@@ -12,7 +12,7 @@ import java.lang.reflect.InvocationTargetException;
 /**
  * Extends the functionality of a AbstractDSMData to add groupings. Contains methods for handling groupings
  */
-public abstract class AbstractGroupedDSMData extends AbstractDSMData implements Cloneable {
+public abstract class AbstractGroupedDSMData extends AbstractDSMData {
     protected ObservableSet<Grouping> groupings;  // ObservableSet is used so that any gui threads reading it will see changes without needing a callback set up
     protected final Grouping defaultGroup = new Grouping(Integer.MAX_VALUE, "(none)", Color.color(1.0, 1.0, 1.0), Grouping.defaultFontColor);  // create a default group when none is assigned (this will always have the same uid)
 

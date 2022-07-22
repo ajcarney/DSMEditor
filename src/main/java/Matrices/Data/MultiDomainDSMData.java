@@ -13,7 +13,6 @@ import javafx.scene.paint.Color;
 import javafx.util.Pair;
 import org.javatuples.Triplet;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 
@@ -233,7 +232,7 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
      *
      * @param group  the object of type Grouping to remove
      */
-    public void removeGrouping(Grouping domain, Grouping group) {
+    public void removeDomainGrouping(Grouping domain, Grouping group) {
         if(group.equals(getDefaultDomainGroup(domain))) {  // don't allow deleting the default domain-grouping
             return;
         }
@@ -264,7 +263,7 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
     /**
      * Removes all groupings from the matrix. Puts the change on the stack but does not set a checkpoint
      */
-    public void clearGroupings(Grouping domain) {
+    public void clearDomainGroupings(Grouping domain) {
         ObservableSet<Grouping> oldGroupings = FXCollections.observableSet();
         oldGroupings.addAll(domains.get(domain));
 
@@ -739,8 +738,8 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
     @Override
     public void importZoom(Grouping fromGroup, Grouping toGroup, AbstractGroupedDSMData importMatrix) {
         // update the new groupings
-        clearGroupings(fromGroup);
-        clearGroupings(toGroup);
+        clearDomainGroupings(fromGroup);
+        clearDomainGroupings(toGroup);
 
         ObservableSet<Grouping> currentDomainGroupings = getDomainGroupings(fromGroup);
         addChangeToStack(new MatrixChange(

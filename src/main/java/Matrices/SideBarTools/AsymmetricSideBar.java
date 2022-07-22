@@ -85,9 +85,9 @@ public class AsymmetricSideBar extends AbstractSideBar {
                     setText(null);
                 } else {
                     if(item.getValue().equals("row")) {
-                        setText(item + " Row");
+                        setText(item.getKey() + " Row");
                     } else {
-                        setText(item + " Column");
+                        setText(item.getKey() + " Column");
                     }
                 }
             }
