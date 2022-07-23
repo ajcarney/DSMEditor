@@ -3,12 +3,13 @@ package Matrices.Data;
 import Matrices.Data.Entities.DSMConnection;
 import Matrices.Data.Entities.DSMItem;
 import Matrices.Data.Entities.Grouping;
-import Matrices.Data.Flags.IPropagationAnalysis;
 import Matrices.Data.Entities.RenderMode;
+import Matrices.Data.Flags.IPropagationAnalysis;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.scene.paint.Color;
 import javafx.util.Pair;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 
@@ -19,18 +20,70 @@ import java.util.*;
  *
  * @author: Aiden Carney
  */
-public class AsymmetricDSMData extends AbstractGroupedDSMData implements IPropagationAnalysis {
+public class AsymmetricDSMData extends AbstractDSMData implements IPropagationAnalysis {
+
+    public static final Integer DEFAULT_GROUP_UID = Integer.MAX_VALUE;
+
+    private ObservableList<Grouping> rowGroupings;
+    private ObservableList<Grouping> colGroupings;
+
+
+    /**
+     * @param isRow  if getting the default group for the rows or columns
+     * @return       the default grouping object for either a row or a column
+     */
+    private Grouping getDefaultGroup(boolean isRow) {
+        if(isRow) {
+            for (Grouping domainGrouping : rowGroupings) {
+                if (domainGrouping.getUid().equals(DEFAULT_GROUP_UID)) {
+                    return domainGrouping;
+                }
+            }
+        } else {
+            for (Grouping domainGrouping : colGroupings) {
+                if (domainGrouping.getUid().equals(DEFAULT_GROUP_UID)) {
+                    return domainGrouping;
+                }
+            }
+        }
+        return null;
+    }
+
+
 
 //region Constructors
     /**
-     * Creates a new SymmetricDSMData object. Creates no row or column items and metadata are empty strings.
-     * There is one grouping, which is the default: "(None)"
+     * Creates a new AsymmetricDSMData object. Creates no row or column items and metadata are empty strings.
+     * There is one grouping, which is the default: "(none)" for both the rows and columns
      */
     public AsymmetricDSMData() {
         super();
 
         connections = new Vector<>();
-        groupings = FXCollections.observableSet();
+        rowGroupings = FXCollections.observableArrayList();
+        colGroupings = FXCollections.observableArrayList();
+        addGrouping(true, new Grouping(DEFAULT_GROUP_UID, "(none)", Color.WHITE, Grouping.defaultFontColor));
+        addGrouping(false, new Grouping(DEFAULT_GROUP_UID, "(none)", Color.WHITE, Grouping.defaultFontColor));
+
+        setWasModified();
+
+        clearStacks();
+    }
+
+
+    /**
+     * Creates a new AsymmetricDSMData object. Creates no row or column items and metadata are empty strings.
+     * Adds all the groupings from the parameters
+     *
+     * @param rowGroupings  a list of the row groupings
+     * @param colGroupings  a list of the column groupings
+     */
+    public AsymmetricDSMData(Collection<Grouping> rowGroupings, Collection<Grouping> colGroupings) {
+        super();
+
+        connections = new Vector<>();
+        this.rowGroupings = FXCollections.observableArrayList(rowGroupings);
+        this.colGroupings = FXCollections.observableArrayList(colGroupings);
 
         setWasModified();
 
@@ -59,12 +112,13 @@ public class AsymmetricDSMData extends AbstractGroupedDSMData implements IPropag
             copy.connections.add(new DSMConnection(conn));
         }
 
-        for(Grouping group : getGroupings()) {
-            copy.groupings.add(new Grouping(group));
+        for(Grouping group : getGroupings(true)) {
+            copy.rowGroupings.add(new Grouping(group));
         }
-        copy.getDefaultGrouping().setColor(defaultGroup.getColor());
-        copy.getDefaultGrouping().setFontColor(defaultGroup.getFontColor());
-        copy.getDefaultGrouping().setName(defaultGroup.getName());
+        for(Grouping group : getGroupings(false)) {
+            copy.colGroupings.add(new Grouping(group));
+        }
+
 
         copy.setTitle(getTitle());
         copy.setProjectName(getProjectName());
@@ -79,6 +133,236 @@ public class AsymmetricDSMData extends AbstractGroupedDSMData implements IPropag
 //endregion
 
 
+//region Grouping functions
+    /**
+     * Adds a new grouping to the matrix for either the rows or columns. Puts the change on the stack but does not set
+     * a checkpoint
+     *
+     * @param isRow  if group should be added to the row or column groups
+     * @param group  the object of type Grouping to add
+     */
+    public void addGrouping(Boolean isRow, Grouping group) {
+        if(isRow && rowGroupings.contains(group)) return;
+        if(!isRow && colGroupings.contains(group)) return;
+
+        addChangeToStack(new MatrixChange(
+                () -> {  // do function
+                    if(isRow) {
+                        rowGroupings.add(group);
+                    } else {
+                        colGroupings.add(group);
+                    }
+                },
+                () -> {  // undo function
+                    if(isRow) {
+                        rowGroupings.remove(group);
+                    } {
+                        colGroupings.remove(group);
+                    }
+                },
+                false
+        ));
+    }
+
+
+    /**
+     * Removes a grouping from the matrix from either the rows or the columns. Puts the change on the stack but does
+     * not set a checkpoint
+     *
+     * @param isRow  if the grouping is a part of the rows or columns
+     * @param group  the object of type Grouping to remove
+     * @return       0 on success, -1 on error
+     */
+    public int removeGrouping(Boolean isRow, Grouping group) {
+        if(group.getUid().equals(DEFAULT_GROUP_UID)) return -1;
+
+        addChangeToStack(new MatrixChange(
+                () -> {  // do function
+                    if(isRow) {
+                        rowGroupings.remove(group);
+                        for(DSMItem item : rows) {  // these changes already get put on the stack so no need to add them a second time
+                            if(item.getGroup1().equals(group)) {
+                                setItemGroup(item, getDefaultGroup(true));
+                            }
+                        }
+                    } else {
+                        colGroupings.remove(group);
+                        for(DSMItem item : cols) {  // these changes already get put on the stack so no need to add them a second time
+                            if(item.getGroup1().equals(group)) {
+                                setItemGroup(item, getDefaultGroup(false));
+                            }
+                        }
+                    }
+                },
+                () -> {  // undo function
+                    if(isRow) {
+                        rowGroupings.add(group);
+                    } else {
+                        colGroupings.add(group);
+                    }
+                },
+                false
+        ));
+
+        return 0;
+    }
+
+
+    /**
+     * Removes all groupings from the matrix. Puts the change on the stack but does not set a checkpoint
+     */
+    public void clearGroupings(Boolean isRow) {
+        ObservableList<Grouping> oldGroupings = FXCollections.observableArrayList();
+        if(isRow) {
+            oldGroupings.addAll(rowGroupings);
+        } else {
+            oldGroupings.addAll(colGroupings);
+        }
+
+
+        addChangeToStack(new MatrixChange(
+                () -> {  // do function
+                    if(isRow) {
+                        rowGroupings.clear();
+                        rowGroupings.add(new Grouping(DEFAULT_GROUP_UID, "(none)", Color.WHITE, Grouping.defaultFontColor));
+                        for(DSMItem r : rows) {  // TODO: fix
+                            setItemGroup(r, getDefaultGroup(true));
+                        }
+                    } else {
+                        colGroupings.clear();
+                        colGroupings.add(new Grouping(DEFAULT_GROUP_UID, "(none)", Color.WHITE, Grouping.defaultFontColor));
+                        for(DSMItem c : cols) {
+                            setItemGroup(c, getDefaultGroup(false));
+                        }
+                    }
+                },
+                () -> {  // undo function
+                    if(isRow) {
+                        rowGroupings = oldGroupings;
+                    } else {
+                        colGroupings = oldGroupings;
+                    }
+                },
+                false
+        ));
+    }
+
+
+    /**
+     * @return  ObservableSet of the matrix domains. Sorts the groupings by alphabetical order with default at the end
+     */
+    public ObservableList<Grouping> getGroupings(boolean isRow) {
+        Comparator<Grouping> groupingComparator = (o1, o2) -> {
+            if(o1.getUid().equals(DEFAULT_GROUP_UID)) return -1;
+            if(o2.getUid().equals(DEFAULT_GROUP_UID)) return 1;
+
+            return o1.getName().compareTo(o2.getName());
+        };
+
+        if(isRow) {
+            FXCollections.sort(rowGroupings, groupingComparator);
+            return rowGroupings;
+        } else {
+            FXCollections.sort(colGroupings, groupingComparator);
+            return colGroupings;
+        }
+    }
+
+
+    /**
+     * Renames a grouping. Puts the change on the stack but does not set a checkpoint. This method can be used
+     * for either domains or domain-groupings
+     *
+     * @param grouping  the group who's name should be changed
+     * @param newName   the new name for the group
+     */
+    public void renameGrouping(Grouping grouping, String newName) {
+        String oldName = grouping.getName();
+
+        addChangeToStack(new MatrixChange(
+                () -> {  // do function
+                    grouping.setName(newName);
+                },
+                () -> {  // undo function
+                    grouping.setName(oldName);
+                },
+                false
+        ));
+    }
+
+
+    /**
+     * Changes a color of a grouping. Puts the change on the stack but does not set a checkpoint.
+     * This method can be used for either domains or domain-groupings
+     *
+     * @param grouping  the group who's name should be changed
+     * @param newColor  the new color of the grouping
+     */
+    public void updateGroupingColor(Grouping grouping, Color newColor) {
+        Color oldColor = grouping.getColor();
+        addChangeToStack(new MatrixChange(
+                () -> {  // do function
+                    grouping.setColor(newColor);
+                },
+                () -> {  // undo function
+                    grouping.setColor(oldColor);
+                },
+                false
+        ));
+    }
+
+
+    /**
+     * Changes a color of a grouping. Puts the change on the stack but does not set a checkpoint. This method
+     * can be used for either domains or domain-groupings
+     *
+     * @param grouping  the grouping who's font color should be changed
+     * @param newColor  the new color of the grouping
+     */
+    public void updateGroupingFontColor(Grouping grouping, Color newColor) {
+        Color oldColor = grouping.getFontColor();
+        addChangeToStack(new MatrixChange(
+                () -> {  // do function
+                    grouping.setFontColor(newColor);
+                },
+                () -> {  // undo function
+                    grouping.setFontColor(oldColor);
+                },
+                false
+        ));
+    }
+
+
+    /**
+     * Sets the domain group of an item in the matrix symmetrically. This method should be called instead of directly modifying the item
+     * because this method puts the change on the stack but does not set a checkpoint.
+     *
+     * @param item     the item to change the name of
+     * @param newGroup the new group for the item
+     */
+    public void setItemGroup(DSMItem item, Grouping newGroup) {
+        Grouping oldGroup = item.getGroup1();
+
+        boolean addNewGroup = (isRow(item.getUid()) && !rowGroupings.contains(newGroup)) || (!isRow(item.getUid()) && !colGroupings.contains(newGroup));
+
+        addChangeToStack(new MatrixChange(
+                () -> {  // do function
+                    if (addNewGroup) {
+                        addGrouping(isRow(item.getUid()), newGroup);
+                    }
+                    item.setGroup1(newGroup);
+                },
+                () -> {  // undo function
+                    item.setGroup1(oldGroup);
+                },
+                false
+        ));
+    }
+
+
+
+//endregion
+
     /**
      * Creates a new item and adds it to the matrix and the stack. Overrides to set a default group
      *
@@ -90,41 +374,10 @@ public class AsymmetricDSMData extends AbstractGroupedDSMData implements IPropag
         double index = (int)getRowMaxSortIndex() + 1;  // cast to int to remove the decimal place so that the index will be a whole number
 
         DSMItem item = new DSMItem(index, name);
-        item.setGroup1(defaultGroup);
+        item.setGroup1(getDefaultGroup(isRow));
         item.setAliasUid(null);
 
         addItem(item, isRow);
-    }
-
-
-    /**
-     * Sets the group of an item in the matrix symmetrically. This method should be called instead of directly modifying the item
-     * because this method puts the change on the stack but does not set a checkpoint.
-     *
-     * @param item     the item to change the name of
-     * @param newGroup the new group for the item
-     */
-    @Override
-    public void setItemGroup(DSMItem item, Grouping newGroup) {
-        Grouping oldGroup = item.getGroup1();
-
-        boolean addedNewGroup = !groupings.contains(newGroup) && !newGroup.equals(defaultGroup);
-
-        addChangeToStack(new MatrixChange(
-                () -> {  // do function
-                    if (addedNewGroup) {
-                        addGrouping(newGroup);
-                    }
-                    item.setGroup1(newGroup);
-                },
-                () -> {  // undo function
-                    if (addedNewGroup) {
-                        removeGrouping(newGroup);
-                    }
-                    item.setGroup1(oldGroup);
-                },
-                false
-        ));
     }
 
 

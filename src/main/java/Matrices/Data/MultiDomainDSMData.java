@@ -43,7 +43,8 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
     }
 
     /**
-     * @return  the default domain grouping object
+     * @param domain  the domain to get the default group for
+     * @return        the default domain grouping object
      */
     private Grouping getDefaultDomainGroup(Grouping domain) {
         for(Grouping domainGrouping : domains.get(domain)) {
@@ -735,23 +736,23 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
      * @param importMatrix  the breakout view matrix
      */
     @Override
-    public void importZoom(Grouping fromGroup, Grouping toGroup, AbstractGroupedDSMData importMatrix) {
+    public void importZoom(Grouping fromGroup, Grouping toGroup, AbstractDSMData importMatrix) {
         // update the new groupings
         clearDomainGroupings(fromGroup);
         clearDomainGroupings(toGroup);
 
-        ObservableSet<Grouping> currentDomainGroupings = getDomainGroupings(fromGroup);
-        addChangeToStack(new MatrixChange(
-                () -> {  // do function
-                    ObservableSet<Grouping> groupings = importMatrix.getGroupings();
-                    groupings.add(importMatrix.getDefaultGrouping());
-                    domains.put(fromGroup, groupings);
-                },
-                () -> {  // undo function
-                    domains.put(fromGroup, currentDomainGroupings);
-                },
-                false
-        ));
+//        ObservableSet<Grouping> currentDomainGroupings = getDomainGroupings(fromGroup);
+//        addChangeToStack(new MatrixChange(
+//                () -> {  // do function
+//                    ObservableSet<Grouping> groupings = importMatrix.getGroupings();
+//                    groupings.add(importMatrix.getDefaultGrouping());
+//                    domains.put(fromGroup, groupings);
+//                },
+//                () -> {  // undo function
+//                    domains.put(fromGroup, currentDomainGroupings);
+//                },
+//                false
+//        ));
 
         // ensure all items have the correct domain
         for(DSMItem row : importMatrix.getRows()) {
@@ -851,7 +852,7 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
      * @return           the matrix object that is a breakout view
      */
     @Override
-    public AbstractGroupedDSMData exportZoom(Grouping fromGroup, Grouping toGroup) {
+    public AbstractDSMData exportZoom(Grouping fromGroup, Grouping toGroup) {
         if(fromGroup.equals(toGroup)) {
             SymmetricDSMData exportMatrix = new SymmetricDSMData();
 
@@ -907,11 +908,11 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
 
             // add the groupings
             for(Grouping grouping : getDomainGroupings(fromGroup)) {
-                exportMatrix.addGrouping(new Grouping(grouping));
+                exportMatrix.addGrouping(true, new Grouping(grouping));
             }
             // add the groupings
             for(Grouping grouping : getDomainGroupings(toGroup)) {
-                exportMatrix.addGrouping(new Grouping(grouping));
+                exportMatrix.addGrouping(false, new Grouping(grouping));
             }
 
             return exportMatrix;

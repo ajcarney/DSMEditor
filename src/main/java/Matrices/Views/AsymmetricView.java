@@ -139,7 +139,7 @@ public class AsymmetricView extends AbstractMatrixView {
                 cell.setCellHighlight(matrix.getItem(rowUid).getGroup1().getColor());
                 cell.setCellTextColor(matrix.getItem(rowUid).getGroup1().getFontColor());
                 return;
-            } else if (rowUid != null && colUid != null) {  // highlight with row group color and border it with the col group color
+            } else if (rowUid != null && colUid != null) {  // highlight with row group color col group color
                 Stop[] stops = new Stop[] { new Stop(0, matrix.getItem(rowUid).getGroup1().getColor()), new Stop(1, matrix.getItem(colUid).getGroup1().getColor())};
                 LinearGradient lg1 = new LinearGradient(0, 0, 1, 1, true, CycleMethod.NO_CYCLE, stops);
 
@@ -285,8 +285,7 @@ public class AsymmetricView extends AbstractMatrixView {
                         groupings.setCellFactory(cellFactory);
                         groupings.setButtonCell(cellFactory.call(null));
 
-                        groupings.getItems().addAll(matrix.getGroupings());
-                        groupings.getItems().add(matrix.getDefaultGrouping());
+                        groupings.getItems().addAll(matrix.getGroupings(true));
                         groupings.getSelectionModel().select(((DSMItem) item.getValue()).getGroup1());
                         groupings.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
                             matrix.setItemGroup((DSMItem) item.getValue(), groupings.getValue());
@@ -337,8 +336,7 @@ public class AsymmetricView extends AbstractMatrixView {
                         groupings.setCellFactory(cellFactory);
                         groupings.setButtonCell(cellFactory.call(null));
 
-                        groupings.getItems().addAll(matrix.getGroupings());
-                        groupings.getItems().add(matrix.getDefaultGrouping());
+                        groupings.getItems().addAll(matrix.getGroupings(false));
                         groupings.getSelectionModel().select(((DSMItem) item.getValue()).getGroup1());
                         groupings.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
                             matrix.setItemGroup((DSMItem) item.getValue(), groupings.getValue());
@@ -584,7 +582,9 @@ public class AsymmetricView extends AbstractMatrixView {
         testCell.getChildren().add(testLabel);
 
         // Start by calculating the width of column 1 and height of row 1 (groupings)
-        String longestGroupingName = matrix.getGroupings().stream().max(Comparator.comparing(g -> g.getName().length())).orElse(new Grouping("", Color.BLACK)).getName();
+        ArrayList<Grouping> allGroupings = new ArrayList<>(matrix.getGroupings(true));
+        allGroupings.addAll(matrix.getGroupings(false));
+        String longestGroupingName = allGroupings.stream().max(Comparator.comparing(g -> g.getName().length())).orElse(new Grouping("", Color.BLACK)).getName();
         longestGroupingName = longestGroupingName.length() > "Groupings".length() ? longestGroupingName: "Groupings";
         testLabel.setText(longestGroupingName);
         double col1Width = Misc.calculateNodeSize(testCell).getWidth();
@@ -630,8 +630,6 @@ public class AsymmetricView extends AbstractMatrixView {
                 Pair<RenderMode, Object> item = template.get(r).get(c);
                 HBox cell = new HBox();  // wrap everything in an HBox so a border can be added easily
                 Label label = null;
-
-                Background defaultBackground = DEFAULT_BACKGROUND;
 
                 switch (item.getKey()) {
                     case PLAIN_TEXT -> {
@@ -747,7 +745,7 @@ public class AsymmetricView extends AbstractMatrixView {
                     Cell cellObject = new Cell(new Pair<>(r, c), cell, label, scaledFontSize);
                     rowData.add(cell);
                     cellObject.setCellBorder(Color.BLACK);
-                    cellObject.updateHighlightBG(defaultBackground, "default");
+                    cellObject.updateHighlightBG(DEFAULT_BACKGROUND, "default");
                     cells.add(cellObject);
                 }
             }

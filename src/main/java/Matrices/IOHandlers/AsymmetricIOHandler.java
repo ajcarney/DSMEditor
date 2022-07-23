@@ -12,7 +12,6 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.WorkbookUtil;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.jdom2.Attribute;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.input.SAXBuilder;
@@ -23,7 +22,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.OutputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 
 /**
@@ -77,8 +79,6 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
     @Override
     public AsymmetricDSMData readFile() {
         try {
-            AsymmetricDSMData matrix = new AsymmetricDSMData();
-
             SAXBuilder saxBuilder = new SAXBuilder();
             Document document = saxBuilder.build(savePath);  // read file into memory
             Element rootElement = document.getRootElement();
@@ -94,44 +94,27 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
                 return null;
             }
 
+
+            // parse groupings
+            List<Element> rowGroupingsXML = rootElement.getChild("row_groupings").getChildren();
+            ArrayList<Grouping> rowGroupings = new ArrayList<>();
+            for(Element groupXML : rowGroupingsXML) {
+                Grouping group = new Grouping(groupXML);
+                rowGroupings.add(group);
+            }
+
+            List<Element> colGroupingsXML = rootElement.getChild("col_groupings").getChildren();
+            ArrayList<Grouping> colGroupings = new ArrayList<>();
+            for(Element groupXML : colGroupingsXML) {
+                Grouping group = new Grouping(groupXML);
+                colGroupings.add(group);
+            }
+
+            AsymmetricDSMData matrix = new AsymmetricDSMData(rowGroupings, colGroupings);
             matrix.setTitle(title);
             matrix.setProjectName(project);
             matrix.setCustomer(customer);
             matrix.setVersionNumber(version);
-
-            // parse groupings
-            HashMap<Integer, Grouping> matrixGroupings = new HashMap<>();
-
-            // parse default grouping
-            Element defaultGroup = rootElement.getChild("default_grouping");
-            String defaultGroupName = defaultGroup.getChild("name").getText();
-            double defaultGroupGroupColorR = Double.parseDouble(defaultGroup.getChild("gr").getText());
-            double defaultGroupGroupColorG = Double.parseDouble(defaultGroup.getChild("gg").getText());
-            double defaultGroupGroupColorB = Double.parseDouble(defaultGroup.getChild("gb").getText());
-            double defaultGroupFontColorR = Double.parseDouble(defaultGroup.getChild("fr").getText());
-            double defaultGroupFontColorG = Double.parseDouble(defaultGroup.getChild("fg").getText());
-            double defaultGroupFontColorB = Double.parseDouble(defaultGroup.getChild("fb").getText());
-            matrix.getDefaultGrouping().setName(defaultGroupName);
-            matrix.getDefaultGrouping().setColor(Color.color(defaultGroupGroupColorR, defaultGroupGroupColorG, defaultGroupGroupColorB));
-            matrix.getDefaultGrouping().setFontColor(Color.color(defaultGroupFontColorR, defaultGroupFontColorG, defaultGroupFontColorB));
-            matrixGroupings.put(Integer.MAX_VALUE, matrix.getDefaultGrouping());
-
-            // parse user defined groupings
-            List<Element> groupings = rootElement.getChild("groupings").getChildren();
-            for(Element conn : groupings) {
-                Integer uid = Integer.parseInt(conn.getChild("uid").getText());
-                String name = conn.getChild("name").getText();
-                double group_r = Double.parseDouble(conn.getChild("gr").getText());
-                double group_g = Double.parseDouble(conn.getChild("gg").getText());
-                double group_b = Double.parseDouble(conn.getChild("gb").getText());
-                double font_r = Double.parseDouble(conn.getChild("fr").getText());
-                double font_g = Double.parseDouble(conn.getChild("fg").getText());
-                double font_b = Double.parseDouble(conn.getChild("fb").getText());
-
-                Grouping group = new Grouping(uid, name, Color.color(group_r, group_g, group_b), Color.color(font_r, font_g, font_b));
-                matrix.addGrouping(group);
-                matrixGroupings.put(uid, group);
-            }
 
 
             ArrayList<Integer> uids = new ArrayList<>();  // keep track of the uids when reading rows and columns to ensure no duplicates
@@ -145,8 +128,8 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
                 String name = col.getChild("name").getText();
                 double sortIndex = Double.parseDouble(col.getChild("sort_index").getText());
 
-                Integer groupUid = Integer.parseInt(col.getChild("group").getText());
-                Grouping group = matrixGroupings.get(groupUid);
+                Integer groupUid = Integer.parseInt(col.getChild("group1").getText());
+                Grouping group = colGroupings.stream().filter(g -> g.getUid().equals(groupUid)).findFirst().orElse(null);
 
                 DSMItem item = new DSMItem(uid, null, sortIndex, name, group, null);
                 matrix.addItem(item, false);
@@ -162,8 +145,8 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
                 String name = row.getChild("name").getText();
                 double sortIndex = Double.parseDouble(row.getChild("sort_index").getText());
 
-                Integer groupUid = Integer.parseInt(row.getChild("group").getText());
-                Grouping group = matrixGroupings.get(groupUid);
+                Integer groupUid = Integer.parseInt(row.getChild("group1").getText());
+                Grouping group = rowGroupings.stream().filter(g -> g.getUid().equals(groupUid)).findFirst().orElse(null);
 
                 DSMItem item = new DSMItem(uid, null, sortIndex, name, group, null);
                 matrix.addItem(item, true);
@@ -196,7 +179,7 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
         } catch(Exception e) {
             // TODO: add alert box that says the file was corrupted in some way and could not be read in
             System.out.println("Error reading file");
-            System.out.println(e);
+            System.out.println(e.getMessage());
             e.printStackTrace();
             return null;
         }
@@ -223,8 +206,8 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
             Element rowsElement = new Element("rows");
             Element colsElement = new Element("columns");
             Element connectionsElement = new Element("connections");
-            Element defaultGroupingElement = new Element("default_grouping");
-            Element groupingsElement = new Element("groupings");
+            Element rowGroupingsElement = new Element("row_groupings");
+            Element colGroupingsElement = new Element("col_groupings");
 
             // update metadata
             infoElement.addContent(new Element("title").setText(matrix.getTitle()));
@@ -235,64 +218,34 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
 
             // create column elements
             for(DSMItem col : matrix.getCols()) {
-                Element colElement = new Element("col");
-                colElement.setAttribute(new Attribute("uid", Integer.valueOf(col.getUid()).toString()));
-                colElement.addContent(new Element("name").setText(col.getName().getValue()));
-                colElement.addContent(new Element("sort_index").setText(Double.valueOf(col.getSortIndex()).toString()));
-                colElement.addContent(new Element("group").setText(col.getGroup1().getUid().toString()));
-
-                colsElement.addContent(colElement);
+                colsElement.addContent(col.getXML(new Element("col")));
             }
 
             // create row elements
             for(DSMItem row : matrix.getRows()) {
-                Element rowElement = new Element("row");
-                rowElement.setAttribute(new Attribute("uid", Integer.valueOf(row.getUid()).toString()));
-                rowElement.addContent(new Element("name").setText(row.getName().getValue()));
-                rowElement.addContent(new Element("sort_index").setText(Double.valueOf(row.getSortIndex()).toString()));
-                rowElement.addContent(new Element("group").setText(row.getGroup1().getUid().toString()));
-                rowsElement.addContent(rowElement);
+                rowsElement.addContent(row.getXML(new Element("row")));
             }
 
             // create connection elements
             for(DSMConnection connection : matrix.getConnections()) {
-                Element connElement = new Element("connection");
-                connElement.addContent(new Element("row_uid").setText(Integer.valueOf(connection.getRowUid()).toString()));
-                connElement.addContent(new Element("col_uid").setText(Integer.valueOf(connection.getColUid()).toString()));
-                connElement.addContent(new Element("name").setText(connection.getConnectionName()));
-                connElement.addContent(new Element("weight").setText(Double.valueOf(connection.getWeight()).toString()));
-                connectionsElement.addContent(connElement);
+                connectionsElement.addContent(connection.getXML(new Element("connection")));
             }
 
             // create groupings elements
-            for(Grouping group: matrix.getGroupings()) {
-                Element groupElement = new Element("group");
-                groupElement.addContent(new Element("uid").setText(group.getUid().toString()));
-                groupElement.addContent(new Element("name").setText(group.getName()));
-                groupElement.addContent(new Element("gr").setText(Double.valueOf(group.getColor().getRed()).toString()));
-                groupElement.addContent(new Element("gg").setText(Double.valueOf(group.getColor().getGreen()).toString()));
-                groupElement.addContent(new Element("gb").setText(Double.valueOf(group.getColor().getBlue()).toString()));
-                groupElement.addContent(new Element("fr").setText(Double.valueOf(group.getFontColor().getRed()).toString()));
-                groupElement.addContent(new Element("fg").setText(Double.valueOf(group.getFontColor().getGreen()).toString()));
-                groupElement.addContent(new Element("fb").setText(Double.valueOf(group.getFontColor().getBlue()).toString()));
 
-                groupingsElement.addContent(groupElement);
+            for(Grouping group: matrix.getGroupings(true)) {
+                rowGroupingsElement.addContent(group.getXML(new Element("group")));
             }
-            // don't write uid for default grouping element because it is always the same
-            defaultGroupingElement.addContent(new Element("name").setText(matrix.getDefaultGrouping().getName()));
-            defaultGroupingElement.addContent(new Element("gr").setText(Double.valueOf(matrix.getDefaultGrouping().getColor().getRed()).toString()));
-            defaultGroupingElement.addContent(new Element("gg").setText(Double.valueOf(matrix.getDefaultGrouping().getColor().getGreen()).toString()));
-            defaultGroupingElement.addContent(new Element("gb").setText(Double.valueOf(matrix.getDefaultGrouping().getColor().getBlue()).toString()));
-            defaultGroupingElement.addContent(new Element("fr").setText(Double.valueOf(matrix.getDefaultGrouping().getFontColor().getRed()).toString()));
-            defaultGroupingElement.addContent(new Element("fg").setText(Double.valueOf(matrix.getDefaultGrouping().getFontColor().getGreen()).toString()));
-            defaultGroupingElement.addContent(new Element("fb").setText(Double.valueOf(matrix.getDefaultGrouping().getFontColor().getBlue()).toString()));
+            for(Grouping group: matrix.getGroupings(false)) {
+                colGroupingsElement.addContent(group.getXML(new Element("group")));
+            }
 
             doc.getRootElement().addContent(infoElement);
             doc.getRootElement().addContent(colsElement);
             doc.getRootElement().addContent(rowsElement);
             doc.getRootElement().addContent(connectionsElement);
-            doc.getRootElement().addContent(defaultGroupingElement);
-            doc.getRootElement().addContent(groupingsElement);
+            doc.getRootElement().addContent(rowGroupingsElement);
+            doc.getRootElement().addContent(colGroupingsElement);
 
             XMLOutputter xmlOutput = new XMLOutputter();
             xmlOutput.setFormat(Format.getPrettyFormat());  // TODO: change this to getCompactFormat() for release
@@ -303,7 +256,7 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
 
             return 1;  // file was successfully saved
         } catch(Exception e) {  // TODO: add better error handling and bring up an alert box
-            System.out.println(e);
+            System.out.println(e.getMessage());
             e.printStackTrace();
             return 0;  // 0 means there was an error somewhere
         }
@@ -359,7 +312,7 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
 
             return 1;
         } catch(Exception e) {  // TODO: add better error handling and bring up an alert box
-            System.out.println(e);
+            System.out.println(e.getMessage());
             e.printStackTrace();
             return 0;  // 0 means there was an error somewhere
         }
@@ -509,7 +462,7 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
 
             return 1;
         } catch(Exception e) {  // TODO: add better error handling and bring up an alert box
-            System.out.println(e);
+            System.out.println(e.getMessage());
             e.printStackTrace();
             return 0;  // 0 means there was an error somewhere
         }

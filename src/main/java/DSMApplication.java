@@ -1,3 +1,4 @@
+import Matrices.AsymmetricDSM;
 import Matrices.IDSM;
 import Matrices.MatricesCollection;
 import Matrices.MultiDomainDSM;
@@ -69,9 +70,9 @@ public class DSMApplication extends Application {
 //                        new AsymmetricSideBar(matrix, editor)
 //                );
 //            }
-            File f = new File("/home/aiden/Documents/DSMEditor/test6.dsm");
+            File f = new File("/home/aiden/Documents/DSMEditor/asymmetric.dsm");
             if(f.exists()) {
-                editor.addTab(new MultiDomainDSM(f, editor.getHeaderMenu()));
+                editor.addTab(new AsymmetricDSM(f));
             }
         }
 

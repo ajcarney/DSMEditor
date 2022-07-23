@@ -195,7 +195,7 @@ public class MultiDomainEditorTab implements IEditorTab {
      * @param toGroup    the domain for the column items
      */
     public void addBreakOutView(Grouping fromGroup, Grouping toGroup) {
-        AbstractGroupedDSMData data = this.matrixData.exportZoom(fromGroup, toGroup);
+        AbstractDSMData data = this.matrixData.exportZoom(fromGroup, toGroup);
         IMatrixView view;
         AbstractSideBar sideBar;
         AbstractIOHandler ioHandler;

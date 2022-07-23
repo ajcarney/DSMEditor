@@ -658,9 +658,7 @@ public class AsymmetricSideBar extends AbstractSideBar {
         spacer.setMaxWidth(Double.MAX_VALUE);
 
         Button cancelButton = new Button("Cancel");
-        cancelButton.setOnAction(ee -> {
-            window.close();
-        });
+        cancelButton.setOnAction(ee -> window.close());
         closeArea.getChildren().addAll(cancelButton, spacer, applyAllButton);
 
 
@@ -679,6 +677,74 @@ public class AsymmetricSideBar extends AbstractSideBar {
 
 
     /**
+     * Configures a row in the edit grouping window. Does not add the row to its parent, but does not return it
+     *
+     * @param matrix     the matrix that will be updated when data about the grouping changes
+     * @param grouping   the grouping object from the matrix that this row is representing
+     * @param isRow      if the grouping is a row grouping or a column grouping
+     * @param parent     the parent display object that will hold the row (used so that if deleted it is removed from parent)
+     * @param deletable  if the grouping can be deleted
+     *
+     * @return           the HBox that contains the row with all the widgets configured
+     */
+    private static HBox configureGroupingEditorRow(AsymmetricDSMData matrix, Grouping grouping, boolean isRow, VBox parent, boolean deletable) {
+        HBox display = new HBox();
+        display.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(display, Priority.ALWAYS);
+
+        TextField groupingName = new TextField();     // use a text field to display the name so that it can be renamed easily
+        groupingName.setText(grouping.getName());
+        groupingName.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
+            if (!newPropertyValue) {  // TextField changed to be not focused so update the new name in the matrix
+                if(!groupingName.getText().equals(grouping.getName())) {  // name changed
+                    matrix.renameGrouping(grouping, groupingName.getText());
+                }
+            }
+        });
+
+        Label groupingColorPickerLabel = new Label("Grouping Color: ");
+        groupingColorPickerLabel.setPadding(new Insets(10, 10, 10, 10));
+        groupingColorPickerLabel.setAlignment(Pos.TOP_RIGHT);
+        ColorPicker groupingColorPicker = new ColorPicker(grouping.getColor());
+        groupingColorPicker.setOnAction(e -> {
+            Color newColor = Color.color(groupingColorPicker.getValue().getRed(), groupingColorPicker.getValue().getGreen(), groupingColorPicker.getValue().getBlue());
+            if(!newColor.equals(grouping.getColor())) {
+                matrix.updateGroupingColor(grouping, newColor);
+            }
+        });
+
+        Label fontColorPickerLabel = new Label("Font Color: ");
+        fontColorPickerLabel.setPadding(new Insets(10, 10, 10, 30));
+        fontColorPickerLabel.setAlignment(Pos.TOP_RIGHT);
+        ColorPicker groupingFontColorPicker = new ColorPicker(grouping.getFontColor());
+        groupingFontColorPicker.setOnAction(e -> {
+            Color newColor = Color.color(groupingFontColorPicker.getValue().getRed(), groupingFontColorPicker.getValue().getGreen(), groupingFontColorPicker.getValue().getBlue());
+            if(!newColor.equals(grouping.getFontColor())) {
+                matrix.updateGroupingFontColor(grouping, newColor);
+            }
+        });
+
+        HBox deleteButtonSpace = new HBox();
+        deleteButtonSpace.setPadding(new Insets(0, 0, 0, 50));
+        Button deleteButton = new Button("Delete Grouping");  // wrap in HBox to add padding (doesn't work right otherwise)
+        deleteButton.setStyle("-fx-background-insets: 0 0 -1 0, 0, 1, 2;");  // this is a weird hack to stop button from resizing all weird when it is focused or hovered
+        deleteButton.setOnAction(e -> {
+            int code = matrix.removeGrouping(isRow, grouping);       // delete the grouping from the matrix
+            if(code == 0) {
+                parent.getChildren().remove(display);  // delete the display item
+            }  // TODO: bring up message box saying it could not be deleted
+        });
+        if(deletable) {
+            deleteButtonSpace.getChildren().add(deleteButton);
+        }
+
+        display.getChildren().addAll(groupingName, Misc.getHorizontalSpacer(), groupingColorPickerLabel, groupingColorPicker, fontColorPickerLabel, groupingFontColorPicker, deleteButtonSpace);
+
+        return display;
+    }
+
+
+    /**
      * Sets up the button for modifying groupings in the matrix
      */
     private void configureGroupingsCallback() {
@@ -688,34 +754,59 @@ public class AsymmetricSideBar extends AbstractSideBar {
         window.setTitle("Configure Groupings");
 
         VBox allGroupings = new VBox();
-        VBox mainGroupingsView = new VBox();
+
         ScrollPane currentGroupingsPane = new ScrollPane(allGroupings);
         currentGroupingsPane.setFitToWidth(true);
 
-        for(Grouping grouping : matrix.getGroupings()) {
-            HBox groupRow = configureGroupingEditorRow(matrix, grouping, mainGroupingsView, true);
-            mainGroupingsView.getChildren().add(groupRow);
+        Label rowGroupingLabel = new Label("Row Groups:");
+        rowGroupingLabel.setPadding(new Insets(15));
+        VBox rowGroupingsView = new VBox();
+        rowGroupingsView.setMaxWidth(Double.MAX_VALUE);
+        rowGroupingsView.setSpacing(10);
+        for(Grouping grouping : matrix.getGroupings(true)) {
+            boolean deletable = !grouping.getUid().equals(AsymmetricDSMData.DEFAULT_GROUP_UID);
+            HBox groupRow = configureGroupingEditorRow(matrix, grouping, true, rowGroupingsView, deletable);
+            rowGroupingsView.getChildren().add(groupRow);
         }
-        HBox defaultGroupLabel = new HBox();
-        defaultGroupLabel.setPadding(new Insets(10));
-        defaultGroupLabel.getChildren().add(new Label("Default Grouping:"));
 
-        HBox defaultGroupRow = configureGroupingEditorRow(matrix, matrix.getDefaultGrouping(), mainGroupingsView, false);
-        allGroupings.getChildren().addAll(mainGroupingsView, defaultGroupLabel, defaultGroupRow);
-
-        // area to add, delete, rename
-        HBox modifyArea = new HBox();
-        modifyArea.setAlignment(Pos.CENTER);
-
-        Button addButton = new Button("Add New Grouping");
-        addButton.setOnAction(e -> {
+        Button addRowButton = new Button("Add New Row Grouping");
+        addRowButton.setAlignment(Pos.CENTER);
+        addRowButton.setPadding(new Insets(5));
+        addRowButton.setOnAction(e -> {
             Grouping newGrouping = new Grouping("New Grouping", Color.color(1, 1, 1));
-            HBox groupRow = configureGroupingEditorRow(matrix, newGrouping, mainGroupingsView, true);
-            matrix.addGrouping(newGrouping);
-            mainGroupingsView.getChildren().add(groupRow);
+            HBox groupRow = configureGroupingEditorRow(matrix, newGrouping, true, rowGroupingsView, true);
+            matrix.addGrouping(true, newGrouping);
+            rowGroupingsView.getChildren().add(groupRow);
         });
 
-        modifyArea.getChildren().add(addButton);
+
+        Label colGroupingLabel = new Label("Column Groups:");
+        colGroupingLabel.setPadding(new Insets(15));
+        VBox colGroupingsView = new VBox();
+        colGroupingsView.setMaxWidth(Double.MAX_VALUE);
+        colGroupingsView.setSpacing(10);
+        for(Grouping grouping : matrix.getGroupings(false)) {
+            boolean deletable = !grouping.getUid().equals(AsymmetricDSMData.DEFAULT_GROUP_UID);
+            HBox groupRow = configureGroupingEditorRow(matrix, grouping, false, colGroupingsView, deletable);
+            colGroupingsView.getChildren().add(groupRow);
+        }
+
+        Button addColButton = new Button("Add New Column Grouping");
+        addColButton.setAlignment(Pos.CENTER);
+        addColButton.setPadding(new Insets(5));
+        addColButton.setOnAction(e -> {
+            Grouping newGrouping = new Grouping("New Grouping", Color.color(1, 1, 1));
+            HBox groupRow = configureGroupingEditorRow(matrix, newGrouping, false, colGroupingsView, true);
+            matrix.addGrouping(false, newGrouping);
+            colGroupingsView.getChildren().add(groupRow);
+        });
+
+
+        allGroupings.getChildren().addAll(rowGroupingLabel, rowGroupingsView, addRowButton, new Separator(), colGroupingLabel, colGroupingsView, addColButton);
+        allGroupings.setPadding(new Insets(10));
+        allGroupings.setSpacing(10);
+        allGroupings.setMaxWidth(Double.MAX_VALUE);
+        allGroupings.setAlignment(Pos.CENTER);
 
         // create HBox for user to close with changes
         HBox closeArea = new HBox();
@@ -728,14 +819,14 @@ public class AsymmetricSideBar extends AbstractSideBar {
         closeArea.getChildren().addAll(Misc.getHorizontalSpacer(), applyAllButton);
 
         VBox layout = new VBox(10);
-        layout.getChildren().addAll(currentGroupingsPane, modifyArea, Misc.getVerticalSpacer(), closeArea);
+        layout.getChildren().addAll(currentGroupingsPane, Misc.getVerticalSpacer(), closeArea);
         layout.setAlignment(Pos.CENTER);
         layout.setPadding(new Insets(10, 10, 10, 10));
         layout.setSpacing(10);
 
 
         //Display window and wait for it to be closed before returning
-        Scene scene = new Scene(layout, 900, 300);
+        Scene scene = new Scene(layout, 1100, 450);
         window.setScene(scene);
         scene.getWindow().setOnHidden(e -> {  // TODO: 6/17/2020 changed from setOnCloseRequest when it was working before and idk why this fixed it
             window.close();                        // changes have already been made so just close and refresh the screen
