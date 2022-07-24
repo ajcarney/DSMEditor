@@ -70,9 +70,9 @@ public class DSMApplication extends Application {
 //                        new AsymmetricSideBar(matrix, editor)
 //                );
 //            }
-            File f = new File("/home/aiden/Documents/DSMEditor/asymmetric.dsm");
+            File f = new File("/home/aiden/Documents/DSMEditor/test6.dsm");
             if(f.exists()) {
-                editor.addTab(new AsymmetricDSM(f));
+                editor.addTab(new MultiDomainDSM(f, editor.getHeaderMenu()));
             }
         }
 

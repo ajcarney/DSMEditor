@@ -28,29 +28,6 @@ public class AsymmetricDSMData extends AbstractDSMData implements IPropagationAn
     private ObservableList<Grouping> colGroupings;
 
 
-    /**
-     * @param isRow  if getting the default group for the rows or columns
-     * @return       the default grouping object for either a row or a column
-     */
-    private Grouping getDefaultGroup(boolean isRow) {
-        if(isRow) {
-            for (Grouping domainGrouping : rowGroupings) {
-                if (domainGrouping.getUid().equals(DEFAULT_GROUP_UID)) {
-                    return domainGrouping;
-                }
-            }
-        } else {
-            for (Grouping domainGrouping : colGroupings) {
-                if (domainGrouping.getUid().equals(DEFAULT_GROUP_UID)) {
-                    return domainGrouping;
-                }
-            }
-        }
-        return null;
-    }
-
-
-
 //region Constructors
     /**
      * Creates a new AsymmetricDSMData object. Creates no row or column items and metadata are empty strings.
@@ -134,6 +111,28 @@ public class AsymmetricDSMData extends AbstractDSMData implements IPropagationAn
 
 
 //region Grouping functions
+    /**
+     * @param isRow  if getting the default group for the rows or columns
+     * @return       the default grouping object for either a row or a column
+     */
+    private Grouping getDefaultGroup(boolean isRow) {
+        if(isRow) {
+            for (Grouping grouping : rowGroupings) {
+                if (grouping.getUid().equals(DEFAULT_GROUP_UID)) {
+                    return grouping;
+                }
+            }
+        } else {
+            for (Grouping grouping : colGroupings) {
+                if (grouping.getUid().equals(DEFAULT_GROUP_UID)) {
+                    return grouping;
+                }
+            }
+        }
+        return null;
+    }
+
+
     /**
      * Adds a new grouping to the matrix for either the rows or columns. Puts the change on the stack but does not set
      * a checkpoint
@@ -249,7 +248,7 @@ public class AsymmetricDSMData extends AbstractDSMData implements IPropagationAn
 
 
     /**
-     * @return  ObservableSet of the matrix domains. Sorts the groupings by alphabetical order with default at the end
+     * @return  ObservableList of the matrix groupings. Sorts the groupings by alphabetical order with default at the start
      */
     public ObservableList<Grouping> getGroupings(boolean isRow) {
         Comparator<Grouping> groupingComparator = (o1, o2) -> {
@@ -270,8 +269,7 @@ public class AsymmetricDSMData extends AbstractDSMData implements IPropagationAn
 
 
     /**
-     * Renames a grouping. Puts the change on the stack but does not set a checkpoint. This method can be used
-     * for either domains or domain-groupings
+     * Renames a grouping. Puts the change on the stack but does not set a checkpoint.
      *
      * @param grouping  the group who's name should be changed
      * @param newName   the new name for the group
@@ -293,7 +291,6 @@ public class AsymmetricDSMData extends AbstractDSMData implements IPropagationAn
 
     /**
      * Changes a color of a grouping. Puts the change on the stack but does not set a checkpoint.
-     * This method can be used for either domains or domain-groupings
      *
      * @param grouping  the group who's name should be changed
      * @param newColor  the new color of the grouping
@@ -313,8 +310,7 @@ public class AsymmetricDSMData extends AbstractDSMData implements IPropagationAn
 
 
     /**
-     * Changes a color of a grouping. Puts the change on the stack but does not set a checkpoint. This method
-     * can be used for either domains or domain-groupings
+     * Changes a color of a grouping. Puts the change on the stack but does not set a checkpoint.
      *
      * @param grouping  the grouping who's font color should be changed
      * @param newColor  the new color of the grouping
@@ -334,7 +330,7 @@ public class AsymmetricDSMData extends AbstractDSMData implements IPropagationAn
 
 
     /**
-     * Sets the domain group of an item in the matrix symmetrically. This method should be called instead of directly modifying the item
+     * Sets the group of an item in the matrix symmetrically. This method should be called instead of directly modifying the item
      * because this method puts the change on the stack but does not set a checkpoint.
      *
      * @param item     the item to change the name of
@@ -371,8 +367,12 @@ public class AsymmetricDSMData extends AbstractDSMData implements IPropagationAn
      */
     @Override
     public void createItem(String name, boolean isRow) {
-        double index = (int)getRowMaxSortIndex() + 1;  // cast to int to remove the decimal place so that the index will be a whole number
-
+        double index;
+        if(isRow) {
+            index = (int) getRowMaxSortIndex() + 1;  // cast to int to remove the decimal place so that the index will be a whole number
+        } else {
+            index = (int) getColMaxSortIndex() + 1;  // cast to int to remove the decimal place so that the index will be a whole number
+        }
         DSMItem item = new DSMItem(index, name);
         item.setGroup1(getDefaultGroup(isRow));
         item.setAliasUid(null);

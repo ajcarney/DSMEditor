@@ -15,7 +15,6 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.WorkbookUtil;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.jdom2.Attribute;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.input.SAXBuilder;
@@ -78,8 +77,6 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
     @Override
     public SymmetricDSMData readFile() {
         try {
-            SymmetricDSMData matrix = new SymmetricDSMData();
-
             SAXBuilder saxBuilder = new SAXBuilder();
             Document document = saxBuilder.build(savePath);  // read file into memory
             Element rootElement = document.getRootElement();
@@ -95,28 +92,19 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
                 return null;
             }
 
+            // parse groupings
+            HashMap<Integer, Grouping> matrixGroupings = new HashMap<>();
+            List<Element> groupings = rootElement.getChild("groupings").getChildren();
+            for(Element groupingXML : groupings) {
+                Grouping group = new Grouping(groupingXML);
+                matrixGroupings.put(group.getUid(), group);
+            }
+
+            SymmetricDSMData matrix = new SymmetricDSMData(matrixGroupings.values());
             matrix.setTitle(title);
             matrix.setProjectName(project);
             matrix.setCustomer(customer);
             matrix.setVersionNumber(version);
-
-            // parse groupings
-            HashMap<Integer, Grouping> matrixGroupings = new HashMap<>();
-
-            // parse default grouping and update it in the matrix
-            Grouping defaultGroup = new Grouping(rootElement.getChild("default_grouping"));
-            matrix.getDefaultGrouping().setName(defaultGroup.getName());
-            matrix.getDefaultGrouping().setColor(defaultGroup.getColor());
-            matrix.getDefaultGrouping().setFontColor(defaultGroup.getFontColor());
-            matrixGroupings.put(Integer.MAX_VALUE, matrix.getDefaultGrouping());
-
-            // parse user defined groupings
-            List<Element> groupings = rootElement.getChild("groupings").getChildren();
-            for(Element groupingXML : groupings) {
-                Grouping group = new Grouping(groupingXML);
-                matrix.addGrouping(group);
-                matrixGroupings.put(group.getUid(), group);
-            }
 
 
             ArrayList<Integer> uids = new ArrayList<>();  // keep track of the uids when reading rows and columns to ensure no duplicates
@@ -233,8 +221,8 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
                 int loc = Integer.parseInt(line.split(Pattern.quote("DSMLABEL{"))[1].split(Pattern.quote(","))[0]);
                 String name = line.split(Pattern.quote("'"))[1];
                 double sortIndex = (uid / 2) + 1;  // this will make the sort indices appear like they are normally distributed
-                DSMItem rowItem = new DSMItem(uid, uid + 1, sortIndex, name, matrix.getDefaultGrouping(), null);
-                DSMItem colItem = new DSMItem(uid + 1, uid, sortIndex, name, matrix.getDefaultGrouping(), null);
+                DSMItem rowItem = new DSMItem(uid, uid + 1, sortIndex, name, matrix.getDefaultGroup(), null);
+                DSMItem colItem = new DSMItem(uid + 1, uid, sortIndex, name, matrix.getDefaultGroup(), null);
                 uid += 2;  // add two because of column item
 
                 matrix.addItem(rowItem, true);
@@ -310,7 +298,6 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
             doc.getRootElement().addContent(colsElement);
             doc.getRootElement().addContent(rowsElement);
             doc.getRootElement().addContent(connectionsElement);
-            doc.getRootElement().addContent(matrix.getDefaultGrouping().getXML(new Element("default_grouping")));
             doc.getRootElement().addContent(groupingsElement);
 
             XMLOutputter xmlOutput = new XMLOutputter();

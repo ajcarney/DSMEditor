@@ -206,6 +206,7 @@ public class MultiDomainEditorTab implements IEditorTab {
             ioHandler = new SymmetricIOHandler(new File(""), symmetricData);
         } else if(data instanceof AsymmetricDSMData asymmetricData) {
             view = new AsymmetricView(asymmetricData, 12.0);
+            view.refreshView();
             sideBar = new AsymmetricSideBar(asymmetricData, (AsymmetricView) view);
             ioHandler = new AsymmetricIOHandler(new File(""), asymmetricData);
         } else {
