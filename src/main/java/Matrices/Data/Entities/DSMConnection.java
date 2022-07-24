@@ -1,5 +1,7 @@
 package Matrices.Data.Entities;
 
+import org.jdom2.Element;
+
 /**
  * Data class to manage DSM connections
  *
@@ -97,6 +99,22 @@ public class DSMConnection {
      */
     public void setWeight(double weight) {
         this.weight = weight;
+    }
+
+
+    /**
+     * Adds the xml representation of a connection to an XML Element object
+     *
+     * @param connElement  the root to add the connection data to
+     * @return             an xml representation of the connection object so that it can be saved to a file
+     */
+    public Element getXML(Element connElement) {
+        connElement.addContent(new Element("row_uid").setText(Integer.valueOf(getRowUid()).toString()));
+        connElement.addContent(new Element("col_uid").setText(Integer.valueOf(getColUid()).toString()));
+        connElement.addContent(new Element("name").setText(getConnectionName()));
+        connElement.addContent(new Element("weight").setText(Double.valueOf(getWeight()).toString()));
+
+        return connElement;
     }
 
 

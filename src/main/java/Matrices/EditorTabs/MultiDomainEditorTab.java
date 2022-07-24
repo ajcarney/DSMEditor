@@ -87,15 +87,20 @@ public class MultiDomainEditorTab implements IEditorTab {
             this.headerMenu.refresh(this.matrixData, this.ioHandler, this.matrixView);
 
             // don't allow editing if breakout views are open
+            MultiDomainSideBar sideBar = new MultiDomainSideBar(this.matrixData, this.matrixView);
             if(tabsData.keySet().size() > 1) {
                 this.matrixView.setCurrentMode(IMatrixView.MatrixViewMode.STATIC);
+                sideBar.setDisabled();
+                headerMenu.setEditDisabled(true);
             } else {
                 this.matrixView.setCurrentMode(IMatrixView.MatrixViewMode.EDIT);
+                sideBar.setEnabled();
+                headerMenu.setEditDisabled(false);
             }
             this.matrixView.refreshView();
 
             leftLayout.getChildren().clear();
-            leftLayout.getChildren().add(new MultiDomainSideBar(this.matrixData, this.matrixView).getLayout());
+            leftLayout.getChildren().add(sideBar.getLayout());
 
             MatrixMetaDataPane metadata = new MatrixMetaDataPane(this.matrixData);
             rightLayout.getChildren().clear();
@@ -195,7 +200,7 @@ public class MultiDomainEditorTab implements IEditorTab {
      * @param toGroup    the domain for the column items
      */
     public void addBreakOutView(Grouping fromGroup, Grouping toGroup) {
-        AbstractGroupedDSMData data = this.matrixData.exportZoom(fromGroup, toGroup);
+        AbstractDSMData data = this.matrixData.exportZoom(fromGroup, toGroup);
         IMatrixView view;
         AbstractSideBar sideBar;
         AbstractIOHandler ioHandler;
@@ -206,6 +211,7 @@ public class MultiDomainEditorTab implements IEditorTab {
             ioHandler = new SymmetricIOHandler(new File(""), symmetricData);
         } else if(data instanceof AsymmetricDSMData asymmetricData) {
             view = new AsymmetricView(asymmetricData, 12.0);
+            view.refreshView();
             sideBar = new AsymmetricSideBar(asymmetricData, (AsymmetricView) view);
             ioHandler = new AsymmetricIOHandler(new File(""), asymmetricData);
         } else {
@@ -221,11 +227,13 @@ public class MultiDomainEditorTab implements IEditorTab {
            // TODO: ask if user wants to apply changes
             this.tabsData.remove(tab);
             this.tabPane.getTabs().remove(tab);
+            headerMenu.setEditDisabled(false);
         });
 
 
         tab.setOnSelectionChanged(e -> {
             headerMenu.refresh(data, ioHandler, view);
+            headerMenu.setEditDisabled(false);
 
             leftLayout.getChildren().clear();
             leftLayout.getChildren().add(sideBar.getLayout());
@@ -249,6 +257,8 @@ public class MultiDomainEditorTab implements IEditorTab {
 
         tabPane.getTabs().add(tab);
         tabsData.put(tab, new Pair<>(data, view));
+
+        tabPane.getSelectionModel().select(tab);  // focus the tab right away
     }
 
 

@@ -102,32 +102,14 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
 
             // parse user defined groupings
             List<Element> domains = rootElement.getChild("domains").getChildren();
-            for(Element domain : domains) {
-                Integer uid = Integer.parseInt(domain.getChild("uid").getText());
-                String name = domain.getChild("name").getText();
-                double group_r = Double.parseDouble(domain.getChild("gr").getText());
-                double group_g = Double.parseDouble(domain.getChild("gg").getText());
-                double group_b = Double.parseDouble(domain.getChild("gb").getText());
-                double font_r = Double.parseDouble(domain.getChild("fr").getText());
-                double font_g = Double.parseDouble(domain.getChild("fg").getText());
-                double font_b = Double.parseDouble(domain.getChild("fb").getText());
-
-                Grouping matrixDomain = new Grouping(uid, name, Color.color(group_r, group_g, group_b), Color.color(font_r, font_g, font_b));
-                matrixDomains.put(uid, matrixDomain);
+            for(Element domainXML : domains) {
+                Grouping matrixDomain = new Grouping(domainXML);
+                matrixDomains.put(matrixDomain.getUid(), matrixDomain);
                 groupingConfiguration.put(matrixDomain, new ArrayList<>());
 
-                List<Element> domainGroupings = domain.getChild("domainGroupings").getChildren();
-                for(Element group : domainGroupings) {
-                    uid = Integer.parseInt(group.getChild("uid").getText());
-                    name = group.getChild("name").getText();
-                    group_r = Double.parseDouble(group.getChild("gr").getText());
-                    group_g = Double.parseDouble(group.getChild("gg").getText());
-                    group_b = Double.parseDouble(group.getChild("gb").getText());
-                    font_r = Double.parseDouble(group.getChild("fr").getText());
-                    font_g = Double.parseDouble(group.getChild("fg").getText());
-                    font_b = Double.parseDouble(group.getChild("fb").getText());
-
-                    Grouping matrixGroup = new Grouping(uid, name, Color.color(group_r, group_g, group_b), Color.color(font_r, font_g, font_b));
+                List<Element> domainGroupings = domainXML.getChild("domainGroupings").getChildren();
+                for(Element groupXML : domainGroupings) {
+                    Grouping matrixGroup = new Grouping(groupXML);
                     groupingConfiguration.get(matrixDomain).add(matrixGroup);
                 }
             }
@@ -206,7 +188,7 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
         } catch(Exception e) {
             // TODO: add alert box that says the file was corrupted in some way and could not be read in
             System.out.println("Error reading file");
-            System.out.println(e);
+            System.out.println(e.getMessage());
             e.printStackTrace();
             return null;
         }
@@ -246,65 +228,26 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
 
             // create column elements
             for(DSMItem col : matrix.getCols()) {
-                Element colElement = new Element("col");
-                colElement.setAttribute(new Attribute("uid", Integer.valueOf(col.getUid()).toString()));
-                colElement.addContent(new Element("name").setText(col.getName().getValue()));
-                colElement.addContent(new Element("sort_index").setText(Double.valueOf(col.getSortIndex()).toString()));
-                if(col.getAliasUid() != null) {
-                    colElement.addContent(new Element("alias").setText(col.getAliasUid().toString()));
-                }
-                colElement.addContent(new Element("group1").setText(col.getGroup1().getUid().toString()));
-                colElement.addContent(new Element("group2").setText(col.getGroup2().getUid().toString()));
-                colsElement.addContent(colElement);
+                colsElement.addContent(col.getXML(new Element("col")));
             }
 
             // create row elements
             for(DSMItem row : matrix.getRows()) {
-                Element rowElement = new Element("row");
-                rowElement.setAttribute(new Attribute("uid", Integer.valueOf(row.getUid()).toString()));
-                rowElement.addContent(new Element("name").setText(row.getName().getValue()));
-                rowElement.addContent(new Element("sort_index").setText(Double.valueOf(row.getSortIndex()).toString()));
-                rowElement.addContent(new Element("group1").setText(row.getGroup1().getUid().toString()));
-                rowElement.addContent(new Element("group2").setText(row.getGroup2().getUid().toString()));
-                rowElement.addContent(new Element("alias").setText(row.getAliasUid().toString()));
-                rowsElement.addContent(rowElement);
+                rowsElement.addContent(row.getXML(new Element("row")));
             }
 
             // create connection elements
             for(DSMConnection connection : matrix.getConnections()) {
-                Element connElement = new Element("connection");
-                connElement.addContent(new Element("row_uid").setText(Integer.valueOf(connection.getRowUid()).toString()));
-                connElement.addContent(new Element("col_uid").setText(Integer.valueOf(connection.getColUid()).toString()));
-                connElement.addContent(new Element("name").setText(connection.getConnectionName()));
-                connElement.addContent(new Element("weight").setText(Double.valueOf(connection.getWeight()).toString()));
-                connectionsElement.addContent(connElement);
+                connectionsElement.addContent(connection.getXML(new Element("connection")));
             }
 
             // create domain and domain-grouping elements
             for(Grouping domain: matrix.getDomains()) {
-                Element domainElement = new Element("domain");
-                domainElement.addContent(new Element("uid").setText(domain.getUid().toString()));
-                domainElement.addContent(new Element("name").setText(domain.getName()));
-                domainElement.addContent(new Element("gr").setText(Double.valueOf(domain.getColor().getRed()).toString()));
-                domainElement.addContent(new Element("gg").setText(Double.valueOf(domain.getColor().getGreen()).toString()));
-                domainElement.addContent(new Element("gb").setText(Double.valueOf(domain.getColor().getBlue()).toString()));
-                domainElement.addContent(new Element("fr").setText(Double.valueOf(domain.getFontColor().getRed()).toString()));
-                domainElement.addContent(new Element("fg").setText(Double.valueOf(domain.getFontColor().getGreen()).toString()));
-                domainElement.addContent(new Element("fb").setText(Double.valueOf(domain.getFontColor().getBlue()).toString()));
+                Element domainElement = domain.getXML(new Element("domain"));
 
                 Element domainGroupingsElement = new Element("domainGroupings");
                 for(Grouping domainGroup : matrix.getDomainGroupings(domain)) {
-                    Element groupElement = new Element("group");
-                    groupElement.addContent(new Element("uid").setText(domainGroup.getUid().toString()));
-                    groupElement.addContent(new Element("name").setText(domainGroup.getName()));
-                    groupElement.addContent(new Element("gr").setText(Double.valueOf(domainGroup.getColor().getRed()).toString()));
-                    groupElement.addContent(new Element("gg").setText(Double.valueOf(domainGroup.getColor().getGreen()).toString()));
-                    groupElement.addContent(new Element("gb").setText(Double.valueOf(domainGroup.getColor().getBlue()).toString()));
-                    groupElement.addContent(new Element("fr").setText(Double.valueOf(domainGroup.getFontColor().getRed()).toString()));
-                    groupElement.addContent(new Element("fg").setText(Double.valueOf(domainGroup.getFontColor().getGreen()).toString()));
-                    groupElement.addContent(new Element("fb").setText(Double.valueOf(domainGroup.getFontColor().getBlue()).toString()));
-
-                    domainGroupingsElement.addContent(groupElement);
+                    domainGroupingsElement.addContent(domainGroup.getXML(new Element("group")));
                 }
                 domainElement.addContent(domainGroupingsElement);
 
@@ -349,24 +292,23 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
             contents.append("Version,").append(matrix.getVersionNumber()).append("\n");
 
             ArrayList<ArrayList<Pair<RenderMode, Object>>> template = matrix.getGridArray();
-            int rows = template.size();
             int columns = template.get(0).size();
 
-            for(int r=0; r<rows; r++) {
+            for (ArrayList<Pair<RenderMode, Object>> pairs : template) {
                 for (int c = 0; c < columns; c++) {
-                    Pair<RenderMode, Object> item = template.get(r).get(c);
+                    Pair<RenderMode, Object> item = pairs.get(c);
 
-                    switch(item.getKey()) {
+                    switch (item.getKey()) {
                         case PLAIN_TEXT, PLAIN_TEXT_V -> contents.append(item.getValue()).append(",");
-                        case MULTI_SPAN_DOMAIN_TEXT -> contents.append(((Triplet<Grouping, Integer, Integer>)item.getValue()).getValue0().getName()).append(",");
+                        case MULTI_SPAN_DOMAIN_TEXT -> contents.append(((Triplet<Grouping, Integer, Integer>) item.getValue()).getValue0().getName()).append(",");
                         case ITEM_NAME, ITEM_NAME_V -> contents.append(((DSMItem) item.getValue()).getName().getValue()).append(",");
                         case GROUPING_ITEM, GROUPING_ITEM_V -> contents.append(((DSMItem) item.getValue()).getGroup1().getName()).append(",");
                         case INDEX_ITEM -> contents.append(((DSMItem) item.getValue()).getSortIndex()).append(",");
                         case UNEDITABLE_CONNECTION, MULTI_SPAN_NULL -> contents.append(",");
                         case EDITABLE_CONNECTION -> {
-                            int rowUid = ((Pair<DSMItem, DSMItem>)item.getValue()).getKey().getUid();
-                            int colUid = ((Pair<DSMItem, DSMItem>)item.getValue()).getValue().getUid();
-                            if(matrix.getConnection(rowUid, colUid) != null) {
+                            int rowUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getKey().getUid();
+                            int colUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getValue().getUid();
+                            if (matrix.getConnection(rowUid, colUid) != null) {
                                 contents.append(matrix.getConnection(rowUid, colUid).getConnectionName());
                             }
                             contents.append(",");
@@ -551,7 +493,7 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
 
             return 1;
         } catch(Exception e) {  // TODO: add better error handling and bring up an alert box
-            System.out.println(e);
+            System.out.println(e.getMessage());
             e.printStackTrace();
             return 0;  // 0 means there was an error somewhere
         }

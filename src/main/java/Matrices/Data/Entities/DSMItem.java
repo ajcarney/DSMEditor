@@ -2,6 +2,8 @@ package Matrices.Data.Entities;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import org.jdom2.Attribute;
+import org.jdom2.Element;
 
 /**
  * Data class to handle an item in a DSM. Each item has a uid, an alias uid to be used to associate rows
@@ -13,7 +15,7 @@ public class DSMItem {
     private final Integer uid;
     private Integer aliasUid;
     private StringProperty name;
-    private Double sortIndex;
+    private double sortIndex;
     private Grouping group1;  // how these 2 groupings are used is up to implementation of the DSM type
     private Grouping group2;
 
@@ -37,7 +39,7 @@ public class DSMItem {
      * @param index the starting index of the item
      * @param name  the starting name of the item
      */
-    public DSMItem(Double index, String name) {
+    public DSMItem(double index, String name) {
         this.uid = java.util.UUID.randomUUID().hashCode();
 
         this.name = new SimpleStringProperty(name);
@@ -57,7 +59,7 @@ public class DSMItem {
      * @param group1   the first group of the item
      * @param group2   the second group of the item
      */
-    public DSMItem(Integer uid, Integer aliasUid, Double index, String name, Grouping group1, Grouping group2) {
+    public DSMItem(Integer uid, Integer aliasUid, double index, String name, Grouping group1, Grouping group2) {
         this.uid = uid;
         this.aliasUid = aliasUid;
         this.name = new SimpleStringProperty(name);
@@ -110,6 +112,7 @@ public class DSMItem {
     public double getSortIndex() {
         return sortIndex;
     }
+
 
     /**
      * Getter function for the alias uid of the item
@@ -201,6 +204,39 @@ public class DSMItem {
         sortIndex = item.getSortIndex();
         group1 = item.getGroup1();
         group2 = item.getGroup2();
+    }
+
+
+    /**
+     * Adds the xml representation of a DSMItem to an XML Element object
+     *
+     * @param itemElement  the root to add the grouping data to
+     * @return             an xml representation of the DSMItem object so that it can be saved to a file
+     */
+    public Element getXML(Element itemElement) {
+        itemElement.setAttribute(new Attribute("uid", Integer.valueOf(getUid()).toString()));
+        itemElement.addContent(new Element("name").setText(getName().getValue()));
+        itemElement.addContent(new Element("sort_index").setText(Double.valueOf(getSortIndex()).toString()));
+
+        if(getGroup1() != null) {
+            itemElement.addContent(new Element("group1").setText(getGroup1().getUid().toString()));
+        } else {
+            itemElement.addContent(new Element("group1").setText(""));
+        }
+
+        if(getGroup2() != null) {
+            itemElement.addContent(new Element("group2").setText(getGroup2().getUid().toString()));
+        } else {
+            itemElement.addContent(new Element("group2").setText(""));
+        }
+
+        if(getAliasUid() != null) {
+            itemElement.addContent(new Element("alias").setText(getAliasUid().toString()));
+        } else {
+            itemElement.addContent(new Element("alias").setText(""));
+        }
+
+        return itemElement;
     }
 
 

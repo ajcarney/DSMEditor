@@ -1,6 +1,7 @@
 package Matrices.Data.Entities;
 
 import javafx.scene.paint.Color;
+import org.jdom2.Element;
 
 /**
  * Data class to handle grouping used in a DSM. Each grouping has a uid, a name, and a color associated with it. This
@@ -58,6 +59,27 @@ public class Grouping {
         this.name = name;
         this.color = color;
         this.fontColor = fontColor;
+    }
+
+
+    /**
+     * Creates a new group based on an xml representation
+     *
+     * @param xml  the xml element associated with the grouping
+     */
+    public Grouping(Element xml) {
+        this.uid = Integer.parseInt(xml.getChild("uid").getText());
+        this.name = xml.getChild("name").getText();
+
+        double groupR = Double.parseDouble(xml.getChild("gr").getText());
+        double groupG = Double.parseDouble(xml.getChild("gg").getText());
+        double groupB = Double.parseDouble(xml.getChild("gb").getText());
+        this.color = Color.color(groupR, groupG, groupB);
+
+        double fontR = Double.parseDouble(xml.getChild("fr").getText());
+        double fontG = Double.parseDouble(xml.getChild("fg").getText());
+        double fontB = Double.parseDouble(xml.getChild("fb").getText());
+        this.fontColor = Color.color(fontR, fontG, fontB);
     }
 
 
@@ -144,6 +166,25 @@ public class Grouping {
     }
 
 
+    /**
+     * Adds the xml representation of a Grouping to an XML Element object
+     *
+     * @param groupElement  the root to add the grouping data to
+     * @return              an xml representation of the Grouping object so that it can be saved to a file
+     */
+    public Element getXML(Element groupElement) {
+        groupElement.addContent(new Element("uid").setText(getUid().toString()));
+        groupElement.addContent(new Element("name").setText(getName()));
+        groupElement.addContent(new Element("gr").setText(Double.valueOf(getColor().getRed()).toString()));
+        groupElement.addContent(new Element("gg").setText(Double.valueOf(getColor().getGreen()).toString()));
+        groupElement.addContent(new Element("gb").setText(Double.valueOf(getColor().getBlue()).toString()));
+        groupElement.addContent(new Element("fr").setText(Double.valueOf(getFontColor().getRed()).toString()));
+        groupElement.addContent(new Element("fg").setText(Double.valueOf(getFontColor().getGreen()).toString()));
+        groupElement.addContent(new Element("fb").setText(Double.valueOf(getFontColor().getBlue()).toString()));
+
+        return groupElement;
+    }
+
 
     /**
      * The function for determining if two groupings are equal. Compare on uid
@@ -159,12 +200,10 @@ public class Grouping {
         }
 
         // Check if o is an instance of Grouping or not "null instanceof [type]" also returns false
-        if (!(o instanceof Grouping)) {
+        if (!(o instanceof Grouping g)) {
             return false;
         }
 
-        // cast to this object
-        Grouping g = (Grouping) o;
-        return g.getUid() == this.getUid();  // compare based on uid
+        return g.getUid().equals(this.getUid());  // compare based on uid
     }
 }

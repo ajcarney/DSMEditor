@@ -3,6 +3,7 @@ package Matrices.Data;
 import Matrices.Data.Entities.DSMConnection;
 import Matrices.Data.Entities.DSMItem;
 import Matrices.Data.Entities.Grouping;
+import javafx.scene.paint.Color;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -70,8 +71,179 @@ public class SymmetricDSMDataTest {
         Assertions.assertEquals("project", copy.getProjectName());
         Assertions.assertEquals("customer", copy.getCustomer());
         Assertions.assertEquals("version", copy.getVersionNumber());
-        Assertions.assertEquals("group", copy.getGroupings().stream().findAny().orElse(new Grouping("-", null)).getName());
+        Assertions.assertTrue(copy.getGroupings().stream().map(Grouping::getName).collect(Collectors.toCollection(ArrayList::new)).contains("group"));
 
+    }
+
+
+    /**
+     * Tests adding a new grouping. Test to ensure the undo-redo works
+     */
+    @Test
+    public void addGroupingTest() {
+        SymmetricDSMData matrix = new SymmetricDSMData();
+        Grouping group = new Grouping("group", null);
+
+        matrix.setCurrentStateAsCheckpoint();
+        matrix.addGrouping(group);
+
+        stressUndoRedo(matrix);
+
+        Assertions.assertTrue(matrix.getGroupings().contains(group));
+    }
+
+
+    /**
+     * Tests removing a grouping. Test to ensure the undo-redo works
+     */
+    @Test
+    public void removeGroupingTest() {
+        SymmetricDSMData matrix = new SymmetricDSMData();
+        Grouping group = new Grouping("group", null);
+        matrix.addGrouping(group);
+
+        matrix.setCurrentStateAsCheckpoint();
+        matrix.removeGrouping(group);
+
+        stressUndoRedo(matrix);
+
+        Assertions.assertFalse(matrix.getGroupings().contains(group));
+    }
+
+
+    /**
+     * Tests removing all groupings for a given matrix. Checks that items created with that grouping
+     * do not have that grouping anymore. Test to ensure the undo-redo works
+     */
+    @Test
+    public void clearGroupingsTest() {
+        SymmetricDSMData matrix = new SymmetricDSMData();
+        Grouping group1 = new Grouping("group1", null);
+        Grouping group2 = new Grouping("group2", null);
+        Grouping group3 = new Grouping("group3", null);
+        matrix.addGrouping(group1);
+        matrix.addGrouping(group2);
+        matrix.addGrouping(group3);
+
+        DSMItem rowItem = new DSMItem(1, 11, 1.0, "item1", group1, null);
+        DSMItem colItem = new DSMItem(11, 1, 1.0, "item1", group1, null);
+        matrix.addItem(rowItem, true);
+        matrix.addItem(colItem, false);
+
+        matrix.setCurrentStateAsCheckpoint();
+        matrix.clearGroupings();
+
+        stressUndoRedo(matrix);
+
+        Assertions.assertFalse(matrix.getGroupings().contains(group1));
+        Assertions.assertFalse(matrix.getGroupings().contains(group2));
+        Assertions.assertFalse(matrix.getGroupings().contains(group3));
+        Assertions.assertNotEquals(rowItem.getGroup1(), group1);
+    }
+
+
+    /**
+     * Tests changing a groupings color. Test to ensure the undo-redo works
+     */
+    @Test
+    public void renameGroupingTest() {
+        SymmetricDSMData matrix = new SymmetricDSMData();
+        Grouping group = new Grouping("group", null);
+        matrix.addGrouping(group);
+
+        matrix.setCurrentStateAsCheckpoint();
+        matrix.renameGrouping(group, "new group");
+
+        stressUndoRedo(matrix);
+
+        Assertions.assertEquals("new group", group.getName());
+    }
+
+
+    /**
+     * Tests changing a groupings font color. Test to ensure the undo-redo works
+     */
+    @Test
+    public void updateGroupingColorTest() {
+        SymmetricDSMData matrix = new SymmetricDSMData();
+        Grouping group = new Grouping("group", Color.color(1.0, 1.0, 1.0));
+        matrix.addGrouping(group);
+
+        matrix.setCurrentStateAsCheckpoint();
+        matrix.updateGroupingColor(group, Color.color(0.0, 0.0, 0.0));
+
+        stressUndoRedo(matrix);
+
+        Assertions.assertEquals(Color.color(0.0, 0.0, 0.0), group.getColor());
+    }
+
+
+    /**
+     * Unit test for setting an item's group in the dsm to a group that is already in the dsm
+     */
+    @Test
+    public void updateGroupingFontColorTest() {
+        SymmetricDSMData matrix = new SymmetricDSMData();
+        Grouping group = new Grouping("group", Color.color(1.0, 1.0, 1.0));
+        matrix.addGrouping(group);
+
+        matrix.setCurrentStateAsCheckpoint();
+        matrix.updateGroupingFontColor(group, Color.color(0.0, 0.0, 0.0));
+
+        stressUndoRedo(matrix);
+
+        Assertions.assertEquals(Color.color(0.0, 0.0, 0.0), group.getFontColor());
+    }
+
+
+    /**
+     * Unit test for setting an item's group in the dsm to a group that is already in the dsm
+     */
+    @Test
+    public void setItemGroupTest() {
+        SymmetricDSMData matrix = new SymmetricDSMData();
+        Grouping startGroup = new Grouping("group1", null);
+        Grouping endGroup = new Grouping("group2", null);
+        matrix.addGrouping(startGroup);
+        matrix.addGrouping(endGroup);
+        DSMItem rowItem = new DSMItem(1, 11, 1.0, "item1", startGroup, null);
+        DSMItem colItem = new DSMItem(11, 1, 1.0, "item1", startGroup, null);
+        matrix.addItem(rowItem, true);
+        matrix.addItem(colItem, false);
+
+        matrix.setCurrentStateAsCheckpoint();
+        matrix.setItemGroup(rowItem, endGroup);
+
+        stressUndoRedo(matrix);
+
+        Assertions.assertEquals(endGroup, rowItem.getGroup1());
+        Assertions.assertEquals(endGroup, colItem.getGroup1());
+        Assertions.assertEquals(3, matrix.getGroupings().size());  // use 3 to account for default
+    }
+
+
+    /**
+     * Unit test for setting an item's group in the dsm to a group that is not already in the dsm
+     */
+    @Test
+    public void setItemToNewGroupTest() {
+        SymmetricDSMData matrix = new SymmetricDSMData();
+        Grouping startGroup = new Grouping("group1", null);
+        Grouping endGroup = new Grouping("group2", null);
+        matrix.addGrouping(startGroup);
+        DSMItem rowItem = new DSMItem(1, 11, 1.0, "item1", startGroup, null);
+        DSMItem colItem = new DSMItem(11, 1, 1.0, "item1", startGroup, null);
+        matrix.addItem(rowItem, true);
+        matrix.addItem(colItem, false);
+
+        matrix.setCurrentStateAsCheckpoint();
+        matrix.setItemGroup(rowItem, endGroup);
+
+        stressUndoRedo(matrix);
+
+        Assertions.assertEquals(endGroup, rowItem.getGroup1());
+        Assertions.assertEquals(endGroup, colItem.getGroup1());
+        Assertions.assertEquals(3, matrix.getGroupings().size());  // use 3 to account for default
     }
 
 
@@ -152,56 +324,6 @@ public class SymmetricDSMDataTest {
 
         Assertions.assertEquals(42.0, rowItem.getSortIndex());
         Assertions.assertEquals(42.0, colItem.getSortIndex());
-    }
-
-
-    /**
-     * Unit test for setting an item's group in the dsm to a group that is already in the dsm
-     */
-    @Test
-    public void setItemGroupTest() {
-        SymmetricDSMData matrix = new SymmetricDSMData();
-        Grouping startGroup = new Grouping("group1", null);
-        Grouping endGroup = new Grouping("group2", null);
-        matrix.addGrouping(startGroup);
-        matrix.addGrouping(endGroup);
-        DSMItem rowItem = new DSMItem(1, 11, 1.0, "item1", startGroup, null);
-        DSMItem colItem = new DSMItem(11, 1, 1.0, "item1", startGroup, null);
-        matrix.addItem(rowItem, true);
-        matrix.addItem(colItem, false);
-
-        matrix.setCurrentStateAsCheckpoint();
-        matrix.setItemGroup(rowItem, endGroup);
-
-        stressUndoRedo(matrix);
-
-        Assertions.assertEquals(endGroup, rowItem.getGroup1());
-        Assertions.assertEquals(endGroup, colItem.getGroup1());
-    }
-
-
-    /**
-     * Unit test for setting an item's group in the dsm to a group that is not already in the dsm
-     */
-    @Test
-    public void setItemToNewGroupTest() {
-        SymmetricDSMData matrix = new SymmetricDSMData();
-        Grouping startGroup = new Grouping("group1", null);
-        Grouping endGroup = new Grouping("group2", null);
-        matrix.addGrouping(startGroup);
-        DSMItem rowItem = new DSMItem(1, 11, 1.0, "item1", startGroup, null);
-        DSMItem colItem = new DSMItem(11, 1, 1.0, "item1", startGroup, null);
-        matrix.addItem(rowItem, true);
-        matrix.addItem(colItem, false);
-
-        matrix.setCurrentStateAsCheckpoint();
-        matrix.setItemGroup(rowItem, endGroup);
-
-        stressUndoRedo(matrix);
-
-        Assertions.assertEquals(endGroup, rowItem.getGroup1());
-        Assertions.assertEquals(endGroup, colItem.getGroup1());
-        Assertions.assertEquals(2, matrix.getGroupings().size());
     }
 
 

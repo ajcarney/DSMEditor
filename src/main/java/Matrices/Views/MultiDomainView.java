@@ -147,6 +147,7 @@ public class MultiDomainView extends AbstractMatrixView implements ISymmetricHig
                     rowUid != null && colUid != null
                     && !rowUid.equals(matrix.getItem(colUid).getAliasUid())
                     && matrix.getItem(rowUid).getGroup1().equals(matrix.getItem(colUid).getGroup1())
+                    && matrix.getItem(rowUid).getGroup2().equals(matrix.getItem(colUid).getGroup2())
             ) {
                 // row and column color will be the same because row and column
                 // have same group in symmetric matrix

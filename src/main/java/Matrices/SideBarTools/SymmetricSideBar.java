@@ -1,5 +1,6 @@
 package Matrices.SideBarTools;
 
+import Matrices.Data.AsymmetricDSMData;
 import Matrices.Data.Entities.DSMConnection;
 import Matrices.Data.Entities.DSMItem;
 import Matrices.Data.Entities.Grouping;
@@ -55,6 +56,36 @@ public class SymmetricSideBar extends AbstractSideBar {
         layout.setPadding(new Insets(10, 10, 10, 10));
         layout.setSpacing(20);
         layout.setAlignment(Pos.CENTER);
+    }
+
+
+    /**
+     * Disables the sidebar buttons
+     */
+    public void setDisabled() {
+        addMatrixItems.setDisable(true);
+        deleteMatrixItems.setDisable(true);
+        appendConnections.setDisable(true);
+        setConnections.setDisable(true);
+        deleteConnections.setDisable(true);
+        configureGroupings.setDisable(true);
+        sort.setDisable(true);
+        reDistributeIndices.setDisable(true);
+    }
+
+
+    /**
+     * Enables the sidebar buttons
+     */
+    public void setEnabled() {
+        addMatrixItems.setDisable(false);
+        deleteMatrixItems.setDisable(false);
+        appendConnections.setDisable(false);
+        setConnections.setDisable(false);
+        deleteConnections.setDisable(false);
+        configureGroupings.setDisable(false);
+        sort.setDisable(false);
+        reDistributeIndices.setDisable(false);
     }
 
 
@@ -877,6 +908,70 @@ public class SymmetricSideBar extends AbstractSideBar {
 
 
     /**
+     * Configures a row in the edit grouping window. Does not add the row to its parent, but does not return it
+     *
+     * @param matrix     the matrix that will be updated when data about the grouping changes
+     * @param grouping   the grouping object from the matrix that this row is representing
+     * @param parent     the parent display object that will hold the row (used so that if deleted it is removed from parent)
+     * @param deletable  if the grouping is allowed to be deleted (if yes there will be a button to delete it)
+     *
+     * @return           the HBox that contains the row with all the widgets configured
+     */
+    private static HBox configureGroupingEditorRow(SymmetricDSMData matrix, Grouping grouping, VBox parent, boolean deletable) {
+        HBox display = new HBox();
+
+        TextField groupingName = new TextField();     // use a text field to display the name so that it can be renamed easily
+        groupingName.setText(grouping.getName());
+        groupingName.setMaxWidth(Double.MAX_VALUE);
+        groupingName.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
+            if (!newPropertyValue) {  // TextField changed to be not focused so update the new name in the matrix
+                if(!groupingName.getText().equals(grouping.getName())) {  // name changed
+                    matrix.renameGrouping(grouping, groupingName.getText());
+                }
+            }
+        });
+
+        Label groupingColorPickerLabel = new Label("Grouping Color: ");
+        groupingColorPickerLabel.setPadding(new Insets(10, 10, 10, 10));
+        groupingColorPickerLabel.setAlignment(Pos.TOP_RIGHT);
+        ColorPicker groupingColorPicker = new ColorPicker(grouping.getColor());
+        groupingColorPicker.setOnAction(e -> {
+            Color newColor = Color.color(groupingColorPicker.getValue().getRed(), groupingColorPicker.getValue().getGreen(), groupingColorPicker.getValue().getBlue());
+            if(!newColor.equals(grouping.getColor())) {
+                matrix.updateGroupingColor(grouping, newColor);
+            }
+        });
+
+        Label fontColorPickerLabel = new Label("Font Color: ");
+        fontColorPickerLabel.setPadding(new Insets(10, 10, 10, 30));
+        fontColorPickerLabel.setAlignment(Pos.TOP_RIGHT);
+        ColorPicker groupingFontColorPicker = new ColorPicker(grouping.getFontColor());
+        groupingFontColorPicker.setOnAction(e -> {
+            Color newColor = Color.color(groupingFontColorPicker.getValue().getRed(), groupingFontColorPicker.getValue().getGreen(), groupingFontColorPicker.getValue().getBlue());
+            if(!newColor.equals(grouping.getFontColor())) {
+                matrix.updateGroupingFontColor(grouping, newColor);
+            }
+        });
+
+        HBox deleteButtonSpace = new HBox();
+        deleteButtonSpace.setPadding(new Insets(0, 0, 0, 50));
+        Button deleteButton = new Button("Delete Grouping");  // wrap in HBox to add padding (doesn't work right otherwise)
+        deleteButton.setOnAction(e -> {
+            parent.getChildren().remove(display);  // delete the display item
+            matrix.removeGrouping(grouping);       // delete the grouping from the matrix
+        });
+        deleteButtonSpace.getChildren().add(deleteButton);
+
+        display.getChildren().addAll(groupingName, Misc.getHorizontalSpacer(), groupingColorPickerLabel, groupingColorPicker, fontColorPickerLabel, groupingFontColorPicker);
+        if(deletable) {
+            display.getChildren().add(deleteButtonSpace);
+        }
+
+        return display;
+    }
+
+
+    /**
      * Sets up the button for modifying groupings in the matrix
      */
     private void configureGroupingsCallback() {
@@ -885,21 +980,15 @@ public class SymmetricSideBar extends AbstractSideBar {
         window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
         window.setTitle("Configure Groupings");
 
-        VBox allGroupings = new VBox();
-        VBox mainGroupingsView = new VBox();
-        ScrollPane currentGroupingsPane = new ScrollPane(allGroupings);
-        currentGroupingsPane.setFitToWidth(true);
+        VBox groupingsView = new VBox();
+        ScrollPane mainViewScrollPane = new ScrollPane(groupingsView);
+        mainViewScrollPane.setFitToWidth(true);
 
         for(Grouping grouping : matrix.getGroupings()) {
-            HBox groupRow = configureGroupingEditorRow(matrix, grouping, mainGroupingsView, true);
-            mainGroupingsView.getChildren().add(groupRow);
+            boolean deletable = !grouping.getUid().equals(AsymmetricDSMData.DEFAULT_GROUP_UID);
+            HBox groupRow = configureGroupingEditorRow(matrix, grouping, groupingsView, deletable);
+            groupingsView.getChildren().add(groupRow);
         }
-        HBox defaultGroupLabel = new HBox();
-        defaultGroupLabel.setPadding(new Insets(10));
-        defaultGroupLabel.getChildren().add(new Label("Default Grouping:"));
-
-        HBox defaultGroupRow = configureGroupingEditorRow(matrix, matrix.getDefaultGrouping(), mainGroupingsView, false);
-        allGroupings.getChildren().addAll(mainGroupingsView, defaultGroupLabel, defaultGroupRow);
 
         // area to add, delete, rename
         HBox modifyArea = new HBox();
@@ -908,12 +997,12 @@ public class SymmetricSideBar extends AbstractSideBar {
         Button addButton = new Button("Add New Grouping");
         addButton.setOnAction(e -> {
             Grouping newGrouping = new Grouping("New Grouping", Color.color(1, 1, 1));
-            HBox groupRow = configureGroupingEditorRow(matrix, newGrouping, mainGroupingsView, true);
+            HBox groupRow = configureGroupingEditorRow(matrix, newGrouping, groupingsView, true);
             matrix.addGrouping(newGrouping);
-            mainGroupingsView.getChildren().add(groupRow);
+            groupingsView.getChildren().add(groupRow);
         });
-
         modifyArea.getChildren().add(addButton);
+
 
         // create HBox for user to close with changes
         HBox closeArea = new HBox();
@@ -926,7 +1015,7 @@ public class SymmetricSideBar extends AbstractSideBar {
         closeArea.getChildren().addAll(Misc.getHorizontalSpacer(), applyAllButton);
 
         VBox layout = new VBox(10);
-        layout.getChildren().addAll(currentGroupingsPane, modifyArea, Misc.getVerticalSpacer(), closeArea);
+        layout.getChildren().addAll(mainViewScrollPane, modifyArea, Misc.getVerticalSpacer(), closeArea);
         layout.setAlignment(Pos.CENTER);
         layout.setPadding(new Insets(10, 10, 10, 10));
         layout.setSpacing(10);

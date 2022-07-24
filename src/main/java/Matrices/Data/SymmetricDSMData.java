@@ -6,12 +6,14 @@ import Matrices.Data.Entities.Grouping;
 import Matrices.Data.Entities.RenderMode;
 import Matrices.Data.Flags.IPropagationAnalysis;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.scene.paint.Color;
 import javafx.util.Pair;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
+
 
 /**
  * A class that contains data about a matrix. All operations to a matrix come through
@@ -20,7 +22,12 @@ import java.util.*;
  *
  * @author: Aiden Carney
  */
-public class SymmetricDSMData extends AbstractGroupedDSMData implements IPropagationAnalysis {
+public class SymmetricDSMData extends AbstractDSMData implements IPropagationAnalysis {
+
+    private ObservableList<Grouping> groupings;
+
+    public static final Integer DEFAULT_GROUP_UID = Integer.MAX_VALUE;
+
 
 //region Constructors
     /**
@@ -31,12 +38,32 @@ public class SymmetricDSMData extends AbstractGroupedDSMData implements IPropaga
         super();
 
         connections = new Vector<>();
-        groupings = FXCollections.observableSet();
+        groupings = FXCollections.observableArrayList();
+        addGrouping(new Grouping(DEFAULT_GROUP_UID, "(none)", Color.WHITE, Grouping.defaultFontColor));
 
         setWasModified();
 
         clearStacks();
     }
+
+
+    /**
+     * Creates a new SymmetricDSMData object. Creates no row or column items and metadata are empty strings.
+     * Adds all the groupings from the parameters
+     *
+     * @param groupings  a list of the groupings
+     */
+    public SymmetricDSMData(Collection<Grouping> groupings) {
+        super();
+
+        connections = new Vector<>();
+        this.groupings = FXCollections.observableArrayList(groupings);
+
+        setWasModified();
+
+        clearStacks();
+    }
+
 
 
     /**
@@ -63,9 +90,6 @@ public class SymmetricDSMData extends AbstractGroupedDSMData implements IPropaga
         for(Grouping group : getGroupings()) {
             copy.groupings.add(new Grouping(group));
         }
-        copy.getDefaultGrouping().setColor(defaultGroup.getColor());
-        copy.getDefaultGrouping().setFontColor(defaultGroup.getFontColor());
-        copy.getDefaultGrouping().setName(defaultGroup.getName());
 
         copy.setTitle(getTitle());
         copy.setProjectName(getProjectName());
@@ -77,6 +101,206 @@ public class SymmetricDSMData extends AbstractGroupedDSMData implements IPropaga
 
         return copy;
     }
+//endregion
+
+
+//region Grouping functions
+    /**
+     * @return  the default grouping object for the matrix
+     */
+    public Grouping getDefaultGroup() {
+        for (Grouping grouping : groupings) {
+            if (grouping.getUid().equals(DEFAULT_GROUP_UID)) {
+                return grouping;
+            }
+        }
+        return null;
+    }
+
+
+    /**
+     * Adds a new grouping to the matrix. Puts the change on the stack but does not set
+     * a checkpoint
+     *
+     * @param group  the object of type Grouping to add
+     */
+    public void addGrouping(Grouping group) {
+        if(groupings.contains(group)) return;
+
+        addChangeToStack(new MatrixChange(
+                () -> {  // do function
+                    groupings.add(group);
+                },
+                () -> {  // undo function
+                    groupings.remove(group);
+                },
+                false
+        ));
+    }
+
+
+    /**
+     * Removes a grouping from the matrix from either the rows or the columns. Puts the change on the stack but does
+     * not set a checkpoint
+     *
+     * @param group  the object of type Grouping to remove
+     * @return       0 on success, -1 on error
+     */
+    public int removeGrouping(Grouping group) {
+        if(group.getUid().equals(DEFAULT_GROUP_UID)) return -1;
+
+        addChangeToStack(new MatrixChange(
+                () -> {  // do function
+                    groupings.remove(group);
+                    for(DSMItem item : rows) {  // these changes already get put on the stack so no need to add them a second time
+                        if(item.getGroup1().equals(group)) {
+                            setItemGroup(item, getDefaultGroup());
+                        }
+                    }
+                },
+                () -> {  // undo function
+                    groupings.add(group);
+                },
+                false
+        ));
+
+        return 0;
+    }
+
+
+    /**
+     * Removes all groupings from the matrix. Puts the change on the stack but does not set a checkpoint
+     */
+    public void clearGroupings() {
+        ObservableList<Grouping> oldGroupings = FXCollections.observableArrayList();
+        oldGroupings.addAll(groupings);
+
+        addChangeToStack(new MatrixChange(
+                () -> {  // do function
+                    groupings.clear();
+                    groupings.add(new Grouping(DEFAULT_GROUP_UID, "(none)", Color.WHITE, Grouping.defaultFontColor));
+                    for(DSMItem r : rows) {  // TODO: fix
+                        setItemGroup(r, getDefaultGroup());  // only need to set the rows because the operation is symmetric
+                    }
+                },
+                () -> {  // undo function
+                    groupings = oldGroupings;
+                },
+                false
+        ));
+    }
+
+
+    /**
+     * @return  ObservableList of the matrix groupings. Sorts the groupings by alphabetical order with default at the start
+     */
+    public ObservableList<Grouping> getGroupings() {
+        Comparator<Grouping> groupingComparator = (o1, o2) -> {
+            if(o1.getUid().equals(DEFAULT_GROUP_UID)) return -1;
+            if(o2.getUid().equals(DEFAULT_GROUP_UID)) return 1;
+
+            return o1.getName().compareTo(o2.getName());
+        };
+
+        FXCollections.sort(groupings, groupingComparator);
+        return groupings;
+    }
+
+
+    /**
+     * Renames a grouping. Puts the change on the stack but does not set a checkpoint.
+     *
+     * @param grouping  the group who's name should be changed
+     * @param newName   the new name for the group
+     */
+    public void renameGrouping(Grouping grouping, String newName) {
+        String oldName = grouping.getName();
+
+        addChangeToStack(new MatrixChange(
+                () -> {  // do function
+                    grouping.setName(newName);
+                },
+                () -> {  // undo function
+                    grouping.setName(oldName);
+                },
+                false
+        ));
+    }
+
+
+    /**
+     * Changes a color of a grouping. Puts the change on the stack but does not set a checkpoint.
+     *
+     * @param grouping  the group who's name should be changed
+     * @param newColor  the new color of the grouping
+     */
+    public void updateGroupingColor(Grouping grouping, Color newColor) {
+        Color oldColor = grouping.getColor();
+        addChangeToStack(new MatrixChange(
+                () -> {  // do function
+                    grouping.setColor(newColor);
+                },
+                () -> {  // undo function
+                    grouping.setColor(oldColor);
+                },
+                false
+        ));
+    }
+
+
+    /**
+     * Changes a color of a grouping. Puts the change on the stack but does not set a checkpoint.
+     *
+     * @param grouping  the grouping who's font color should be changed
+     * @param newColor  the new color of the grouping
+     */
+    public void updateGroupingFontColor(Grouping grouping, Color newColor) {
+        Color oldColor = grouping.getFontColor();
+        addChangeToStack(new MatrixChange(
+                () -> {  // do function
+                    grouping.setFontColor(newColor);
+                },
+                () -> {  // undo function
+                    grouping.setFontColor(oldColor);
+                },
+                false
+        ));
+    }
+
+
+    /**
+     * Sets the group of an item in the matrix symmetrically. This method should be called instead of directly modifying the item
+     * because this method puts the change on the stack but does not set a checkpoint.
+     *
+     * @param item     the item to change the name of
+     * @param newGroup the new group for the item
+     */
+    public void setItemGroup(DSMItem item, Grouping newGroup) {
+        DSMItem aliasedItem = getItemByAlias(item.getUid());
+        Grouping oldGroup = item.getGroup1();
+        assert oldGroup.getUid().equals(aliasedItem.getGroup1().getUid()) : "Symmetric item groupings were not the same";
+
+        boolean addNewGroup = !groupings.contains(newGroup);
+
+        addChangeToStack(new MatrixChange(
+                () -> {  // do function
+                    item.setGroup1(newGroup);
+                    if (addNewGroup) {  // no need to undo because this puts another change on the stack
+                        addGrouping(newGroup);
+                    }
+                    item.setGroup1(newGroup);
+                    aliasedItem.setGroup1(newGroup);
+                },
+                () -> {  // undo function
+                    item.setGroup1(oldGroup);
+                    aliasedItem.setGroup1(oldGroup);
+                },
+                false
+        ));
+    }
+
+
+
 //endregion
 
 
@@ -93,8 +317,8 @@ public class SymmetricDSMData extends AbstractGroupedDSMData implements IPropaga
 
         DSMItem rowItem = new DSMItem(index, name);
         DSMItem colItem = new DSMItem(index, name);
-        rowItem.setGroup1(defaultGroup);
-        colItem.setGroup1(defaultGroup);
+        rowItem.setGroup1(getDefaultGroup());
+        colItem.setGroup1(getDefaultGroup());
         colItem.setAliasUid(rowItem.getUid());
         rowItem.setAliasUid(colItem.getUid());
 
@@ -184,39 +408,6 @@ public class SymmetricDSMData extends AbstractGroupedDSMData implements IPropaga
                 () -> {  // undo function
                     item.setSortIndex(oldIndex);
                     aliasedItem.setSortIndex(oldIndex);
-                },
-                false
-        ));
-    }
-
-
-    /**
-     * Sets the group of an item in the matrix symmetrically. This method should be called instead of directly modifying the item
-     * because this method puts the change on the stack but does not set a checkpoint.
-     *
-     * @param item     the item to change the name of
-     * @param newGroup the new group for the item
-     */
-    @Override
-    public void setItemGroup(DSMItem item, Grouping newGroup) {
-        DSMItem aliasedItem = getItemByAlias(item.getUid());
-        Grouping oldGroup = item.getGroup1();
-
-        assert oldGroup.getUid().equals(aliasedItem.getGroup1().getUid()) : "Symmetric item groupings were not the same";
-
-        boolean addedNewGroup = !groupings.contains(newGroup) && !newGroup.equals(defaultGroup);
-
-        addChangeToStack(new MatrixChange(
-                () -> {  // do function
-                    if (addedNewGroup) {  // no need to undo because this puts another change on the stack
-                        addGrouping(newGroup);
-                    }
-                    item.setGroup1(newGroup);
-                    aliasedItem.setGroup1(newGroup);
-                },
-                () -> {  // undo function
-                    item.setGroup1(oldGroup);
-                    aliasedItem.setGroup1(oldGroup);
                 },
                 false
         ));
@@ -579,8 +770,8 @@ public class SymmetricDSMData extends AbstractGroupedDSMData implements IPropaga
 
         // place each element in the matrix in its own cluster
         SymmetricDSMData matrix = inputMatrix.createCopy();
-        assert matrix != inputMatrix && !matrix.equals(inputMatrix): "matrices are equal and they should not be";
-        matrix.clearGroupings();  // groups will be re-distributed
+        assert !matrix.equals(inputMatrix): "matrices are equal and they should not be";
+        matrix.groupings.clear();  // groups will be re-distributed so remove the default as well
 
         // this method for generating random colors is from stack overflow, it generates colors based on a start value
         // and the golden ratio conjugate (golden ratio method)

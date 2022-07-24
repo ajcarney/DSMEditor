@@ -368,7 +368,6 @@ public class SymmetricView extends AbstractMatrixView implements ISymmetricHighl
                         groupings.setButtonCell(groupingItemCellFactory.call(null));
 
                         groupings.getItems().addAll(matrix.getGroupings());
-                        groupings.getItems().add(matrix.getDefaultGrouping());
                         groupings.getSelectionModel().select(((DSMItem) item.getValue()).getGroup1());
                         groupings.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
                             matrix.setItemGroup((DSMItem) item.getValue(), groupings.getValue());

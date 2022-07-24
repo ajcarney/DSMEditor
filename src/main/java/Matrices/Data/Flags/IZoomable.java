@@ -1,6 +1,6 @@
 package Matrices.Data.Flags;
 
-import Matrices.Data.AbstractGroupedDSMData;
+import Matrices.Data.AbstractDSMData;
 import Matrices.Data.Entities.Grouping;
 
 
@@ -16,7 +16,7 @@ public interface IZoomable {
      * @param toGroup    the "to" grouping item that defines where the breakout view is from
      * @param matrix     the breakout view matrix
      */
-    void importZoom(Grouping fromGroup, Grouping toGroup, AbstractGroupedDSMData matrix);
+    void importZoom(Grouping fromGroup, Grouping toGroup, AbstractDSMData matrix);
 
 
     /**
@@ -26,6 +26,6 @@ public interface IZoomable {
      * @param toGroup    the group that defines the column items
      * @return           the matrix object that is a breakout view
      */
-    AbstractGroupedDSMData exportZoom(Grouping fromGroup, Grouping toGroup);
+    AbstractDSMData exportZoom(Grouping fromGroup, Grouping toGroup);
 
 }
