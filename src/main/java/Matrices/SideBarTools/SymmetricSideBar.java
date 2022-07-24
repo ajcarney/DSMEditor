@@ -60,6 +60,36 @@ public class SymmetricSideBar extends AbstractSideBar {
 
 
     /**
+     * Disables the sidebar buttons
+     */
+    public void setDisabled() {
+        addMatrixItems.setDisable(true);
+        deleteMatrixItems.setDisable(true);
+        appendConnections.setDisable(true);
+        setConnections.setDisable(true);
+        deleteConnections.setDisable(true);
+        configureGroupings.setDisable(true);
+        sort.setDisable(true);
+        reDistributeIndices.setDisable(true);
+    }
+
+
+    /**
+     * Enables the sidebar buttons
+     */
+    public void setEnabled() {
+        addMatrixItems.setDisable(false);
+        deleteMatrixItems.setDisable(false);
+        appendConnections.setDisable(false);
+        setConnections.setDisable(false);
+        deleteConnections.setDisable(false);
+        configureGroupings.setDisable(false);
+        sort.setDisable(false);
+        reDistributeIndices.setDisable(false);
+    }
+
+
+    /**
      * Sets up the button for adding items to the matrix
      */
     @Override

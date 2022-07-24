@@ -26,9 +26,10 @@ import java.util.*;
  * @author: Aiden Carney
  */
 public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
-    private final Grouping defaultDomain = new Grouping(Integer.MAX_VALUE, "default", Color.WHITE, Grouping.defaultFontColor);
+    private final Grouping defaultDomain = new Grouping(DEFAULT_GROUP_UID, "default", Color.WHITE, Grouping.defaultFontColor);
     private ObservableMap<Grouping, ObservableList<Grouping>> domains;  // hashmap of domains and list of groupings corresponding to that domain
 
+    public static final Integer DEFAULT_GROUP_UID = Integer.MAX_VALUE;
 
     /**
      * Creates a default domain-grouping and adds it to the hashmap
@@ -37,7 +38,7 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
      */
     private void createNewDefaultDomainGroup(Grouping domain) {
         if(getDefaultDomainGroup(domain) == null) {
-            Grouping group = new Grouping(Integer.MAX_VALUE, "default", Color.WHITE, Grouping.defaultFontColor);
+            Grouping group = new Grouping(DEFAULT_GROUP_UID, "default", Color.WHITE, Grouping.defaultFontColor);
             addDomainGrouping(domain, group);
         }
     }
@@ -48,7 +49,7 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
      */
     private Grouping getDefaultDomainGroup(Grouping domain) {
         for(Grouping domainGrouping : domains.get(domain)) {
-            if(domainGrouping.getUid().equals(Integer.MAX_VALUE)) {
+            if(domainGrouping.getUid().equals(DEFAULT_GROUP_UID)) {
                 return domainGrouping;
             }
         }
@@ -156,7 +157,7 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
     public void addDomain(Grouping domain) {
         if(domains.containsKey(domain)) return;
 
-        Grouping group = new Grouping(Integer.MAX_VALUE, "default", Color.WHITE, Grouping.defaultFontColor);
+        Grouping group = new Grouping(DEFAULT_GROUP_UID, "default", Color.WHITE, Grouping.defaultFontColor);
         addChangeToStack(new MatrixChange(
                 () -> {  // do function
                     domains.put(domain, FXCollections.observableArrayList());
@@ -271,7 +272,7 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
         ObservableList<Grouping> oldGroupings = FXCollections.observableArrayList();
         oldGroupings.addAll(domains.get(domain));
 
-        for(DSMItem r : rows) {  // TODO: fix
+        for(DSMItem r : rows) {
             setItemDomainGroup(r, r.getGroup2(), getDefaultDomainGroup(domain));
         }
         for(DSMItem c : cols) {
@@ -303,6 +304,14 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
      * @return  the ObservableList of the groupings in a current domain
      */
     public ObservableList<Grouping> getDomainGroupings(Grouping domain) {
+        Comparator<Grouping> groupingComparator = (o1, o2) -> {
+            if(o1.getUid().equals(DEFAULT_GROUP_UID)) return -1;
+            if(o2.getUid().equals(DEFAULT_GROUP_UID)) return 1;
+
+            return o1.getName().compareTo(o2.getName());
+        };
+
+        FXCollections.sort(domains.get(domain), groupingComparator);
         return domains.get(domain);
     }
 
@@ -611,37 +620,6 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
             for(int i=0; i<domainCols.size(); i++) {  // reset col sort Indices 1 -> n
                 setItemSortIndex(domainCols.get(i), i + 1);
             }
-        }
-    }
-
-
-    /**
-     * Sorts the matrix rows and columns by their group and then their current sort index, then distributes new sort
-     * Indices 1 to n. Used to make the sort Indices "clean" numbers and make the groups line up. Puts multiple changes on the
-     * stack but does not set any checkpoint.
-     */
-    public void reDistributeSortIndicesByGroup() {
-        rows.sort(Comparator.comparing((DSMItem item) -> item.getGroup1().getName()).thenComparing((DSMItem item) -> item.getName().getValue()));
-        Vector<DSMItem> newCols = new Vector<>();
-
-        for(DSMItem row : rows) {  // sort the new columns according to the rows (this does not need to be on the change stack because
-            // only the index numbers are what matters to the change stack TODO: confirm this
-            for(DSMItem col : cols) {
-                if(col.getAliasUid() == row.getUid()) {
-                    assert col.getGroup1().getUid().equals(row.getGroup1().getUid()) : "Groups were not the same when redistributing sort indices";
-
-                    newCols.add(col);
-                    break;
-                }
-            }
-        }
-        cols = newCols;
-
-        for(int i=0; i<rows.size(); i++) {  // reset row sort Indices 1 -> n
-            setItemSortIndex(rows.elementAt(i), i + 1);
-        }
-        for(int i=0; i<cols.size(); i++) {  // reset col sort Indices 1 -> n
-            setItemSortIndex(cols.elementAt(i), i + 1);
         }
     }
 

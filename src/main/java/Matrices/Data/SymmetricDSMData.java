@@ -280,7 +280,7 @@ public class SymmetricDSMData extends AbstractDSMData implements IPropagationAna
         Grouping oldGroup = item.getGroup1();
         assert oldGroup.getUid().equals(aliasedItem.getGroup1().getUid()) : "Symmetric item groupings were not the same";
 
-        boolean addNewGroup = groupings.contains(newGroup);
+        boolean addNewGroup = !groupings.contains(newGroup);
 
         addChangeToStack(new MatrixChange(
                 () -> {  // do function
@@ -770,8 +770,8 @@ public class SymmetricDSMData extends AbstractDSMData implements IPropagationAna
 
         // place each element in the matrix in its own cluster
         SymmetricDSMData matrix = inputMatrix.createCopy();
-        assert matrix != inputMatrix && !matrix.equals(inputMatrix): "matrices are equal and they should not be";
-        matrix.clearGroupings();  // groups will be re-distributed
+        assert !matrix.equals(inputMatrix): "matrices are equal and they should not be";
+        matrix.groupings.clear();  // groups will be re-distributed so remove the default as well
 
         // this method for generating random colors is from stack overflow, it generates colors based on a start value
         // and the golden ratio conjugate (golden ratio method)

@@ -1,7 +1,4 @@
-import Matrices.AsymmetricDSM;
-import Matrices.IDSM;
-import Matrices.MatricesCollection;
-import Matrices.MultiDomainDSM;
+import Matrices.*;
 import UI.EditorPane;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -70,9 +67,13 @@ public class DSMApplication extends Application {
 //                        new AsymmetricSideBar(matrix, editor)
 //                );
 //            }
-            File f = new File("/home/aiden/Documents/DSMEditor/test6.dsm");
+//            File f = new File("/home/aiden/Documents/DSMEditor/test6.dsm");
+//            if(f.exists()) {
+//                editor.addTab(new MultiDomainDSM(f, editor.getHeaderMenu()));
+//            }
+            File f = new File("/home/aiden/Documents/DSMEditor/symmetric.dsm");
             if(f.exists()) {
-                editor.addTab(new MultiDomainDSM(f, editor.getHeaderMenu()));
+                editor.addTab(new SymmetricDSM(f));
             }
         }
 

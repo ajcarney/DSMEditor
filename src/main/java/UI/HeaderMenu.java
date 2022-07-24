@@ -533,6 +533,13 @@ public class HeaderMenu {
     }
 
 
+    /**
+     * Refreshes the header menu for a new matrix
+     *
+     * @param matrixData  the matrix data object
+     * @param ioHandler   the matrix ioHandler object
+     * @param matrixView  the matrix view object
+     */
     public void refresh(AbstractDSMData matrixData, AbstractIOHandler ioHandler, IMatrixView matrixView) {
         this.matrixData = matrixData;
         this.ioHandler = ioHandler;
@@ -552,5 +559,15 @@ public class HeaderMenu {
         setupHelpMenu();
 
         menuBar.getMenus().addAll(fileMenu, editMenu, viewMenu, toolsMenu, helpMenu);
+    }
+
+
+    /**
+     * Enables or disables the edit menu
+     *
+     * @param disabled  if the edit menu should be disabled
+     */
+    public void setEditDisabled(boolean disabled) {
+        editMenu.setDisable(disabled);
     }
 }

@@ -1,6 +1,6 @@
 import javafx.embed.swing.JFXPanel;
 
-public class Main {
+public class Launcher {
     /**
      * starts the application
      *
@@ -11,7 +11,7 @@ public class Main {
         // file can be created that requires no runtime dependencies. Javafx requires initialization before creating any
         // components and this would occur in the class that extends application however, this happens out of order
         // with the creation of this wrapper class so a dummy variable is used which will call the javafx initialization.
-        // Without the line of code a runtime error will occur
+        // Without the line of code a runtime error will occur when packaging application as a single jar
         final JFXPanel fxPanel = new JFXPanel();
 
         // start the application

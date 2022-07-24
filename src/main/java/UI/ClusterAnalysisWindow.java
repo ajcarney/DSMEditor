@@ -10,6 +10,7 @@ import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
+import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
@@ -43,8 +44,8 @@ public class ClusterAnalysisWindow {
     private DoubleProperty powbid;
 
     // main content panes
-    private VBox coordinationLayout;
-    private VBox bidsLayout;
+    private final VBox coordinationLayout;
+    private final VBox bidsLayout;
 
     private CheckBox countByWeight;
 
@@ -256,7 +257,7 @@ public class ClusterAnalysisWindow {
     private void runClusterBidsAnalysis() {
         Vector<Grouping> groupOrder = new Vector<>(matrix.getGroupings());
         Vector<DSMItem> items = matrix.getRows();
-        Collections.sort(items, Comparator.comparing(r -> r.getSortIndex()));
+        items.sort(Comparator.comparing(DSMItem::getSortIndex));
 
         // create data structure for the table
         ArrayList<ArrayList<HBox>> data = new ArrayList<>();
@@ -302,16 +303,18 @@ public class ClusterAnalysisWindow {
             for(String text : rowBids) {
                 HBox cell = new HBox();
                 Label label = new Label(text);
-                if(maxBidGroup.equals(items.get(r).getGroup1())) {  // highlight green because group has highest bid
-                    cell.setStyle(cell.getStyle() + "-fx-background-color:palegreen");
-                } else if(minBidGroup.equals(items.get(r).getGroup1())) {  // highlight red because group has lowest bid
-                    cell.setStyle(cell.getStyle() + "-fx-background-color:indianred");
+                if(maxBidGroup.getUid().equals(items.get(r).getGroup1().getUid())) {  // highlight green because group has highest bid
+                    cell.setStyle("-fx-background-color:palegreen");
+                } else if(minBidGroup.getUid().equals(items.get(r).getGroup1().getUid())) {  // highlight red because group has lowest bid
+                    cell.setStyle("-fx-background-color:indianred");
                 } else {
-                    cell.setStyle(cell.getStyle() + "-fx-background-color:white");
+                    cell.setStyle("-fx-background-color:white");
                 }
                 cell.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
                 cell.setPadding(new Insets(5));
-                cell.getChildren().add(label);
+                Group g = new Group();  // add to group so that size of label can be managed properly
+                g.getChildren().add(label);
+                cell.getChildren().add(g);
 
                 row.add(cell);
             }
@@ -336,7 +339,9 @@ public class ClusterAnalysisWindow {
 
             cell.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
             cell.setPadding(new Insets(5));
-            cell.getChildren().add(label);
+            Group g = new Group();  // add to group so that size of label can be managed properly
+            g.getChildren().add(label);
+            cell.getChildren().add(g);
             cell.setAlignment(Pos.CENTER);
 
             headerRow.add(cell);
@@ -347,8 +352,10 @@ public class ClusterAnalysisWindow {
         table.setGridDataHBox(data);
         table.setFreezeHeader(1);
         table.setFreezeLeft(2);
+        table.resizeGrid(true);
+        table.updateGrid();
 
-        bidsLayout.getChildren().removeAll(bidsLayout.getChildren());
+        bidsLayout.getChildren().clear();
         bidsLayout.getChildren().addAll(table.getGrid());
         bidsLayout.setAlignment(Pos.CENTER);
         bidsLayout.setPadding(new Insets(10));

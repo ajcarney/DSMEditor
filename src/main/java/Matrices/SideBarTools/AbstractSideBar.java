@@ -33,7 +33,7 @@ public abstract class AbstractSideBar {
     protected AbstractDSMData matrix;
 
 
-    //region Cell Factories
+//region Cell Factories
     /**
      * Cell factory for displaying DSM connections in a listview. Takes a DSMConnection and Prepends DELETE
      * if the connection name is empty and the weight is set to Double.MAX_VALUE
@@ -142,7 +142,7 @@ public abstract class AbstractSideBar {
             };
         }
     };
-    //endregion
+//endregion
 
 
     /**
@@ -179,6 +179,18 @@ public abstract class AbstractSideBar {
         reDistributeIndices.setOnAction(e -> reDistributeIndicesCallback());
         reDistributeIndices.setMaxWidth(Double.MAX_VALUE);
     }
+
+
+    /**
+     * Disables the sidebar buttons
+     */
+    public abstract void setDisabled();
+
+
+    /**
+     * Enables the sidebar buttons
+     */
+    public abstract void setEnabled();
 
 
     /**

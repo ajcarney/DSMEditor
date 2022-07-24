@@ -121,7 +121,7 @@ public class AsymmetricDSMDataTest {
         matrix.addGrouping(true, group2);
         matrix.addGrouping(true, group3);
 
-        DSMItem rowItem = new DSMItem(1, 11, 1.0, "item1", group1, null);
+        DSMItem rowItem = new DSMItem(1, null, 1.0, "item1", group1, null);
         matrix.addItem(rowItem, true);
 
         matrix.setCurrentStateAsCheckpoint();
@@ -215,23 +215,6 @@ public class AsymmetricDSMDataTest {
 
 
     /**
-     * Unit test for creating an item in a dsm. Test to ensure the undo-redo works with creating a new item
-     */
-    @Test
-    public void createItemTest() {
-        AsymmetricDSMData matrix = new AsymmetricDSMData();
-
-        matrix.setCurrentStateAsCheckpoint();
-        matrix.createItem("item1", true);
-        matrix.setCurrentStateAsCheckpoint();
-
-        stressUndoRedo(matrix);
-
-        Assertions.assertEquals("item1", matrix.getRows().get(0).getName().getValue());
-    }
-
-
-    /**
      * Unit test for setting an item's group in the dsm to a group that is not already in the dsm
      */
     @Test
@@ -251,6 +234,23 @@ public class AsymmetricDSMDataTest {
 
         Assertions.assertEquals(endGroup, rowItem.getGroup1());
         Assertions.assertEquals(3, matrix.getGroupings(true).size());  // use 3 to account for default
+    }
+
+
+    /**
+     * Unit test for creating an item in a dsm. Test to ensure the undo-redo works with creating a new item
+     */
+    @Test
+    public void createItemTest() {
+        AsymmetricDSMData matrix = new AsymmetricDSMData();
+
+        matrix.setCurrentStateAsCheckpoint();
+        matrix.createItem("item1", true);
+        matrix.setCurrentStateAsCheckpoint();
+
+        stressUndoRedo(matrix);
+
+        Assertions.assertEquals("item1", matrix.getRows().get(0).getName().getValue());
     }
 
 }

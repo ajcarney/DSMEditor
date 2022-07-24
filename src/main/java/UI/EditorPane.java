@@ -243,6 +243,7 @@ public class EditorPane {
 
         tab.setOnSelectionChanged(e -> {
             headerMenu.refresh(this.matrices.getMatrix(matrixUid).getMatrixData(), this.matrices.getMatrix(matrixUid).getMatrixIOHandler(), this.matrices.getMatrix(matrixUid).getMatrixView());
+            headerMenu.setEditDisabled(false);
 
             this.rootLayout.setLeft(this.matrices.getMatrix(matrixUid).getMatrixEditorTab().getLeftPane());
             this.rootLayout.setRight(this.matrices.getMatrix(matrixUid).getMatrixEditorTab().getRightPane());

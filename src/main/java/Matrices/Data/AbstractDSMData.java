@@ -126,7 +126,7 @@ public abstract class AbstractDSMData {
      *
      * @return  the deep copy of the object
      */
-    public abstract <T extends AbstractDSMData> T createCopy();
+    public abstract AbstractDSMData createCopy();
 //endregion
 
 

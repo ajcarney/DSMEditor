@@ -3,6 +3,7 @@ package UI;
 import Matrices.Data.Entities.Grouping;
 import Matrices.Data.SymmetricDSMData;
 import Matrices.IOHandlers.SymmetricIOHandler;
+import Matrices.Views.IMatrixView;
 import Matrices.Views.SymmetricView;
 import UI.Widgets.NumericTextField;
 import javafx.application.Platform;
@@ -94,6 +95,7 @@ public class ClusterAlgorithmWindow {
                return;
            }
            SymmetricIOHandler ioHandler = new SymmetricIOHandler(new File(""));
+           ioHandler.setMatrix(outputMatrix);
            ioHandler.promptSaveToFile(menuBar.getScene().getWindow());
         });
         MenuItem csv = new MenuItem("CSV File");
@@ -102,6 +104,7 @@ public class ClusterAlgorithmWindow {
                 return;
             }
             SymmetricIOHandler ioHandler = new SymmetricIOHandler(new File(""));
+            ioHandler.setMatrix(outputMatrix);
             ioHandler.promptExportToCSV(menuBar.getScene().getWindow());
         });
         MenuItem excel = new MenuItem("Excel File");
@@ -110,6 +113,7 @@ public class ClusterAlgorithmWindow {
                 return;
             }
             SymmetricIOHandler ioHandler = new SymmetricIOHandler(new File(""));
+            ioHandler.setMatrix(outputMatrix);
             ioHandler.promptExportToExcel(menuBar.getScene().getWindow());
         });
         MenuItem thebeau = new MenuItem("Thebeau Matlab File");
@@ -118,11 +122,12 @@ public class ClusterAlgorithmWindow {
                 return;
             }
             SymmetricIOHandler ioHandler = new SymmetricIOHandler(new File(""));
+            ioHandler.setMatrix(outputMatrix);
             ioHandler.promptExportToThebeau(menuBar.getScene().getWindow());
         });
 
         exportMenu.getItems().addAll(dsm, csv, excel, thebeau);
-        exportMenu.setOnShown(e -> {  // disable validate symmetry for non-symmetrical matrices
+        exportMenu.setOnShown(e -> {
             if(outputMatrix == null) {
                 dsm.setDisable(true);
                 csv.setDisable(true);
@@ -496,6 +501,8 @@ public class ClusterAlgorithmWindow {
         popup.showAndWait();  // wait for it to finish
 
         SymmetricView gui = new SymmetricView(outputMatrix, 10);
+        gui.setCurrentMode(IMatrixView.MatrixViewMode.STATIC);
+        gui.refreshView();
 
         outputMatrixLayout.getChildren().removeAll(outputMatrixLayout.getChildren());
         outputMatrixLayout.getChildren().addAll(gui.getView());
