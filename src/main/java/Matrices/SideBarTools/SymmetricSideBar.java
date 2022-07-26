@@ -52,7 +52,7 @@ public class SymmetricSideBar extends AbstractSideBar {
         configureGroupings.setOnAction(e -> configureGroupingsCallback());
         configureGroupings.setMaxWidth(Double.MAX_VALUE);
 
-        layout.getChildren().addAll(addMatrixItems, deleteMatrixItems, appendConnections, setConnections, deleteConnections, configureGroupings, sort, reDistributeIndices);
+        layout.getChildren().addAll(addMatrixItems, deleteMatrixItems, appendConnections, setConnections, deleteConnections, configureInterfaces, configureGroupings, sort, reDistributeIndices);
         layout.setPadding(new Insets(10, 10, 10, 10));
         layout.setSpacing(20);
         layout.setAlignment(Pos.CENTER);
@@ -71,6 +71,7 @@ public class SymmetricSideBar extends AbstractSideBar {
         configureGroupings.setDisable(true);
         sort.setDisable(true);
         reDistributeIndices.setDisable(true);
+        configureInterfaces.setDisable(true);
     }
 
 
@@ -86,6 +87,7 @@ public class SymmetricSideBar extends AbstractSideBar {
         configureGroupings.setDisable(false);
         sort.setDisable(false);
         reDistributeIndices.setDisable(false);
+        configureInterfaces.setDisable(false);
     }
 
 
@@ -931,28 +933,6 @@ public class SymmetricSideBar extends AbstractSideBar {
             }
         });
 
-        Label groupingColorPickerLabel = new Label("Grouping Color: ");
-        groupingColorPickerLabel.setPadding(new Insets(10, 10, 10, 10));
-        groupingColorPickerLabel.setAlignment(Pos.TOP_RIGHT);
-        ColorPicker groupingColorPicker = new ColorPicker(grouping.getColor());
-        groupingColorPicker.setOnAction(e -> {
-            Color newColor = Color.color(groupingColorPicker.getValue().getRed(), groupingColorPicker.getValue().getGreen(), groupingColorPicker.getValue().getBlue());
-            if(!newColor.equals(grouping.getColor())) {
-                matrix.updateGroupingColor(grouping, newColor);
-            }
-        });
-
-        Label fontColorPickerLabel = new Label("Font Color: ");
-        fontColorPickerLabel.setPadding(new Insets(10, 10, 10, 30));
-        fontColorPickerLabel.setAlignment(Pos.TOP_RIGHT);
-        ColorPicker groupingFontColorPicker = new ColorPicker(grouping.getFontColor());
-        groupingFontColorPicker.setOnAction(e -> {
-            Color newColor = Color.color(groupingFontColorPicker.getValue().getRed(), groupingFontColorPicker.getValue().getGreen(), groupingFontColorPicker.getValue().getBlue());
-            if(!newColor.equals(grouping.getFontColor())) {
-                matrix.updateGroupingFontColor(grouping, newColor);
-            }
-        });
-
         HBox deleteButtonSpace = new HBox();
         deleteButtonSpace.setPadding(new Insets(0, 0, 0, 50));
         Button deleteButton = new Button("Delete Grouping");  // wrap in HBox to add padding (doesn't work right otherwise)
@@ -962,10 +942,7 @@ public class SymmetricSideBar extends AbstractSideBar {
         });
         deleteButtonSpace.getChildren().add(deleteButton);
 
-        display.getChildren().addAll(groupingName, Misc.getHorizontalSpacer(), groupingColorPickerLabel, groupingColorPicker, fontColorPickerLabel, groupingFontColorPicker);
-        if(deletable) {
-            display.getChildren().add(deleteButtonSpace);
-        }
+        display.getChildren().addAll(groupingName, Misc.getHorizontalSpacer(), deleteButtonSpace);
 
         return display;
     }

@@ -2,17 +2,26 @@ package Matrices.SideBarTools;
 
 import Matrices.Data.AbstractDSMData;
 import Matrices.Data.Entities.DSMConnection;
+import Matrices.Data.Entities.DSMInterfaceType;
 import Matrices.Data.Entities.DSMItem;
 import Matrices.Data.Entities.Grouping;
+import Matrices.Data.SymmetricDSMData;
 import Matrices.Views.AbstractMatrixView;
 import UI.Widgets.Misc;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 import javafx.util.Callback;
+
+import java.util.Map;
+import java.util.Vector;
 
 
 /**
@@ -28,6 +37,7 @@ public abstract class AbstractSideBar {
     protected final Button deleteConnections = new Button("Delete Connections");
     protected final Button sort = new Button("Sort");
     protected final Button reDistributeIndices = new Button("Re-Distribute Indices");
+    protected final Button configureInterfaces = new Button("Configure Interface Types");
 
     protected AbstractMatrixView matrixView;
     protected AbstractDSMData matrix;
@@ -178,6 +188,9 @@ public abstract class AbstractSideBar {
 
         reDistributeIndices.setOnAction(e -> reDistributeIndicesCallback());
         reDistributeIndices.setMaxWidth(Double.MAX_VALUE);
+
+        configureInterfaces.setOnAction(e -> configureInterfacesCallback());
+        configureInterfaces.setMaxWidth(Double.MAX_VALUE);
     }
 
 
@@ -228,6 +241,186 @@ public abstract class AbstractSideBar {
      */
     protected void sortCallback() {
         matrixView.refreshView();
+    }
+
+
+
+    /**
+     * Configures a row in the edit grouping window. Does not add the row to its parent, but does not return it
+     *
+     * @param matrix              the matrix that will be updated when data about the grouping changes
+     * @param interfaceTypeGroup  the interface type's grouping
+     * @param interfaceType       the interface type to modify
+     * @param parent              the parent display object that will hold the row (used so that if deleted it is removed from parent)
+     *
+     * @return           the HBox that contains the row with all the widgets configured
+     */
+    private static HBox configureInterfaceEditorRow(AbstractDSMData matrix, StringProperty interfaceTypeGroup, DSMInterfaceType interfaceType, VBox parent) {
+        HBox display = new HBox();
+
+        TextField interfaceName = new TextField();     // use a text field to display the name so that it can be renamed easily
+        interfaceName.setText(interfaceType.getName());
+        interfaceName.setMaxWidth(Double.MAX_VALUE);
+        interfaceName.setPrefColumnCount(30);
+        interfaceName.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
+            if (!newPropertyValue) {  // TextField changed to be not focused so update the new name in the matrix
+                if(!interfaceName.getText().equals(interfaceType.getName())) {  // name changed
+                    matrix.renameInterfaceType(interfaceType, interfaceName.getText());
+                }
+            }
+        });
+
+
+        HBox deleteButtonSpace = new HBox();
+        deleteButtonSpace.setPadding(new Insets(0, 0, 0, 50));
+        Button deleteButton = new Button("Delete Interface");  // wrap in HBox to add padding (doesn't work right otherwise)
+        deleteButton.setOnAction(e -> {
+            parent.getChildren().remove(display);  // delete the display item
+            matrix.removeInterface(interfaceTypeGroup.getValue(), interfaceType);       // delete the grouping from the matrix
+        });
+        deleteButtonSpace.getChildren().add(deleteButton);
+
+        display.getChildren().addAll(interfaceName, Misc.getHorizontalSpacer(), deleteButtonSpace);
+
+        return display;
+    }
+
+
+    private static VBox configureInterfaceGroupingEditorRow(AbstractDSMData matrix, String interfaceTypeGroup, VBox parent) {
+        VBox interfacesLayout = new VBox();
+        HBox groupingEditRow = new HBox();
+
+        StringProperty interfaceGroupName = new SimpleStringProperty(interfaceTypeGroup);
+
+        // text entry for setting the interface grouping name
+        TextField interfaceGroupTextField = new TextField();     // use a text field to display the name so that it can be renamed easily
+        interfaceGroupTextField.setText(interfaceGroupName.getValue());
+        interfaceGroupTextField.setMaxWidth(Double.MAX_VALUE);
+        interfaceGroupTextField.setPrefColumnCount(30);
+        interfaceGroupTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
+            if (!newPropertyValue) {  // TextField changed to be not focused so update the new name in the matrix
+                if(!matrix.getInterfaceGroupings().contains(interfaceGroupTextField.getText())) {  // name changed
+                    matrix.renameInterfaceTypeGrouping(interfaceGroupName.getValue(), interfaceGroupTextField.getText());
+                    interfaceGroupName.set(interfaceGroupTextField.getText());
+                } else {
+                    interfaceGroupTextField.setText(interfaceGroupName.getValue());
+                }
+            }
+        });
+
+        // button for deleting this interface grouping
+        HBox deleteButtonSpace = new HBox();
+        deleteButtonSpace.setPadding(new Insets(0, 0, 0, 50));
+        Button deleteButton = new Button("Delete Grouping");  // wrap in HBox to add padding (doesn't work right otherwise)
+        deleteButton.setOnAction(e -> {
+            parent.getChildren().remove(interfacesLayout);
+            matrix.removeInterfaceTypeGrouping(interfaceGroupName.getValue());       // delete the grouping from the matrix
+        });
+        deleteButtonSpace.getChildren().add(deleteButton);
+
+        groupingEditRow.getChildren().addAll(interfaceGroupTextField, Misc.getHorizontalSpacer(), deleteButtonSpace);
+
+
+        // pane for all the interfaces of this grouping
+        VBox interfacesPane = new VBox();
+        interfacesPane.setPadding(new Insets(0, 0, 0, 50));
+        interfacesPane.setSpacing(7);
+        for(DSMInterfaceType i : matrix.getInterfaceTypes().get(interfaceTypeGroup)) {
+            HBox interfaceTypePane = configureInterfaceEditorRow(matrix, interfaceGroupName, i, interfacesPane);
+            interfacesPane.getChildren().add(interfaceTypePane);
+        }
+
+        // pane for adding a new interface
+        HBox addInterfaceButtonPane = new HBox();
+        addInterfaceButtonPane.setAlignment(Pos.CENTER);
+        Button addInterfaceButton = new Button("Add New Interface");
+        addInterfaceButton.setOnAction(e -> {
+            DSMInterfaceType newInterface = new DSMInterfaceType("New Interface");
+            matrix.addInterface(interfaceGroupName.getValue(), newInterface);
+            HBox interfaceTypePane = configureInterfaceEditorRow(matrix, interfaceGroupName, newInterface, interfacesPane);
+            interfacesPane.getChildren().add(interfaceTypePane);
+        });
+        addInterfaceButtonPane.getChildren().add(addInterfaceButton);
+
+        // add all the nodes to the root
+        interfacesLayout.getChildren().addAll(groupingEditRow, interfacesPane, addInterfaceButtonPane);
+        interfacesLayout.setSpacing(12);
+        interfacesLayout.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
+        interfacesLayout.setPadding(new Insets(5));
+
+        return interfacesLayout;
+    }
+
+
+    /**
+     * Opens a window to configure interface types for a matrix
+     */
+    protected void configureInterfacesCallback() {
+        // Create Root window
+        Stage window = new Stage();
+        window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
+        window.setTitle("Configure Groupings");
+
+        VBox mainView = new VBox();
+        mainView.setSpacing(15);
+        VBox groupingsView = new VBox();
+        groupingsView.setSpacing(25);
+
+        for(String grouping : matrix.getInterfaceGroupings()) {
+            VBox interfaceEditLayout = configureInterfaceGroupingEditorRow(matrix, grouping, groupingsView);
+            groupingsView.getChildren().addAll(interfaceEditLayout);
+        }
+
+
+        HBox addInterfaceGroupingPane = new HBox();
+        Button addInterfaceGroupingButton = new Button("Add New Interface Grouping");
+        addInterfaceGroupingButton.setOnAction(e -> {
+            int i = matrix.getInterfaceGroupings().size() + 1;
+            String groupingName = "New Interface Grouping" + i;
+            while(matrix.getInterfaceGroupings().contains(groupingName)) {  // keep increasing number until reaching a unique name
+                i += 1;
+                groupingName = "New Interface Grouping" + i;
+            }
+
+            matrix.addInterfaceTypeGrouping(groupingName);
+            VBox interfaceEditLayout = configureInterfaceGroupingEditorRow(matrix, groupingName, groupingsView);
+            groupingsView.getChildren().add(interfaceEditLayout);
+        });
+        addInterfaceGroupingPane.getChildren().addAll(Misc.getHorizontalSpacer(), addInterfaceGroupingButton);
+
+
+        ScrollPane interfacesScrollView = new ScrollPane(groupingsView);
+        interfacesScrollView.setFitToWidth(true);
+        mainView.getChildren().add(interfacesScrollView);
+        mainView.getChildren().add(addInterfaceGroupingPane);
+
+
+        // create HBox for user to close with changes
+        HBox closeArea = new HBox();
+        Button applyAllButton = new Button("Ok");
+
+        applyAllButton.setOnAction(e -> {
+            window.close();        // changes have already been made so just close the window
+        });
+
+        closeArea.getChildren().addAll(Misc.getHorizontalSpacer(), applyAllButton);
+
+        VBox layout = new VBox(10);
+        layout.getChildren().addAll(mainView, Misc.getVerticalSpacer(), closeArea);
+        layout.setAlignment(Pos.CENTER);
+        layout.setPadding(new Insets(10, 10, 10, 10));
+        layout.setSpacing(10);
+
+
+        //Display window and wait for it to be closed before returning
+        Scene scene = new Scene(layout, 1000, 400);
+        window.setScene(scene);
+        scene.getWindow().setOnHidden(e -> {  // TODO: 6/17/2020 changed from setOnCloseRequest when it was working before and idk why this fixed it
+            window.close();                        // changes have already been made so just close and refresh the screen
+            matrix.setCurrentStateAsCheckpoint();
+            matrixView.refreshView();
+        });
+        window.showAndWait();
     }
 
 

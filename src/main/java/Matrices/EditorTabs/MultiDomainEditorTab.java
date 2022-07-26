@@ -246,6 +246,7 @@ public class MultiDomainEditorTab implements IEditorTab {
             Button applyButton = new Button("Apply Changes");
             applyButton.setOnAction(ee -> {
                 this.matrixData.importZoom(fromGroup, toGroup, data);
+                this.matrixData.setCurrentStateAsCheckpoint();
                 this.matrixView.refreshView();  // refresh the main view
             });
             HBox applyButtonLayout = new HBox();

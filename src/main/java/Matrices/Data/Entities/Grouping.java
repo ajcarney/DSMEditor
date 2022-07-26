@@ -4,7 +4,7 @@ import javafx.scene.paint.Color;
 import org.jdom2.Element;
 
 /**
- * Data class to handle grouping used in a DSM. Each grouping has a uid, a name, and a color associated with it. This
+ * Data class to handle groupings used in a DSM. Each grouping has a uid, a name, and a color associated with it. This
  * is generic so it can be used for different levels of groupings in a hierarchy design (ie. domains vs subsystems)
  *
  * @author Aiden Carney
@@ -20,10 +20,10 @@ public class Grouping {
 
 
     /**
-     * Creates a new Grouping with a given color
+     * Creates a new Grouping with a given name and color
      *
-     * @param name  the starting name of the item
-     * @param color the starting index of the item
+     * @param name  the starting name of the grouping
+     * @param color the starting index of the grouping
      */
     public Grouping(String name, Color color) {
         this.uid = java.util.UUID.randomUUID().hashCode();
@@ -34,10 +34,10 @@ public class Grouping {
 
 
     /**
-     * Creates a new Grouping with a given color
+     * Creates a new Grouping with given colors and name
      *
-     * @param name  the starting name of the item
-     * @param color the starting index of the item
+     * @param name  the starting name of the grouping
+     * @param color the starting index of the grouping
      */
     public Grouping(String name, Color color, Color fontColor) {
         this.uid = java.util.UUID.randomUUID().hashCode();
@@ -48,7 +48,8 @@ public class Grouping {
 
 
     /**
-     * Creates a new Group with all data fields to be set. Called when creating an item from data that was saved to a file
+     * Creates a new Group with all data fields to be set. Called when creating a Grouping from data that was
+     * saved to a file
      *
      * @param uid      the uid of the group
      * @param name     the name of the group
@@ -84,9 +85,9 @@ public class Grouping {
 
 
     /**
-     * Copy constructor for DSMItem
+     * Copy constructor for a Grouping
      *
-     * @param copy DSMItem object that will be copied
+     * @param copy Grouping object that will be copied
      */
     public Grouping(Grouping copy) {
         uid = copy.getUid();
@@ -99,7 +100,7 @@ public class Grouping {
     /**
      * Getter function for the uid of the grouping
      *
-     * @return the uid of the item
+     * @return the uid of the grouping
      */
     public Integer getUid() {
         return uid;

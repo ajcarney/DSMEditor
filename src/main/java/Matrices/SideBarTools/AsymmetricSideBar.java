@@ -54,7 +54,7 @@ public class AsymmetricSideBar extends AbstractSideBar {
         configureGroupings.setOnAction(e -> configureGroupingsCallback());
         configureGroupings.setMaxWidth(Double.MAX_VALUE);
 
-        layout.getChildren().addAll(addMatrixItems, deleteMatrixItems, appendConnections, setConnections, deleteConnections, configureGroupings, sort, reDistributeIndices);
+        layout.getChildren().addAll(addMatrixItems, deleteMatrixItems, appendConnections, setConnections, deleteConnections, configureInterfaces, configureGroupings, sort, reDistributeIndices);
         layout.setPadding(new Insets(10, 10, 10, 10));
         layout.setSpacing(20);
         layout.setAlignment(Pos.CENTER);
@@ -73,6 +73,7 @@ public class AsymmetricSideBar extends AbstractSideBar {
         configureGroupings.setDisable(true);
         sort.setDisable(true);
         reDistributeIndices.setDisable(true);
+        configureInterfaces.setDisable(true);
     }
 
 
@@ -88,6 +89,7 @@ public class AsymmetricSideBar extends AbstractSideBar {
         configureGroupings.setDisable(false);
         sort.setDisable(false);
         reDistributeIndices.setDisable(false);
+        configureInterfaces.setDisable(false);
     }
 
 

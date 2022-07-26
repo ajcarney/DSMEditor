@@ -1,10 +1,8 @@
 package Matrices.IOHandlers;
 
+import Constants.Constants;
 import Matrices.Data.AsymmetricDSMData;
-import Matrices.Data.Entities.DSMConnection;
-import Matrices.Data.Entities.DSMItem;
-import Matrices.Data.Entities.Grouping;
-import Matrices.Data.Entities.RenderMode;
+import Matrices.Data.Entities.*;
 import Matrices.Views.AbstractMatrixView;
 import javafx.scene.paint.Color;
 import javafx.util.Pair;
@@ -22,10 +20,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 
 /**
@@ -115,6 +110,20 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
             matrix.setProjectName(project);
             matrix.setCustomer(customer);
             matrix.setVersionNumber(version);
+
+            // parse interfaces
+            HashMap<String, HashMap<Integer, DSMInterfaceType>> interfaces = new HashMap<>();
+            for(Element interfaceGroupingXML : rootElement.getChild("interfaces").getChildren()) {
+                String interfaceGrouping = interfaceGroupingXML.getAttribute("name").getValue();
+                matrix.addInterfaceTypeGrouping(interfaceGrouping);
+                interfaces.put(interfaceGrouping, new HashMap<>());
+
+                for(Element interfaceXML : interfaceGroupingXML.getChildren()) {
+                    DSMInterfaceType interfaceType = new DSMInterfaceType(interfaceXML);
+                    interfaces.get(interfaceGrouping).put(interfaceType.getUid(), interfaceType);
+                    matrix.addInterface(interfaceGrouping, interfaceType);
+                }
+            }
 
 
             ArrayList<Integer> uids = new ArrayList<>();  // keep track of the uids when reading rows and columns to ensure no duplicates
@@ -208,6 +217,7 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
             Element connectionsElement = new Element("connections");
             Element rowGroupingsElement = new Element("row_groupings");
             Element colGroupingsElement = new Element("col_groupings");
+            Element interfacesElement = new Element("interfaces");
 
             // update metadata
             infoElement.addContent(new Element("title").setText(matrix.getTitle()));
@@ -215,6 +225,7 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
             infoElement.addContent(new Element("customer").setText(matrix.getCustomer()));
             infoElement.addContent(new Element("version").setText(matrix.getVersionNumber()));
             infoElement.addContent(new Element("type").setText("asymmetric"));
+            infoElement.addContent(new Element("file_structure").setText(Constants.version));
 
             // create column elements
             for(DSMItem col : matrix.getCols()) {
@@ -232,12 +243,21 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
             }
 
             // create groupings elements
-
             for(Grouping group: matrix.getGroupings(true)) {
                 rowGroupingsElement.addContent(group.getXML(new Element("group")));
             }
             for(Grouping group: matrix.getGroupings(false)) {
                 colGroupingsElement.addContent(group.getXML(new Element("group")));
+            }
+
+            // create interface type elements
+            for(Map.Entry<String, Vector<DSMInterfaceType>> interfaces : matrix.getInterfaceTypes().entrySet()) {
+                Element interfacesGroupingElement = new Element("grouping");
+                interfacesGroupingElement.setAttribute("name", interfaces.getKey());
+                for(DSMInterfaceType i : interfaces.getValue()) {
+                    interfacesGroupingElement.addContent(i.getXML(new Element("interface")));
+                }
+                interfacesElement.addContent(interfacesGroupingElement);
             }
 
             doc.getRootElement().addContent(infoElement);
@@ -246,6 +266,7 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
             doc.getRootElement().addContent(connectionsElement);
             doc.getRootElement().addContent(rowGroupingsElement);
             doc.getRootElement().addContent(colGroupingsElement);
+            doc.getRootElement().addContent(interfacesElement);
 
             XMLOutputter xmlOutput = new XMLOutputter();
             xmlOutput.setFormat(Format.getPrettyFormat());  // TODO: change this to getCompactFormat() for release
