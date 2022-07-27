@@ -1,9 +1,6 @@
 package Matrices.Data;
 
-import Matrices.Data.Entities.DSMConnection;
-import Matrices.Data.Entities.DSMItem;
-import Matrices.Data.Entities.Grouping;
-import Matrices.Data.Entities.RenderMode;
+import Matrices.Data.Entities.*;
 import Matrices.Data.Flags.IPropagationAnalysis;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -89,6 +86,14 @@ public class SymmetricDSMData extends AbstractDSMData implements IPropagationAna
 
         for(Grouping group : getGroupings()) {
             copy.groupings.add(new Grouping(group));
+        }
+
+        for(Map.Entry<String, Vector<DSMInterfaceType>> interfaceGroup : getInterfaceTypes().entrySet()) {
+            Vector<DSMInterfaceType> interfaces = new Vector<>();
+            for(DSMInterfaceType i : interfaceGroup.getValue()) {
+                interfaces.add(new DSMInterfaceType(i));
+            }
+            copy.interfaceTypes.put(interfaceGroup.getKey(), interfaces);
         }
 
         copy.setTitle(getTitle());
@@ -179,7 +184,7 @@ public class SymmetricDSMData extends AbstractDSMData implements IPropagationAna
                 () -> {  // do function
                     groupings.clear();
                     groupings.add(new Grouping(DEFAULT_GROUP_UID, "(none)", Color.WHITE, Grouping.defaultFontColor));
-                    for(DSMItem r : rows) {  // TODO: fix
+                    for(DSMItem r : rows) {
                         setItemGroup(r, getDefaultGroup());  // only need to set the rows because the operation is symmetric
                     }
                 },
@@ -426,11 +431,11 @@ public class SymmetricDSMData extends AbstractDSMData implements IPropagationAna
      * @param weight         the weight of the connection
      */
     @Override
-    protected void createConnection(int rowUid, int colUid, String connectionName, double weight) {
+    protected void createConnection(int rowUid, int colUid, String connectionName, double weight, ArrayList<DSMInterfaceType> interfaces) {
         // add assertion in this override
         assert getItem(rowUid).getUid() != getItem(colUid).getAliasUid();  // corresponds to where row and column are same and thus connection cannot be made
 
-        DSMConnection connection = new DSMConnection(connectionName, weight, rowUid, colUid);
+        DSMConnection connection = new DSMConnection(connectionName, weight, rowUid, colUid, interfaces);
         connections.add(connection);
     }
 
@@ -444,10 +449,10 @@ public class SymmetricDSMData extends AbstractDSMData implements IPropagationAna
      * @param connectionName the new name of the connections
      * @param weight         the new weight of the connections
      */
-    public void modifyConnectionSymmetric(int rowUid, int colUid, String connectionName, double weight) {
+    public void modifyConnectionSymmetric(int rowUid, int colUid, String connectionName, double weight, ArrayList<DSMInterfaceType> interfaces) {
         Pair<Integer, Integer> uids = getSymmetricConnectionUids(rowUid, colUid);
-        modifyConnection(rowUid, colUid, connectionName, weight);
-        modifyConnection(uids.getKey(), uids.getValue(), connectionName, weight);
+        modifyConnection(rowUid, colUid, connectionName, weight, interfaces);
+        modifyConnection(uids.getKey(), uids.getValue(), connectionName, weight, interfaces);
     }
 //endregion
 

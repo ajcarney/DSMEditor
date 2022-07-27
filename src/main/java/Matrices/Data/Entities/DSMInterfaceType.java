@@ -43,7 +43,6 @@ public class DSMInterfaceType {
      * @param xml  the xml element associated with the interface type
      */
     public DSMInterfaceType(Element xml) {
-        System.out.println(xml);
         this.uid = Integer.parseInt(xml.getChild("uid").getText());
         this.name = xml.getChild("name").getText();
     }

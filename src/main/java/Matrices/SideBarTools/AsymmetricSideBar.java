@@ -341,13 +341,13 @@ public class AsymmetricSideBar extends AbstractSideBar {
             for (Map.Entry<CheckBox, DSMItem> entry : connections.entrySet()) {
                 if(entry.getKey().isSelected()) {
                     if(tg.getSelectedToggle().equals(selectByRow)) {  // selecting by row
-                        DSMConnection conn = new DSMConnection(connectionName.getText(), weight.getNumericValue(), itemSelector.getValue().getUid(), entry.getValue().getUid());
+                        DSMConnection conn = new DSMConnection(connectionName.getText(), weight.getNumericValue(), itemSelector.getValue().getUid(), entry.getValue().getUid(), new ArrayList<>());
                         if(!changesToMakeView.getItems().contains(conn)) {  // ensure no duplicates
                             changesToMakeView.getItems().add(conn);
                         }
 
                     } else if(tg.getSelectedToggle().equals(selectByCol)) {  // selecting by column
-                        DSMConnection conn = new DSMConnection(connectionName.getText(), weight.getNumericValue(), entry.getValue().getUid(), itemSelector.getValue().getUid());
+                        DSMConnection conn = new DSMConnection(connectionName.getText(), weight.getNumericValue(), entry.getValue().getUid(), itemSelector.getValue().getUid(), new ArrayList<>());
                         if(!changesToMakeView.getItems().contains(conn)) {  // ensure no duplicates
                             changesToMakeView.getItems().add(conn);
                         }
@@ -364,7 +364,7 @@ public class AsymmetricSideBar extends AbstractSideBar {
         Button applyAllButton = new Button("Apply All Changes");
         applyAllButton.setOnAction(ee -> {
             for(DSMConnection conn : changesToMakeView.getItems()) {  // rowUid | colUid | name | weight
-                matrix.modifyConnection(conn.getRowUid(), conn.getColUid(), conn.getConnectionName(), conn.getWeight());
+                matrix.modifyConnection(conn.getRowUid(), conn.getColUid(), conn.getConnectionName(), conn.getWeight(), new ArrayList<>());
             }
             window.close();
             matrixView.refreshView();
@@ -454,26 +454,26 @@ public class AsymmetricSideBar extends AbstractSideBar {
             for (Map.Entry<CheckBox, DSMItem> entry : connections.entrySet()) {
                 if (entry.getKey().isSelected() && !connectionName.getText().isEmpty()) {  // create the connection
                     if(tg.getSelectedToggle().equals(selectByRow)) {  // selecting by row
-                        DSMConnection conn = new DSMConnection(connectionName.getText(), weight.getNumericValue(), itemSelector.getValue().getUid(), entry.getValue().getUid());
+                        DSMConnection conn = new DSMConnection(connectionName.getText(), weight.getNumericValue(), itemSelector.getValue().getUid(), entry.getValue().getUid(), new ArrayList<>());
                         if(!changesToMakeView.getItems().contains(conn)) {  // ensure no duplicates
                             changesToMakeView.getItems().add(conn);
                         }
 
                     } else if(tg.getSelectedToggle().equals(selectByCol)) {  // selecting by column
-                        DSMConnection conn = new DSMConnection(connectionName.getText(), weight.getNumericValue(), entry.getValue().getUid(), itemSelector.getValue().getUid());
+                        DSMConnection conn = new DSMConnection(connectionName.getText(), weight.getNumericValue(), entry.getValue().getUid(), itemSelector.getValue().getUid(), new ArrayList<>());
                         if(!changesToMakeView.getItems().contains(conn)) {  // ensure no duplicates
                             changesToMakeView.getItems().add(conn);
                         }
                     }
                 } else {  // delete the connection
                     if(tg.getSelectedToggle().equals(selectByRow)) {  // selecting by row
-                        DSMConnection conn = new DSMConnection("", Double.MAX_VALUE, itemSelector.getValue().getUid(), entry.getValue().getUid());
+                        DSMConnection conn = new DSMConnection("", Double.MAX_VALUE, itemSelector.getValue().getUid(), entry.getValue().getUid(), new ArrayList<>());
                         if(!changesToMakeView.getItems().contains(conn)) {  // ensure no duplicates
                             changesToMakeView.getItems().add(conn);
                         }
 
                     } else if(tg.getSelectedToggle().equals(selectByCol)) {  // selecting by column
-                        DSMConnection conn = new DSMConnection("", Double.MAX_VALUE, entry.getValue().getUid(), itemSelector.getValue().getUid());
+                        DSMConnection conn = new DSMConnection("", Double.MAX_VALUE, entry.getValue().getUid(), itemSelector.getValue().getUid(), new ArrayList<>());
                         if(!changesToMakeView.getItems().contains(conn)) {  // ensure no duplicates
                             changesToMakeView.getItems().add(conn);
                         }
@@ -491,7 +491,7 @@ public class AsymmetricSideBar extends AbstractSideBar {
         applyAllButton.setOnAction(ee -> {
             for(DSMConnection conn : changesToMakeView.getItems()) {
                 if(conn.getConnectionName() != null && conn.getWeight() != Double.MAX_VALUE) {
-                    matrix.modifyConnection(conn.getRowUid(), conn.getColUid(), conn.getConnectionName(), conn.getWeight());
+                    matrix.modifyConnection(conn.getRowUid(), conn.getColUid(), conn.getConnectionName(), conn.getWeight(), new ArrayList<>());
                 } else {
                     matrix.deleteConnection(conn.getRowUid(), conn.getColUid());
                 }

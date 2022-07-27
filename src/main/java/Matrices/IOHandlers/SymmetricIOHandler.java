@@ -105,15 +105,14 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
             matrix.setVersionNumber(version);
 
             // parse interfaces
-            HashMap<String, HashMap<Integer, DSMInterfaceType>> interfaces = new HashMap<>();
+            HashMap<Integer, DSMInterfaceType> interfaces = new HashMap<>();
             for(Element interfaceGroupingXML : rootElement.getChild("interfaces").getChildren()) {
                 String interfaceGrouping = interfaceGroupingXML.getAttribute("name").getValue();
                 matrix.addInterfaceTypeGrouping(interfaceGrouping);
-                interfaces.put(interfaceGrouping, new HashMap<>());
 
                 for(Element interfaceXML : interfaceGroupingXML.getChildren()) {
                     DSMInterfaceType interfaceType = new DSMInterfaceType(interfaceXML);
-                    interfaces.get(interfaceGrouping).put(interfaceType.getUid(), interfaceType);
+                    interfaces.put(interfaceType.getUid(), interfaceType);
                     matrix.addInterface(interfaceGrouping, interfaceType);
                 }
             }
@@ -158,13 +157,19 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
 
             // parse connections
             List<Element> connections = rootElement.getChild("connections").getChildren();
-            for(Element conn : connections) {
-                int rowUid = Integer.parseInt(conn.getChild("row_uid").getText());
-                int colUid = Integer.parseInt(conn.getChild("col_uid").getText());
-                String name = conn.getChild("name").getText();
-                double weight = Double.parseDouble(conn.getChild("weight").getText());
+            for(Element connXML : connections) {
+                int rowUid = Integer.parseInt(connXML.getChild("row_uid").getText());
+                int colUid = Integer.parseInt(connXML.getChild("col_uid").getText());
+                String name = connXML.getChild("name").getText();
+                double weight = Double.parseDouble(connXML.getChild("weight").getText());
 
-                matrix.modifyConnection(rowUid, colUid, name, weight);
+                ArrayList<DSMInterfaceType> connectionInterfaces = new ArrayList<>();
+                for(Element interfaceXML : connXML.getChild("interfaces").getChildren()) {
+                    int interfaceUid = interfaceXML.getAttribute("uid").getIntValue();
+                    connectionInterfaces.add(interfaces.get(interfaceUid));
+                }
+
+                matrix.modifyConnection(rowUid, colUid, name, weight, connectionInterfaces);
             }
 
 
@@ -248,7 +253,7 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
             int rowUid = rowItems.get(conn.get(0).intValue()).getUid();
             int colUid = colItems.get(conn.get(1).intValue()).getUid();
 
-            matrix.modifyConnection(rowUid, colUid, "x", conn.get(2));
+            matrix.modifyConnection(rowUid, colUid, "x", conn.get(2), new ArrayList<>());
         }
 
         matrix.clearStacks();  // make sure there are no changes when it is opened

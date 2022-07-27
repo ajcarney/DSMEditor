@@ -2,8 +2,10 @@ package Matrices.Views;
 
 import Matrices.Data.AbstractDSMData;
 import Matrices.Data.Entities.DSMConnection;
+import Matrices.Data.Entities.DSMInterfaceType;
 import Matrices.Data.Entities.DSMItem;
 import Matrices.Views.Entities.Cell;
+import UI.ConfigureConnectionInterfaces;
 import UI.Widgets.Misc;
 import UI.Widgets.NumericTextField;
 import javafx.beans.binding.Bindings;
@@ -26,6 +28,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Pair;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Optional;
 import java.util.Vector;
@@ -511,6 +514,21 @@ public abstract class AbstractMatrixView implements IMatrixView, Cloneable {
                 row2.getChildren().addAll(weightLabel, weightField);
 
                 // row 3
+                HBox row3 = new HBox();
+                final ArrayList<DSMInterfaceType> interfaceTypes = new ArrayList<>();
+                if(matrix.getConnection(rowUid, colUid) != null) {
+                    interfaceTypes.addAll(matrix.getConnection(rowUid, colUid).getInterfaces());
+                }
+                Button configureInterfacesButton = new Button("Configure Interfaces");
+                configureInterfacesButton.setOnAction(ee -> {
+                    ArrayList<DSMInterfaceType> newInterfaceTypes = ConfigureConnectionInterfaces.configureConnectionInterfaces(matrix.getInterfaceTypes(), interfaceTypes);
+                    interfaceTypes.clear();
+                    interfaceTypes.addAll(newInterfaceTypes);  // copy all the interfaces to the array
+                });
+                row3.getChildren().addAll(Misc.getHorizontalSpacer(), configureInterfacesButton, Misc.getHorizontalSpacer());
+
+
+                // row 4
                 // create HBox for user to close with our without changes
                 HBox closeArea = new HBox();
                 Button applyButton = new Button("Apply Changes");
@@ -522,7 +540,7 @@ public abstract class AbstractMatrixView implements IMatrixView, Cloneable {
                         } catch(NumberFormatException nfe) {
                             weight = 1.0;
                         }
-                        matrix.modifyConnection(rowUid, colUid, nameField.getText(), weight);
+                        matrix.modifyConnection(rowUid, colUid, nameField.getText(), weight, interfaceTypes);
                     } else {
                         matrix.deleteConnection(rowUid, colUid);
                     }
@@ -549,16 +567,16 @@ public abstract class AbstractMatrixView implements IMatrixView, Cloneable {
                 closeArea.getChildren().addAll(cancelButton, Misc.getHorizontalSpacer(), applyButton);
 
                 //Display window and wait for it to be closed before returning
-                layout.getChildren().addAll(titleLabel, row1, row2, closeArea);
+                layout.getChildren().addAll(titleLabel, row1, row2, row3, Misc.getVerticalSpacer(), closeArea);
                 layout.setAlignment(Pos.CENTER);
                 layout.setPadding(new Insets(10, 10, 10, 10));
                 layout.setSpacing(10);
 
-                Scene scene = new Scene(layout, 400, 200);
+                Scene scene = new Scene(layout, 450, 250);
                 window.setScene(scene);
                 window.showAndWait();
 
-                // fire the event because the content could change and the cell might need to do something extra unique
+                // fire the event because the content could change and the cell might need to do something extra that is unique
                 // to a specific kind of matrix handler
                 cell.fireEvent(new CellChangedEvent(CELL_CHANGED_EVENT));
 

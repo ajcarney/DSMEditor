@@ -321,10 +321,11 @@ public abstract class AbstractDSMData {
      * @param colUid         the column item uid
      * @param connectionName the name of the connection
      * @param weight         the weight of the connection
+     * @param interfaces     the interfaces for the connection
      */
-    protected void createConnection(int rowUid, int colUid, String connectionName, double weight) {
-        if(isRow(rowUid) && !isRow(colUid)) {
-            DSMConnection connection = new DSMConnection(connectionName, weight, rowUid, colUid);
+    protected void createConnection(int rowUid, int colUid, String connectionName, double weight, ArrayList<DSMInterfaceType> interfaces) {
+        if(isRow(rowUid) && isCol(colUid)) {
+            DSMConnection connection = new DSMConnection(connectionName, weight, rowUid, colUid, interfaces);
             connections.add(connection);
         }
     }
@@ -411,7 +412,7 @@ public abstract class AbstractDSMData {
 
 
     /**
-     * Returns connections in a mutable way 
+     * Returns connections in a mutable way
      *
      * @return a vector of the connections in the matrix
      */
@@ -467,6 +468,23 @@ public abstract class AbstractDSMData {
     public final boolean isRow(int uid) {
         for(DSMItem row : rows) {
             if(row.getUid() == uid) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+
+    /**
+     * Checks whether a uid is a column or not
+     *
+     * @param uid the uid of the item to check
+     * @return    true or false if it is a column or not
+     */
+    public final boolean isCol(int uid) {
+        for(DSMItem col : cols) {
+            if(col.getUid() == uid) {
                 return true;
             }
         }
@@ -767,30 +785,36 @@ public abstract class AbstractDSMData {
      * @param colUid         the column item uid of the connection
      * @param connectionName the new name of the connection
      * @param weight         the weight of the connection
+     * @param interfaces     the interfaces for the connection
      */
-    public final void modifyConnection(int rowUid, int colUid, String connectionName, double weight) {
+    public final void modifyConnection(int rowUid, int colUid, String connectionName, double weight, ArrayList<DSMInterfaceType> interfaces) {
         DSMConnection connection = null;
         String oldName = "";
         double oldWeight = 0.0;
+        ArrayList<DSMInterfaceType> oldInterfaces = new ArrayList<>();
         for(DSMConnection conn : this.connections) {
             if(rowUid == conn.getRowUid() && colUid == conn.getColUid()) {
                 connection = conn;
                 oldName = conn.getConnectionName();
                 oldWeight = conn.getWeight();
+                oldInterfaces = conn.getInterfaces();
+
                 break;
             }
         }
+
         DSMConnection finalConnection = connection;
         String finalOldName = oldName;
         double finalOldWeight = oldWeight;
-
+        ArrayList<DSMInterfaceType> finalOldInterfaces = oldInterfaces;
         addChangeToStack(new MatrixChange(
                 () -> {  // do function
                     if (finalConnection == null) {
-                        createConnection(rowUid, colUid, connectionName, weight);
+                        createConnection(rowUid, colUid, connectionName, weight, interfaces);
                     } else {
                         finalConnection.setConnectionName(connectionName);
                         finalConnection.setWeight(weight);
+                        finalConnection.setInterfaces(interfaces);
                     }
                 },
                 () -> {  // undo function
@@ -799,6 +823,7 @@ public abstract class AbstractDSMData {
                     } else {
                         finalConnection.setConnectionName(finalOldName);
                         finalConnection.setWeight(finalOldWeight);
+                        finalConnection.setInterfaces(finalOldInterfaces);
                     }
                 },
                 false
@@ -847,7 +872,7 @@ public abstract class AbstractDSMData {
                             removeConnection(rowUid, colUid);
                         },
                         () -> {  // undo function
-                            createConnection(rowUid, colUid, connection.getConnectionName(), connection.getWeight());
+                            createConnection(rowUid, colUid, connection.getConnectionName(), connection.getWeight(), connection.getInterfaces());
                         },
                         false
                 ));
@@ -879,7 +904,7 @@ public abstract class AbstractDSMData {
 
         for(DSMConnection conn : oldConnections) {  // these function calls already put a change on the stack so they don't need to be wrapped
             deleteConnection(conn.getRowUid(), conn.getColUid());
-            modifyConnection(conn.getColUid(), conn.getRowUid(), conn.getConnectionName(), conn.getWeight());
+            modifyConnection(conn.getColUid(), conn.getRowUid(), conn.getConnectionName(), conn.getWeight(), conn.getInterfaces());
         }
 
         addChangeToStack(new MatrixChange(

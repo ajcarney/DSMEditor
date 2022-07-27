@@ -1,9 +1,6 @@
 package Matrices.Data;
 
-import Matrices.Data.Entities.DSMConnection;
-import Matrices.Data.Entities.DSMItem;
-import Matrices.Data.Entities.Grouping;
-import Matrices.Data.Entities.RenderMode;
+import Matrices.Data.Entities.*;
 import Matrices.Data.Flags.IPropagationAnalysis;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -96,6 +93,13 @@ public class AsymmetricDSMData extends AbstractDSMData implements IPropagationAn
             copy.colGroupings.add(new Grouping(group));
         }
 
+        for(Map.Entry<String, Vector<DSMInterfaceType>> interfaceGroup : getInterfaceTypes().entrySet()) {
+            Vector<DSMInterfaceType> interfaces = new Vector<>();
+            for(DSMInterfaceType i : interfaceGroup.getValue()) {
+                interfaces.add(new DSMInterfaceType(i));
+            }
+            copy.interfaceTypes.put(interfaceGroup.getKey(), interfaces);
+        }
 
         copy.setTitle(getTitle());
         copy.setProjectName(getProjectName());
@@ -224,7 +228,7 @@ public class AsymmetricDSMData extends AbstractDSMData implements IPropagationAn
                     if(isRow) {
                         rowGroupings.clear();
                         rowGroupings.add(new Grouping(DEFAULT_GROUP_UID, "(none)", Color.WHITE, Grouping.defaultFontColor));
-                        for(DSMItem r : rows) {  // TODO: fix
+                        for(DSMItem r : rows) {
                             setItemGroup(r, getDefaultGroup(true));
                         }
                     } else {
