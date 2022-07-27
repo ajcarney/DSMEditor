@@ -1,9 +1,7 @@
 package Matrices.IOHandlers;
 
-import Matrices.Data.Entities.DSMConnection;
-import Matrices.Data.Entities.DSMItem;
-import Matrices.Data.Entities.Grouping;
-import Matrices.Data.Entities.RenderMode;
+import Constants.Constants;
+import Matrices.Data.Entities.*;
 import Matrices.Data.SymmetricDSMData;
 import Matrices.IOHandlers.Flags.IThebeauExport;
 import Matrices.Views.AbstractMatrixView;
@@ -106,6 +104,19 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
             matrix.setCustomer(customer);
             matrix.setVersionNumber(version);
 
+            // parse interfaces
+            HashMap<Integer, DSMInterfaceType> interfaces = new HashMap<>();
+            for(Element interfaceGroupingXML : rootElement.getChild("interfaces").getChildren()) {
+                String interfaceGrouping = interfaceGroupingXML.getAttribute("name").getValue();
+                matrix.addInterfaceTypeGrouping(interfaceGrouping);
+
+                for(Element interfaceXML : interfaceGroupingXML.getChildren()) {
+                    DSMInterfaceType interfaceType = new DSMInterfaceType(interfaceXML);
+                    interfaces.put(interfaceType.getUid(), interfaceType);
+                    matrix.addInterface(interfaceGrouping, interfaceType);
+                }
+            }
+
 
             ArrayList<Integer> uids = new ArrayList<>();  // keep track of the uids when reading rows and columns to ensure no duplicates
 
@@ -146,13 +157,19 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
 
             // parse connections
             List<Element> connections = rootElement.getChild("connections").getChildren();
-            for(Element conn : connections) {
-                int rowUid = Integer.parseInt(conn.getChild("row_uid").getText());
-                int colUid = Integer.parseInt(conn.getChild("col_uid").getText());
-                String name = conn.getChild("name").getText();
-                double weight = Double.parseDouble(conn.getChild("weight").getText());
+            for(Element connXML : connections) {
+                int rowUid = Integer.parseInt(connXML.getChild("row_uid").getText());
+                int colUid = Integer.parseInt(connXML.getChild("col_uid").getText());
+                String name = connXML.getChild("name").getText();
+                double weight = Double.parseDouble(connXML.getChild("weight").getText());
 
-                matrix.modifyConnection(rowUid, colUid, name, weight);
+                ArrayList<DSMInterfaceType> connectionInterfaces = new ArrayList<>();
+                for(Element interfaceXML : connXML.getChild("interfaces").getChildren()) {
+                    int interfaceUid = interfaceXML.getAttribute("uid").getIntValue();
+                    connectionInterfaces.add(interfaces.get(interfaceUid));
+                }
+
+                matrix.modifyConnection(rowUid, colUid, name, weight, connectionInterfaces);
             }
 
 
@@ -236,7 +253,7 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
             int rowUid = rowItems.get(conn.get(0).intValue()).getUid();
             int colUid = colItems.get(conn.get(1).intValue()).getUid();
 
-            matrix.modifyConnection(rowUid, colUid, "x", conn.get(2));
+            matrix.modifyConnection(rowUid, colUid, "x", conn.get(2), new ArrayList<>());
         }
 
         matrix.clearStacks();  // make sure there are no changes when it is opened
@@ -266,6 +283,7 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
             Element colsElement = new Element("columns");
             Element connectionsElement = new Element("connections");
             Element groupingsElement = new Element("groupings");
+            Element interfacesElement = new Element("interfaces");
 
             // update metadata
             infoElement.addContent(new Element("title").setText(matrix.getTitle()));
@@ -273,6 +291,7 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
             infoElement.addContent(new Element("customer").setText(matrix.getCustomer()));
             infoElement.addContent(new Element("version").setText(matrix.getVersionNumber()));
             infoElement.addContent(new Element("type").setText("symmetric"));
+            infoElement.addContent(new Element("file_structure").setText(Constants.version));
 
             // create column elements
             for(DSMItem col : matrix.getCols()) {
@@ -294,11 +313,22 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
                 groupingsElement.addContent(group.getXML(new Element("group")));
             }
 
+            // create interface type elements
+            for(Map.Entry<String, Vector<DSMInterfaceType>> interfaces : matrix.getInterfaceTypes().entrySet()) {
+                Element interfacesGroupingElement = new Element("grouping");
+                interfacesGroupingElement.setAttribute("name", interfaces.getKey());
+                for(DSMInterfaceType i : interfaces.getValue()) {
+                    interfacesGroupingElement.addContent(i.getXML(new Element("interface")));
+                }
+                interfacesElement.addContent(interfacesGroupingElement);
+            }
+
             doc.getRootElement().addContent(infoElement);
             doc.getRootElement().addContent(colsElement);
             doc.getRootElement().addContent(rowsElement);
             doc.getRootElement().addContent(connectionsElement);
             doc.getRootElement().addContent(groupingsElement);
+            doc.getRootElement().addContent(interfacesElement);
 
             XMLOutputter xmlOutput = new XMLOutputter();
             xmlOutput.setFormat(Format.getPrettyFormat());  // TODO: change this to getCompactFormat() for release

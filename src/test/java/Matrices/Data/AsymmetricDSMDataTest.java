@@ -41,7 +41,7 @@ public class AsymmetricDSMDataTest {
         AsymmetricDSMData matrix = new AsymmetricDSMData();
         matrix.createItem("row1", true);
         matrix.createItem("col1", false);
-        matrix.modifyConnection(matrix.getRows().get(0).getUid(), matrix.getCols().get(0).getUid(), "x", 1.0);
+        matrix.modifyConnection(matrix.getRows().get(0).getUid(), matrix.getCols().get(0).getUid(), "x", 1.0, new ArrayList<>());
         matrix.setTitle("title");
         matrix.setProjectName("project");
         matrix.setCustomer("customer");

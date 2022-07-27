@@ -1,10 +1,7 @@
 package Matrices.Data;
 
 
-import Matrices.Data.Entities.DSMConnection;
-import Matrices.Data.Entities.DSMItem;
-import Matrices.Data.Entities.Grouping;
-import Matrices.Data.Entities.RenderMode;
+import Matrices.Data.Entities.*;
 import Matrices.Data.Flags.IZoomable;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -123,7 +120,6 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
             copy.connections.add(new DSMConnection(conn));
         }
 
-
         copy.domains = FXCollections.observableHashMap();
         for(ObservableMap.Entry<Grouping, ObservableList<Grouping>> entry : domains.entrySet()) {
             ObservableList<Grouping> domainGroupings = FXCollections.observableArrayList();
@@ -131,6 +127,14 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
                 domainGroupings.add(new Grouping(domainGrouping));
             }
             copy.domains.put(new Grouping(entry.getKey()), domainGroupings);
+        }
+
+        for(Map.Entry<String, Vector<DSMInterfaceType>> interfaceGroup : getInterfaceTypes().entrySet()) {
+            Vector<DSMInterfaceType> interfaces = new Vector<>();
+            for(DSMInterfaceType i : interfaceGroup.getValue()) {
+                interfaces.add(new DSMInterfaceType(i));
+            }
+            copy.interfaceTypes.put(interfaceGroup.getKey(), interfaces);
         }
 
         copy.setTitle(getTitle());
@@ -576,11 +580,11 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
      * @param weight         the weight of the connection
      */
     @Override
-    protected void createConnection(int rowUid, int colUid, String connectionName, double weight) {
+    protected void createConnection(int rowUid, int colUid, String connectionName, double weight, ArrayList<DSMInterfaceType> interfaces) {
         // add assertion in this override
         assert getItem(rowUid).getUid() != getItem(colUid).getAliasUid();  // corresponds to where row and column are same and thus connection cannot be made
 
-        DSMConnection connection = new DSMConnection(connectionName, weight, rowUid, colUid);
+        DSMConnection connection = new DSMConnection(connectionName, weight, rowUid, colUid, interfaces);
         connections.add(connection);
     }
 
@@ -594,10 +598,10 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
      * @param connectionName the new name of the connections
      * @param weight         the new weight of the connections
      */
-    public void modifyConnectionSymmetric(int rowUid, int colUid, String connectionName, double weight) {
+    public void modifyConnectionSymmetric(int rowUid, int colUid, String connectionName, double weight, ArrayList<DSMInterfaceType> interfaces) {
         Pair<Integer, Integer> uids = getSymmetricConnectionUids(rowUid, colUid);
-        modifyConnection(rowUid, colUid, connectionName, weight);
-        modifyConnection(uids.getKey(), uids.getValue(), connectionName, weight);
+        modifyConnection(rowUid, colUid, connectionName, weight, interfaces);
+        modifyConnection(uids.getKey(), uids.getValue(), connectionName, weight, interfaces);
     }
 //endregion
 
@@ -797,7 +801,7 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
                                 removeConnection(conn.getRowUid(), conn.getColUid());
                             },
                             () -> {  // undo function
-                                createConnection(conn.getRowUid(), conn.getColUid(), conn.getConnectionName(), conn.getWeight());
+                                createConnection(conn.getRowUid(), conn.getColUid(), conn.getConnectionName(), conn.getWeight(), conn.getInterfaces());
                             },
                             false
                         ));
@@ -823,7 +827,7 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
                 DSMItem connColItem = getItem(conn.getColUid());
                 assert connRowItem != null && connColItem != null : "Merging rows from symmetric DSM failed";
 
-                modifyConnection(conn.getRowUid(), conn.getColUid(), conn.getConnectionName(), conn.getWeight());
+                modifyConnection(conn.getRowUid(), conn.getColUid(), conn.getConnectionName(), conn.getWeight(), conn.getInterfaces());
             }
 
 
@@ -883,7 +887,7 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
                                     removeConnection(conn.getRowUid(), conn.getColUid());
                                 },
                                 () -> {  // undo function
-                                    createConnection(conn.getRowUid(), conn.getColUid(), conn.getConnectionName(), conn.getWeight());
+                                    createConnection(conn.getRowUid(), conn.getColUid(), conn.getConnectionName(), conn.getWeight(), conn.getInterfaces());
                                 },
                                 false
                         ));
@@ -939,7 +943,7 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
                                     removeConnection(conn.getRowUid(), conn.getColUid());
                                 },
                                 () -> {  // undo function
-                                    createConnection(conn.getRowUid(), conn.getColUid(), conn.getConnectionName(), conn.getWeight());
+                                    createConnection(conn.getRowUid(), conn.getColUid(), conn.getConnectionName(), conn.getWeight(), conn.getInterfaces());
                                 },
                                 false
                         ));
@@ -968,7 +972,7 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
                 DSMItem connColItem = getItem(conn.getColUid());
                 assert connRowItem != null && connColItem != null : "Merging rows from symmetric DSM failed";
 
-                modifyConnection(conn.getRowUid(), conn.getColUid(), conn.getConnectionName(), conn.getWeight());
+                modifyConnection(conn.getRowUid(), conn.getColUid(), conn.getConnectionName(), conn.getWeight(), conn.getInterfaces());
             }
 
         }
@@ -1011,7 +1015,7 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
             // find the connections
             for(DSMConnection conn : connections) {
                 if(exportMatrix.getRows().stream().anyMatch(r -> r.getUid() == conn.getRowUid()) && exportMatrix.getCols().stream().anyMatch(c -> c.getUid() == conn.getColUid())) {
-                    exportMatrix.modifyConnection(conn.getRowUid(), conn.getColUid(), conn.getConnectionName(), conn.getWeight());
+                    exportMatrix.modifyConnection(conn.getRowUid(), conn.getColUid(), conn.getConnectionName(), conn.getWeight(), conn.getInterfaces());
                 }
             }
 
@@ -1047,7 +1051,7 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
             // find the connections
             for(DSMConnection conn : connections) {
                 if(exportMatrix.getRows().stream().anyMatch(r -> r.getUid() == conn.getRowUid()) && exportMatrix.getCols().stream().anyMatch(c -> c.getUid() == conn.getColUid())) {
-                    exportMatrix.modifyConnection(conn.getRowUid(), conn.getColUid(), conn.getConnectionName(), conn.getWeight());
+                    exportMatrix.modifyConnection(conn.getRowUid(), conn.getColUid(), conn.getConnectionName(), conn.getWeight(), conn.getInterfaces());
                 }
             }
 
