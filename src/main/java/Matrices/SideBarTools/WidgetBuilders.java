@@ -2,7 +2,9 @@ package Matrices.SideBarTools;
 
 import Matrices.Data.AbstractDSMData;
 import Matrices.Data.Entities.DSMConnection;
+import Matrices.Data.Entities.DSMInterfaceType;
 import Matrices.Data.Entities.DSMItem;
+import UI.ConfigureConnectionInterfaces;
 import UI.Widgets.Misc;
 import UI.Widgets.NumericTextField;
 import javafx.beans.value.ChangeListener;
@@ -16,6 +18,7 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.util.Callback;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -173,6 +176,7 @@ public class WidgetBuilders {
         RadioButton selectByCol,
         TextField connectionNameEntry,
         NumericTextField weightEntry,
+        ArrayList<DSMInterfaceType> selectedInterfaces,
         Boolean checkConnectionsIfExist
     ) {
         // area to interact with the connections
@@ -314,11 +318,21 @@ public class WidgetBuilders {
         connectionDetailsLayout.setMinWidth(Region.USE_PREF_SIZE);
 
         connectionNameEntry.setPromptText("Connection Name");
-        weightEntry.setPromptText("Connection Weight");
         connectionNameEntry.setMinWidth(connectionNameEntry.getPrefWidth());
+
+        weightEntry.setPromptText("Connection Weight");
         weightEntry.setMinWidth(weightEntry.getPrefWidth());
 
-        connectionDetailsLayout.getChildren().addAll(connectionNameEntry, weightEntry);
+        Button configureInterfacesButton = new Button("Configure Interfaces");
+        configureInterfacesButton.setOnAction(e -> {
+            ArrayList<DSMInterfaceType> newInterfaceTypes = ConfigureConnectionInterfaces.configureConnectionInterfaces(matrix.getInterfaceTypes(), selectedInterfaces);
+            selectedInterfaces.clear();
+            selectedInterfaces.addAll(newInterfaceTypes);  // copy all the interfaces to the array
+        });
+        HBox configureInterfacesPane = new HBox();  // wrap in a pane to center it
+        configureInterfacesPane.getChildren().addAll(Misc.getHorizontalSpacer(), configureInterfacesButton, Misc.getHorizontalSpacer());
+
+        connectionDetailsLayout.getChildren().addAll(connectionNameEntry, weightEntry, configureInterfacesPane);
 
         connectionsArea.getChildren().addAll(itemSelectorView, scrollPane, Misc.getHorizontalSpacer(), connectionDetailsLayout);
     }

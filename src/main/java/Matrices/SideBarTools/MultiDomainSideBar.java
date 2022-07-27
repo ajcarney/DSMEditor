@@ -1,6 +1,7 @@
 package Matrices.SideBarTools;
 
 import Matrices.Data.Entities.DSMConnection;
+import Matrices.Data.Entities.DSMInterfaceType;
 import Matrices.Data.Entities.DSMItem;
 import Matrices.Data.Entities.Grouping;
 import Matrices.Data.MultiDomainDSMData;
@@ -327,19 +328,21 @@ public class MultiDomainSideBar extends AbstractSideBar {
         RadioButton selectByCol = new RadioButton("Column");
         TextField connectionName = new TextField();
         NumericTextField weight = new NumericTextField(null);
+        ArrayList<DSMInterfaceType> selectedInterfaces = new ArrayList<>();
 
         // create the viewer for connections
         WidgetBuilders.createConnectionsViewerScrollPane(
-                matrix,
-                connectionsArea,
-                itemSelector,
-                connections,
-                tg,
-                selectByRow,
-                selectByCol,
-                connectionName,
-                weight,
-                true
+            matrix,
+            connectionsArea,
+            itemSelector,
+            connections,
+            tg,
+            selectByRow,
+            selectByCol,
+            connectionName,
+            weight,
+            selectedInterfaces,
+            true
         );
 
 
@@ -359,13 +362,13 @@ public class MultiDomainSideBar extends AbstractSideBar {
                 }
 
                 if(tg.getSelectedToggle().equals(selectByRow)) {  // selecting by row
-                    DSMConnection conn = new DSMConnection(connectionName.getText(), weight.getNumericValue(), itemSelector.getValue().getUid(), entry.getValue().getUid(), new ArrayList<>());
+                    DSMConnection conn = new DSMConnection(connectionName.getText(), weight.getNumericValue(), itemSelector.getValue().getUid(), entry.getValue().getUid(), selectedInterfaces);
                     if(!changesToMakeView.getItems().contains(conn)) {  // ensure no duplicates
                         changesToMakeView.getItems().add(conn);
                     }
 
                 } else if(tg.getSelectedToggle().equals(selectByCol)) {  // selecting by column
-                    DSMConnection conn = new DSMConnection(connectionName.getText(), weight.getNumericValue(), entry.getValue().getUid(), itemSelector.getValue().getUid(), new ArrayList<>());
+                    DSMConnection conn = new DSMConnection(connectionName.getText(), weight.getNumericValue(), entry.getValue().getUid(), itemSelector.getValue().getUid(), selectedInterfaces);
                     if(!changesToMakeView.getItems().contains(conn)) {  // ensure no duplicates
                         changesToMakeView.getItems().add(conn);
                     }
@@ -389,8 +392,8 @@ public class MultiDomainSideBar extends AbstractSideBar {
                     int symmetricRowUid = matrix.getSymmetricConnectionUids(rowUid, colUid).getKey();
                     int symmetricColUid = matrix.getSymmetricConnectionUids(rowUid, colUid).getValue();
 
-                    DSMConnection conn1 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), rowUid, colUid, new ArrayList<>());
-                    DSMConnection conn2 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), symmetricRowUid, symmetricColUid, new ArrayList<>());
+                    DSMConnection conn1 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), rowUid, colUid, selectedInterfaces);
+                    DSMConnection conn2 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), symmetricRowUid, symmetricColUid, selectedInterfaces);
 
                     if(!changesToMakeView.getItems().contains(conn1)) {  // ensure no duplicates
                         changesToMakeView.getItems().add(conn1);
@@ -404,8 +407,8 @@ public class MultiDomainSideBar extends AbstractSideBar {
                     int symmetricRowUid = matrix.getSymmetricConnectionUids(rowUid, colUid).getKey();
                     int symmetricColUid = matrix.getSymmetricConnectionUids(rowUid, colUid).getValue();
 
-                    DSMConnection conn1 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), rowUid, colUid, new ArrayList<>());
-                    DSMConnection conn2 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), symmetricRowUid, symmetricColUid, new ArrayList<>());
+                    DSMConnection conn1 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), rowUid, colUid, selectedInterfaces);
+                    DSMConnection conn2 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), symmetricRowUid, symmetricColUid, selectedInterfaces);
 
                     if(!changesToMakeView.getItems().contains(conn1)) {  // ensure no duplicates
                         changesToMakeView.getItems().add(conn1);
@@ -425,7 +428,7 @@ public class MultiDomainSideBar extends AbstractSideBar {
         Button applyAllButton = new Button("Apply All Changes");
         applyAllButton.setOnAction(ee -> {
             for(DSMConnection conn : changesToMakeView.getItems()) {  // rowUid | colUid | name | weight
-                matrix.modifyConnection(conn.getRowUid(), conn.getColUid(), conn.getConnectionName(), conn.getWeight(), new ArrayList<>());
+                matrix.modifyConnection(conn.getRowUid(), conn.getColUid(), conn.getConnectionName(), conn.getWeight(), selectedInterfaces);
             }
             window.close();
             matrixView.refreshView();
@@ -486,19 +489,21 @@ public class MultiDomainSideBar extends AbstractSideBar {
         RadioButton selectByCol = new RadioButton("Column");
         TextField connectionName = new TextField();
         NumericTextField weight = new NumericTextField(null);
+        ArrayList<DSMInterfaceType> selectedInterfaces = new ArrayList<>();
 
         // create the viewer for connections
         WidgetBuilders.createConnectionsViewerScrollPane(
-                matrix,
-                connectionsArea,
-                itemSelector,
-                connections,
-                tg,
-                selectByRow,
-                selectByCol,
-                connectionName,
-                weight,
-                true
+            matrix,
+            connectionsArea,
+            itemSelector,
+            connections,
+            tg,
+            selectByRow,
+            selectByCol,
+            connectionName,
+            weight,
+            selectedInterfaces,
+            true
         );
 
 
@@ -515,13 +520,13 @@ public class MultiDomainSideBar extends AbstractSideBar {
             for (Map.Entry<CheckBox, DSMItem> entry : connections.entrySet()) {
                 if (entry.getKey().isSelected() && !connectionName.getText().isEmpty()) {  // create the connection
                     if(tg.getSelectedToggle().equals(selectByRow)) {  // selecting by row
-                        DSMConnection conn = new DSMConnection(connectionName.getText(), weight.getNumericValue(), itemSelector.getValue().getUid(), entry.getValue().getUid(), new ArrayList<>());
+                        DSMConnection conn = new DSMConnection(connectionName.getText(), weight.getNumericValue(), itemSelector.getValue().getUid(), entry.getValue().getUid(), selectedInterfaces);
                         if(!changesToMakeView.getItems().contains(conn)) {  // ensure no duplicates
                             changesToMakeView.getItems().add(conn);
                         }
 
                     } else if(tg.getSelectedToggle().equals(selectByCol)) {  // selecting by column
-                        DSMConnection conn = new DSMConnection(connectionName.getText(), weight.getNumericValue(), entry.getValue().getUid(), itemSelector.getValue().getUid(), new ArrayList<>());
+                        DSMConnection conn = new DSMConnection(connectionName.getText(), weight.getNumericValue(), entry.getValue().getUid(), itemSelector.getValue().getUid(), selectedInterfaces);
                         if(!changesToMakeView.getItems().contains(conn)) {  // ensure no duplicates
                             changesToMakeView.getItems().add(conn);
                         }
@@ -556,8 +561,8 @@ public class MultiDomainSideBar extends AbstractSideBar {
                         int symmetricRowUid = matrix.getSymmetricConnectionUids(rowUid, colUid).getKey();
                         int symmetricColUid = matrix.getSymmetricConnectionUids(rowUid, colUid).getValue();
 
-                        DSMConnection conn1 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), rowUid, colUid, new ArrayList<>());
-                        DSMConnection conn2 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), symmetricRowUid, symmetricColUid, new ArrayList<>());
+                        DSMConnection conn1 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), rowUid, colUid, selectedInterfaces);
+                        DSMConnection conn2 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), symmetricRowUid, symmetricColUid, selectedInterfaces);
 
                         if(!changesToMakeView.getItems().contains(conn1)) {  // ensure no duplicates
                             changesToMakeView.getItems().add(conn1);
@@ -571,8 +576,8 @@ public class MultiDomainSideBar extends AbstractSideBar {
                         int symmetricRowUid = matrix.getSymmetricConnectionUids(rowUid, colUid).getKey();
                         int symmetricColUid = matrix.getSymmetricConnectionUids(rowUid, colUid).getValue();
 
-                        DSMConnection conn1 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), rowUid, colUid, new ArrayList<>());
-                        DSMConnection conn2 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), symmetricRowUid, symmetricColUid, new ArrayList<>());
+                        DSMConnection conn1 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), rowUid, colUid, selectedInterfaces);
+                        DSMConnection conn2 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), symmetricRowUid, symmetricColUid, selectedInterfaces);
 
                         if(!changesToMakeView.getItems().contains(conn1)) {  // ensure no duplicates
                             changesToMakeView.getItems().add(conn1);
@@ -581,7 +586,7 @@ public class MultiDomainSideBar extends AbstractSideBar {
                             changesToMakeView.getItems().add(conn2);
                         }
                     }
-                } else {
+                } else {  // deleting connection
                     if(tg.getSelectedToggle().equals(selectByRow)) {  // selecting by row
                         int rowUid = itemSelector.getValue().getUid();
                         int colUid = entry.getValue().getUid();
@@ -625,7 +630,7 @@ public class MultiDomainSideBar extends AbstractSideBar {
         applyAllButton.setOnAction(ee -> {
             for(DSMConnection conn : changesToMakeView.getItems()) {
                 if(!conn.getConnectionName().isEmpty() && conn.getWeight() != Double.MAX_VALUE) {
-                    matrix.modifyConnection(conn.getRowUid(), conn.getColUid(), conn.getConnectionName(), conn.getWeight(), new ArrayList<>());
+                    matrix.modifyConnection(conn.getRowUid(), conn.getColUid(), conn.getConnectionName(), conn.getWeight(), selectedInterfaces);
                 } else {
                     matrix.deleteConnection(conn.getRowUid(), conn.getColUid());
                 }
