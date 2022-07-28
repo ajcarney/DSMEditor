@@ -113,12 +113,12 @@ public class MultiDomainView extends AbstractMatrixView implements ISymmetricHig
             cell.setCellHighlight(cell.getHighlightBG("error"));
             cell.setCellTextColor(Grouping.defaultFontColor);
 
-        } else if(cell.getHighlightBG("symmetryError") != null) {
-            cell.setCellHighlight(cell.getHighlightBG("symmetryError"));
-            cell.setCellTextColor(Grouping.defaultFontColor);
-
         } else if(cell.getHighlightBG("search") != null) {
             cell.setCellHighlight(cell.getHighlightBG("search"));
+            cell.setCellTextColor(Grouping.defaultFontColor);
+
+        } else if(cell.getHighlightBG("symmetryError") != null) {
+            cell.setCellHighlight(cell.getHighlightBG("symmetryError"));
             cell.setCellTextColor(Grouping.defaultFontColor);
 
         } else if (cell.getHighlightBG("cross") != null && cell.getCrossHighlightEnabled()) {
@@ -136,7 +136,7 @@ public class MultiDomainView extends AbstractMatrixView implements ISymmetricHig
                 cell.setCellHighlight(matrix.getItem(colUid).getGroup1().getColor());
                 cell.setCellTextColor(matrix.getItem(colUid).getGroup1().getFontColor());
             } else if (rowUid != null && colUid == null) {  // highlight with row color
-                if(cell.getGridLocation().getValue() == domainColumn) {
+                if(cell.getGridLocation().getValue().equals(domainColumn)) {
                     cell.setCellHighlight(matrix.getItem(rowUid).getGroup2().getColor());
                     cell.setCellTextColor(matrix.getItem(rowUid).getGroup2().getFontColor());
                 } else {

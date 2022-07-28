@@ -4,8 +4,8 @@ import Constants.Constants;
 import Matrices.Data.AbstractDSMData;
 import Matrices.IDSM;
 import Matrices.MatricesCollection;
+import Matrices.Views.AbstractMatrixView;
 import UI.Widgets.DraggableTab;
-import UI.Widgets.Misc;
 import javafx.beans.binding.Bindings;
 import javafx.scene.control.TabPane;
 import javafx.scene.input.KeyCode;
@@ -90,11 +90,26 @@ public class EditorPane {
      */
     public AbstractDSMData getFocusedMatrixData() {
         try {
-            return matrices.getMatrix(getFocusedMatrixUid()).getMatrixData();
+            return matrices.getMatrix(getFocusedMatrixUid()).getMatrixEditorTab().getMatrixData();
         } catch(Exception e) {
             return null;
         }
     }
+
+
+    /**
+     * Finds the matrix the user is focused on by using a lookup table
+     *
+     * @return  the uid of the matrix that is focused
+     */
+    public AbstractMatrixView getFocusedMatrixView() {
+        try {
+            return matrices.getMatrix(getFocusedMatrixUid()).getMatrixEditorTab().getMatrixView();
+        } catch(Exception e) {
+            return null;
+        }
+    }
+
 
 
     /**
@@ -177,8 +192,7 @@ public class EditorPane {
      *
      * @param  matrix  the matrix to add a tab for
      */
-    public void addTab(IDSM matrix)
-    {
+    public void addTab(IDSM matrix) {
         int matrixUid = currentMatrixUid;
         currentMatrixUid += 1;
 

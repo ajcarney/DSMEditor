@@ -1,5 +1,6 @@
 package Matrices.EditorTabs;
 
+import Matrices.Data.AbstractDSMData;
 import Matrices.Data.AsymmetricDSMData;
 import Matrices.SideBarTools.AsymmetricSideBar;
 import Matrices.Views.AsymmetricView;
@@ -73,5 +74,14 @@ public class AsymmetricEditorTab implements IEditorTab {
     @Override
     public AsymmetricView getMatrixView() {
         return matrixView;
+    }
+
+
+    /**
+     * @return  the matrix data of the open matrix
+     */
+    @Override
+    public AsymmetricDSMData getMatrixData() {
+        return matrixData;
     }
 }

@@ -71,9 +71,9 @@ public class DSMApplication extends Application {
 //            if(f.exists()) {
 //                editor.addTab(new MultiDomainDSM(f, editor.getHeaderMenu()));
 //            }
-            File f = new File("/home/aiden/Documents/DSMEditor/symmetric.dsm");
+            File f = new File("/home/aiden/Documents/DSMEditor/multi_domain.dsm");
             if(f.exists()) {
-                editor.addTab(new SymmetricDSM(f));
+                editor.addTab(new MultiDomainDSM(f, editor.getHeaderMenu()));
             }
         }
 

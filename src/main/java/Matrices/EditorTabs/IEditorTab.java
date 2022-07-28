@@ -1,6 +1,7 @@
 package Matrices.EditorTabs;
 
-import Matrices.Views.IMatrixView;
+import Matrices.Data.AbstractDSMData;
+import Matrices.Views.AbstractMatrixView;
 import javafx.scene.layout.Pane;
 
 /**
@@ -35,8 +36,14 @@ public interface IEditorTab {
 
 
     /**
-     * @return  The matrix view in case it needs to be used directly somewhere
+     * @return  The matrix view currently selected in case it needs to be used directly somewhere
      */
-    IMatrixView getMatrixView();
+    AbstractMatrixView getMatrixView();
+
+
+    /**
+     * @return  the matrix data of the open matrix
+     */
+    AbstractDSMData getMatrixData();
 
 }

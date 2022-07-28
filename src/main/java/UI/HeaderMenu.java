@@ -16,7 +16,6 @@ import Matrices.MultiDomainDSM;
 import Matrices.SymmetricDSM;
 import Matrices.Views.AbstractMatrixView;
 import Matrices.Views.Flags.ISymmetricHighlight;
-import Matrices.Views.IMatrixView;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -49,7 +48,7 @@ public class HeaderMenu {
     //private IDSM matrix;
     private AbstractDSMData matrixData;
     private AbstractIOHandler ioHandler;
-    private IMatrixView matrixView;
+    private AbstractMatrixView matrixView;
 
     /**
      * Creates a new instance of the header menu and instantiate widgets on it
@@ -203,7 +202,7 @@ public class HeaderMenu {
      *
      * @param menu  the Menu object
      */
-    public <T extends MenuItem> void setupSaveFileMenuButton(T menu) {
+    public void setupSaveFileMenuButton(MenuItem menu) {
         menu.setOnAction(e -> {
             if(matrixData == null) return;
 
@@ -540,7 +539,7 @@ public class HeaderMenu {
      * @param ioHandler   the matrix ioHandler object
      * @param matrixView  the matrix view object
      */
-    public void refresh(AbstractDSMData matrixData, AbstractIOHandler ioHandler, IMatrixView matrixView) {
+    public void refresh(AbstractDSMData matrixData, AbstractIOHandler ioHandler, AbstractMatrixView matrixView) {
         this.matrixData = matrixData;
         this.ioHandler = ioHandler;
         this.matrixView = matrixView;

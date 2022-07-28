@@ -4,7 +4,7 @@ import Matrices.Data.MultiDomainDSMData;
 import Matrices.EditorTabs.MultiDomainEditorTab;
 import Matrices.IOHandlers.MultiDomainIOHandler;
 import Matrices.SideBarTools.MultiDomainSideBar;
-import Matrices.Views.IMatrixView;
+import Matrices.Views.AbstractMatrixView;
 import Matrices.Views.MultiDomainView;
 import UI.HeaderMenu;
 
@@ -82,7 +82,7 @@ public class MultiDomainDSM implements IDSM {
      * @return  the DSM View object for the matrix
      */
     @Override
-    public IMatrixView getMatrixView() {
+    public AbstractMatrixView getMatrixView() {
         return editorTab.getMatrixView();
     }
 

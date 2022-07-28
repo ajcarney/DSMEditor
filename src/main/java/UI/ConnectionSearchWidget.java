@@ -106,7 +106,7 @@ public class ConnectionSearchWidget {
                 }
 
                 synchronized (editor.getFocusedMatrixData()) {  // TODO: maybe this synchronization call can be removed. Idk, i was too scared to check
-                    AbstractMatrixView m = this.editor.getMatricesCollection().getMatrix(editor.getFocusedMatrixUid()).getMatrixView();
+                    AbstractMatrixView m = this.editor.getFocusedMatrixView();
 
                     matches = getMatches(searchInput.getText());
                     Set<Pair<Integer, Integer>> prevAndCurrentErrors = new HashSet<>(prevMatches);

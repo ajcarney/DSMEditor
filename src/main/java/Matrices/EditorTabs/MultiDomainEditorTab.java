@@ -10,10 +10,7 @@ import Matrices.SideBarTools.AbstractSideBar;
 import Matrices.SideBarTools.AsymmetricSideBar;
 import Matrices.SideBarTools.MultiDomainSideBar;
 import Matrices.SideBarTools.SymmetricSideBar;
-import Matrices.Views.AsymmetricView;
-import Matrices.Views.IMatrixView;
-import Matrices.Views.MultiDomainView;
-import Matrices.Views.SymmetricView;
+import Matrices.Views.*;
 import UI.HeaderMenu;
 import UI.MatrixMetaDataPane;
 import UI.Widgets.DraggableTab;
@@ -51,7 +48,7 @@ public class MultiDomainEditorTab implements IEditorTab {
 
 
     protected final TabPane tabPane = new TabPane();
-    protected final HashMap<DraggableTab, Pair<AbstractDSMData, IMatrixView>> tabsData = new HashMap<>();  // tab object, matrix uid
+    protected final HashMap<DraggableTab, Pair<AbstractDSMData, AbstractMatrixView>> tabsData = new HashMap<>();  // tab object, matrix uid
 
 
     /**
@@ -89,11 +86,11 @@ public class MultiDomainEditorTab implements IEditorTab {
             // don't allow editing if breakout views are open
             MultiDomainSideBar sideBar = new MultiDomainSideBar(this.matrixData, this.matrixView);
             if(tabsData.keySet().size() > 1) {
-                this.matrixView.setCurrentMode(IMatrixView.MatrixViewMode.STATIC);
+                this.matrixView.setCurrentMode(AbstractMatrixView.MatrixViewMode.STATIC);
                 sideBar.setDisabled();
                 headerMenu.setEditDisabled(true);
             } else {
-                this.matrixView.setCurrentMode(IMatrixView.MatrixViewMode.EDIT);
+                this.matrixView.setCurrentMode(AbstractMatrixView.MatrixViewMode.EDIT);
                 sideBar.setEnabled();
                 headerMenu.setEditDisabled(false);
             }
@@ -201,7 +198,7 @@ public class MultiDomainEditorTab implements IEditorTab {
      */
     public void addBreakOutView(Grouping fromGroup, Grouping toGroup) {
         AbstractDSMData data = this.matrixData.exportZoom(fromGroup, toGroup);
-        IMatrixView view;
+        AbstractMatrixView view;
         AbstractSideBar sideBar;
         AbstractIOHandler ioHandler;
         if(data instanceof SymmetricDSMData symmetricData) {
@@ -303,8 +300,17 @@ public class MultiDomainEditorTab implements IEditorTab {
      * @return  The matrix view used by the tab
      */
     @Override
-    public IMatrixView getMatrixView() {
+    public AbstractMatrixView getMatrixView() {
         return tabsData.get((DraggableTab)tabPane.getSelectionModel().getSelectedItem()).getValue();
+    }
+
+
+    /**
+     * @return  the matrix data of the open matrix
+     */
+    @Override
+    public AbstractDSMData getMatrixData() {
+        return tabsData.get((DraggableTab)tabPane.getSelectionModel().getSelectedItem()).getKey();
     }
 
 }

@@ -342,7 +342,7 @@ public class MultiDomainSideBar extends AbstractSideBar {
             connectionName,
             weight,
             selectedInterfaces,
-            true
+            false
         );
 
 
