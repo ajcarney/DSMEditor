@@ -3,9 +3,12 @@ package Matrices.EditorTabs;
 import Matrices.Data.AsymmetricDSMData;
 import Matrices.Data.SymmetricDSMData;
 import Matrices.SideBarTools.SymmetricSideBar;
+import Matrices.Views.AbstractMatrixView;
 import Matrices.Views.SymmetricView;
 import UI.MatrixMetaDataPane;
 import javafx.scene.layout.Pane;
+
+import java.util.ArrayList;
 
 
 /**
@@ -74,6 +77,17 @@ public class SymmetricEditorTab implements IEditorTab {
     @Override
     public SymmetricView getMatrixView() {
         return matrixView;
+    }
+
+
+    /**
+     * @return  all the matrix views currently in the editor tab
+     */
+    @Override
+    public ArrayList<AbstractMatrixView> getAllMatrixViews() {
+        ArrayList<AbstractMatrixView> views = new ArrayList<>();
+        views.add(matrixView);
+        return views;
     }
 
 

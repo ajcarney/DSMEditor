@@ -2,11 +2,13 @@ package UI;
 
 import Constants.Constants;
 import Matrices.Data.AbstractDSMData;
+import Matrices.EditorTabs.IEditorTab;
 import Matrices.IDSM;
 import Matrices.MatricesCollection;
 import Matrices.Views.AbstractMatrixView;
 import UI.Widgets.DraggableTab;
 import javafx.beans.binding.Bindings;
+import javafx.scene.Scene;
 import javafx.scene.control.TabPane;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
@@ -214,11 +216,6 @@ public class EditorPane {
         tab.setContent(this.matrices.getMatrix(matrixUid).getMatrixEditorTab().getCenterPane());
 
         tab.setDetachable(false);
-        tabPane.getScene().setOnKeyPressed(e -> {  // add keybinding to toggle cross-highlighting on the editor
-            if (e.getCode() == KeyCode.F) {
-                this.matrices.getMatrix(matrixUid).getMatrixView().toggleCrossHighlighting();
-            }
-        });
 
         tab.setOnCloseRequest(e -> {
             if(!matrices.isMatrixSaved(matrixUid)) {
@@ -372,6 +369,25 @@ public class EditorPane {
         this.matrices.getMatrix(getFocusedMatrixUid()).getMatrixView().setFontSize(DEFAULT_FONT_SIZE);
         this.matrices.getMatrix(getFocusedMatrixUid()).getMatrixView().refreshView();
         refreshSelectedTab();
+    }
+
+
+    /**
+     * Configures the keyboard bindings to run on a given scene. Use scene so that binding will trigger no
+     * matter which node is focused
+     *
+     * @param scene
+     */
+    public void configureKeyboardBindings(Scene scene) {
+        scene.setOnKeyPressed(e -> {  // add keybinding to toggle cross-highlighting on the editor
+            if (e.getCode() == KeyCode.F) {
+                for(IEditorTab editorPane : matrices.getMatrices().values().stream().map(IDSM::getMatrixEditorTab).toList()) {
+                    for(AbstractMatrixView view : editorPane.getAllMatrixViews()) {
+                        view.toggleCrossHighlighting();
+                    }
+                }
+            }
+        });
     }
 
 }

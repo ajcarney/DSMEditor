@@ -230,6 +230,14 @@ public class SymmetricView extends AbstractMatrixView implements ISymmetricHighl
             refreshCellHighlight(cell);
         }
     }
+
+
+    /**
+     * @return  if validation symmetry is set or not
+     */
+    public boolean getSymmetryValidation() {
+        return symmetryValidation;
+    }
     //endregion
 
 

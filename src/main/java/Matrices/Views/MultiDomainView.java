@@ -240,6 +240,14 @@ public class MultiDomainView extends AbstractMatrixView implements ISymmetricHig
             refreshCellHighlight(cell);
         }
     }
+
+
+    /**
+     * @return  if validation symmetry is set or not
+     */
+    public boolean getSymmetryValidation() {
+        return symmetryValidation;
+    }
     //endregion
 
 

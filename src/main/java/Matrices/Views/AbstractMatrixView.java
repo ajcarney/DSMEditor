@@ -158,12 +158,10 @@ public abstract class AbstractMatrixView {
     protected Cell getCellByLoc(Pair<Integer, Integer> cellLoc) {
         // searching in parallel can add some performance improvements once the size of the cells vector increases
         // to a certain point and the overhead is not such that it will detriment smaller matrices significantly
+        assert cellLoc != null : "cellLoc was null";
+
         Optional<Cell> c = cells.stream().parallel().filter(cell -> cell.getGridLocation().getKey().equals(cellLoc.getKey()) && cell.getGridLocation().getValue().equals(cellLoc.getValue())).findFirst();
-        if(c.isPresent()) {
-            return c.get();
-        } else {
-            return null;
-        }
+        return c.orElse(null);
     }
 
 

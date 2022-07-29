@@ -15,4 +15,10 @@ public interface ISymmetricHighlight {
      * Sets symmetryValidation to false in order to stop highlighting symmetry errors
      */
     void clearValidateSymmetry();
+
+
+    /**
+     * @return  if validation symmetry is set or not
+     */
+    boolean getSymmetryValidation();
 }

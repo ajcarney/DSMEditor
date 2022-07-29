@@ -26,6 +26,7 @@ import javafx.util.Callback;
 import javafx.util.Pair;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 
@@ -302,6 +303,19 @@ public class MultiDomainEditorTab implements IEditorTab {
     @Override
     public AbstractMatrixView getMatrixView() {
         return tabsData.get((DraggableTab)tabPane.getSelectionModel().getSelectedItem()).getValue();
+    }
+
+
+    /**
+     * @return  all the matrix views currently in the editor tab
+     */
+    @Override
+    public ArrayList<AbstractMatrixView> getAllMatrixViews() {
+        ArrayList<AbstractMatrixView> views = new ArrayList<>();
+        for(Pair<AbstractDSMData, AbstractMatrixView> data : tabsData.values()) {
+            views.add(data.getValue());
+        }
+        return views;
     }
 
 

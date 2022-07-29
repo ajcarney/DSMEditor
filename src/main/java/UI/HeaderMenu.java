@@ -4,6 +4,10 @@ import Constants.Constants;
 import Matrices.AsymmetricDSM;
 import Matrices.Data.AbstractDSMData;
 import Matrices.Data.AsymmetricDSMData;
+import Matrices.Data.Entities.DSMConnection;
+import Matrices.Data.Entities.DSMInterfaceType;
+import Matrices.Data.Entities.DSMItem;
+import Matrices.Data.Entities.Grouping;
 import Matrices.Data.Flags.IPropagationAnalysis;
 import Matrices.Data.MultiDomainDSMData;
 import Matrices.Data.SymmetricDSMData;
@@ -16,16 +20,21 @@ import Matrices.MultiDomainDSM;
 import Matrices.SymmetricDSM;
 import Matrices.Views.AbstractMatrixView;
 import Matrices.Views.Flags.ISymmetricHighlight;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+import org.jdom2.Element;
 
 import java.io.File;
+import java.util.*;
 
 
 /**
@@ -363,22 +372,101 @@ public class HeaderMenu {
         });
 
 
+        MenuItem convertToMDM = new MenuItem("Convert to Multi-Domain");
+        convertToMDM.setOnAction(e -> {
+            if(matrixData instanceof SymmetricDSMData symmetricMatrix) {
+                // create the default domain and the groupings
+                ArrayList<Grouping> domainGroupings = new ArrayList<>();
+                for(Grouping grouping : symmetricMatrix.getGroupings()) {
+                    domainGroupings.add(new Grouping(grouping));
+                }
+                HashMap<Grouping, Collection<Grouping>> domains = new HashMap<>();
+                Grouping domain = new Grouping("default", Color.color(1, 1, 1));
+                domains.put(domain, domainGroupings);
+
+                MultiDomainDSMData multiDomainMatrix = new MultiDomainDSMData(domains);
+                multiDomainMatrix.setTitle(symmetricMatrix.getTitle());
+                multiDomainMatrix.setProjectName(symmetricMatrix.getProjectName());
+                multiDomainMatrix.setCustomer(symmetricMatrix.getCustomer());
+                multiDomainMatrix.setVersionNumber(symmetricMatrix.getVersionNumber());
+
+                // create the items
+                for(DSMItem row : symmetricMatrix.getRows()) {
+                    DSMItem newRow = new DSMItem(row);
+                    newRow.setGroup2(domain);
+                    multiDomainMatrix.addItem(newRow, true);
+                }
+                for(DSMItem col : symmetricMatrix.getCols()) {
+                    DSMItem newCol = new DSMItem(col);
+                    newCol.setGroup2(domain);
+                    multiDomainMatrix.addItem(newCol, false);
+                }
+
+                // create the connections
+                for(DSMConnection conn : symmetricMatrix.getConnections()) {
+                    ArrayList<DSMInterfaceType> connectionInterfaces = new ArrayList<>();  // parse interfaces
+                    for(DSMInterfaceType interfaceType : conn.getInterfaces()) {
+                        connectionInterfaces.add(new DSMInterfaceType(interfaceType));
+                    }
+                    multiDomainMatrix.modifyConnection(conn.getRowUid(), conn.getColUid(), conn.getConnectionName(), conn.getWeight(), connectionInterfaces);
+                }
+
+                // create the interfaces
+                HashMap<String, Vector<DSMInterfaceType>> interfaceTypes = new HashMap<>();
+                for(Map.Entry<String, Vector<DSMInterfaceType>> interfaceGroup : symmetricMatrix.getInterfaceTypes().entrySet()) {
+                    Vector<DSMInterfaceType> interfaces = new Vector<>();
+                    for(DSMInterfaceType i : interfaceGroup.getValue()) {
+                        interfaces.add(new DSMInterfaceType(i));
+                    }
+                    interfaceTypes.put(interfaceGroup.getKey(), interfaces);
+                }
+                for(String interfaceGrouping : interfaceTypes.keySet()) {  // add the groupings
+                    multiDomainMatrix.addInterfaceTypeGrouping(interfaceGrouping);
+                }
+                for(Map.Entry<String, Vector<DSMInterfaceType>> interfaces : interfaceTypes.entrySet()) {  // add the interfaces
+                    for(DSMInterfaceType i : interfaces.getValue()) {
+                        multiDomainMatrix.addInterface(interfaces.getKey(), i);
+                    }
+                }
+
+                multiDomainMatrix.setCurrentStateAsCheckpoint();
+                multiDomainMatrix.clearStacks();
+
+
+                File file = new File("./untitled" + defaultName);
+                while(file.exists()) {  // make sure file does not exist
+                    defaultName += 1;
+                    file = new File("./untitled" + defaultName);
+                }
+                MultiDomainIOHandler ioHandler = new MultiDomainIOHandler(file, multiDomainMatrix);
+
+                this.editor.addTab(new MultiDomainDSM(multiDomainMatrix, ioHandler, this));
+
+                defaultName += 1;
+            }
+        });
+
+
         editMenu.setOnShown(e -> {
             if(matrixData == null) {
                 undo.setDisable(true);
                 redo.setDisable(true);
+                convertToMDM.setDisable(true);
             } else {
                 undo.setDisable(!matrixData.canUndo());
                 redo.setDisable(!matrixData.canRedo());
+                convertToMDM.setDisable(false);
             }
         });
 
 
         editMenu.getItems().add(undo);
         editMenu.getItems().add(redo);
-        if(matrixData != null) {
-            editMenu.getItems().add(new SeparatorMenuItem());
-            editMenu.getItems().add(invert);
+        editMenu.getItems().add(new SeparatorMenuItem());
+        editMenu.getItems().add(invert);
+
+        if(matrixData instanceof SymmetricDSMData) {
+            editMenu.getItems().add(convertToMDM);
         }
     }
 
@@ -396,8 +484,8 @@ public class HeaderMenu {
 
         if(matrixView instanceof ISymmetricHighlight symmetricMatrixView) {
             RadioMenuItem validateSymmetry = new RadioMenuItem("Validate Symmetry");
+            validateSymmetry.setSelected(symmetricMatrixView.getSymmetryValidation());
             validateSymmetry.setOnAction(e -> {
-                //SymmetricView matrixView = (SymmetricView) editor.getMatrixController().getMatrixView(editor.getFocusedMatrixUid());
                 if (validateSymmetry.isSelected()) {
                     symmetricMatrixView.setValidateSymmetry();
                 } else {
@@ -487,6 +575,24 @@ public class HeaderMenu {
             showNames.setSelected(true);
             fastRender.setSelected(false);
         }
+
+
+        editMenu.setOnShown(e -> {
+            if(matrixData == null) {
+                zoomIn.setDisable(true);
+                zoomOut.setDisable(true);
+                zoomReset.setDisable(true);
+                showNames.setDisable(true);
+                fastRender.setDisable(true);
+            } else {
+                zoomIn.setDisable(false);
+                zoomOut.setDisable(false);
+                zoomReset.setDisable(false);
+                showNames.setDisable(false);
+                fastRender.setDisable(false);
+            }
+        });
+
 
         viewMenu.getItems().addAll(zoomIn, zoomOut, zoomReset);
         viewMenu.getItems().add(new SeparatorMenuItem());
