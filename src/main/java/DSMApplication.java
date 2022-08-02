@@ -69,15 +69,15 @@ public class DSMApplication extends Application {
 //                        new AsymmetricSideBar(matrix, editor)
 //                );
 //            }
-            File f = new File("/home/aiden/Documents/DSMEditor/symmetric.dsm");
-            if(f.exists()) {
-                editor.addTab(new SymmetricDSM(f));
-            }
-
-//            File f = new File("/home/aiden/Documents/DSMEditor/multi_domain.dsm");
+//            File f = new File("/home/aiden/Documents/DSMEditor/symmetric.dsm");
 //            if(f.exists()) {
-//                editor.addTab(new MultiDomainDSM(f, editor.getHeaderMenu()));
+//                editor.addTab(new SymmetricDSM(f));
 //            }
+
+            File f = new File("/home/aiden/Documents/DSMEditor/multi_domain.dsm");
+            if(f.exists()) {
+                editor.addTab(new MultiDomainDSM(f, editor.getHeaderMenu()));
+            }
         }
 
         for (String cliArg : cliArgs) {

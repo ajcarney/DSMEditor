@@ -36,7 +36,7 @@ public class SymmetricDSMData extends AbstractDSMData implements IPropagationAna
 
         connections = new Vector<>();
         groupings = FXCollections.observableArrayList();
-        addGrouping(new Grouping(DEFAULT_GROUP_UID, "(none)", Color.WHITE, Grouping.defaultFontColor));
+        addGrouping(new Grouping(DEFAULT_GROUP_UID, Grouping.DEFAULT_PRIORITY, "(none)", Color.WHITE, Grouping.DEFAULT_FONT_COLOR));
 
         setWasModified();
 
@@ -183,7 +183,7 @@ public class SymmetricDSMData extends AbstractDSMData implements IPropagationAna
         addChangeToStack(new MatrixChange(
                 () -> {  // do function
                     groupings.clear();
-                    groupings.add(new Grouping(DEFAULT_GROUP_UID, "(none)", Color.WHITE, Grouping.defaultFontColor));
+                    groupings.add(new Grouping(DEFAULT_GROUP_UID, Grouping.DEFAULT_PRIORITY,  "(none)", Color.WHITE, Grouping.DEFAULT_FONT_COLOR));
                     for(DSMItem r : rows) {
                         setItemGroup(r, getDefaultGroup());  // only need to set the rows because the operation is symmetric
                     }

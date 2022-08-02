@@ -7,9 +7,7 @@ import javafx.scene.paint.Color;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -114,6 +112,116 @@ public class MultiDomainDSMDataTest {
         stressUndoRedo(matrix);
 
         Assertions.assertTrue(matrix.getDomainGroupings(domain).contains(group));
+    }
+
+
+    /**
+     * Test shifting a domain down in order. Stresses the undo/redo cycle
+     */
+    @Test
+    public void shiftDomainDown() {
+        Grouping domain1 = new Grouping(111, 1, "domain1", null, null);
+        Grouping domain2 = new Grouping(222, 2, "domain2", null, null);
+        Grouping domain3 = new Grouping(333, 3, "domain3", null, null);
+
+        HashMap<Grouping, Collection<Grouping>> domains = new HashMap<>();
+        domains.put(domain1, new ArrayList<>());
+        domains.put(domain2, new ArrayList<>());
+        domains.put(domain3, new ArrayList<>());
+        MultiDomainDSMData matrix = new MultiDomainDSMData(domains);  // create domains this way to ensure full control
+
+        matrix.setCurrentStateAsCheckpoint();
+
+        // Test 1  -  shifting to the bottom
+        matrix.shiftDomainDown(domain1);
+        matrix.shiftDomainDown(domain1);  // shift to the bottom
+
+        Assertions.assertEquals(matrix.getDomains().get(0), domain2);  // assert ordering is 2, 3, 1
+        Assertions.assertEquals(matrix.getDomains().get(1), domain3);
+        Assertions.assertEquals(matrix.getDomains().get(2), domain1);
+
+        // Test 2  -  shift past bottom (should not do anything)
+        matrix.shiftDomainDown(domain1);
+        Assertions.assertEquals(matrix.getDomains().get(0), domain2);  // assert ordering is still 2, 3, 1
+        Assertions.assertEquals(matrix.getDomains().get(1), domain3);
+        Assertions.assertEquals(matrix.getDomains().get(2), domain1);
+
+        stressUndoRedo(matrix);
+
+        Assertions.assertEquals(matrix.getDomains().get(0), domain2);  // assert ordering is still 2, 3, 1
+        Assertions.assertEquals(matrix.getDomains().get(1), domain3);
+        Assertions.assertEquals(matrix.getDomains().get(2), domain1);
+    }
+
+
+    /**
+     * Test shifting a domain down in order. Stresses the undo/redo cycle
+     */
+    @Test
+    public void shiftDomainUp() {
+        Grouping domain1 = new Grouping(111, 1, "domain1", null, null);
+        Grouping domain2 = new Grouping(222, 2, "domain2", null, null);
+        Grouping domain3 = new Grouping(333, 3, "domain3", null, null);
+
+        HashMap<Grouping, Collection<Grouping>> domains = new HashMap<>();
+        domains.put(domain1, new ArrayList<>());
+        domains.put(domain2, new ArrayList<>());
+        domains.put(domain3, new ArrayList<>());
+        MultiDomainDSMData matrix = new MultiDomainDSMData(domains);  // create domains this way to ensure full control
+
+        matrix.setCurrentStateAsCheckpoint();
+
+        // Test 1  -  shifting to the bottom
+        matrix.shiftDomainUp(domain3);
+        matrix.shiftDomainUp(domain3);  // shift to the bottom
+
+        Assertions.assertEquals(matrix.getDomains().get(0), domain3);  // assert ordering is 2, 3, 1
+        Assertions.assertEquals(matrix.getDomains().get(1), domain1);
+        Assertions.assertEquals(matrix.getDomains().get(2), domain2);
+
+        // Test 2  -  shift past bottom (should not do anything)
+        matrix.shiftDomainUp(domain3);
+        Assertions.assertEquals(matrix.getDomains().get(0), domain3);  // assert ordering is still 2, 3, 1
+        Assertions.assertEquals(matrix.getDomains().get(1), domain1);
+        Assertions.assertEquals(matrix.getDomains().get(2), domain2);
+
+        stressUndoRedo(matrix);
+
+        Assertions.assertEquals(matrix.getDomains().get(0), domain3);  // assert ordering is still 2, 3, 1
+        Assertions.assertEquals(matrix.getDomains().get(1), domain1);
+        Assertions.assertEquals(matrix.getDomains().get(2), domain2);
+    }
+
+
+    /**
+     * Tests redistributing domain priorities. Stresses the undo/redo cycle
+     */
+    @Test
+    public void redistributeDomainPriorities() {
+        Grouping domain1 = new Grouping(111, 7, "domain1", null, null);
+        Grouping domain2 = new Grouping(222, 4, "domain2", null, null);
+        Grouping domain3 = new Grouping(333, 9, "domain3", null, null);
+        Grouping domain4 = new Grouping(444, 2, "domain3", null, null);
+
+        HashMap<Grouping, Collection<Grouping>> domains = new HashMap<>();
+        domains.put(domain1, new ArrayList<>());
+        domains.put(domain2, new ArrayList<>());
+        domains.put(domain3, new ArrayList<>());
+        domains.put(domain4, new ArrayList<>());
+        MultiDomainDSMData matrix = new MultiDomainDSMData(domains);  // create domains this way to ensure full control
+
+        matrix.setCurrentStateAsCheckpoint();
+
+        matrix.redistributeDomainPriorities();
+        Assertions.assertEquals(matrix.getDomains().get(0), domain4);  // assert order is correct
+        Assertions.assertEquals(matrix.getDomains().get(1), domain2);
+        Assertions.assertEquals(matrix.getDomains().get(2), domain1);
+        Assertions.assertEquals(matrix.getDomains().get(3), domain3);
+
+        Assertions.assertEquals(matrix.getDomains().get(0).getPriority(), domain4.getPriority());  // assert priorities are correct
+        Assertions.assertEquals(matrix.getDomains().get(1).getPriority(), domain2.getPriority());
+        Assertions.assertEquals(matrix.getDomains().get(2).getPriority(), domain1.getPriority());
+        Assertions.assertEquals(matrix.getDomains().get(3).getPriority(), domain3.getPriority());
     }
 
 

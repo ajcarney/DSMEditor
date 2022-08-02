@@ -12,11 +12,13 @@ import org.jdom2.Element;
 public class Grouping {
 
     private final Integer uid;
+    private Integer priority;
     private String name;
     private Color color;
     private Color fontColor;
 
-    public static final Color defaultFontColor = Color.color(0, 0, 0);
+    public static final Color DEFAULT_FONT_COLOR = Color.color(0, 0, 0);
+    public static final Integer DEFAULT_PRIORITY = -1;
 
 
     /**
@@ -27,9 +29,10 @@ public class Grouping {
      */
     public Grouping(String name, Color color) {
         this.uid = java.util.UUID.randomUUID().hashCode();
+        this.priority = DEFAULT_PRIORITY;
         this.name = name;
         this.color = color;
-        this.fontColor = defaultFontColor;
+        this.fontColor = DEFAULT_FONT_COLOR;
     }
 
 
@@ -41,6 +44,7 @@ public class Grouping {
      */
     public Grouping(String name, Color color, Color fontColor) {
         this.uid = java.util.UUID.randomUUID().hashCode();
+        this.priority = DEFAULT_PRIORITY;
         this.name = name;
         this.color = color;
         this.fontColor = fontColor;
@@ -55,8 +59,9 @@ public class Grouping {
      * @param name     the name of the group
      * @param color    the color of the group
      */
-    public Grouping(Integer uid, String name, Color color, Color fontColor) {
+    public Grouping(Integer uid, Integer priority, String name, Color color, Color fontColor) {
         this.uid = uid;
+        this.priority = priority;
         this.name = name;
         this.color = color;
         this.fontColor = fontColor;
@@ -70,6 +75,7 @@ public class Grouping {
      */
     public Grouping(Element xml) {
         this.uid = Integer.parseInt(xml.getChild("uid").getText());
+        this.priority = Integer.parseInt(xml.getChild("priority").getText());
         this.name = xml.getChild("name").getText();
 
         double groupR = Double.parseDouble(xml.getChild("gr").getText());
@@ -91,6 +97,7 @@ public class Grouping {
      */
     public Grouping(Grouping copy) {
         uid = copy.getUid();
+        priority = copy.getPriority();
         name = copy.getName();
         color = copy.getColor();
         fontColor = copy.getFontColor();
@@ -104,6 +111,16 @@ public class Grouping {
      */
     public Integer getUid() {
         return uid;
+    }
+
+
+    /**
+     * Getter function for the priority of the grouping
+     *
+     * @return the priority of the grouping
+     */
+    public Integer getPriority() {
+        return priority;
     }
 
 
@@ -134,6 +151,16 @@ public class Grouping {
      */
     public Color getFontColor() {
         return fontColor;
+    }
+
+
+    /**
+     * Setter function for the priority of the grouping
+     *
+     * @param priority the new priority of the grouping
+     */
+    public void setPriority(Integer priority) {
+        this.priority = priority;
     }
 
 
@@ -175,6 +202,7 @@ public class Grouping {
      */
     public Element getXML(Element groupElement) {
         groupElement.addContent(new Element("uid").setText(getUid().toString()));
+        groupElement.addContent(new Element("priority").setText(getPriority().toString()));
         groupElement.addContent(new Element("name").setText(getName()));
         groupElement.addContent(new Element("gr").setText(Double.valueOf(getColor().getRed()).toString()));
         groupElement.addContent(new Element("gg").setText(Double.valueOf(getColor().getGreen()).toString()));
