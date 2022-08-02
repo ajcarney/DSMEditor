@@ -1,7 +1,11 @@
 package Matrices.EditorTabs;
 
-import Matrices.Views.IMatrixView;
+import Matrices.Data.AbstractDSMData;
+import Matrices.Views.AbstractMatrixView;
 import javafx.scene.layout.Pane;
+
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * Interface to define what an editor tab is able to have. It is able to
@@ -35,8 +39,20 @@ public interface IEditorTab {
 
 
     /**
-     * @return  The matrix view in case it needs to be used directly somewhere
+     * @return  The matrix view currently selected in case it needs to be used directly somewhere
      */
-    IMatrixView getMatrixView();
+    AbstractMatrixView getMatrixView();
+
+
+    /**
+     * @return  all the matrix views currently in the editor tab
+     */
+    Collection<AbstractMatrixView> getAllMatrixViews();
+
+
+    /**
+     * @return  the matrix data of the open matrix
+     */
+    AbstractDSMData getMatrixData();
 
 }

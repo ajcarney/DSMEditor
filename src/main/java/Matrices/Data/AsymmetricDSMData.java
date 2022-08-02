@@ -36,8 +36,8 @@ public class AsymmetricDSMData extends AbstractDSMData implements IPropagationAn
         connections = new Vector<>();
         rowGroupings = FXCollections.observableArrayList();
         colGroupings = FXCollections.observableArrayList();
-        addGrouping(true, new Grouping(DEFAULT_GROUP_UID, "(none)", Color.WHITE, Grouping.defaultFontColor));
-        addGrouping(false, new Grouping(DEFAULT_GROUP_UID, "(none)", Color.WHITE, Grouping.defaultFontColor));
+        addGrouping(true, new Grouping(DEFAULT_GROUP_UID, Grouping.DEFAULT_PRIORITY,  "(none)", Color.WHITE, Grouping.DEFAULT_FONT_COLOR));
+        addGrouping(false, new Grouping(DEFAULT_GROUP_UID, Grouping.DEFAULT_PRIORITY,  "(none)", Color.WHITE, Grouping.DEFAULT_FONT_COLOR));
 
         setWasModified();
 
@@ -227,13 +227,13 @@ public class AsymmetricDSMData extends AbstractDSMData implements IPropagationAn
                 () -> {  // do function
                     if(isRow) {
                         rowGroupings.clear();
-                        rowGroupings.add(new Grouping(DEFAULT_GROUP_UID, "(none)", Color.WHITE, Grouping.defaultFontColor));
+                        rowGroupings.add(new Grouping(DEFAULT_GROUP_UID, Grouping.DEFAULT_PRIORITY,  "(none)", Color.WHITE, Grouping.DEFAULT_FONT_COLOR));
                         for(DSMItem r : rows) {
                             setItemGroup(r, getDefaultGroup(true));
                         }
                     } else {
                         colGroupings.clear();
-                        colGroupings.add(new Grouping(DEFAULT_GROUP_UID, "(none)", Color.WHITE, Grouping.defaultFontColor));
+                        colGroupings.add(new Grouping(DEFAULT_GROUP_UID, Grouping.DEFAULT_PRIORITY,  "(none)", Color.WHITE, Grouping.DEFAULT_FONT_COLOR));
                         for(DSMItem c : cols) {
                             setItemGroup(c, getDefaultGroup(false));
                         }

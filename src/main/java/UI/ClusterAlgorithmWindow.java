@@ -3,7 +3,7 @@ package UI;
 import Matrices.Data.Entities.Grouping;
 import Matrices.Data.SymmetricDSMData;
 import Matrices.IOHandlers.SymmetricIOHandler;
-import Matrices.Views.IMatrixView;
+import Matrices.Views.AbstractMatrixView;
 import Matrices.Views.SymmetricView;
 import UI.Widgets.NumericTextField;
 import javafx.application.Platform;
@@ -501,7 +501,7 @@ public class ClusterAlgorithmWindow {
         popup.showAndWait();  // wait for it to finish
 
         SymmetricView gui = new SymmetricView(outputMatrix, 10);
-        gui.setCurrentMode(IMatrixView.MatrixViewMode.STATIC);
+        gui.setCurrentMode(AbstractMatrixView.MatrixViewMode.STATIC);
         gui.refreshView();
 
         outputMatrixLayout.getChildren().removeAll(outputMatrixLayout.getChildren());

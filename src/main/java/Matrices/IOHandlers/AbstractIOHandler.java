@@ -3,7 +3,6 @@ package Matrices.IOHandlers;
 import Matrices.Data.AbstractDSMData;
 import Matrices.IOHandlers.Flags.IStandardExports;
 import Matrices.Views.AbstractMatrixView;
-import Matrices.Views.IMatrixView;
 import UI.Widgets.Misc;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.geometry.Insets;
@@ -288,7 +287,7 @@ public abstract class AbstractIOHandler implements IStandardExports {
      * @param matrixView  the matrix gui handler for the matrix object
      */
     @Override
-     public void exportToImage(AbstractDSMData matrix, IMatrixView matrixView) {
+     public void exportToImage(AbstractDSMData matrix, AbstractMatrixView matrixView) {
         // Create Root window
         Stage window = new Stage();
         window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows

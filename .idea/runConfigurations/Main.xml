@@ -3,6 +3,7 @@
     <option name="MAIN_CLASS_NAME" value="Launcher" />
     <module name="DSMEditor" />
     <option name="PROGRAM_PARAMETERS" value="debug=true" />
+    <option name="VM_PARAMETERS" value="-ea" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>

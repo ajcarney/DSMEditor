@@ -12,7 +12,6 @@ import org.apache.poi.ss.util.WorkbookUtil;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.javatuples.Triplet;
-import org.jdom2.Attribute;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.input.SAXBuilder;
@@ -503,7 +502,7 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
                                 styleExcelCell(workbook, cell, bgColor, fontColor, HORIZONTAL_ROTATION);
                             } else {
                                 Color bgColor = (Color) AbstractMatrixView.DEFAULT_BACKGROUND.getFills().get(0).getFill();
-                                Color fontColor = Grouping.defaultFontColor;
+                                Color fontColor = Grouping.DEFAULT_FONT_COLOR;
                                 styleExcelCell(workbook, cell, bgColor, fontColor, HORIZONTAL_ROTATION);
                             }
                         }

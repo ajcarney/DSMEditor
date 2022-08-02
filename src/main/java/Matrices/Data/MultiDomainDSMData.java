@@ -23,8 +23,9 @@ import java.util.*;
  * @author: Aiden Carney
  */
 public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
-    private final Grouping defaultDomain = new Grouping(DEFAULT_GROUP_UID, "default", Color.WHITE, Grouping.defaultFontColor);
+    private final Grouping defaultDomain = new Grouping(DEFAULT_GROUP_UID, Grouping.DEFAULT_PRIORITY, "default", Color.WHITE, Grouping.DEFAULT_FONT_COLOR);
     private ObservableMap<Grouping, ObservableList<Grouping>> domains;  // hashmap of domains and list of groupings corresponding to that domain
+    private ObservableList<Grouping> sortedDomains;
 
     public static final Integer DEFAULT_GROUP_UID = Integer.MAX_VALUE;
 
@@ -35,7 +36,7 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
      */
     private void createNewDefaultDomainGroup(Grouping domain) {
         if(getDefaultDomainGroup(domain) == null) {
-            Grouping group = new Grouping(DEFAULT_GROUP_UID, "default", Color.WHITE, Grouping.defaultFontColor);
+            Grouping group = new Grouping(DEFAULT_GROUP_UID, Grouping.DEFAULT_PRIORITY, "default", Color.WHITE, Grouping.DEFAULT_FONT_COLOR);
             addDomainGrouping(domain, group);
         }
     }
@@ -67,6 +68,8 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
         domains.put(defaultDomain, FXCollections.observableArrayList());  // add the default
         createNewDefaultDomainGroup(defaultDomain);
 
+        sortedDomains = FXCollections.observableArrayList();
+
         setWasModified();
 
         clearStacks();
@@ -84,6 +87,7 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
         connections = new Vector<>();
 
         this.domains = FXCollections.observableHashMap();
+        this.sortedDomains = FXCollections.observableArrayList();
         if(domains.size() > 0) {
             for(Map.Entry<Grouping, Collection<Grouping>> domain : domains.entrySet()) {
                 ObservableList<Grouping> domainGroupings = FXCollections.observableArrayList();
@@ -93,6 +97,8 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
         } else {
             this.domains.put(defaultDomain, FXCollections.observableArrayList());
         }
+        redistributeDomainPriorities();
+        sortDomains();
         setWasModified();
 
         clearStacks();
@@ -126,7 +132,9 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
             for(Grouping domainGrouping : getDomainGroupings(entry.getKey())) {
                 domainGroupings.add(new Grouping(domainGrouping));
             }
-            copy.domains.put(new Grouping(entry.getKey()), domainGroupings);
+            Grouping newDomain = new Grouping(entry.getKey());
+            copy.domains.put(newDomain, domainGroupings);
+            copy.sortedDomains.add(newDomain);
         }
 
         for(Map.Entry<String, Vector<DSMInterfaceType>> interfaceGroup : getInterfaceTypes().entrySet()) {
@@ -142,7 +150,9 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
         copy.setCustomer(getCustomer());
         copy.setVersionNumber(getVersionNumber());
 
-        copy.setWasModified();
+        copy.redistributeDomainPriorities();
+        copy.sortDomains();
+
         copy.setWasModified();
 
         return copy;
@@ -154,25 +164,73 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
 //region configure domains and domain groupings
 
     /**
-     * Adds a new domain to the matrix. Puts the change on the stack but does not set a checkpoint
+     * @return  the highest priority domain number
+     */
+    private int getHighestDomainPriority() {
+        int maxPriority = 0;
+        for(Grouping domain : domains.keySet()) {
+            if(domain.getPriority() > maxPriority) {
+                maxPriority = domain.getPriority();
+            }
+        }
+        return maxPriority;
+    }
+
+
+    /**
+     * Sorts the list of domains that can be used externally
+     */
+    private void sortDomains() {
+        Comparator<Grouping> groupingComparator = (o1, o2) -> {
+            if(o1.getPriority() > o2.getPriority()) return 1;  // sort after
+            else if(o1.getPriority() < o2.getPriority()) return -1;  // sort before
+
+            return o1.getName().compareTo(o2.getName());  // sort alphabetically
+        };
+
+        sortedDomains.clear();  // don't create a new object in case this is being bound to
+        sortedDomains.addAll(domains.keySet());
+
+        FXCollections.sort(sortedDomains, groupingComparator);
+    }
+
+
+    /**
+     * Redistributes the priorities of the domains so that they can be swapped and moved with consistency
+     */
+    public void redistributeDomainPriorities() {
+        ArrayList<Grouping> domains = new ArrayList<>(getDomains());  // get the sorted domains. Use a copy to avoid concurrent modification
+
+        int i = 1;
+        for(Grouping domain : domains) {
+            updateGroupingPriority(domain, i);
+            i += 1;
+        }
+        sortDomains();
+    }
+
+
+    /**
+     * Adds a new domain to the matrix. Updates the priority to push it to the end. Puts the change on the stack
+     * but does not set a checkpoint
      *
      * @param domain  the object of type Grouping to add
      */
     public void addDomain(Grouping domain) {
         if(domains.containsKey(domain)) return;
 
-        Grouping group = new Grouping(DEFAULT_GROUP_UID, "default", Color.WHITE, Grouping.defaultFontColor);
+        domain.setPriority(getHighestDomainPriority() + 1);
+
+        Grouping group = new Grouping(DEFAULT_GROUP_UID, Grouping.DEFAULT_PRIORITY, "default", Color.WHITE, Grouping.DEFAULT_FONT_COLOR);
         addChangeToStack(new MatrixChange(
                 () -> {  // do function
                     domains.put(domain, FXCollections.observableArrayList());
                     domains.get(domain).add(group);
+                    sortDomains();
                 },
                 () -> {  // undo function
                     domains.remove(domain);
-
-                    // items cannot exist outside of a domain so no items in this domain should exist because items
-                    // in this domain have to be created after the domain was created. As such there is no need
-                    // to change any of the items
+                    sortDomains();
                 },
                 false
         ));
@@ -202,6 +260,52 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
 
 
     /**
+     * Swaps a domain with the domain after it to move it towards the back of the list
+     *
+     * @param domain  the domain to move
+     */
+    public void shiftDomainDown(Grouping domain) {
+        if(!domains.containsKey(domain)) return;
+
+        ObservableList<Grouping> sortedDomains = getDomains();
+
+        if(sortedDomains.get(domains.keySet().size() - 1).equals(domain)) return;
+
+        // swap the the priorities of the two domains
+        int domainIndex = sortedDomains.indexOf(domain);
+        int domainPriority = domain.getPriority();
+        int nextDomainPriority = sortedDomains.get(domainIndex + 1).getPriority();
+        Grouping nextDomain = sortedDomains.get(domainIndex + 1);
+
+        updateGroupingPriority(domain, nextDomainPriority);
+        updateGroupingPriority(nextDomain, domainPriority);
+    }
+
+
+    /**
+     * Swaps a domain with the domain before it to move it towards the front of the list
+     *
+     * @param domain  the domain to move
+     */
+    public void shiftDomainUp(Grouping domain) {
+        if(!domains.containsKey(domain)) return;
+
+        ObservableList<Grouping> sortedDomains = getDomains();
+
+        if(sortedDomains.get(0).equals(domain)) return;
+
+        // swap the the priorities of the two domains
+        int domainIndex = sortedDomains.indexOf(domain);
+        int domainPriority = domain.getPriority();
+        int prevDomainPriority = sortedDomains.get(domainIndex - 1).getPriority();
+        Grouping prevDomain = sortedDomains.get(domainIndex - 1);
+
+        updateGroupingPriority(domain, prevDomainPriority);
+        updateGroupingPriority(prevDomain, domainPriority);
+    }
+
+
+    /**
      * Removes a domain from the matrix. Puts the change on the stack but does not set a checkpoint. Only removes
      * the domain if the domains will not be empty
      *
@@ -226,9 +330,11 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
                     }
 
                     domains.remove(domain);
+                    sortDomains();
                 },
                 () -> {  // undo function
                     domains.put(domain, domainGroupings);
+                    sortDomains();
                 },
                 false
         ));
@@ -297,15 +403,15 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
 
 
     /**
-     * @return  ObservableList of the matrix domains
+     * @return  ObservableList of the matrix domains in sorted order
      */
     public ObservableList<Grouping> getDomains() {
-        return FXCollections.observableArrayList(domains.keySet());
+        return sortedDomains;
     }
 
 
     /**
-     * @return  the ObservableList of the groupings in a current domain
+     * @return  the ObservableList of the groupings in a current domain in sorted order
      */
     public ObservableList<Grouping> getDomainGroupings(Grouping domain) {
         Comparator<Grouping> groupingComparator = (o1, o2) -> {
@@ -321,14 +427,47 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
 
 
     /**
-     * @return  an ObservableList of all domain groupings
+     * @return  an ObservableList of all domain groupings in sorted order
      */
     public ObservableList<Grouping> getDomainGroupings() {
+        Comparator<Grouping> groupingComparator = (o1, o2) -> {
+            if(o1.getUid().equals(DEFAULT_GROUP_UID)) return -1;
+            if(o2.getUid().equals(DEFAULT_GROUP_UID)) return 1;
+
+            return o1.getName().compareTo(o2.getName());
+        };
+
         ObservableList<Grouping> domainGroupings = FXCollections.observableArrayList();
         for(ObservableList<Grouping> groupings : domains.values()) {
             domainGroupings.addAll(groupings);
         }
+
+        FXCollections.sort(domainGroupings, groupingComparator);
         return domainGroupings;
+    }
+
+
+    /**
+     * Changes a grouping's priority. Puts the change on the stack but does not set a checkpoint. This method can be used
+     * for either domains or domain-groupings
+     *
+     * @param grouping     the group who's priority should be changed
+     * @param newPriority  the new priority for the group
+     */
+    public void updateGroupingPriority(Grouping grouping, Integer newPriority) {
+        Integer oldPriority = grouping.getPriority();
+
+        addChangeToStack(new MatrixChange(
+                () -> {  // do function
+                    grouping.setPriority(newPriority);
+                    sortDomains();
+                },
+                () -> {  // undo function
+                    grouping.setPriority(oldPriority);
+                    sortDomains();
+                },
+                false
+        ));
     }
 
 
@@ -356,7 +495,8 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
 
     /**
      * Changes a color of a grouping. Puts the change on the stack but does not set a checkpoint.
-     * This method can be used for either domains or domain-groupings
+     * This method can be used for either domains or domain-groupings. Sorts the domains if the
+     * grouping is a domain
      *
      * @param grouping  the group who's name should be changed
      * @param newColor  the new color of the grouping
@@ -366,9 +506,15 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
         addChangeToStack(new MatrixChange(
                 () -> {  // do function
                     grouping.setColor(newColor);
+                    if(domains.keySet().contains(grouping)) {
+                        sortDomains();
+                    }
                 },
                 () -> {  // undo function
                     grouping.setColor(oldColor);
+                    if(domains.keySet().contains(grouping)) {
+                        sortDomains();
+                    }
                 },
                 false
         ));
@@ -437,16 +583,32 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
 
 
 //region Add and Delete Items
+
+    /**
+     * Finds the maximum sort index of in a given domain by performing a linear search.
+     *
+     * @return the maximum sort index of the row items
+     */
+    public final double getMaxSortIndex(Grouping domain) {
+        double sortIndex = 0;
+        for(DSMItem row : rows) {
+            if(row.getSortIndex() > sortIndex && row.getGroup2().equals(domain)) {
+                sortIndex = row.getSortIndex();
+            }
+        }
+        return sortIndex;
+    }
+
+
     /**
      * Creates a new item and adds it to the matrix and the stack. Also configures its domain. Creates the domain if
      * it is not already in the domain list
      *
      * @param name    the name of the item to create and add
-     * @param isRow   is the item a row
      * @param domain  the domain for the item (for MDMs this method should be used because item domains cannot be changed)
      */
-    public void createItem(String name, boolean isRow, Grouping domain) {
-        double index = (int)getRowMaxSortIndex() + 1;  // cast to int to remove the decimal place so that the index will be a whole number
+    public void createItem(String name, Grouping domain) {
+        double index = (int)getMaxSortIndex(domain) + 1;  // cast to int to remove the decimal place so that the index will be a whole number
 
         DSMItem rowItem = new DSMItem(index, name);
         DSMItem colItem = new DSMItem(index, name);
@@ -476,7 +638,7 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
      */
     @Override
     public void createItem(String name, boolean isRow) {
-        createItem(name, isRow, defaultDomain);
+        createItem(name, defaultDomain);
     }
 
 
@@ -675,9 +837,9 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
     public ArrayList<ArrayList<Pair<RenderMode, Object>>> getGridArray() {
         ArrayList<ArrayList<Pair<RenderMode, Object>>> grid = new ArrayList<>();
 
-        // sort row and columns by sortIndex
-        rows.sort(Comparator.comparing((DSMItem item) -> item.getGroup2().getName()).thenComparing(DSMItem::getSortIndex));
-        cols.sort(Comparator.comparing((DSMItem item) -> item.getGroup2().getName()).thenComparing(DSMItem::getSortIndex));
+        // sort row and columns by domain and then by sort index
+        rows.sort(Comparator.comparing((DSMItem item) -> item.getGroup2().getPriority()).thenComparing((DSMItem item) -> item.getGroup2().getName()).thenComparing(DSMItem::getSortIndex));
+        cols.sort(Comparator.comparing((DSMItem item) -> item.getGroup2().getPriority()).thenComparing((DSMItem item) -> item.getGroup2().getName()).thenComparing(DSMItem::getSortIndex));
 
         // create header row
         ArrayList<Pair<RenderMode, Object>> row0 = new ArrayList<>();

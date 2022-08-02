@@ -529,7 +529,7 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
                                 styleExcelCell(workbook, cell, bgColor, fontColor, HORIZONTAL_ROTATION);
                             } else {
                                 Color bgColor = (Color) AbstractMatrixView.DEFAULT_BACKGROUND.getFills().get(0).getFill();
-                                Color fontColor = Grouping.defaultFontColor;
+                                Color fontColor = Grouping.DEFAULT_FONT_COLOR;
                                 styleExcelCell(workbook, cell, bgColor, fontColor, HORIZONTAL_ROTATION);
                             }
                         }

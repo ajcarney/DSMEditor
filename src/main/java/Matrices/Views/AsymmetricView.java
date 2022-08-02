@@ -110,23 +110,23 @@ public class AsymmetricView extends AbstractMatrixView {
     public void refreshCellHighlight(Cell cell) {
         if (cell.getHighlightBG("error") != null) {
             cell.setCellHighlight(cell.getHighlightBG("error"));
-            cell.setCellTextColor(Grouping.defaultFontColor);
-
-        } else if(cell.getHighlightBG("symmetryError") != null) {
-            cell.setCellHighlight(cell.getHighlightBG("symmetryError"));
-            cell.setCellTextColor(Grouping.defaultFontColor);
+            cell.setCellTextColor(Grouping.DEFAULT_FONT_COLOR);
 
         } else if(cell.getHighlightBG("search") != null) {
             cell.setCellHighlight(cell.getHighlightBG("search"));
-            cell.setCellTextColor(Grouping.defaultFontColor);
+            cell.setCellTextColor(Grouping.DEFAULT_FONT_COLOR);
+
+        } else if(cell.getHighlightBG("symmetryError") != null) {
+            cell.setCellHighlight(cell.getHighlightBG("symmetryError"));
+            cell.setCellTextColor(Grouping.DEFAULT_FONT_COLOR);
 
         } else if (cell.getHighlightBG("cross") != null && cell.getCrossHighlightEnabled()) {
             cell.setCellHighlight(cell.getHighlightBG("cross"));
-            cell.setCellTextColor(Grouping.defaultFontColor);
+            cell.setCellTextColor(Grouping.DEFAULT_FONT_COLOR);
 
         } else if (cell.getHighlightBG("user") != null) {
             cell.setCellHighlight(cell.getHighlightBG("user"));
-            cell.setCellTextColor(Grouping.defaultFontColor);
+            cell.setCellTextColor(Grouping.DEFAULT_FONT_COLOR);
 
         } else {  // default background determined by groupings
             Integer rowUid = getUidsFromGridLoc(cell.getGridLocation()).getKey();
@@ -275,7 +275,7 @@ public class AsymmetricView extends AbstractMatrixView {
                                             if(group.equals(groupings.getValue())) {
                                                 setTextFill(group.getFontColor());
                                             } else {
-                                                setTextFill(Grouping.defaultFontColor);
+                                                setTextFill(Grouping.DEFAULT_FONT_COLOR);
                                             }
                                         }
                                     }
@@ -326,7 +326,7 @@ public class AsymmetricView extends AbstractMatrixView {
                                             if(group.equals(groupings.getValue())) {
                                                 setTextFill(group.getFontColor());
                                             } else {
-                                                setTextFill(Grouping.defaultFontColor);
+                                                setTextFill(Grouping.DEFAULT_FONT_COLOR);
                                             }
                                         }
                                     }
