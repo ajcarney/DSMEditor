@@ -1,10 +1,9 @@
 package Matrices;
 
-
 import Matrices.Data.AbstractDSMData;
 import Matrices.EditorTabs.IEditorTab;
 import Matrices.IOHandlers.AbstractIOHandler;
-import Matrices.Views.IMatrixView;
+import Matrices.Views.AbstractMatrixView;
 
 
 /**
@@ -21,34 +20,31 @@ public interface IDSM {
     /**
      * Gets the DSM Data object for the matrix
      *
-     * @param <T>  the type of matrix data
      * @return     the DSM Data object for the matrix
      */
-    <T extends AbstractDSMData> T getMatrixData();
+    AbstractDSMData getMatrixData();
 
 
     /**
      * @return  the DSM editor tab object for the matrix
      */
-    <T extends IEditorTab> T getMatrixEditorTab();
+    IEditorTab getMatrixEditorTab();
 
 
     /**
      * Gets the DSM View object for the matrix
      *
-     * @param <T>  the type of matrix view
      * @return     the DSM View object for the matrix
      */
-    <T extends IMatrixView> T getMatrixView();
+    AbstractMatrixView getMatrixView();
 
 
     /**
      * Gets the DSM IOHandler object for the matrix
      *
-     * @param <T>  the type of matrix IOHandler
      * @return     the DSM IOHandler object for the matrix
      */
-    <T extends AbstractIOHandler> T getMatrixIOHandler();
+    AbstractIOHandler getMatrixIOHandler();
 
 
     /**

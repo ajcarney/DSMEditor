@@ -159,18 +159,18 @@ public class MatrixMetaDataPane {
         });
         modifyButton.setMaxWidth(Double.MAX_VALUE);
 
-        openCloseButton = new Button(">");
+        openCloseButton = new Button(Character.toString(0x25b6));  // right arrow utf-16 hex code
         openCloseButton.setOnAction(e -> {
             isOpen = !isOpen;
             layout.requestFocus();
             if (isOpen) {
-                openCloseButton.setText(">");
+                openCloseButton.setText(Character.toString(0x25b6));  // right arrow utf-16 hex code
                 detailsLayout.setVisible(true);
                 detailsLayout.setManaged(true);
                 modifyButton.setVisible(true);
                 modifyButton.setManaged(true);
             } else {
-                openCloseButton.setText("<");
+                openCloseButton.setText(Character.toString(0x25c0));  // left arrow utf-16 hex code
                 detailsLayout.setVisible(false);
                 detailsLayout.setManaged(false);
                 modifyButton.setVisible(false);

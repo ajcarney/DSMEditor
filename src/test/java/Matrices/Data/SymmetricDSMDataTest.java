@@ -44,7 +44,7 @@ public class SymmetricDSMDataTest {
         SymmetricDSMData matrix = new SymmetricDSMData();
         matrix.createItem("item1", true);
         matrix.createItem("item2", true);
-        matrix.modifyConnection(matrix.getRows().get(0).getUid(), matrix.getRows().get(1).getAliasUid(), "x", 1.0);
+        matrix.modifyConnection(matrix.getRows().get(0).getUid(), matrix.getRows().get(1).getAliasUid(), "x", 1.0, new ArrayList<>());
         matrix.setTitle("title");
         matrix.setProjectName("project");
         matrix.setCustomer("customer");
@@ -337,7 +337,7 @@ public class SymmetricDSMDataTest {
         matrix.createItem("item2", true);
 
         matrix.setCurrentStateAsCheckpoint();
-        matrix.modifyConnection(matrix.getRows().get(0).getUid(), matrix.getCols().get(1).getUid(), "x", 1.0);
+        matrix.modifyConnection(matrix.getRows().get(0).getUid(), matrix.getCols().get(1).getUid(), "x", 1.0, new ArrayList<>());
 
         stressUndoRedo(matrix);
 
@@ -362,7 +362,7 @@ public class SymmetricDSMDataTest {
         matrix.addItem(new DSMItem(33, 3, 1.0, "item3", null, null), false);
 
         matrix.setCurrentStateAsCheckpoint();
-        matrix.modifyConnectionSymmetric(1, 33, "x", 1.0);
+        matrix.modifyConnectionSymmetric(1, 33, "x", 1.0, new ArrayList<>());
 
         stressUndoRedo(matrix);
 
@@ -441,7 +441,7 @@ public class SymmetricDSMDataTest {
         matrix.addItem(new DSMItem(33, 3, 1.0, "item3", null, null), false);
 
         matrix.setCurrentStateAsCheckpoint();
-        matrix.modifyConnectionSymmetric(1, 33, "x", 1.0);
+        matrix.modifyConnectionSymmetric(1, 33, "x", 1.0, new ArrayList<>());
 
         stressUndoRedo(matrix);
 
@@ -466,7 +466,7 @@ public class SymmetricDSMDataTest {
         matrix.addItem(new DSMItem(33, 3, 1.0, "item3", null, null), false);
 
         matrix.setCurrentStateAsCheckpoint();
-        matrix.modifyConnectionSymmetric(1, 33, "x", 1.0);
+        matrix.modifyConnectionSymmetric(1, 33, "x", 1.0, new ArrayList<>());
 
         stressUndoRedo(matrix);
 

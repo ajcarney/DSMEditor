@@ -1,5 +1,6 @@
 package Matrices.Data;
 
+import Matrices.Data.Entities.DSMInterfaceType;
 import Matrices.Data.Entities.DSMItem;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -35,6 +36,137 @@ public class AbstractDSMDataTest {
 
 
     /**
+     * Tests adding an interface grouping. Stresses the undo and redo functionality for it
+     */
+    @Test
+    public void addInterfaceTypeGrouping() {
+        SymmetricDSMData matrix = new SymmetricDSMData();
+
+        matrix.setCurrentStateAsCheckpoint();
+        matrix.addInterfaceTypeGrouping("mechanical");
+
+        stressUndoRedo(matrix);
+
+        Assertions.assertTrue(matrix.getInterfaceGroupings().contains("mechanical"));
+    }
+
+
+    /**
+     * Tests adding an interface. Stresses the undo and redo functionality for it
+     */
+    @Test
+    public void addInterface() {
+        SymmetricDSMData matrix = new SymmetricDSMData();
+        matrix.addInterfaceTypeGrouping("mechanical");
+
+        matrix.setCurrentStateAsCheckpoint();
+        DSMInterfaceType interfaceType = new DSMInterfaceType("m1");
+        matrix.addInterface("mechanical", interfaceType);
+
+        stressUndoRedo(matrix);
+
+        Assertions.assertTrue(matrix.getInterfaceGroupings().contains("mechanical"));
+        Assertions.assertTrue(matrix.getInterfaceTypes().get("mechanical").contains(interfaceType));
+    }
+
+
+    /**
+     * Tests removing an interface grouping. Ensures that any interfaces under it are present on undo.
+     * Stresses the undo/redo cycle
+     */
+    @Test
+    public void removeInterfaceTypeGrouping() {
+        SymmetricDSMData matrix = new SymmetricDSMData();
+        matrix.addInterfaceTypeGrouping("mechanical");
+        DSMInterfaceType interfaceType = new DSMInterfaceType("m1");
+        matrix.addInterface("mechanical", interfaceType);
+
+        matrix.setCurrentStateAsCheckpoint();
+        matrix.removeInterfaceTypeGrouping("mechanical");
+
+        matrix.undoToCheckpoint();
+        Assertions.assertTrue(matrix.getInterfaceGroupings().contains("mechanical"));
+        Assertions.assertTrue(matrix.getInterfaceTypes().get("mechanical").contains(interfaceType));
+        matrix.redoToCheckpoint();
+
+        stressUndoRedo(matrix);
+
+        Assertions.assertFalse(matrix.getInterfaceGroupings().contains("mechanical"));
+    }
+
+
+    /**
+     * Tests removing an interface. Ensures that the interface is present on undo.
+     * Stresses the undo/redo cycle
+     */
+    @Test
+    public void removeInterface() {
+        SymmetricDSMData matrix = new SymmetricDSMData();
+        matrix.addInterfaceTypeGrouping("mechanical");
+        DSMInterfaceType interfaceType = new DSMInterfaceType("m1");
+        matrix.addInterface("mechanical", interfaceType);
+
+        matrix.setCurrentStateAsCheckpoint();
+        matrix.removeInterface("mechanical", interfaceType);
+
+        matrix.undoToCheckpoint();
+        Assertions.assertTrue(matrix.getInterfaceTypes().get("mechanical").contains(interfaceType));
+        matrix.redoToCheckpoint();
+
+        stressUndoRedo(matrix);
+
+        Assertions.assertFalse(matrix.getInterfaceTypes().get("mechanical").contains(interfaceType));
+    }
+
+
+    /**
+     * Tests renaming an interface Grouping. Checks to ensure that any interfaces under it are still accessible.
+     * Stresses the undo/redo cycle
+     */
+    @Test
+    public void renameInterfaceTypeGrouping() {
+        SymmetricDSMData matrix = new SymmetricDSMData();
+        DSMInterfaceType interfaceType = new DSMInterfaceType("m1");
+        matrix.addInterfaceTypeGrouping("mechanical");
+        matrix.addInterface("mechanical", interfaceType);
+
+        matrix.setCurrentStateAsCheckpoint();
+        matrix.renameInterfaceTypeGrouping("mechanical", "electrical");
+
+        matrix.undoToCheckpoint();
+        Assertions.assertTrue(matrix.getInterfaceGroupings().contains("mechanical"));
+        Assertions.assertTrue(matrix.getInterfaceTypes().get("mechanical").contains(interfaceType));
+        matrix.redoToCheckpoint();
+
+        stressUndoRedo(matrix);
+
+
+        Assertions.assertTrue(matrix.getInterfaceGroupings().contains("electrical"));
+        Assertions.assertTrue(matrix.getInterfaceTypes().get("electrical").contains(interfaceType));
+    }
+
+
+    /**
+     * Tests renaming an interface. Stresses the undo/redo cycle
+     */
+    @Test
+    public void renameInterfaceType() {
+        SymmetricDSMData matrix = new SymmetricDSMData();
+        DSMInterfaceType interfaceType = new DSMInterfaceType("m1");
+        matrix.addInterfaceTypeGrouping("mechanical");
+        matrix.addInterface("mechanical", interfaceType);
+
+        matrix.setCurrentStateAsCheckpoint();
+        matrix.renameInterfaceType(interfaceType, "m2");
+
+        stressUndoRedo(matrix);
+
+        Assertions.assertTrue(matrix.getInterfaceTypes().get("mechanical").contains(interfaceType));
+        Assertions.assertTrue(interfaceType.getName().equals("m2"));
+    }
+
+
+    /**
      * tests creating a connection for a matrix
      */
     @Test
@@ -44,7 +176,7 @@ public class AbstractDSMDataTest {
         matrix.createItem("item2", false);
 
         matrix.setCurrentStateAsCheckpoint();
-        matrix.modifyConnection(matrix.getRows().get(0).getUid(), matrix.getCols().get(0).getUid(), "x", 1.0);
+        matrix.modifyConnection(matrix.getRows().get(0).getUid(), matrix.getCols().get(0).getUid(), "x", 1.0, new ArrayList<>());
         matrix.setCurrentStateAsCheckpoint();
 
         stressUndoRedo(matrix);
@@ -63,10 +195,10 @@ public class AbstractDSMDataTest {
         SymmetricDSMData matrix = new SymmetricDSMData();
         matrix.createItem("item1", true);
         matrix.createItem("item2", true);
-        matrix.createConnection(matrix.getRows().get(0).getUid(), matrix.getRows().get(1).getAliasUid(), "x", 1.0);
+        matrix.createConnection(matrix.getRows().get(0).getUid(), matrix.getRows().get(1).getAliasUid(), "x", 1.0, new ArrayList<>());
 
         matrix.setCurrentStateAsCheckpoint();
-        matrix.modifyConnection(matrix.getRows().get(0).getUid(), matrix.getRows().get(1).getAliasUid(), "a", 42.0);
+        matrix.modifyConnection(matrix.getRows().get(0).getUid(), matrix.getRows().get(1).getAliasUid(), "a", 42.0, new ArrayList<>());
         matrix.setCurrentStateAsCheckpoint();
 
         stressUndoRedo(matrix);
@@ -86,7 +218,7 @@ public class AbstractDSMDataTest {
         SymmetricDSMData matrix = new SymmetricDSMData();
         matrix.createItem("item1", true);
         matrix.createItem("item2", true);
-        matrix.createConnection(matrix.getRows().get(0).getUid(), matrix.getRows().get(1).getAliasUid(), "x", 1.0);
+        matrix.createConnection(matrix.getRows().get(0).getUid(), matrix.getRows().get(1).getAliasUid(), "x", 1.0, new ArrayList<>());
 
         matrix.setCurrentStateAsCheckpoint();
         matrix.deleteConnection(matrix.getRows().get(0).getUid(), matrix.getRows().get(1).getAliasUid());
@@ -110,10 +242,10 @@ public class AbstractDSMDataTest {
         matrix.addItem(new DSMItem(11, 1, 1.0, "item1", null, null), false);
         matrix.addItem(new DSMItem(22, 2, 1.0, "item2", null, null), false);
         matrix.addItem(new DSMItem(33, 3, 1.0, "item3", null, null), false);
-        matrix.createConnection(1, 22, "x", 1.0);
-        matrix.createConnection(3, 22, "x", 1.0);
-        matrix.createConnection(2, 11, "x", 1.0);
-        matrix.createConnection(3, 11, "x", 1.0);
+        matrix.createConnection(1, 22, "x", 1.0, new ArrayList<>());
+        matrix.createConnection(3, 22, "x", 1.0, new ArrayList<>());
+        matrix.createConnection(2, 11, "x", 1.0, new ArrayList<>());
+        matrix.createConnection(3, 11, "x", 1.0, new ArrayList<>());
 
         matrix.setCurrentStateAsCheckpoint();
         matrix.deleteAllConnections();
@@ -137,10 +269,10 @@ public class AbstractDSMDataTest {
         matrix.addItem(new DSMItem(11, 1, 1.0, "item1", null, null), false);
         matrix.addItem(new DSMItem(22, 2, 1.0, "item2", null, null), false);
         matrix.addItem(new DSMItem(33, 3, 1.0, "item3", null, null), false);
-        matrix.createConnection(1, 22, "x", 1.0);
-        matrix.createConnection(3, 22, "x", 1.0);
-        matrix.createConnection(2, 11, "x", 1.0);
-        matrix.createConnection(3, 11, "x", 1.0);
+        matrix.createConnection(1, 22, "x", 1.0, new ArrayList<>());
+        matrix.createConnection(3, 22, "x", 1.0, new ArrayList<>());
+        matrix.createConnection(2, 11, "x", 1.0, new ArrayList<>());
+        matrix.createConnection(3, 11, "x", 1.0, new ArrayList<>());
 
         matrix.setCurrentStateAsCheckpoint();
         matrix.transposeMatrix();

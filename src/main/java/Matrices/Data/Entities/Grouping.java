@@ -4,7 +4,7 @@ import javafx.scene.paint.Color;
 import org.jdom2.Element;
 
 /**
- * Data class to handle grouping used in a DSM. Each grouping has a uid, a name, and a color associated with it. This
+ * Data class to handle groupings used in a DSM. Each grouping has a uid, a name, and a color associated with it. This
  * is generic so it can be used for different levels of groupings in a hierarchy design (ie. domains vs subsystems)
  *
  * @author Aiden Carney
@@ -12,35 +12,39 @@ import org.jdom2.Element;
 public class Grouping {
 
     private final Integer uid;
+    private Integer priority;
     private String name;
     private Color color;
     private Color fontColor;
 
-    public static final Color defaultFontColor = Color.color(0, 0, 0);
+    public static final Color DEFAULT_FONT_COLOR = Color.color(0, 0, 0);
+    public static final Integer DEFAULT_PRIORITY = -1;
 
 
     /**
-     * Creates a new Grouping with a given color
+     * Creates a new Grouping with a given name and color
      *
-     * @param name  the starting name of the item
-     * @param color the starting index of the item
+     * @param name  the starting name of the grouping
+     * @param color the starting index of the grouping
      */
     public Grouping(String name, Color color) {
         this.uid = java.util.UUID.randomUUID().hashCode();
+        this.priority = DEFAULT_PRIORITY;
         this.name = name;
         this.color = color;
-        this.fontColor = defaultFontColor;
+        this.fontColor = DEFAULT_FONT_COLOR;
     }
 
 
     /**
-     * Creates a new Grouping with a given color
+     * Creates a new Grouping with given colors and name
      *
-     * @param name  the starting name of the item
-     * @param color the starting index of the item
+     * @param name  the starting name of the grouping
+     * @param color the starting index of the grouping
      */
     public Grouping(String name, Color color, Color fontColor) {
         this.uid = java.util.UUID.randomUUID().hashCode();
+        this.priority = DEFAULT_PRIORITY;
         this.name = name;
         this.color = color;
         this.fontColor = fontColor;
@@ -48,14 +52,16 @@ public class Grouping {
 
 
     /**
-     * Creates a new Group with all data fields to be set. Called when creating an item from data that was saved to a file
+     * Creates a new Group with all data fields to be set. Called when creating a Grouping from data that was
+     * saved to a file
      *
      * @param uid      the uid of the group
      * @param name     the name of the group
      * @param color    the color of the group
      */
-    public Grouping(Integer uid, String name, Color color, Color fontColor) {
+    public Grouping(Integer uid, Integer priority, String name, Color color, Color fontColor) {
         this.uid = uid;
+        this.priority = priority;
         this.name = name;
         this.color = color;
         this.fontColor = fontColor;
@@ -69,6 +75,7 @@ public class Grouping {
      */
     public Grouping(Element xml) {
         this.uid = Integer.parseInt(xml.getChild("uid").getText());
+        this.priority = Integer.parseInt(xml.getChild("priority").getText());
         this.name = xml.getChild("name").getText();
 
         double groupR = Double.parseDouble(xml.getChild("gr").getText());
@@ -84,12 +91,13 @@ public class Grouping {
 
 
     /**
-     * Copy constructor for DSMItem
+     * Copy constructor for a Grouping
      *
-     * @param copy DSMItem object that will be copied
+     * @param copy Grouping object that will be copied
      */
     public Grouping(Grouping copy) {
         uid = copy.getUid();
+        priority = copy.getPriority();
         name = copy.getName();
         color = copy.getColor();
         fontColor = copy.getFontColor();
@@ -99,10 +107,20 @@ public class Grouping {
     /**
      * Getter function for the uid of the grouping
      *
-     * @return the uid of the item
+     * @return the uid of the grouping
      */
     public Integer getUid() {
         return uid;
+    }
+
+
+    /**
+     * Getter function for the priority of the grouping
+     *
+     * @return the priority of the grouping
+     */
+    public Integer getPriority() {
+        return priority;
     }
 
 
@@ -133,6 +151,16 @@ public class Grouping {
      */
     public Color getFontColor() {
         return fontColor;
+    }
+
+
+    /**
+     * Setter function for the priority of the grouping
+     *
+     * @param priority the new priority of the grouping
+     */
+    public void setPriority(Integer priority) {
+        this.priority = priority;
     }
 
 
@@ -174,6 +202,7 @@ public class Grouping {
      */
     public Element getXML(Element groupElement) {
         groupElement.addContent(new Element("uid").setText(getUid().toString()));
+        groupElement.addContent(new Element("priority").setText(getPriority().toString()));
         groupElement.addContent(new Element("name").setText(getName()));
         groupElement.addContent(new Element("gr").setText(Double.valueOf(getColor().getRed()).toString()));
         groupElement.addContent(new Element("gg").setText(Double.valueOf(getColor().getGreen()).toString()));

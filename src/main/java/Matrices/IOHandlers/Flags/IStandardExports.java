@@ -1,7 +1,7 @@
 package Matrices.IOHandlers.Flags;
 
 import Matrices.Data.AbstractDSMData;
-import Matrices.Views.IMatrixView;
+import Matrices.Views.AbstractMatrixView;
 import javafx.stage.Window;
 
 import java.io.File;
@@ -56,6 +56,6 @@ public interface IStandardExports {
      * @param matrix      the matrix object to save to an image
      * @param matrixView  the matrix gui handler for the matrix object
      */
-    void exportToImage(AbstractDSMData matrix, IMatrixView matrixView);
+    void exportToImage(AbstractDSMData matrix, AbstractMatrixView matrixView);
 
 }

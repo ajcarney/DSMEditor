@@ -1,9 +1,7 @@
 package Matrices.IOHandlers;
 
-import Matrices.Data.Entities.DSMConnection;
-import Matrices.Data.Entities.DSMItem;
-import Matrices.Data.Entities.Grouping;
-import Matrices.Data.Entities.RenderMode;
+import Constants.Constants;
+import Matrices.Data.Entities.*;
 import Matrices.Data.MultiDomainDSMData;
 import Matrices.Views.AbstractMatrixView;
 import javafx.scene.paint.Color;
@@ -14,7 +12,6 @@ import org.apache.poi.ss.util.WorkbookUtil;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.javatuples.Triplet;
-import org.jdom2.Attribute;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.input.SAXBuilder;
@@ -119,6 +116,19 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
             matrix.setCustomer(customer);
             matrix.setVersionNumber(version);
 
+            // parse interfaces
+            HashMap<Integer, DSMInterfaceType> interfaces = new HashMap<>();
+            for(Element interfaceGroupingXML : rootElement.getChild("interfaces").getChildren()) {
+                String interfaceGrouping = interfaceGroupingXML.getAttribute("name").getValue();
+                matrix.addInterfaceTypeGrouping(interfaceGrouping);
+
+                for(Element interfaceXML : interfaceGroupingXML.getChildren()) {
+                    DSMInterfaceType interfaceType = new DSMInterfaceType(interfaceXML);
+                    interfaces.put(interfaceType.getUid(), interfaceType);
+                    matrix.addInterface(interfaceGrouping, interfaceType);
+                }
+            }
+
 
             ArrayList<Integer> uids = new ArrayList<>();  // keep track of the uids when reading rows and columns to ensure no duplicates
 
@@ -163,13 +173,19 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
 
             // parse connections
             List<Element> connections = rootElement.getChild("connections").getChildren();
-            for(Element conn : connections) {
-                int rowUid = Integer.parseInt(conn.getChild("row_uid").getText());
-                int colUid = Integer.parseInt(conn.getChild("col_uid").getText());
-                String name = conn.getChild("name").getText();
-                double weight = Double.parseDouble(conn.getChild("weight").getText());
+            for(Element connXML : connections) {
+                int rowUid = Integer.parseInt(connXML.getChild("row_uid").getText());
+                int colUid = Integer.parseInt(connXML.getChild("col_uid").getText());
+                String name = connXML.getChild("name").getText();
+                double weight = Double.parseDouble(connXML.getChild("weight").getText());
 
-                matrix.modifyConnection(rowUid, colUid, name, weight);
+                ArrayList<DSMInterfaceType> connectionInterfaces = new ArrayList<>();
+                for(Element interfaceXML : connXML.getChild("interfaces").getChildren()) {
+                    int interfaceUid = interfaceXML.getAttribute("uid").getIntValue();
+                    connectionInterfaces.add(interfaces.get(interfaceUid));
+                }
+
+                matrix.modifyConnection(rowUid, colUid, name, weight, connectionInterfaces);
             }
 
 
@@ -216,8 +232,8 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
             Element rowsElement = new Element("rows");
             Element colsElement = new Element("columns");
             Element connectionsElement = new Element("connections");
-            Element defaultGroupingElement = new Element("default_grouping");
             Element groupingsElement = new Element("domains");
+            Element interfacesElement = new Element("interfaces");
 
             // update metadata
             infoElement.addContent(new Element("title").setText(matrix.getTitle()));
@@ -225,6 +241,7 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
             infoElement.addContent(new Element("customer").setText(matrix.getCustomer()));
             infoElement.addContent(new Element("version").setText(matrix.getVersionNumber()));
             infoElement.addContent(new Element("type").setText("multi-domain"));
+            infoElement.addContent(new Element("file_structure").setText(Constants.version));
 
             // create column elements
             for(DSMItem col : matrix.getCols()) {
@@ -254,12 +271,22 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
                 groupingsElement.addContent(domainElement);
             }
 
+            // create interface type elements
+            for(Map.Entry<String, Vector<DSMInterfaceType>> interfaces : matrix.getInterfaceTypes().entrySet()) {
+                Element interfacesGroupingElement = new Element("grouping");
+                interfacesGroupingElement.setAttribute("name", interfaces.getKey());
+                for(DSMInterfaceType i : interfaces.getValue()) {
+                    interfacesGroupingElement.addContent(i.getXML(new Element("interface")));
+                }
+                interfacesElement.addContent(interfacesGroupingElement);
+            }
+
             doc.getRootElement().addContent(infoElement);
             doc.getRootElement().addContent(colsElement);
             doc.getRootElement().addContent(rowsElement);
             doc.getRootElement().addContent(connectionsElement);
-            doc.getRootElement().addContent(defaultGroupingElement);
             doc.getRootElement().addContent(groupingsElement);
+            doc.getRootElement().addContent(interfacesElement);
 
             XMLOutputter xmlOutput = new XMLOutputter();
             xmlOutput.setFormat(Format.getPrettyFormat());  // TODO: change this to getCompactFormat() for release
@@ -475,7 +502,7 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
                                 styleExcelCell(workbook, cell, bgColor, fontColor, HORIZONTAL_ROTATION);
                             } else {
                                 Color bgColor = (Color) AbstractMatrixView.DEFAULT_BACKGROUND.getFills().get(0).getFill();
-                                Color fontColor = Grouping.defaultFontColor;
+                                Color fontColor = Grouping.DEFAULT_FONT_COLOR;
                                 styleExcelCell(workbook, cell, bgColor, fontColor, HORIZONTAL_ROTATION);
                             }
                         }

@@ -719,8 +719,8 @@ public class FreezeGrid {
 
 
         // set cell pref sizes to row/col sizes
-        assert colPrefWidths.size() == cells.size();
-        assert rowPrefHeights.size() == cells.get(0).size();  // no need to perform null check on get() (0 size checked for earlier)
+        assert rowPrefHeights.size() == cells.size();
+        assert colPrefWidths.size() == cells.get(0).size();  // no need to perform null check on get() (0 size checked for earlier)
         for (int r=0; r<cells.size(); r++) {
             ArrayList<FreezeGridCell> row = cells.get(r);
             for (int c = 0; c < row.size(); c++) {

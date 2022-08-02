@@ -1,9 +1,6 @@
 package Matrices.Data;
 
-import Matrices.Data.Entities.DSMConnection;
-import Matrices.Data.Entities.DSMItem;
-import Matrices.Data.Entities.Grouping;
-import Matrices.Data.Entities.RenderMode;
+import Matrices.Data.Entities.*;
 import Matrices.Data.Flags.IPropagationAnalysis;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -39,8 +36,8 @@ public class AsymmetricDSMData extends AbstractDSMData implements IPropagationAn
         connections = new Vector<>();
         rowGroupings = FXCollections.observableArrayList();
         colGroupings = FXCollections.observableArrayList();
-        addGrouping(true, new Grouping(DEFAULT_GROUP_UID, "(none)", Color.WHITE, Grouping.defaultFontColor));
-        addGrouping(false, new Grouping(DEFAULT_GROUP_UID, "(none)", Color.WHITE, Grouping.defaultFontColor));
+        addGrouping(true, new Grouping(DEFAULT_GROUP_UID, Grouping.DEFAULT_PRIORITY,  "(none)", Color.WHITE, Grouping.DEFAULT_FONT_COLOR));
+        addGrouping(false, new Grouping(DEFAULT_GROUP_UID, Grouping.DEFAULT_PRIORITY,  "(none)", Color.WHITE, Grouping.DEFAULT_FONT_COLOR));
 
         setWasModified();
 
@@ -96,6 +93,13 @@ public class AsymmetricDSMData extends AbstractDSMData implements IPropagationAn
             copy.colGroupings.add(new Grouping(group));
         }
 
+        for(Map.Entry<String, Vector<DSMInterfaceType>> interfaceGroup : getInterfaceTypes().entrySet()) {
+            Vector<DSMInterfaceType> interfaces = new Vector<>();
+            for(DSMInterfaceType i : interfaceGroup.getValue()) {
+                interfaces.add(new DSMInterfaceType(i));
+            }
+            copy.interfaceTypes.put(interfaceGroup.getKey(), interfaces);
+        }
 
         copy.setTitle(getTitle());
         copy.setProjectName(getProjectName());
@@ -223,13 +227,13 @@ public class AsymmetricDSMData extends AbstractDSMData implements IPropagationAn
                 () -> {  // do function
                     if(isRow) {
                         rowGroupings.clear();
-                        rowGroupings.add(new Grouping(DEFAULT_GROUP_UID, "(none)", Color.WHITE, Grouping.defaultFontColor));
-                        for(DSMItem r : rows) {  // TODO: fix
+                        rowGroupings.add(new Grouping(DEFAULT_GROUP_UID, Grouping.DEFAULT_PRIORITY,  "(none)", Color.WHITE, Grouping.DEFAULT_FONT_COLOR));
+                        for(DSMItem r : rows) {
                             setItemGroup(r, getDefaultGroup(true));
                         }
                     } else {
                         colGroupings.clear();
-                        colGroupings.add(new Grouping(DEFAULT_GROUP_UID, "(none)", Color.WHITE, Grouping.defaultFontColor));
+                        colGroupings.add(new Grouping(DEFAULT_GROUP_UID, Grouping.DEFAULT_PRIORITY,  "(none)", Color.WHITE, Grouping.DEFAULT_FONT_COLOR));
                         for(DSMItem c : cols) {
                             setItemGroup(c, getDefaultGroup(false));
                         }

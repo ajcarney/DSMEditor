@@ -2,11 +2,13 @@ package UI;
 
 import Constants.Constants;
 import Matrices.Data.AbstractDSMData;
+import Matrices.EditorTabs.IEditorTab;
 import Matrices.IDSM;
 import Matrices.MatricesCollection;
+import Matrices.Views.AbstractMatrixView;
 import UI.Widgets.DraggableTab;
-import UI.Widgets.Misc;
 import javafx.beans.binding.Bindings;
+import javafx.scene.Scene;
 import javafx.scene.control.TabPane;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
@@ -90,11 +92,26 @@ public class EditorPane {
      */
     public AbstractDSMData getFocusedMatrixData() {
         try {
-            return matrices.getMatrix(getFocusedMatrixUid()).getMatrixData();
+            return matrices.getMatrix(getFocusedMatrixUid()).getMatrixEditorTab().getMatrixData();
         } catch(Exception e) {
             return null;
         }
     }
+
+
+    /**
+     * Finds the matrix the user is focused on by using a lookup table
+     *
+     * @return  the uid of the matrix that is focused
+     */
+    public AbstractMatrixView getFocusedMatrixView() {
+        try {
+            return matrices.getMatrix(getFocusedMatrixUid()).getMatrixEditorTab().getMatrixView();
+        } catch(Exception e) {
+            return null;
+        }
+    }
+
 
 
     /**
@@ -177,8 +194,7 @@ public class EditorPane {
      *
      * @param  matrix  the matrix to add a tab for
      */
-    public void addTab(IDSM matrix)
-    {
+    public void addTab(IDSM matrix) {
         int matrixUid = currentMatrixUid;
         currentMatrixUid += 1;
 
@@ -200,11 +216,6 @@ public class EditorPane {
         tab.setContent(this.matrices.getMatrix(matrixUid).getMatrixEditorTab().getCenterPane());
 
         tab.setDetachable(false);
-        tabPane.getScene().setOnKeyPressed(e -> {  // add keybinding to toggle cross-highlighting on the editor
-            if (e.getCode() == KeyCode.F) {
-                this.matrices.getMatrix(matrixUid).getMatrixView().toggleCrossHighlighting();
-            }
-        });
 
         tab.setOnCloseRequest(e -> {
             if(!matrices.isMatrixSaved(matrixUid)) {
@@ -358,6 +369,25 @@ public class EditorPane {
         this.matrices.getMatrix(getFocusedMatrixUid()).getMatrixView().setFontSize(DEFAULT_FONT_SIZE);
         this.matrices.getMatrix(getFocusedMatrixUid()).getMatrixView().refreshView();
         refreshSelectedTab();
+    }
+
+
+    /**
+     * Configures the keyboard bindings to run on a given scene. Use scene so that binding will trigger no
+     * matter which node is focused
+     *
+     * @param scene
+     */
+    public void configureKeyboardBindings(Scene scene) {
+        scene.setOnKeyPressed(e -> {  // add keybinding to toggle cross-highlighting on the editor
+            if (e.getCode() == KeyCode.F) {
+                for(IEditorTab editorPane : matrices.getMatrices().values().stream().map(IDSM::getMatrixEditorTab).toList()) {
+                    for(AbstractMatrixView view : editorPane.getAllMatrixViews()) {
+                        view.toggleCrossHighlighting();
+                    }
+                }
+            }
+        });
     }
 
 }

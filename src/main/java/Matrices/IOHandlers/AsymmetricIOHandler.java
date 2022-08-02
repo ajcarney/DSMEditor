@@ -1,10 +1,8 @@
 package Matrices.IOHandlers;
 
+import Constants.Constants;
 import Matrices.Data.AsymmetricDSMData;
-import Matrices.Data.Entities.DSMConnection;
-import Matrices.Data.Entities.DSMItem;
-import Matrices.Data.Entities.Grouping;
-import Matrices.Data.Entities.RenderMode;
+import Matrices.Data.Entities.*;
 import Matrices.Views.AbstractMatrixView;
 import javafx.scene.paint.Color;
 import javafx.util.Pair;
@@ -22,10 +20,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 
 /**
@@ -116,6 +111,19 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
             matrix.setCustomer(customer);
             matrix.setVersionNumber(version);
 
+            // parse interfaces
+            HashMap<Integer, DSMInterfaceType> interfaces = new HashMap<>();
+            for(Element interfaceGroupingXML : rootElement.getChild("interfaces").getChildren()) {
+                String interfaceGrouping = interfaceGroupingXML.getAttribute("name").getValue();
+                matrix.addInterfaceTypeGrouping(interfaceGrouping);
+
+                for(Element interfaceXML : interfaceGroupingXML.getChildren()) {
+                    DSMInterfaceType interfaceType = new DSMInterfaceType(interfaceXML);
+                    interfaces.put(interfaceType.getUid(), interfaceType);
+                    matrix.addInterface(interfaceGrouping, interfaceType);
+                }
+            }
+
 
             ArrayList<Integer> uids = new ArrayList<>();  // keep track of the uids when reading rows and columns to ensure no duplicates
 
@@ -154,13 +162,19 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
 
             // parse connections
             List<Element> connections = rootElement.getChild("connections").getChildren();
-            for(Element conn : connections) {
-                int rowUid = Integer.parseInt(conn.getChild("row_uid").getText());
-                int colUid = Integer.parseInt(conn.getChild("col_uid").getText());
-                String name = conn.getChild("name").getText();
-                double weight = Double.parseDouble(conn.getChild("weight").getText());
+            for(Element connXML : connections) {
+                int rowUid = Integer.parseInt(connXML.getChild("row_uid").getText());
+                int colUid = Integer.parseInt(connXML.getChild("col_uid").getText());
+                String name = connXML.getChild("name").getText();
+                double weight = Double.parseDouble(connXML.getChild("weight").getText());
 
-                matrix.modifyConnection(rowUid, colUid, name, weight);
+                ArrayList<DSMInterfaceType> connectionInterfaces = new ArrayList<>();
+                for(Element interfaceXML : connXML.getChild("interfaces").getChildren()) {
+                    int interfaceUid = interfaceXML.getAttribute("uid").getIntValue();
+                    connectionInterfaces.add(interfaces.get(interfaceUid));
+                }
+
+                matrix.modifyConnection(rowUid, colUid, name, weight, connectionInterfaces);
             }
 
 
@@ -208,6 +222,7 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
             Element connectionsElement = new Element("connections");
             Element rowGroupingsElement = new Element("row_groupings");
             Element colGroupingsElement = new Element("col_groupings");
+            Element interfacesElement = new Element("interfaces");
 
             // update metadata
             infoElement.addContent(new Element("title").setText(matrix.getTitle()));
@@ -215,6 +230,7 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
             infoElement.addContent(new Element("customer").setText(matrix.getCustomer()));
             infoElement.addContent(new Element("version").setText(matrix.getVersionNumber()));
             infoElement.addContent(new Element("type").setText("asymmetric"));
+            infoElement.addContent(new Element("file_structure").setText(Constants.version));
 
             // create column elements
             for(DSMItem col : matrix.getCols()) {
@@ -232,12 +248,21 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
             }
 
             // create groupings elements
-
             for(Grouping group: matrix.getGroupings(true)) {
                 rowGroupingsElement.addContent(group.getXML(new Element("group")));
             }
             for(Grouping group: matrix.getGroupings(false)) {
                 colGroupingsElement.addContent(group.getXML(new Element("group")));
+            }
+
+            // create interface type elements
+            for(Map.Entry<String, Vector<DSMInterfaceType>> interfaces : matrix.getInterfaceTypes().entrySet()) {
+                Element interfacesGroupingElement = new Element("grouping");
+                interfacesGroupingElement.setAttribute("name", interfaces.getKey());
+                for(DSMInterfaceType i : interfaces.getValue()) {
+                    interfacesGroupingElement.addContent(i.getXML(new Element("interface")));
+                }
+                interfacesElement.addContent(interfacesGroupingElement);
             }
 
             doc.getRootElement().addContent(infoElement);
@@ -246,6 +271,7 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
             doc.getRootElement().addContent(connectionsElement);
             doc.getRootElement().addContent(rowGroupingsElement);
             doc.getRootElement().addContent(colGroupingsElement);
+            doc.getRootElement().addContent(interfacesElement);
 
             XMLOutputter xmlOutput = new XMLOutputter();
             xmlOutput.setFormat(Format.getPrettyFormat());  // TODO: change this to getCompactFormat() for release
@@ -444,7 +470,7 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
                                 styleExcelCell(workbook, cell, bgColor, fontColor, HORIZONTAL_ROTATION);
                             } else {
                                 Color bgColor = (Color) AbstractMatrixView.DEFAULT_BACKGROUND.getFills().get(0).getFill();
-                                Color fontColor = Grouping.defaultFontColor;
+                                Color fontColor = Grouping.DEFAULT_FONT_COLOR;
                                 styleExcelCell(workbook, cell, bgColor, fontColor, HORIZONTAL_ROTATION);
                             }
                         }

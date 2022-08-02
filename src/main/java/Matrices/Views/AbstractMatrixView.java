@@ -2,8 +2,10 @@ package Matrices.Views;
 
 import Matrices.Data.AbstractDSMData;
 import Matrices.Data.Entities.DSMConnection;
+import Matrices.Data.Entities.DSMInterfaceType;
 import Matrices.Data.Entities.DSMItem;
 import Matrices.Views.Entities.Cell;
+import UI.ConfigureConnectionInterfaces;
 import UI.Widgets.Misc;
 import UI.Widgets.NumericTextField;
 import javafx.beans.binding.Bindings;
@@ -26,6 +28,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Pair;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Optional;
 import java.util.Vector;
@@ -34,7 +37,7 @@ import java.util.Vector;
 /**
  * Generic class for displaying a matrix
  */
-public abstract class AbstractMatrixView implements IMatrixView, Cloneable {
+public abstract class AbstractMatrixView {
 
     public static final Background DEFAULT_BACKGROUND = new Background(new BackgroundFill(Color.color(1, 1, 1), new CornerRadii(3), new Insets(0)));
     public static final Background UNEDITABLE_CONNECTION_BACKGROUND = new Background(new BackgroundFill(Color.color(0, 0, 0), new CornerRadii(3), new Insets(0)));
@@ -54,6 +57,17 @@ public abstract class AbstractMatrixView implements IMatrixView, Cloneable {
 
     protected Vector<Cell> cells;  // contains information for highlighting
     protected HashMap<String, HashMap<Integer, Integer>> gridUidLookup;
+
+
+    /**
+     * Contains the different types of valid view modes for the matrix. Each of these defines
+     * how the matrix is to behave when it is rendered to the user
+     */
+    public enum MatrixViewMode {
+        EDIT,
+        STATIC,
+        FAST_RENDER
+    }
 
 
     protected class CellChangedEvent extends Event {
@@ -89,6 +103,13 @@ public abstract class AbstractMatrixView implements IMatrixView, Cloneable {
 
 //endregion
 
+    /**
+     * Method to clone this object type
+     *
+     * @return  the deep copy of the object
+     */
+    public abstract AbstractMatrixView createCopy();
+
 
     /**
      * Builder pattern method for setting the font size
@@ -96,7 +117,7 @@ public abstract class AbstractMatrixView implements IMatrixView, Cloneable {
      * @param fontSize  the new font size for the matrix view
      * @return          this
      */
-    public abstract <T extends AbstractMatrixView> T withFontSize(double fontSize);
+    public abstract AbstractMatrixView withFontSize(double fontSize);
 
 
     /**
@@ -105,14 +126,13 @@ public abstract class AbstractMatrixView implements IMatrixView, Cloneable {
      * @param mode  the new mode for the matrix view
      * @return      this
      */
-    public abstract <T extends AbstractMatrixView> T withMode(MatrixViewMode mode);
+    public abstract AbstractMatrixView withMode(MatrixViewMode mode);
 
 
 //region Getters
     /**
      * @return  if the matrix is showing names or values
      */
-    @Override
     public final boolean getShowNames() {
         return showNames.getValue();
     }
@@ -121,7 +141,6 @@ public abstract class AbstractMatrixView implements IMatrixView, Cloneable {
     /**
      * @return  the current view mode of the matrix
      */
-    @Override
     public final MatrixViewMode getCurrentMode() {
         return currentMode;
     }
@@ -139,12 +158,10 @@ public abstract class AbstractMatrixView implements IMatrixView, Cloneable {
     protected Cell getCellByLoc(Pair<Integer, Integer> cellLoc) {
         // searching in parallel can add some performance improvements once the size of the cells vector increases
         // to a certain point and the overhead is not such that it will detriment smaller matrices significantly
+        assert cellLoc != null : "cellLoc was null";
+
         Optional<Cell> c = cells.stream().parallel().filter(cell -> cell.getGridLocation().getKey().equals(cellLoc.getKey()) && cell.getGridLocation().getValue().equals(cellLoc.getValue())).findFirst();
-        if(c.isPresent()) {
-            return c.get();
-        } else {
-            return null;
-        }
+        return c.orElse(null);
     }
 
 
@@ -184,13 +201,9 @@ public abstract class AbstractMatrixView implements IMatrixView, Cloneable {
         // to a certain point and the overhead is not such that it will detriment smaller matrices significantly
         Optional<Cell> c = cells.stream().parallel().filter(cell -> {
             Pair<Integer, Integer> testUids = getUidsFromGridLoc(cell.getGridLocation());
-            if(testUids != null && testUids.equals(uids)) {
-                return true;
-            } else {
-                return false;
-            }
+            return testUids != null && testUids.equals(uids);
         }).findFirst();
-        
+
         if(c.isPresent()) {
             return new Pair<>(c.get().getGridLocation().getKey(), c.get().getGridLocation().getValue());
         } else {
@@ -199,21 +212,11 @@ public abstract class AbstractMatrixView implements IMatrixView, Cloneable {
     }
 
 
-    public void getCells() {
-
-    }
-
-    public void getGridUidLookup() {
-
-    }
-
-
     /**
      * Returns the current layout for the matrix editor that is either mutable or immutable depending on the last refresh call
      *
      * @return VBox of the root layout
      */
-    @Override
     public final VBox getView() {
         return rootLayout;
     }
@@ -226,7 +229,6 @@ public abstract class AbstractMatrixView implements IMatrixView, Cloneable {
      *
      * @param newSize the new font size to use in the gui
      */
-    @Override
     public final void setFontSize(Double newSize) {
         fontSize.setValue(newSize);
     }
@@ -237,7 +239,6 @@ public abstract class AbstractMatrixView implements IMatrixView, Cloneable {
      *
      * @param newValue show the names of the connections or the weights if false
      */
-    @Override
     public final void setShowNames(Boolean newValue) {
         showNames.set(newValue);
     }
@@ -248,7 +249,6 @@ public abstract class AbstractMatrixView implements IMatrixView, Cloneable {
      *
      * @param mode  the new mode for the matrix
      */
-    @Override
     public final void setCurrentMode(MatrixViewMode mode) {
         currentMode = mode;
     }
@@ -336,7 +336,6 @@ public abstract class AbstractMatrixView implements IMatrixView, Cloneable {
      *
      * @param highlightType the highlight type to assign to (userHighlight, errorHighlight, symmetryErrorHighlight)
      */
-    @Override
     public void clearAllCellsHighlight(String highlightType) {
         for(Cell cell : (Vector<Cell>)cells.clone()) {  // use a clone so we don't run into concurrent modification exceptions
             cell.updateHighlightBG(null, highlightType);
@@ -511,6 +510,21 @@ public abstract class AbstractMatrixView implements IMatrixView, Cloneable {
                 row2.getChildren().addAll(weightLabel, weightField);
 
                 // row 3
+                HBox row3 = new HBox();
+                final ArrayList<DSMInterfaceType> interfaceTypes = new ArrayList<>();
+                if(matrix.getConnection(rowUid, colUid) != null) {
+                    interfaceTypes.addAll(matrix.getConnection(rowUid, colUid).getInterfaces());
+                }
+                Button configureInterfacesButton = new Button("Configure Interfaces");
+                configureInterfacesButton.setOnAction(ee -> {
+                    ArrayList<DSMInterfaceType> newInterfaceTypes = ConfigureConnectionInterfaces.configureConnectionInterfaces(matrix.getInterfaceTypes(), interfaceTypes);
+                    interfaceTypes.clear();
+                    interfaceTypes.addAll(newInterfaceTypes);  // copy all the interfaces to the array
+                });
+                row3.getChildren().addAll(Misc.getHorizontalSpacer(), configureInterfacesButton, Misc.getHorizontalSpacer());
+
+
+                // row 4
                 // create HBox for user to close with our without changes
                 HBox closeArea = new HBox();
                 Button applyButton = new Button("Apply Changes");
@@ -522,7 +536,7 @@ public abstract class AbstractMatrixView implements IMatrixView, Cloneable {
                         } catch(NumberFormatException nfe) {
                             weight = 1.0;
                         }
-                        matrix.modifyConnection(rowUid, colUid, nameField.getText(), weight);
+                        matrix.modifyConnection(rowUid, colUid, nameField.getText(), weight, interfaceTypes);
                     } else {
                         matrix.deleteConnection(rowUid, colUid);
                     }
@@ -549,16 +563,16 @@ public abstract class AbstractMatrixView implements IMatrixView, Cloneable {
                 closeArea.getChildren().addAll(cancelButton, Misc.getHorizontalSpacer(), applyButton);
 
                 //Display window and wait for it to be closed before returning
-                layout.getChildren().addAll(titleLabel, row1, row2, closeArea);
+                layout.getChildren().addAll(titleLabel, row1, row2, row3, Misc.getVerticalSpacer(), closeArea);
                 layout.setAlignment(Pos.CENTER);
                 layout.setPadding(new Insets(10, 10, 10, 10));
                 layout.setSpacing(10);
 
-                Scene scene = new Scene(layout, 400, 200);
+                Scene scene = new Scene(layout, 450, 250);
                 window.setScene(scene);
                 window.showAndWait();
 
-                // fire the event because the content could change and the cell might need to do something extra unique
+                // fire the event because the content could change and the cell might need to do something extra that is unique
                 // to a specific kind of matrix handler
                 cell.fireEvent(new CellChangedEvent(CELL_CHANGED_EVENT));
 

@@ -1,6 +1,7 @@
 package Matrices.SideBarTools;
 
 import Matrices.Data.Entities.DSMConnection;
+import Matrices.Data.Entities.DSMInterfaceType;
 import Matrices.Data.Entities.DSMItem;
 import Matrices.Data.Entities.Grouping;
 import Matrices.Data.MultiDomainDSMData;
@@ -50,7 +51,7 @@ public class MultiDomainSideBar extends AbstractSideBar {
         configureGroupings.setOnAction(e -> configureGroupingsCallback());
         configureGroupings.setMaxWidth(Double.MAX_VALUE);
 
-        layout.getChildren().addAll(addMatrixItems, deleteMatrixItems, appendConnections, setConnections, deleteConnections, configureGroupings, sort, reDistributeIndices);
+        layout.getChildren().addAll(addMatrixItems, deleteMatrixItems, appendConnections, setConnections, deleteConnections, configureInterfaces, configureGroupings, sort, reDistributeIndices);
         layout.setPadding(new Insets(10, 10, 10, 10));
         layout.setSpacing(20);
         layout.setAlignment(Pos.CENTER);
@@ -69,6 +70,7 @@ public class MultiDomainSideBar extends AbstractSideBar {
         configureGroupings.setDisable(true);
         sort.setDisable(true);
         reDistributeIndices.setDisable(true);
+        configureInterfaces.setDisable(true);
     }
 
 
@@ -84,6 +86,7 @@ public class MultiDomainSideBar extends AbstractSideBar {
         configureGroupings.setDisable(false);
         sort.setDisable(false);
         reDistributeIndices.setDisable(false);
+        configureInterfaces.setDisable(false);
     }
 
 
@@ -170,7 +173,7 @@ public class MultiDomainSideBar extends AbstractSideBar {
         Button applyButton = new Button("Apply Changes");
         applyButton.setOnAction(e -> {
             for(Pair<String, Grouping> item : changesToMakeView.getItems()) {
-                matrix.createItem(item.getKey(), true, item.getValue());
+                matrix.createItem(item.getKey(), item.getValue());
             }
             matrix.setCurrentStateAsCheckpoint();
             window.close();
@@ -325,19 +328,21 @@ public class MultiDomainSideBar extends AbstractSideBar {
         RadioButton selectByCol = new RadioButton("Column");
         TextField connectionName = new TextField();
         NumericTextField weight = new NumericTextField(null);
+        ArrayList<DSMInterfaceType> selectedInterfaces = new ArrayList<>();
 
         // create the viewer for connections
         WidgetBuilders.createConnectionsViewerScrollPane(
-                matrix,
-                connectionsArea,
-                itemSelector,
-                connections,
-                tg,
-                selectByRow,
-                selectByCol,
-                connectionName,
-                weight,
-                true
+            matrix,
+            connectionsArea,
+            itemSelector,
+            connections,
+            tg,
+            selectByRow,
+            selectByCol,
+            connectionName,
+            weight,
+            selectedInterfaces,
+            false
         );
 
 
@@ -357,13 +362,13 @@ public class MultiDomainSideBar extends AbstractSideBar {
                 }
 
                 if(tg.getSelectedToggle().equals(selectByRow)) {  // selecting by row
-                    DSMConnection conn = new DSMConnection(connectionName.getText(), weight.getNumericValue(), itemSelector.getValue().getUid(), entry.getValue().getUid());
+                    DSMConnection conn = new DSMConnection(connectionName.getText(), weight.getNumericValue(), itemSelector.getValue().getUid(), entry.getValue().getUid(), selectedInterfaces);
                     if(!changesToMakeView.getItems().contains(conn)) {  // ensure no duplicates
                         changesToMakeView.getItems().add(conn);
                     }
 
                 } else if(tg.getSelectedToggle().equals(selectByCol)) {  // selecting by column
-                    DSMConnection conn = new DSMConnection(connectionName.getText(), weight.getNumericValue(), entry.getValue().getUid(), itemSelector.getValue().getUid());
+                    DSMConnection conn = new DSMConnection(connectionName.getText(), weight.getNumericValue(), entry.getValue().getUid(), itemSelector.getValue().getUid(), selectedInterfaces);
                     if(!changesToMakeView.getItems().contains(conn)) {  // ensure no duplicates
                         changesToMakeView.getItems().add(conn);
                     }
@@ -387,8 +392,8 @@ public class MultiDomainSideBar extends AbstractSideBar {
                     int symmetricRowUid = matrix.getSymmetricConnectionUids(rowUid, colUid).getKey();
                     int symmetricColUid = matrix.getSymmetricConnectionUids(rowUid, colUid).getValue();
 
-                    DSMConnection conn1 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), rowUid, colUid);
-                    DSMConnection conn2 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), symmetricRowUid, symmetricColUid);
+                    DSMConnection conn1 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), rowUid, colUid, selectedInterfaces);
+                    DSMConnection conn2 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), symmetricRowUid, symmetricColUid, selectedInterfaces);
 
                     if(!changesToMakeView.getItems().contains(conn1)) {  // ensure no duplicates
                         changesToMakeView.getItems().add(conn1);
@@ -402,8 +407,8 @@ public class MultiDomainSideBar extends AbstractSideBar {
                     int symmetricRowUid = matrix.getSymmetricConnectionUids(rowUid, colUid).getKey();
                     int symmetricColUid = matrix.getSymmetricConnectionUids(rowUid, colUid).getValue();
 
-                    DSMConnection conn1 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), rowUid, colUid);
-                    DSMConnection conn2 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), symmetricRowUid, symmetricColUid);
+                    DSMConnection conn1 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), rowUid, colUid, selectedInterfaces);
+                    DSMConnection conn2 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), symmetricRowUid, symmetricColUid, selectedInterfaces);
 
                     if(!changesToMakeView.getItems().contains(conn1)) {  // ensure no duplicates
                         changesToMakeView.getItems().add(conn1);
@@ -423,7 +428,7 @@ public class MultiDomainSideBar extends AbstractSideBar {
         Button applyAllButton = new Button("Apply All Changes");
         applyAllButton.setOnAction(ee -> {
             for(DSMConnection conn : changesToMakeView.getItems()) {  // rowUid | colUid | name | weight
-                matrix.modifyConnection(conn.getRowUid(), conn.getColUid(), conn.getConnectionName(), conn.getWeight());
+                matrix.modifyConnection(conn.getRowUid(), conn.getColUid(), conn.getConnectionName(), conn.getWeight(), selectedInterfaces);
             }
             window.close();
             matrixView.refreshView();
@@ -484,19 +489,21 @@ public class MultiDomainSideBar extends AbstractSideBar {
         RadioButton selectByCol = new RadioButton("Column");
         TextField connectionName = new TextField();
         NumericTextField weight = new NumericTextField(null);
+        ArrayList<DSMInterfaceType> selectedInterfaces = new ArrayList<>();
 
         // create the viewer for connections
         WidgetBuilders.createConnectionsViewerScrollPane(
-                matrix,
-                connectionsArea,
-                itemSelector,
-                connections,
-                tg,
-                selectByRow,
-                selectByCol,
-                connectionName,
-                weight,
-                true
+            matrix,
+            connectionsArea,
+            itemSelector,
+            connections,
+            tg,
+            selectByRow,
+            selectByCol,
+            connectionName,
+            weight,
+            selectedInterfaces,
+            true
         );
 
 
@@ -513,26 +520,26 @@ public class MultiDomainSideBar extends AbstractSideBar {
             for (Map.Entry<CheckBox, DSMItem> entry : connections.entrySet()) {
                 if (entry.getKey().isSelected() && !connectionName.getText().isEmpty()) {  // create the connection
                     if(tg.getSelectedToggle().equals(selectByRow)) {  // selecting by row
-                        DSMConnection conn = new DSMConnection(connectionName.getText(), weight.getNumericValue(), itemSelector.getValue().getUid(), entry.getValue().getUid());
+                        DSMConnection conn = new DSMConnection(connectionName.getText(), weight.getNumericValue(), itemSelector.getValue().getUid(), entry.getValue().getUid(), selectedInterfaces);
                         if(!changesToMakeView.getItems().contains(conn)) {  // ensure no duplicates
                             changesToMakeView.getItems().add(conn);
                         }
 
                     } else if(tg.getSelectedToggle().equals(selectByCol)) {  // selecting by column
-                        DSMConnection conn = new DSMConnection(connectionName.getText(), weight.getNumericValue(), entry.getValue().getUid(), itemSelector.getValue().getUid());
+                        DSMConnection conn = new DSMConnection(connectionName.getText(), weight.getNumericValue(), entry.getValue().getUid(), itemSelector.getValue().getUid(), selectedInterfaces);
                         if(!changesToMakeView.getItems().contains(conn)) {  // ensure no duplicates
                             changesToMakeView.getItems().add(conn);
                         }
                     }
                 } else {  // delete the connection
                     if(tg.getSelectedToggle().equals(selectByRow)) {  // selecting by row
-                        DSMConnection conn = new DSMConnection("", Double.MAX_VALUE, itemSelector.getValue().getUid(), entry.getValue().getUid());
+                        DSMConnection conn = new DSMConnection("", Double.MAX_VALUE, itemSelector.getValue().getUid(), entry.getValue().getUid(), new ArrayList<>());
                         if(!changesToMakeView.getItems().contains(conn)) {  // ensure no duplicates
                             changesToMakeView.getItems().add(conn);
                         }
 
                     } else if(tg.getSelectedToggle().equals(selectByCol)) {  // selecting by column
-                        DSMConnection conn = new DSMConnection("", Double.MAX_VALUE, entry.getValue().getUid(), itemSelector.getValue().getUid());
+                        DSMConnection conn = new DSMConnection("", Double.MAX_VALUE, entry.getValue().getUid(), itemSelector.getValue().getUid(), new ArrayList<>());
                         if(!changesToMakeView.getItems().contains(conn)) {  // ensure no duplicates
                             changesToMakeView.getItems().add(conn);
                         }
@@ -554,8 +561,8 @@ public class MultiDomainSideBar extends AbstractSideBar {
                         int symmetricRowUid = matrix.getSymmetricConnectionUids(rowUid, colUid).getKey();
                         int symmetricColUid = matrix.getSymmetricConnectionUids(rowUid, colUid).getValue();
 
-                        DSMConnection conn1 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), rowUid, colUid);
-                        DSMConnection conn2 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), symmetricRowUid, symmetricColUid);
+                        DSMConnection conn1 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), rowUid, colUid, selectedInterfaces);
+                        DSMConnection conn2 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), symmetricRowUid, symmetricColUid, selectedInterfaces);
 
                         if(!changesToMakeView.getItems().contains(conn1)) {  // ensure no duplicates
                             changesToMakeView.getItems().add(conn1);
@@ -569,8 +576,8 @@ public class MultiDomainSideBar extends AbstractSideBar {
                         int symmetricRowUid = matrix.getSymmetricConnectionUids(rowUid, colUid).getKey();
                         int symmetricColUid = matrix.getSymmetricConnectionUids(rowUid, colUid).getValue();
 
-                        DSMConnection conn1 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), rowUid, colUid);
-                        DSMConnection conn2 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), symmetricRowUid, symmetricColUid);
+                        DSMConnection conn1 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), rowUid, colUid, selectedInterfaces);
+                        DSMConnection conn2 = new DSMConnection(connectionName.getText(), weight.getNumericValue(), symmetricRowUid, symmetricColUid, selectedInterfaces);
 
                         if(!changesToMakeView.getItems().contains(conn1)) {  // ensure no duplicates
                             changesToMakeView.getItems().add(conn1);
@@ -579,15 +586,15 @@ public class MultiDomainSideBar extends AbstractSideBar {
                             changesToMakeView.getItems().add(conn2);
                         }
                     }
-                } else {
+                } else {  // deleting connection
                     if(tg.getSelectedToggle().equals(selectByRow)) {  // selecting by row
                         int rowUid = itemSelector.getValue().getUid();
                         int colUid = entry.getValue().getUid();
                         int symmetricRowUid = matrix.getSymmetricConnectionUids(rowUid, colUid).getKey();
                         int symmetricColUid = matrix.getSymmetricConnectionUids(rowUid, colUid).getValue();
 
-                        DSMConnection conn1 = new DSMConnection("", Double.MAX_VALUE, rowUid, colUid);
-                        DSMConnection conn2 = new DSMConnection("", Double.MAX_VALUE, symmetricRowUid, symmetricColUid);
+                        DSMConnection conn1 = new DSMConnection("", Double.MAX_VALUE, rowUid, colUid, new ArrayList<>());
+                        DSMConnection conn2 = new DSMConnection("", Double.MAX_VALUE, symmetricRowUid, symmetricColUid, new ArrayList<>());
 
                         if(!changesToMakeView.getItems().contains(conn1)) {  // ensure no duplicates
                             changesToMakeView.getItems().add(conn1);
@@ -601,8 +608,8 @@ public class MultiDomainSideBar extends AbstractSideBar {
                         int symmetricRowUid = matrix.getSymmetricConnectionUids(rowUid, colUid).getKey();
                         int symmetricColUid = matrix.getSymmetricConnectionUids(rowUid, colUid).getValue();
 
-                        DSMConnection conn1 = new DSMConnection("", Double.MAX_VALUE, rowUid, colUid);
-                        DSMConnection conn2 = new DSMConnection("", Double.MAX_VALUE, symmetricRowUid, symmetricColUid);
+                        DSMConnection conn1 = new DSMConnection("", Double.MAX_VALUE, rowUid, colUid, new ArrayList<>());
+                        DSMConnection conn2 = new DSMConnection("", Double.MAX_VALUE, symmetricRowUid, symmetricColUid, new ArrayList<>());
 
                         if (!changesToMakeView.getItems().contains(conn1)) {  // ensure no duplicates
                             changesToMakeView.getItems().add(conn1);
@@ -623,7 +630,7 @@ public class MultiDomainSideBar extends AbstractSideBar {
         applyAllButton.setOnAction(ee -> {
             for(DSMConnection conn : changesToMakeView.getItems()) {
                 if(!conn.getConnectionName().isEmpty() && conn.getWeight() != Double.MAX_VALUE) {
-                    matrix.modifyConnection(conn.getRowUid(), conn.getColUid(), conn.getConnectionName(), conn.getWeight());
+                    matrix.modifyConnection(conn.getRowUid(), conn.getColUid(), conn.getConnectionName(), conn.getWeight(), selectedInterfaces);
                 } else {
                     matrix.deleteConnection(conn.getRowUid(), conn.getColUid());
                 }
@@ -1000,70 +1007,6 @@ public class MultiDomainSideBar extends AbstractSideBar {
 
 
     /**
-     * Creates the edit pane for a given domain
-     *
-     * @param matrix  the matrix that contains the domain
-     * @param parent  the parent VBox that will contain the created pane
-     * @param domain  the domain to create the edit view for
-     */
-    private static void configureDomainRow(MultiDomainDSMData matrix, VBox parent, Grouping domain) {
-        VBox domainEditLayout = new VBox();
-        VBox groupingsLayout = new VBox();
-
-        HBox domainRow = configureGroupingEditorRow(matrix, domain, () -> {
-            if(matrix.getDomains().size() > 1) {
-                // TODO: Prompt delete confirmation
-                matrix.removeDomain(domain);  // delete the grouping from the matrix
-                parent.getChildren().remove(domainEditLayout);  // remove the domain from the view
-            }  // TODO: prompt that it can't be deleted
-        }, true);
-        groupingsLayout.getChildren().add(domainRow);
-
-        for(Grouping domainGrouping : matrix.getDomainGroupings(domain)) {
-            HBox groupingRow = new HBox();
-            groupingRow.setPadding(new Insets(0, 0, 0, 50));
-            groupingRow.setMaxWidth(Double.MAX_VALUE);
-            HBox.setHgrow(groupingRow, Priority.ALWAYS);
-            boolean deletable = !domainGrouping.getUid().equals(Integer.MAX_VALUE);
-
-            HBox groupingRowContent = configureGroupingEditorRow(matrix, domainGrouping, () -> {
-                if(matrix.getDomainGroupings(domain).size() > 1) {
-                    matrix.removeDomainGrouping(domain, domainGrouping);  // delete the grouping from the matrix
-                    groupingsLayout.getChildren().remove(groupingRow);  // remove the domain from the view
-                }  // TODO: prompt that it can't be deleted
-            }, deletable);
-
-            groupingRow.getChildren().add(groupingRowContent);
-            groupingsLayout.getChildren().add(groupingRow);
-        }
-
-        Button addDomainGroupingButton = new Button("Add New Grouping");
-        addDomainGroupingButton.setOnAction(e -> {
-            Grouping newDomainGrouping = new Grouping("New Grouping", Color.color(1, 1, 1));
-            HBox groupingRow = new HBox();  // wrap content in another hbox to add padding for an indent
-            groupingRow.setPadding(new Insets(0, 0, 0, 50));
-            HBox groupingRowContent = configureGroupingEditorRow(matrix, newDomainGrouping, () -> {
-                if (matrix.getDomainGroupings(domain).size() > 1) {
-                    matrix.removeDomainGrouping(domain, newDomainGrouping);  // delete the grouping from the matrix
-                    groupingsLayout.getChildren().remove(groupingRow);  // remove the domain from the view
-                }  // TODO: prompt that it can't be deleted
-            }, true);
-
-            groupingRow.getChildren().add(groupingRowContent);
-            groupingsLayout.getChildren().add(groupingRow);
-            matrix.addDomainGrouping(domain, newDomainGrouping);
-        });
-
-        domainEditLayout.setAlignment(Pos.CENTER);
-        domainEditLayout.setPadding(new Insets(5));
-        domainEditLayout.getChildren().addAll(groupingsLayout, addDomainGroupingButton);
-        domainEditLayout.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
-        parent.getChildren().add(domainEditLayout);
-    }
-
-
-
-    /**
      * Sets up the button for modifying groupings in the matrix
      */
     private void configureGroupingsCallback() {
@@ -1074,12 +1017,104 @@ public class MultiDomainSideBar extends AbstractSideBar {
 
         VBox mainView = new VBox();
         mainView.setSpacing(15);
-        VBox groupingsView = new VBox();
-        groupingsView.setSpacing(25);
 
-        for(Grouping domain : matrix.getDomains()) {
-            configureDomainRow(matrix, groupingsView, domain);
-        }
+
+        ListView<Grouping> domainsListView = new ListView<>();
+        domainsListView.setItems(matrix.getDomains());
+        domainsListView.setSelectionModel(new Misc.NoSelectionModel<>());
+
+
+        domainsListView.setCellFactory(new Callback<>() {
+            @Override
+            public ListCell<Grouping> call(ListView<Grouping> param) {
+                return new ListCell<>(){
+                    @Override
+                    protected void updateItem(Grouping domain, boolean empty) {
+                        super.updateItem(domain, empty);
+
+                        if(empty || domain == null) {
+                            setGraphic(null);
+                            return;
+                        }
+
+                        VBox domainEditCell = new VBox();    // the layout for the whole cell
+                        HBox groupingsLayout = new HBox();   // the layout for the grouping edit rows and the up/down buttons
+                        VBox groupingsVLayout = new VBox();  // the layout for just the grouping edit rows
+
+                        groupingsLayout.setSpacing(10);
+
+                        // configure the row for the domain
+                        HBox domainRow = configureGroupingEditorRow(matrix, domain, () -> {
+                            if(matrix.getDomains().size() > 1) {
+                                // TODO: Prompt delete confirmation
+                                matrix.removeDomain(domain);  // delete the grouping from the matrix
+                            }  // TODO: prompt that it can't be deleted
+                        }, true);
+                        groupingsVLayout.getChildren().add(domainRow);
+
+
+                        // configure the rows for the domain groupings
+                        for(Grouping domainGrouping : matrix.getDomainGroupings(domain)) {
+                            HBox groupingRow = new HBox();
+                            groupingRow.setPadding(new Insets(0, 0, 0, 50));
+                            groupingRow.setMaxWidth(Double.MAX_VALUE);
+                            HBox.setHgrow(groupingRow, Priority.ALWAYS);
+                            boolean deletable = !domainGrouping.getUid().equals(Integer.MAX_VALUE);
+
+                            HBox groupingRowContent = configureGroupingEditorRow(matrix, domainGrouping, () -> {
+                                if(matrix.getDomainGroupings(domain).size() > 1) {
+                                    matrix.removeDomainGrouping(domain, domainGrouping);  // delete the grouping from the matrix
+                                    groupingsVLayout.getChildren().remove(groupingRow);  // remove the domain from the view
+                                }  // TODO: prompt that it can't be deleted
+                            }, deletable);
+
+                            groupingRow.getChildren().add(groupingRowContent);
+                            groupingsVLayout.getChildren().add(groupingRow);
+                        }
+
+
+                        // configure the buttons for moving a domain up or down
+                        VBox shiftButtonsLayout = new VBox();
+                        shiftButtonsLayout.setAlignment(Pos.CENTER);
+                        shiftButtonsLayout.setSpacing(10);
+                        Button upButton = new Button(Character.toString(0x25b2));  // up arrow utf-16 hex code
+                        upButton.setOnAction(ee -> matrix.shiftDomainUp(domain));
+
+                        Button downButton = new Button(Character.toString(0x25bc));  // down arrow utf-16 hex code
+                        downButton.setOnAction(ee -> matrix.shiftDomainDown(domain));
+                        shiftButtonsLayout.getChildren().addAll(upButton, downButton);
+                        groupingsLayout.getChildren().addAll(shiftButtonsLayout, groupingsVLayout);
+
+
+                        // configure the button for adding a new grouping
+                        Button addDomainGroupingButton = new Button("Add New Grouping");
+                        addDomainGroupingButton.setOnAction(e -> {
+                            Grouping newDomainGrouping = new Grouping("New Grouping", Color.color(1, 1, 1));
+                            HBox groupingRow = new HBox();  // wrap content in another hbox to add padding for an indent
+                            groupingRow.setPadding(new Insets(0, 0, 0, 50));
+                            HBox groupingRowContent = configureGroupingEditorRow(matrix, newDomainGrouping, () -> {
+                                if (matrix.getDomainGroupings(domain).size() > 1) {
+                                    matrix.removeDomainGrouping(domain, newDomainGrouping);  // delete the grouping from the matrix
+                                    groupingsVLayout.getChildren().remove(groupingRow);  // remove the domain from the view
+                                }  // TODO: prompt that it can't be deleted
+                            }, true);
+
+                            groupingRow.getChildren().add(groupingRowContent);
+                            groupingsVLayout.getChildren().add(groupingRow);
+                            matrix.addDomainGrouping(domain, newDomainGrouping);
+                        });
+
+                        domainEditCell.setAlignment(Pos.CENTER);
+                        domainEditCell.setPadding(new Insets(5));
+                        domainEditCell.getChildren().addAll(groupingsLayout, addDomainGroupingButton);
+                        domainEditCell.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
+
+                        setGraphic(domainEditCell);
+                    }
+                };
+            }
+        });
+
 
 
         HBox addDomainButtonPane = new HBox();
@@ -1087,13 +1122,11 @@ public class MultiDomainSideBar extends AbstractSideBar {
         addDomainButton.setOnAction(e -> {
             Grouping newDomain = new Grouping("New Domain", Color.color(1, 1, 1));
             matrix.addDomain(newDomain);
-            configureDomainRow(matrix, groupingsView, newDomain);
         });
         addDomainButtonPane.getChildren().addAll(Misc.getHorizontalSpacer(), addDomainButton);
 
-        ScrollPane groupingsScrollView = new ScrollPane(groupingsView);
-        groupingsScrollView.setFitToWidth(true);
-        mainView.getChildren().add(groupingsScrollView);
+
+        mainView.getChildren().add(domainsListView);
         mainView.getChildren().add(addDomainButtonPane);
 
 
@@ -1115,7 +1148,7 @@ public class MultiDomainSideBar extends AbstractSideBar {
 
 
         //Display window and wait for it to be closed before returning
-        Scene scene = new Scene(layout, 1000, 400);
+        Scene scene = new Scene(layout, 1000, 550);
         window.setScene(scene);
         scene.getWindow().setOnHidden(e -> {  // TODO: 6/17/2020 changed from setOnCloseRequest when it was working before and idk why this fixed it
             window.close();                        // changes have already been made so just close and refresh the screen

@@ -1,5 +1,6 @@
 package UI;
 
+import Matrices.Data.AbstractDSMData;
 import Matrices.Data.Entities.DSMConnection;
 import Matrices.IDSM;
 import Matrices.Views.AbstractMatrixView;
@@ -94,6 +95,9 @@ public class ConnectionSearchWidget {
             ArrayList<Pair<Integer, Integer>> matches = new ArrayList<>();
             ArrayList<Pair<Integer, Integer>> prevMatches = new ArrayList<>();
 
+            AbstractMatrixView prevView = null;
+            AbstractDSMData prevMatrix = null;
+
             while(true) {  // go through and update highlighting
                 try {
                     Thread.sleep(100);
@@ -105,27 +109,35 @@ public class ConnectionSearchWidget {
                     continue;
                 }
 
-                synchronized (editor.getFocusedMatrixData()) {  // TODO: maybe this synchronization call can be removed. Idk, i was too scared to check
-                    AbstractMatrixView m = this.editor.getMatricesCollection().getMatrix(editor.getFocusedMatrixUid()).getMatrixView();
+                final AbstractMatrixView view = this.editor.getFocusedMatrixView();
+                final AbstractDSMData matrix = this.editor.getFocusedMatrixData();
+                if(!matrix.equals(prevMatrix) || !view.equals(prevView)) {  // if matrix switched, reset the previous matches
+                    prevMatches.clear();
+                    prevMatrix = matrix;
+                    prevView = view;
+                }
 
-                    matches = getMatches(searchInput.getText());
+                synchronized (view) {  // TODO: maybe this synchronization call can be removed. Idk, i was too scared to check
+                    matches = getMatches(searchInput.getText(), matrix);
                     Set<Pair<Integer, Integer>> prevAndCurrentErrors = new HashSet<>(prevMatches);
                     prevAndCurrentErrors.addAll(matches);
 
                     int numMatches = matches.size();  // update label text
-                    Platform.runLater(() -> numResults.setValue(numMatches));  // needs to be run on javafx thread or errors will occur
+                    ArrayList<Pair<Integer, Integer>> finalMatches = matches;
+                    ArrayList<Pair<Integer, Integer>> finalPrevMatches = prevMatches;
+                    Platform.runLater(() -> {
+                        numResults.setValue(numMatches);
 
-                    for (Pair<Integer, Integer> pair : prevAndCurrentErrors) {
-                        if (!matches.contains(pair) && prevMatches.contains(pair)) {  // old match that no longer matches, unhighlight it
-                            m.clearCellHighlight(m.getGridLocFromUids(pair), "search");
-                        } else {
-                            m.setCellHighlight(m.getGridLocFromUids(pair), AbstractMatrixView.SEARCH_BACKGROUND, "search");
+                        for (Pair<Integer, Integer> pair : prevAndCurrentErrors) {
+                            if (!finalMatches.contains(pair) && finalPrevMatches.contains(pair)) {  // old match that no longer matches, unhighlight it
+                                view.clearCellHighlight(view.getGridLocFromUids(pair), "search");
+                            } else {
+                                view.setCellHighlight(view.getGridLocFromUids(pair), AbstractMatrixView.SEARCH_BACKGROUND, "search");
+                            }
                         }
-                    }
-
+                    });  // needs to be run on javafx thread or errors will occur
 
                     prevMatches = matches;
-
                 }
             }
         });
@@ -140,29 +152,29 @@ public class ConnectionSearchWidget {
      * @param text the text to search for
      * @return     ArrayList of Pair row uid, column uid of all the matches
      */
-    private ArrayList<Pair<Integer, Integer>> getMatches(String text) {
+    private ArrayList<Pair<Integer, Integer>> getMatches(String text, AbstractDSMData matrix) {
         ArrayList<Pair<Integer, Integer>> matches = new ArrayList<>();  // find the connection cells to highlight
         if(tg.getSelectedToggle().equals(exactRadio)) {
-            for(DSMConnection connection : editor.getFocusedMatrixData().getConnections()) {
+            for(DSMConnection connection : matrix.getConnections()) {
                 if(connection.getConnectionName().equals(text)) {
                     matches.add(new Pair<>(connection.getRowUid(), connection.getColUid()));
                 }
             }
         } else if(tg.getSelectedToggle().equals(containsRadio)){
-            for(DSMConnection connection : editor.getFocusedMatrixData().getConnections()) {
+            for(DSMConnection connection : matrix.getConnections()) {
                 if(connection.getConnectionName().contains(text)) {
                     matches.add(new Pair<>(connection.getRowUid(), connection.getColUid()));
                 }
             }
         } else {
-            for(DSMConnection connection : editor.getFocusedMatrixData().getConnections()) {
-                double searchWeight;
-                try{
-                    searchWeight = Double.parseDouble(text);
-                } catch(NumberFormatException e) {
-                    continue;
-                }
+            double searchWeight;
+            try {
+                searchWeight = Double.parseDouble(text);
+            } catch(NumberFormatException e) {
+                return new ArrayList<>();
+            }
 
+            for(DSMConnection connection : matrix.getConnections()) {
                 if(connection.getWeight() == searchWeight) {
                     matches.add(new Pair<>(connection.getRowUid(), connection.getColUid()));
                 }
@@ -182,8 +194,10 @@ public class ConnectionSearchWidget {
         mainLayout.setManaged(false);  // so that the layout will not take up space on the application
         searchInput.setText("");
 
-        for(IDSM m : this.editor.getMatricesCollection().getMatrices().values()) {  // clear all search highlight for all matrices for better flow when switching tabs
-            m.getMatrixView().clearAllCellsHighlight("search");
+        for(IDSM matrix : this.editor.getMatricesCollection().getMatrices().values()) {  // clear all search highlight for all matrices for better flow when switching tabs
+            for(AbstractMatrixView view : matrix.getMatrixEditorTab().getAllMatrixViews()) {
+                view.clearAllCellsHighlight("search");
+            }
         }
     }
 
