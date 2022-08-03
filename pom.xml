@@ -24,11 +24,31 @@
             <artifactId>poi-ooxml</artifactId>
             <version>5.2.2</version>
         </dependency>
+
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-controls</artifactId>
             <version>17.0.2</version>
         </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-graphics</artifactId>
+            <version>17.0.2</version>
+            <classifier>win</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-graphics</artifactId>
+            <version>17.0.2</version>
+            <classifier>mac</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-graphics</artifactId>
+            <version>17.0.2</version>
+            <classifier>linux</classifier>
+        </dependency>
+
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-swing</artifactId>
@@ -59,6 +79,14 @@
                 </configuration>
             </plugin>
 
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.22.2</version>
+            </plugin>
+
+
             <plugin>
                 <artifactId>maven-shade-plugin</artifactId>
                 <version>3.2.1</version>
@@ -75,16 +103,134 @@
                                 </transformer>
                             </transformers>
                             <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <finalName>DSMEditor</finalName>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
 
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.22.2</version>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>wagon-maven-plugin</artifactId>
+                <version>1.0</version>
+                <executions>
+                    <execution>
+                        <id>download-win-jre</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>download-single</goal>
+                        </goals>
+                        <configuration>
+                            <url>https://github.com/adoptium/temurin16-binaries/releases/download/jdk-16.0.2%2B7</url>
+                            <fromFile>OpenJDK16U-jdk_x64_windows_hotspot_16.0.2_7.zip</fromFile>
+                            <toDir>target</toDir>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>download-linux-jre</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>download-single</goal>
+                        </goals>
+                        <configuration>
+                            <url>https://github.com/adoptium/temurin16-binaries/releases/download/jdk-16.0.2%2B7</url>
+                            <fromFile>OpenJDK16U-jdk_x64_linux_hotspot_16.0.2_7.tar.gz</fromFile>
+                            <toDir>target</toDir>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
+
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>createDirs</id>
+                        <phase>package</phase>
+                        <configuration>
+                            <tasks>
+                                <delete dir="./release"/>
+                                <mkdir dir="./release"/>
+                                <mkdir dir="./release/win64"/>
+                                <mkdir dir="./release/linux"/>
+
+                                <echo message="unzipping win jre..."/>
+                                <unzip src="./target/OpenJDK16U-jdk_x64_windows_hotspot_16.0.2_7.zip" dest="release/win64/" />
+
+                                <echo message="untarring linux jre..."/>
+                                <untar src="./target/OpenJDK16U-jdk_x64_linux_hotspot_16.0.2_7.tar.gz" compression="gzip" dest="release/linux/" />
+
+                                <echo message="cleaning up..."/>
+                                <delete>
+                                    <fileset file="./target/OpenJDK16U-jdk_x64_windows_hotspot_16.0.2_7.zip" includes="*.xml" />
+                                </delete>
+                                <delete>
+                                    <fileset file="./target/OpenJDK16U-jdk_x64_linux_hotspot_16.0.2_7.tar.gz" includes="*.xml" />
+                                </delete>
+
+                                <echo message="copying jar..."/>
+                                <copy todir="./release">
+                                    <fileset file="${project.build.directory}/DSMEditor.jar"/>
+                                </copy>
+                                <copy todir="./release/win64">
+                                    <fileset file="${project.build.directory}/DSMEditor.jar"/>
+                                </copy>
+                                <copy todir="./release/linux">
+                                    <fileset file="${project.build.directory}/DSMEditor.jar"/>
+                                </copy>
+
+                            </tasks>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+
+            <plugin>  <!-- This calls launch4j to create the program EXE -->
+                <groupId>com.akathist.maven.plugins.launch4j</groupId>
+                <artifactId>launch4j-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>l4j</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>launch4j</goal>
+                        </goals>
+                        <configuration>
+                            <headerType>console</headerType>
+                            <outfile>./release/win64/DSMEditor.exe</outfile>
+                            <jar>./release/win64/DSMEditor.jar</jar>
+                            <errTitle>Error</errTitle>
+                            <classPath>
+                                <mainClass>Launcher</mainClass>
+                                <addDependencies>true</addDependencies>
+                            </classPath>
+                            <jre>
+                                <path>./jdk-16.0.2+7</path>
+                            </jre>
+                            <versionInfo>
+                                <fileVersion>1.0.0.0</fileVersion>
+                                <txtFileVersion>${project.version}</txtFileVersion>
+                                <fileDescription>${project.name}</fileDescription>
+                                <copyright>N/A</copyright>
+                                <productVersion>1.0.0.0</productVersion>
+                                <txtProductVersion>1.0.0.0</txtProductVersion>
+                                <productName>${project.name}</productName>
+                                <companyName>N/A</companyName>
+                                <internalName>DSMEditor</internalName>
+                                <originalFilename>DSMEditor.exe</originalFilename>
+                            </versionInfo>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
         </plugins>
     </build>
 

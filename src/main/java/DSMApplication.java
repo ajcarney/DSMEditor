@@ -20,9 +20,9 @@ import java.util.*;
  * @author Aiden Carney
  */
 public class DSMApplication extends Application {
-    private static final BorderPane root = new BorderPane();
-    private static final EditorPane editor = new EditorPane(new MatricesCollection(), root);
-    private static final ArrayList<String> cliArgs = new ArrayList<>();
+    private static BorderPane root;
+    private static EditorPane editor;
+    private static ArrayList<String> cliArgs;
 
     /**
      * Starts the gui application
@@ -31,53 +31,29 @@ public class DSMApplication extends Application {
      */
     @Override
     public void start(Stage primaryStage) {
-        Thread.setDefaultUncaughtExceptionHandler(DSMApplication::handleError);
-
-
+        root = new BorderPane();
         Scene scene = new Scene(root, 1400, 800);
         primaryStage.setTitle("DSM Editor");
         primaryStage.setScene(scene);
         primaryStage.show();
         Platform.setImplicitExit(true);
 
+        editor = new EditorPane(new MatricesCollection(), root);
         editor.configureKeyboardBindings(scene);
 
+        Thread.setDefaultUncaughtExceptionHandler(DSMApplication::handleError);
 
         // start with a tab open (used for debugging, remove or comment out for release)
         if(cliArgs.contains("debug=true")) {
-//            File f = new File("/home/aiden/Documents/DSMEditor/test3.dsm");
-//            if(f.exists()) {
-//                SymmetricIOHandler ioHandler = new SymmetricIOHandler(f);
-//                SymmetricDSMData matrix = ioHandler.readFile();
-//                editor.addTab(
-//                        matrix,
-//                        ioHandler,
-//                        new SymmetricView(matrix, 12.0),
-//                        new SymmetricHeaderMenu(editor),
-//                        new SymmetricSideBar(matrix, editor)
-//                );
-//            }
-//            File f = new File("/home/aiden/Documents/DSMEditor/untitled0.dsm");
-//            if(f.exists()) {
-//                AsymmetricIOHandler ioHandler = new AsymmetricIOHandler(f);
-//                AsymmetricDSMData matrix = ioHandler.readFile();
-//                editor.addTab(
-//                        matrix,
-//                        ioHandler,
-//                        new AsymmetricView(matrix, 12.0),
-//                        new AsymmetricHeaderMenu(editor),
-//                        new AsymmetricSideBar(matrix, editor)
-//                );
-//            }
-//            File f = new File("/home/aiden/Documents/DSMEditor/symmetric.dsm");
-//            if(f.exists()) {
-//                editor.addTab(new SymmetricDSM(f));
-//            }
-
-            File f = new File("/home/aiden/Documents/DSMEditor/multi_domain.dsm");
+            File f = new File("/home/aiden/Documents/DSMEditor/symmetric.dsm");
             if(f.exists()) {
-                editor.addTab(new MultiDomainDSM(f, editor.getHeaderMenu()));
+                editor.addTab(new SymmetricDSM(f));
             }
+
+//            File f = new File("/home/aiden/Documents/DSMEditor/multi_domain.dsm");
+//            if(f.exists()) {
+//                editor.addTab(new MultiDomainDSM(f, editor.getHeaderMenu()));
+//            }
         }
 
         for (String cliArg : cliArgs) {
@@ -159,6 +135,7 @@ public class DSMApplication extends Application {
      * @param args any command line args used by javafx (probably not used anywhere and will be ignored)
      */
     public static void main(String[] args) {
+        cliArgs = new ArrayList<>();
         cliArgs.addAll(Arrays.asList(args));
 
         launch(args);  // starts gui application

@@ -402,8 +402,8 @@ public class MultiDomainSideBar extends AbstractSideBar {
                         changesToMakeView.getItems().add(conn2);
                     }
                 } else if(tg.getSelectedToggle().equals(selectByCol)) {  // selecting by column
-                    int rowUid = itemSelector.getValue().getUid();
-                    int colUid = entry.getValue().getUid();
+                    int rowUid = entry.getValue().getUid();
+                    int colUid = itemSelector.getValue().getUid();
                     int symmetricRowUid = matrix.getSymmetricConnectionUids(rowUid, colUid).getKey();
                     int symmetricColUid = matrix.getSymmetricConnectionUids(rowUid, colUid).getValue();
 
@@ -571,8 +571,8 @@ public class MultiDomainSideBar extends AbstractSideBar {
                             changesToMakeView.getItems().add(conn2);
                         }
                     } else if(tg.getSelectedToggle().equals(selectByCol)) {  // selecting by column
-                        int rowUid = itemSelector.getValue().getUid();
-                        int colUid = entry.getValue().getUid();
+                        int rowUid = entry.getValue().getUid();
+                        int colUid = itemSelector.getValue().getUid();
                         int symmetricRowUid = matrix.getSymmetricConnectionUids(rowUid, colUid).getKey();
                         int symmetricColUid = matrix.getSymmetricConnectionUids(rowUid, colUid).getValue();
 
@@ -603,8 +603,8 @@ public class MultiDomainSideBar extends AbstractSideBar {
                             changesToMakeView.getItems().add(conn2);
                         }
                     } else if(tg.getSelectedToggle().equals(selectByCol)) {  // selecting by column
-                        int rowUid = itemSelector.getValue().getUid();
-                        int colUid = entry.getValue().getUid();
+                        int rowUid = entry.getValue().getUid();
+                        int colUid = itemSelector.getValue().getUid();
                         int symmetricRowUid = matrix.getSymmetricConnectionUids(rowUid, colUid).getKey();
                         int symmetricColUid = matrix.getSymmetricConnectionUids(rowUid, colUid).getValue();
 

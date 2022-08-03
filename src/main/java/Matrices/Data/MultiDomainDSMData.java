@@ -2,6 +2,7 @@ package Matrices.Data;
 
 
 import Matrices.Data.Entities.*;
+import Matrices.Data.Flags.IPropagationAnalysis;
 import Matrices.Data.Flags.IZoomable;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -22,7 +23,7 @@ import java.util.*;
  *
  * @author: Aiden Carney
  */
-public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
+public class MultiDomainDSMData extends AbstractDSMData implements IZoomable, IPropagationAnalysis {
     private final Grouping defaultDomain = new Grouping(DEFAULT_GROUP_UID, Grouping.DEFAULT_PRIORITY, "default", Color.WHITE, Grouping.DEFAULT_FONT_COLOR);
     private ObservableMap<Grouping, ObservableList<Grouping>> domains;  // hashmap of domains and list of groupings corresponding to that domain
     private ObservableList<Grouping> sortedDomains;
@@ -70,6 +71,8 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
 
         sortedDomains = FXCollections.observableArrayList();
 
+        redistributeDomainPriorities();
+        sortDomains();
         setWasModified();
 
         clearStacks();
@@ -895,6 +898,7 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
     }
 
 
+//region zoom functions
     /**
      * Takes a matrix from a breakout view and merges its changes
      *
@@ -1220,6 +1224,66 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable {
 
             return exportMatrix;
         }
+    }
+//endregion
+
+
+    /**
+     * Runs propagation analysis for a matrix. Pick a start item and each level find the connections of the items in the
+     * previous level. Items that are excluded are added to the count, but not propagated through.
+     *
+     * @param startItem     the item to start at
+     * @param numLevels     number of levels to run
+     * @param exclusions    array of item uids to be excluded
+     * @param minWeight     minimum weight for item to be included
+     * @param countByWeight count by weight or by occurrence
+     * @return              HashMap(level : Hashmap(uid, occurrences/weights))
+     */
+    @Override
+    public HashMap<Integer, HashMap<Integer, Double>> propagationAnalysis(Integer startItem, int numLevels, ArrayList<Integer> exclusions, double minWeight, boolean countByWeight) {
+        int currentLevel = 1;
+        HashMap<Integer, HashMap<Integer, Double>> results = new HashMap<>();
+        ArrayList<Integer> dependentConnections = new ArrayList<>();
+        dependentConnections.add(startItem);
+        exclusions.add(startItem);
+
+        while(currentLevel <= numLevels) {
+            ArrayList<Integer> newDependentConnections = new ArrayList<>();
+            results.put(currentLevel, new HashMap<>());  // add default item
+
+            for(Integer uid : dependentConnections) {  // find dependent connections of each item from the previous level
+
+                // find connections with uid as the row item
+                for(DSMItem col : cols) {  // iterate over column items finding the ones that match the row
+                    DSMConnection conn = getConnection(uid, col.getUid());
+
+                    // define exit conditions
+                    if(conn == null) continue;
+                    if(conn.getWeight() < minWeight) continue;
+
+                    Integer resultEntryUid = col.getAliasUid();
+
+                    results.get(currentLevel).putIfAbsent(resultEntryUid, 0.0);
+
+                    if(countByWeight) {
+                        results.get(currentLevel).put(resultEntryUid, results.get(currentLevel).get(resultEntryUid) + conn.getWeight());
+                    } else {
+                        results.get(currentLevel).put(resultEntryUid, results.get(currentLevel).get(resultEntryUid) + 1.0);
+                    }
+
+                    if(!exclusions.contains(resultEntryUid) && !newDependentConnections.contains(resultEntryUid)) {  // add to next level if not present and not excluded
+                        newDependentConnections.add(resultEntryUid);  // add the actual item uid
+                    }
+                }
+            }
+
+
+            dependentConnections.clear();
+            dependentConnections = newDependentConnections;
+            currentLevel += 1;
+        }
+
+        return results;
     }
 
 }
