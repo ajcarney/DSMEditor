@@ -894,7 +894,7 @@ public class MultiDomainView extends AbstractMatrixView implements ISymmetricHig
         double y = 0;
         for(DSMItem rowItem : matrix.getRows()) {
             for(DSMItem colItem : matrix.getCols()) {
-                if(rowItem.getGroup1().equals(colItem.getGroup1())) {
+                if(rowItem.getGroup1().equals(colItem.getGroup1()) && rowItem.getGroup2().equals(colItem.getGroup2())) {
                     graphics_context.setFill(rowItem.getGroup1().getColor());
                 } else {
                     graphics_context.setFill(defaultColor);
