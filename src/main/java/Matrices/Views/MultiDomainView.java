@@ -76,7 +76,7 @@ public class MultiDomainView extends AbstractMatrixView implements ISymmetricHig
      * @return      this
      */
     public MultiDomainView withMode(MatrixViewMode mode) {
-        this.currentMode = mode;
+        this.currentMode.set(mode);
         return this;
     }
 
@@ -92,7 +92,6 @@ public class MultiDomainView extends AbstractMatrixView implements ISymmetricHig
         MultiDomainView copy = new MultiDomainView(matrix.createCopy(), fontSize.doubleValue());
 
         copy.setCurrentMode(getCurrentMode());
-        copy.setShowNames(getShowNames());
 
         // no need to copy gridUidLookup HashMap because those values are generated from the matrix on the
         // refreshView call which can be done later
@@ -382,7 +381,7 @@ public class MultiDomainView extends AbstractMatrixView implements ISymmetricHig
                         groupings.setStyle(
                                 "-fx-background-color: transparent;" +
                                 "-fx-padding: 0, 0, 0, 0;" +
-                                "-fx-font-size: " + (fontSize.doubleValue()) + " };"
+                                "-fx-font-size: " + (fontSize.doubleValue()) + " ;"
                         );
 
                         Callback<ListView<Grouping>, ListCell<Grouping>> groupingItemCellFactory = new Callback<>() {
@@ -606,14 +605,7 @@ public class MultiDomainView extends AbstractMatrixView implements ISymmetricHig
                         int rowUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getKey().getUid();
                         int colUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getValue().getUid();
                         DSMConnection conn = matrix.getConnection(rowUid, colUid);
-                        label = new Label();
-                        if (showNames.getValue() && conn != null) {
-                            label.setText(conn.getConnectionName());
-                        } else if (!showNames.getValue() && conn != null) {
-                            label.setText(String.valueOf(conn.getWeight()));
-                        } else {
-                            label.setText("");
-                        }
+                        label = new Label(getConnectionCellText(conn));
 
                         cell.setAlignment(Pos.CENTER);  // center the text
 

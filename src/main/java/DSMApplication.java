@@ -5,6 +5,7 @@ import javafx.application.Platform;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.Tab;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
@@ -45,15 +46,15 @@ public class DSMApplication extends Application {
 
         // start with a tab open (used for debugging, remove or comment out for release)
         if(cliArgs.contains("debug=true")) {
-            File f = new File("/home/aiden/Documents/DSMEditor/symmetric.dsm");
-            if(f.exists()) {
-                editor.addTab(new SymmetricDSM(f));
-            }
-
-//            File f = new File("/home/aiden/Documents/DSMEditor/multi_domain.dsm");
+//            File f = new File("/home/aiden/Documents/DSMEditor/symmetric.dsm");
 //            if(f.exists()) {
-//                editor.addTab(new MultiDomainDSM(f, editor.getHeaderMenu()));
+//                editor.addTab(new SymmetricDSM(f));
 //            }
+
+            File f = new File("/home/aiden/Documents/DSMEditor/multi_domain.dsm");
+            if(f.exists()) {
+                editor.addTab(new MultiDomainDSM(f, editor.getHeaderMenu()));
+            }
         }
 
         for (String cliArg : cliArgs) {

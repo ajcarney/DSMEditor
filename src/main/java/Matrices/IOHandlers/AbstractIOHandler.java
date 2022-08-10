@@ -437,12 +437,13 @@ public abstract class AbstractIOHandler implements IStandardExports {
             }
 
             HBox centeredMatrix = new HBox();
-            matrixView.setShowNames(showConnectionNames.isSelected());
 
             if(fastRender.isSelected()) {
                 matrixView.setCurrentMode(AbstractMatrixView.MatrixViewMode.FAST_RENDER);
+            } else if(showConnectionNames.isSelected()) {
+                matrixView.setCurrentMode(AbstractMatrixView.MatrixViewMode.STATIC_NAMES);
             } else {
-                matrixView.setCurrentMode(AbstractMatrixView.MatrixViewMode.STATIC);
+                matrixView.setCurrentMode(AbstractMatrixView.MatrixViewMode.STATIC_WEIGHTS);
             }
             matrixView.refreshView();
 

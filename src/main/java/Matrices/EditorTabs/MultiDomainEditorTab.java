@@ -87,13 +87,11 @@ public class MultiDomainEditorTab implements IEditorTab {
             // don't allow editing if breakout views are open
             MultiDomainSideBar sideBar = new MultiDomainSideBar(this.matrixData, this.matrixView);
             if(tabsData.keySet().size() > 1) {
-                this.matrixView.setCurrentMode(AbstractMatrixView.MatrixViewMode.STATIC);
                 sideBar.setDisabled();
-                headerMenu.setEditDisabled(true);
+                headerMenu.setDisabled(true);
             } else {
-                this.matrixView.setCurrentMode(AbstractMatrixView.MatrixViewMode.EDIT);
                 sideBar.setEnabled();
-                headerMenu.setEditDisabled(false);
+                headerMenu.setDisabled(false);
             }
             this.matrixView.refreshView();
 
@@ -225,13 +223,13 @@ public class MultiDomainEditorTab implements IEditorTab {
            // TODO: ask if user wants to apply changes
             this.tabsData.remove(tab);
             this.tabPane.getTabs().remove(tab);
-            headerMenu.setEditDisabled(false);
+            headerMenu.setDisabled(false);
         });
 
 
         tab.setOnSelectionChanged(e -> {
             headerMenu.refresh(data, ioHandler, view);
-            headerMenu.setEditDisabled(false);
+            headerMenu.setDisabled(false);
 
             leftLayout.getChildren().clear();
             leftLayout.getChildren().add(sideBar.getLayout());
