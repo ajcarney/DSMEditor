@@ -22,7 +22,7 @@ public class ConfigureConnectionInterfaces {
 
         // Create Root window
         window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
-        window.setTitle("Modify Connection Interfaces");
+        window.setTitle("Interfaces");
 
         final Accordion accordion = new Accordion ();
         ArrayList<DSMInterfaceType> selectedInterfaces = new ArrayList<>(currentInterfaces);  // copy

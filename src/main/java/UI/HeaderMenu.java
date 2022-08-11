@@ -33,6 +33,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+import UI.ConfigureConnectionInterfaces;
 import org.jdom2.Element;
 
 import java.io.File;
@@ -58,6 +59,8 @@ public class HeaderMenu {
     private RadioMenuItem weightsView = new RadioMenuItem("Weights");
     private RadioMenuItem interfacesView = new RadioMenuItem("Interfaces");
     private RadioMenuItem fastRenderView = new RadioMenuItem("Fast Render");
+
+    private ArrayList<DSMInterfaceType> currentInterfaces = new ArrayList<>();
 
     private final MenuBar menuBar = new MenuBar();
 
@@ -570,10 +573,16 @@ public class HeaderMenu {
         fastRenderView.setToggleGroup(toggleGroup);
 
 
+        MenuItem configureVisibleInterfaces = new MenuItem("Configure Visible Interfaces...");
+        configureVisibleInterfaces.setOnAction(e -> {
+            currentInterfaces = ConfigureConnectionInterfaces.configureConnectionInterfaces(matrixData.getInterfaceTypes(), currentInterfaces);
+        });
+
         toggleGroup.selectedToggleProperty().addListener((o, oldValue, newValue) -> {
             if(matrixData == null || newValue == null) return;
 
             if(newValue.equals(namesView)) {
+                configureVisibleInterfaces.setVisible(false);
                 if(this.disabled) {
                     matrixView.setCurrentMode(AbstractMatrixView.MatrixViewMode.STATIC_NAMES);
                 } else {
@@ -581,6 +590,7 @@ public class HeaderMenu {
                 }
 
             } else if(newValue.equals(weightsView)) {
+                configureVisibleInterfaces.setVisible(false);
                 if(this.disabled) {
                     matrixView.setCurrentMode(AbstractMatrixView.MatrixViewMode.STATIC_WEIGHTS);
                 } else {
@@ -588,6 +598,7 @@ public class HeaderMenu {
                 }
 
             } else if(newValue.equals(interfacesView)) {
+                configureVisibleInterfaces.setVisible(true);
                 if(this.disabled) {
                     matrixView.setCurrentMode(AbstractMatrixView.MatrixViewMode.STATIC_INTERFACES);
                 } else {
@@ -595,6 +606,7 @@ public class HeaderMenu {
                 }
 
             } else if(newValue.equals(fastRenderView)) {
+                configureVisibleInterfaces.setVisible(false);
                 matrixView.setCurrentMode(AbstractMatrixView.MatrixViewMode.FAST_RENDER);
             }
 
@@ -639,6 +651,7 @@ public class HeaderMenu {
         viewMenu.getItems().addAll(zoomIn, zoomOut, zoomReset);
         viewMenu.getItems().add(new SeparatorMenuItem());
         viewMenu.getItems().add(viewMode);
+        viewMenu.getItems().add(configureVisibleInterfaces);
 
     }
 
