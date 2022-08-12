@@ -223,7 +223,6 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
     public int saveMatrixToFile(File file) {
         try {
             file = forceExtension(file, ".dsm");
-
             // create xml
             Element rootElement = new Element("dsm");
             Document doc = new Document(rootElement);
@@ -289,7 +288,11 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
             doc.getRootElement().addContent(interfacesElement);
 
             XMLOutputter xmlOutput = new XMLOutputter();
-            xmlOutput.setFormat(Format.getPrettyFormat());  // TODO: change this to getCompactFormat() for release
+            if(Constants.isDebug) {
+                xmlOutput.setFormat(Format.getPrettyFormat());
+            } else {
+                xmlOutput.setFormat(Format.getCompactFormat());
+            }
             xmlOutput.output(doc, new FileOutputStream(file));
 
             System.out.println("Saving file " + file);

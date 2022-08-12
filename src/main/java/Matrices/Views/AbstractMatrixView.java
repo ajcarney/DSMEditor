@@ -9,10 +9,9 @@ import UI.ConfigureConnectionInterfaces;
 import UI.Widgets.Misc;
 import UI.Widgets.NumericTextField;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.*;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.Event;
 import javafx.event.EventType;
 import javafx.geometry.Insets;
@@ -32,6 +31,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Optional;
 import java.util.Vector;
+import java.util.stream.Collectors;
 
 
 /**
@@ -48,10 +48,10 @@ public abstract class AbstractMatrixView {
     public static final Background SEARCH_BACKGROUND = new Background(new BackgroundFill(Color.color(0, 1, 1), new CornerRadii(3), new Insets(0)));
 
     protected AbstractDSMData matrix;
+    private final ObservableList<DSMInterfaceType> currentInterfaces = FXCollections.observableArrayList();
 
     protected DoubleProperty fontSize;
-    protected BooleanProperty showNames;
-    protected MatrixViewMode currentMode;
+    protected ObjectProperty<MatrixViewMode> currentMode;
 
     protected VBox rootLayout;
 
@@ -64,13 +64,17 @@ public abstract class AbstractMatrixView {
      * how the matrix is to behave when it is rendered to the user
      */
     public enum MatrixViewMode {
-        EDIT,
-        STATIC,
-        FAST_RENDER
+        EDIT_NAMES,
+        EDIT_WEIGHTS,
+        EDIT_INTERFACES,
+        FAST_RENDER,
+        STATIC_NAMES,
+        STATIC_WEIGHTS,
+        STATIC_INTERFACES
     }
 
 
-    protected class CellChangedEvent extends Event {
+    protected static class CellChangedEvent extends Event {
         public CellChangedEvent(EventType<? extends Event> eventType) {
             super(eventType);
         }
@@ -97,8 +101,7 @@ public abstract class AbstractMatrixView {
         rootLayout = new VBox();
 
         this.fontSize = new SimpleDoubleProperty(fontSize);
-        showNames = new SimpleBooleanProperty(true);  // default to showing names instead of weights
-        currentMode = MatrixViewMode.EDIT;
+        currentMode = new SimpleObjectProperty<>(MatrixViewMode.EDIT_NAMES);
     }
 
 //endregion
@@ -130,19 +133,12 @@ public abstract class AbstractMatrixView {
 
 
 //region Getters
-    /**
-     * @return  if the matrix is showing names or values
-     */
-    public final boolean getShowNames() {
-        return showNames.getValue();
-    }
-
 
     /**
      * @return  the current view mode of the matrix
      */
     public final MatrixViewMode getCurrentMode() {
-        return currentMode;
+        return currentMode.getValue();
     }
 
 
@@ -235,22 +231,40 @@ public abstract class AbstractMatrixView {
 
 
     /**
-     * Sets the value of showNames. This value is bound to in the gui so that either the connection names or weights will be shown.
-     *
-     * @param newValue show the names of the connections or the weights if false
-     */
-    public final void setShowNames(Boolean newValue) {
-        showNames.set(newValue);
-    }
-
-
-    /**
-     * Sets the new current view mode for the matrix
+     * Sets the new current view mode for the matrix. If switching outside of the class of view
+     * mode (static, edit, fast) then a refresh will be triggered
      *
      * @param mode  the new mode for the matrix
      */
     public final void setCurrentMode(MatrixViewMode mode) {
-        currentMode = mode;
+        boolean refresh = true;
+        MatrixViewMode oldMode = currentMode.getValue();
+        if(  // if staying within either static or edit there is not need for a refresh because the bindings will update the value automatically
+            ((oldMode.equals(MatrixViewMode.EDIT_NAMES) || oldMode.equals(MatrixViewMode.EDIT_WEIGHTS) || oldMode.equals(MatrixViewMode.EDIT_INTERFACES)) &&
+            (mode.equals(MatrixViewMode.EDIT_NAMES) || mode.equals(MatrixViewMode.EDIT_WEIGHTS) || mode.equals(MatrixViewMode.EDIT_INTERFACES)))
+            ||
+            ((oldMode.equals(MatrixViewMode.STATIC_NAMES) || oldMode.equals(MatrixViewMode.STATIC_WEIGHTS) || oldMode.equals(MatrixViewMode.STATIC_INTERFACES)) &&
+            (mode.equals(MatrixViewMode.STATIC_NAMES) || mode.equals(MatrixViewMode.STATIC_WEIGHTS) || mode.equals(MatrixViewMode.STATIC_INTERFACES)))
+        ) {
+            refresh = false;
+        }
+
+        currentMode.set(mode);
+
+        if(refresh) {
+            refreshView();
+        }
+    }
+
+
+    /**
+     * Sets the list of visible interfaces for if the view mode is set to interface types
+     *
+     * @param currentInterfaces  the list of interfaces to show in the cells
+     */
+    public final void setVisibleInterfaces(ArrayList<DSMInterfaceType> currentInterfaces) {
+        this.currentInterfaces.clear();
+        this.currentInterfaces.addAll(currentInterfaces);
     }
 //endregion
 
@@ -275,7 +289,7 @@ public abstract class AbstractMatrixView {
 
 
     /**
-     * Function to set several different types of highlight for a cell
+     * Function to set several types of highlight for a cell
      *
      * @param cell          the cell object to set the highlight for
      * @param bg            the color to assign to a cell
@@ -290,7 +304,7 @@ public abstract class AbstractMatrixView {
 
 
     /**
-     * Function to set several different types of highlight for a cell given its grid location
+     * Function to set several types of highlight for a cell given its grid location
      *
      * @param cellLoc       the grid location of a cell (row, column)
      * @param bg            the color to assign to a cell
@@ -303,7 +317,7 @@ public abstract class AbstractMatrixView {
 
 
     /**
-     * Function to remove several different highlight types of a cell by assigning
+     * Function to remove several highlight types of a cell by assigning
      * null to that highlight field
      *
      * @param cell          the cell object
@@ -345,27 +359,31 @@ public abstract class AbstractMatrixView {
 
 
     /**
-     * Sets whether or not a cell should be cross highlighted. Cross highlights by taking grid location
+     * Sets whether a cell should be cross highlighted. Cross highlights by taking grid location
      * and keeping row constant and decrementing column location to minimum and then keeping column
      * constant and decrementing the row location to minimum.
      *
      * @param endLocation      the cell passed by location (row, column) to cross highlight to, no cells will be highlighted past this cell
-     * @param shouldHighlight  whether or not to cross highlight the cell
+     * @param shouldHighlight  whether to cross highlight the cell
      */
     private void crossHighlightCell(Pair<Integer, Integer> endLocation, boolean shouldHighlight) {
         int endRow = endLocation.getKey();
         int endCol = endLocation.getValue();
 
-        int minRow = Integer.MAX_VALUE;  // TODO: shouldn't this just be 0? This would save a linear search
-        int minCol = Integer.MAX_VALUE;
-        for(Cell cell : cells) {  // determine the value to decrease to
-            if(cell.getGridLocation().getKey() < minRow) {
-                minRow = cell.getGridLocation().getKey();
-            }
-            if(cell.getGridLocation().getValue() < minCol) {
-                minCol = cell.getGridLocation().getValue();
-            }
-        }
+//        int minRow = Integer.MAX_VALUE;
+//        int minCol = Integer.MAX_VALUE;
+//        for(Cell cell : cells) {  // determine the value to decrease to
+//            if(cell.getGridLocation().getKey() < minRow) {
+//                minRow = cell.getGridLocation().getKey();
+//            }
+//            if(cell.getGridLocation().getValue() < minCol) {
+//                minCol = cell.getGridLocation().getValue();
+//            }
+//        }
+//        System.out.println(minRow);
+//        System.out.println(minCol);
+        int minRow = 0;
+        int minCol = 0;
 
         for(int i=endRow; i>=minRow; i--) {  // highlight vertically
             for(Cell cell : cells) {  // find the cell to modify
@@ -420,6 +438,46 @@ public abstract class AbstractMatrixView {
 
 
 //region pop-up edit windows
+
+    /**
+     * Gets the text to display for a connection cell based on the current render mode
+     *
+     * @param conn  the connection to make the text for
+     * @return      the text to display
+     */
+    protected String getConnectionCellText(DSMConnection conn) {
+        if(conn == null) {
+            return "";
+        } else if(currentMode.getValue().equals(MatrixViewMode.EDIT_NAMES) || currentMode.getValue().equals(MatrixViewMode.STATIC_NAMES)) {
+            String text = conn.getConnectionName();
+            if(text.length() > 3) {  // replace with dots because maintaining grid squareness is very important
+                return "...";
+            }
+            return text;
+        } else if(currentMode.getValue().equals(MatrixViewMode.EDIT_WEIGHTS) || currentMode.getValue().equals(MatrixViewMode.STATIC_WEIGHTS)) {
+            String text = String.valueOf(conn.getWeight());
+            if(text.length() > 3) {  // replace with dots because maintaining grid squareness is very important
+                return "...";
+            }
+            return text;
+        } else if(currentMode.getValue().equals(MatrixViewMode.EDIT_INTERFACES) || currentMode.getValue().equals(MatrixViewMode.STATIC_INTERFACES)) {
+            StringBuilder text = new StringBuilder();
+            for(DSMInterfaceType i : conn.getInterfaces()) {
+                if(currentInterfaces.contains(i)) {
+                    text.append(i.getAbbreviation());
+                }
+            }
+            if(text.length() > 3) {  // replace with dots because maintaining grid squareness is very important
+                return "...";
+            }
+
+            return text.toString();
+        } else {
+            return "";
+        }
+    }
+
+
     /**
      * Modifies an hbox in place for a cell that when clicked will handle the editing of a DSM connection
      *
@@ -433,18 +491,12 @@ public abstract class AbstractMatrixView {
     protected Label getEditableConnectionCell(HBox cell, Label locationLabel, int rowUid, int colUid, int gridRowIndex, int gridColIndex) {
         DSMConnection conn = matrix.getConnection(rowUid, colUid);
         final Label label = new Label();
-        label.textProperty().bind(Bindings.createStringBinding(() -> {  // bind so that either weights or name can be shown
-            if(conn == null) {
-                return "";
-            } else if(showNames.getValue()) {
-                if(conn.getConnectionName().length() > 2) {  // replace with dots because maintaining grid squareness is very important
-                    return "...";
-                }
-                return conn.getConnectionName();
-            } else{
-                return String.valueOf(conn.getWeight());
-            }
-        }, showNames));
+
+        label.textProperty().bind(Bindings.createStringBinding(
+            () -> getConnectionCellText(conn),
+            currentMode,
+            currentInterfaces)
+        );
 
         cell.setAlignment(Pos.CENTER);  // center the text
         cell.setMinWidth(Region.USE_PREF_SIZE);
@@ -480,6 +532,7 @@ public abstract class AbstractMatrixView {
                 row1.setPadding(new Insets(10, 10, 10, 10));
                 row1.setSpacing(10);
                 Label nameLabel = new Label("Connection Type:  ");
+                nameLabel.setStyle("-fx-font-weight: bold");
 
                 String currentName;
                 if(matrix.getConnection(rowUid, colUid) != null) {
@@ -494,7 +547,9 @@ public abstract class AbstractMatrixView {
 
                 // row 2
                 HBox row2 = new HBox();
+                row2.setAlignment(Pos.CENTER_LEFT);
                 Label weightLabel = new Label("Connection Weight:");
+                weightLabel.setStyle("-fx-font-weight: bold");
                 row2.setPadding(new Insets(10, 10, 10, 10));
                 row2.setSpacing(10);
 
@@ -510,24 +565,40 @@ public abstract class AbstractMatrixView {
                 row2.getChildren().addAll(weightLabel, weightField);
 
                 // row 3
-                HBox row3 = new HBox();
-                final ArrayList<DSMInterfaceType> interfaceTypes = new ArrayList<>();
+                final ObservableList<DSMInterfaceType> interfaceTypes = FXCollections.observableArrayList();
                 if(matrix.getConnection(rowUid, colUid) != null) {
                     interfaceTypes.addAll(matrix.getConnection(rowUid, colUid).getInterfaces());
                 }
-                Button configureInterfacesButton = new Button("Configure Interfaces");
+
+                HBox row3 = new HBox();
+                Label interfacesLabel = new Label("Interfaces:");
+                interfacesLabel.setMinWidth(Region.USE_PREF_SIZE);
+                interfacesLabel.setStyle("-fx-font-weight: bold");
+
+                Label currentInterfacesLabel = new Label();
+                currentInterfacesLabel.textProperty().bind(Bindings.createStringBinding(
+                        () ->  interfaceTypes.stream().map(DSMInterfaceType::getName).collect(Collectors.joining(", ")),
+                        interfaceTypes)
+                );
+                currentInterfacesLabel.setWrapText(true);
+                currentInterfacesLabel.setPadding(new Insets(0, 10, 0, 10));
+
+                Button configureInterfacesButton = new Button("Configure");
                 configureInterfacesButton.setOnAction(ee -> {
                     ArrayList<DSMInterfaceType> newInterfaceTypes = ConfigureConnectionInterfaces.configureConnectionInterfaces(matrix.getInterfaceTypes(), interfaceTypes);
                     interfaceTypes.clear();
                     interfaceTypes.addAll(newInterfaceTypes);  // copy all the interfaces to the array
                 });
-                row3.getChildren().addAll(Misc.getHorizontalSpacer(), configureInterfacesButton, Misc.getHorizontalSpacer());
+                configureInterfacesButton.setMinWidth(Region.USE_PREF_SIZE);
+
+                row3.getChildren().addAll(interfacesLabel, currentInterfacesLabel, Misc.getHorizontalSpacer(), configureInterfacesButton);
+                row3.setPadding(new Insets(0, 10, 0, 10));
 
 
                 // row 4
                 // create HBox for user to close with our without changes
                 HBox closeArea = new HBox();
-                Button applyButton = new Button("Apply Changes");
+                Button applyButton = new Button("Apply");
                 applyButton.setOnAction(ee -> {
                     if(!nameField.getText().equals("")) {
                         double weight;
@@ -536,7 +607,7 @@ public abstract class AbstractMatrixView {
                         } catch(NumberFormatException nfe) {
                             weight = 1.0;
                         }
-                        matrix.modifyConnection(rowUid, colUid, nameField.getText(), weight, interfaceTypes);
+                        matrix.modifyConnection(rowUid, colUid, nameField.getText(), weight, new ArrayList<>(interfaceTypes));
                     } else {
                         matrix.deleteConnection(rowUid, colUid);
                     }
@@ -544,16 +615,13 @@ public abstract class AbstractMatrixView {
                     window.close();
 
                     label.textProperty().unbind();  // reset binding to update text (Bound values cannot be set)
-                    label.setText(nameField.getText());
-                    label.textProperty().bind(Bindings.createStringBinding(() -> {
-                        if(matrix.getConnection(rowUid, colUid) == null) {
-                            return "";
-                        } else if(showNames.getValue()) {
-                            return matrix.getConnection(rowUid, colUid).getConnectionName();
-                        } else{
-                            return String.valueOf(matrix.getConnection(rowUid, colUid).getWeight());
-                        }
-                    }, showNames));
+                    DSMConnection newConn = matrix.getConnection(rowUid, colUid);
+                    label.setText(getConnectionCellText(newConn));
+                    label.textProperty().bind(Bindings.createStringBinding(
+                        () -> getConnectionCellText(newConn),
+                        currentMode,
+                        currentInterfaces)
+                    );
                 });
 
                 Button cancelButton = new Button("Cancel");
@@ -676,9 +744,9 @@ public abstract class AbstractMatrixView {
      * Creates the gui that displays a matrix.
      */
     public final void refreshView() {
-        switch(currentMode) {
-            case EDIT -> refreshEditView();
-            case STATIC -> refreshStaticView();
+        switch(currentMode.getValue()) {
+            case EDIT_NAMES, EDIT_WEIGHTS, EDIT_INTERFACES -> refreshEditView();
+            case STATIC_NAMES, STATIC_WEIGHTS, STATIC_INTERFACES -> refreshStaticView();
             case FAST_RENDER -> refreshFastRenderView();
         }
     }

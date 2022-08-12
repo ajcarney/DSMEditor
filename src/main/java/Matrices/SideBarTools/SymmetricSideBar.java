@@ -1,6 +1,5 @@
 package Matrices.SideBarTools;
 
-import Matrices.Data.AsymmetricDSMData;
 import Matrices.Data.Entities.DSMConnection;
 import Matrices.Data.Entities.DSMInterfaceType;
 import Matrices.Data.Entities.DSMItem;
@@ -376,8 +375,8 @@ public class SymmetricSideBar extends AbstractSideBar {
                         changesToMakeView.getItems().add(conn2);
                     }
                 } else if(tg.getSelectedToggle().equals(selectByCol)) {  // selecting by column
-                    int rowUid = itemSelector.getValue().getUid();
-                    int colUid = entry.getValue().getUid();
+                    int rowUid = entry.getValue().getUid();
+                    int colUid = itemSelector.getValue().getUid();
                     int symmetricRowUid = matrix.getSymmetricConnectionUids(rowUid, colUid).getKey();
                     int symmetricColUid = matrix.getSymmetricConnectionUids(rowUid, colUid).getValue();
 
@@ -545,8 +544,8 @@ public class SymmetricSideBar extends AbstractSideBar {
                             changesToMakeView.getItems().add(conn2);
                         }
                     } else if(tg.getSelectedToggle().equals(selectByCol)) {  // selecting by column
-                        int rowUid = itemSelector.getValue().getUid();
-                        int colUid = entry.getValue().getUid();
+                        int rowUid = entry.getValue().getUid();
+                        int colUid = itemSelector.getValue().getUid();
                         int symmetricRowUid = matrix.getSymmetricConnectionUids(rowUid, colUid).getKey();
                         int symmetricColUid = matrix.getSymmetricConnectionUids(rowUid, colUid).getValue();
 
@@ -577,8 +576,8 @@ public class SymmetricSideBar extends AbstractSideBar {
                             changesToMakeView.getItems().add(conn2);
                         }
                     } else if(tg.getSelectedToggle().equals(selectByCol)) {  // selecting by column
-                        int rowUid = itemSelector.getValue().getUid();
-                        int colUid = entry.getValue().getUid();
+                        int rowUid = entry.getValue().getUid();
+                        int colUid = itemSelector.getValue().getUid();
                         int symmetricRowUid = matrix.getSymmetricConnectionUids(rowUid, colUid).getKey();
                         int symmetricColUid = matrix.getSymmetricConnectionUids(rowUid, colUid).getValue();
 
@@ -940,6 +939,29 @@ public class SymmetricSideBar extends AbstractSideBar {
             }
         });
 
+        Label groupingColorPickerLabel = new Label("Grouping Color: ");
+        groupingColorPickerLabel.setPadding(new Insets(10, 10, 10, 10));
+        groupingColorPickerLabel.setAlignment(Pos.TOP_RIGHT);
+        ColorPicker groupingColorPicker = new ColorPicker(grouping.getColor());
+        groupingColorPicker.setOnAction(e -> {
+            Color newColor = Color.color(groupingColorPicker.getValue().getRed(), groupingColorPicker.getValue().getGreen(), groupingColorPicker.getValue().getBlue());
+            if(!newColor.equals(grouping.getColor())) {
+                matrix.updateGroupingColor(grouping, newColor);
+            }
+        });
+
+        Label fontColorPickerLabel = new Label("Font Color: ");
+        fontColorPickerLabel.setPadding(new Insets(10, 10, 10, 30));
+        fontColorPickerLabel.setAlignment(Pos.TOP_RIGHT);
+        ColorPicker groupingFontColorPicker = new ColorPicker(grouping.getFontColor());
+        groupingFontColorPicker.setOnAction(e -> {
+            Color newColor = Color.color(groupingFontColorPicker.getValue().getRed(), groupingFontColorPicker.getValue().getGreen(), groupingFontColorPicker.getValue().getBlue());
+            if(!newColor.equals(grouping.getFontColor())) {
+                matrix.updateGroupingFontColor(grouping, newColor);
+            }
+        });
+
+
         HBox deleteButtonSpace = new HBox();
         deleteButtonSpace.setPadding(new Insets(0, 0, 0, 50));
         Button deleteButton = new Button("Delete Grouping");  // wrap in HBox to add padding (doesn't work right otherwise)
@@ -949,7 +971,10 @@ public class SymmetricSideBar extends AbstractSideBar {
         });
         deleteButtonSpace.getChildren().add(deleteButton);
 
-        display.getChildren().addAll(groupingName, Misc.getHorizontalSpacer(), deleteButtonSpace);
+        display.getChildren().addAll(groupingName, Misc.getHorizontalSpacer(), groupingColorPickerLabel, groupingColorPicker, fontColorPickerLabel, groupingFontColorPicker);
+        if(deletable) {
+            display.getChildren().add(deleteButtonSpace);
+        }
 
         return display;
     }
@@ -965,11 +990,12 @@ public class SymmetricSideBar extends AbstractSideBar {
         window.setTitle("Configure Groupings");
 
         VBox groupingsView = new VBox();
+        groupingsView.setSpacing(10);
         ScrollPane mainViewScrollPane = new ScrollPane(groupingsView);
         mainViewScrollPane.setFitToWidth(true);
 
         for(Grouping grouping : matrix.getGroupings()) {
-            boolean deletable = !grouping.getUid().equals(AsymmetricDSMData.DEFAULT_GROUP_UID);
+            boolean deletable = !grouping.getUid().equals(SymmetricDSMData.DEFAULT_GROUP_UID);
             HBox groupRow = configureGroupingEditorRow(matrix, grouping, groupingsView, deletable);
             groupingsView.getChildren().add(groupRow);
         }

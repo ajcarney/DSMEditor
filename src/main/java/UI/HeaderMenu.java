@@ -20,8 +20,6 @@ import Matrices.MultiDomainDSM;
 import Matrices.SymmetricDSM;
 import Matrices.Views.AbstractMatrixView;
 import Matrices.Views.Flags.ISymmetricHighlight;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -31,7 +29,6 @@ import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
-import org.jdom2.Element;
 
 import java.io.File;
 import java.util.*;
@@ -51,6 +48,14 @@ public class HeaderMenu {
     private final Menu toolsMenu = new Menu("_Tools");
     private final Menu helpMenu = new Menu("_Help");
 
+    private ToggleGroup toggleGroup = new ToggleGroup();
+    private RadioMenuItem namesView = new RadioMenuItem("Names");
+    private RadioMenuItem weightsView = new RadioMenuItem("Weights");
+    private RadioMenuItem interfacesView = new RadioMenuItem("Interfaces");
+    private RadioMenuItem fastRenderView = new RadioMenuItem("Fast Render");
+
+    private ArrayList<DSMInterfaceType> currentInterfaces = new ArrayList<>();
+
     private final MenuBar menuBar = new MenuBar();
 
     private final EditorPane editor;
@@ -58,6 +63,8 @@ public class HeaderMenu {
     private AbstractDSMData matrixData;
     private AbstractIOHandler ioHandler;
     private AbstractMatrixView matrixView;
+
+    private boolean disabled = false;
 
     /**
      * Creates a new instance of the header menu and instantiate widgets on it
@@ -451,10 +458,12 @@ public class HeaderMenu {
             if(matrixData == null) {
                 undo.setDisable(true);
                 redo.setDisable(true);
+                invert.setDisable(true);
                 convertToMDM.setDisable(true);
             } else {
                 undo.setDisable(!matrixData.canUndo());
                 redo.setDisable(!matrixData.canRedo());
+                invert.setDisable(false);
                 convertToMDM.setDisable(false);
             }
         });
@@ -547,58 +556,99 @@ public class HeaderMenu {
         MenuItem zoomReset = new MenuItem("Reset Zoom");
         zoomReset.setOnAction(e -> editor.resetFontScaling());
 
-        RadioMenuItem showNames = new RadioMenuItem("Show Connection Names");
-        showNames.setOnAction(e -> {
-            if(matrixData == null) return;
-            matrixView.setShowNames(showNames.isSelected());
-            matrixView.refreshView();
+        Menu viewMode = new Menu("View Mode");
+
+        namesView = new RadioMenuItem("Names");
+        weightsView = new RadioMenuItem("Weights");
+        interfacesView = new RadioMenuItem("Interfaces");
+        fastRenderView = new RadioMenuItem("Fast Render");
+
+        MenuItem configureVisibleInterfaces = new MenuItem("Configure Visible Interfaces...");
+        configureVisibleInterfaces.setOnAction(e -> {
+            currentInterfaces = ConfigureConnectionInterfaces.configureConnectionInterfaces(matrixData.getInterfaceTypes(), currentInterfaces);
+            matrixView.setVisibleInterfaces(currentInterfaces);
         });
+        configureVisibleInterfaces.setVisible(false);  // default to invisible, can be over-ridden if matrix data is not null when default view is selected
 
+        toggleGroup = new ToggleGroup();
+        toggleGroup.selectedToggleProperty().addListener((o, oldValue, newValue) -> {
+            if(matrixData == null || newValue == null) return;
+            if(newValue.equals(namesView)) {
+                configureVisibleInterfaces.setVisible(false);
+                if(this.disabled) {
+                    matrixView.setCurrentMode(AbstractMatrixView.MatrixViewMode.STATIC_NAMES);
+                } else {
+                    matrixView.setCurrentMode(AbstractMatrixView.MatrixViewMode.EDIT_NAMES);
+                }
 
-        RadioMenuItem fastRender = new RadioMenuItem("Fast Render");  // TODO: this should maybe be a setting in editor
-        fastRender.setOnAction(e -> {
-            if(matrixData == null) return;
+            } else if(newValue.equals(weightsView)) {
+                configureVisibleInterfaces.setVisible(false);
+                if(this.disabled) {
+                    matrixView.setCurrentMode(AbstractMatrixView.MatrixViewMode.STATIC_WEIGHTS);
+                } else {
+                    matrixView.setCurrentMode(AbstractMatrixView.MatrixViewMode.EDIT_WEIGHTS);
+                }
 
-            if(fastRender.isSelected()) {
+            } else if(newValue.equals(interfacesView)) {
+                configureVisibleInterfaces.setVisible(true);
+                if(this.disabled) {
+                    matrixView.setCurrentMode(AbstractMatrixView.MatrixViewMode.STATIC_INTERFACES);
+                } else {
+                    matrixView.setCurrentMode(AbstractMatrixView.MatrixViewMode.EDIT_INTERFACES);
+                }
+
+            } else if(newValue.equals(fastRenderView)) {
+                configureVisibleInterfaces.setVisible(false);
                 matrixView.setCurrentMode(AbstractMatrixView.MatrixViewMode.FAST_RENDER);
-            } else {
-                matrixView.setCurrentMode(AbstractMatrixView.MatrixViewMode.EDIT);
             }
-            matrixView.refreshView();
+
         });
+
+        namesView.setToggleGroup(toggleGroup);
+        weightsView.setToggleGroup(toggleGroup);
+        interfacesView.setToggleGroup(toggleGroup);
+        fastRenderView.setToggleGroup(toggleGroup);
+
+        viewMode.getItems().addAll(namesView, weightsView, interfacesView, fastRenderView);
+
 
         // set default values of check boxes
         if(matrixData != null) {
-            showNames.setSelected(matrixView.getShowNames());
-            fastRender.setSelected(matrixView.getCurrentMode().equals(AbstractMatrixView.MatrixViewMode.FAST_RENDER));
+            AbstractMatrixView.MatrixViewMode mode = matrixView.getCurrentMode();
+            if(mode.equals(AbstractMatrixView.MatrixViewMode.EDIT_NAMES) || mode.equals(AbstractMatrixView.MatrixViewMode.STATIC_NAMES)) {
+                namesView.setSelected(true);
+            } else if(mode.equals(AbstractMatrixView.MatrixViewMode.EDIT_WEIGHTS) || mode.equals(AbstractMatrixView.MatrixViewMode.STATIC_WEIGHTS)) {
+                weightsView.setSelected(true);
+            } else if(mode.equals(AbstractMatrixView.MatrixViewMode.EDIT_INTERFACES) || mode.equals(AbstractMatrixView.MatrixViewMode.STATIC_INTERFACES)) {
+                interfacesView.setSelected(true);
+            } else if(mode.equals(AbstractMatrixView.MatrixViewMode.FAST_RENDER)) {
+                fastRenderView.setSelected(true);
+            }
         } else {  // default to true if no matrix is open
-            showNames.setSelected(true);
-            fastRender.setSelected(false);
+            namesView.setSelected(true);
         }
 
 
-        editMenu.setOnShown(e -> {
+        viewMenu.setOnShown(e -> {
             if(matrixData == null) {
                 zoomIn.setDisable(true);
                 zoomOut.setDisable(true);
                 zoomReset.setDisable(true);
-                showNames.setDisable(true);
-                fastRender.setDisable(true);
+                viewMode.setDisable(true);
             } else {
                 zoomIn.setDisable(false);
                 zoomOut.setDisable(false);
                 zoomReset.setDisable(false);
-                showNames.setDisable(false);
-                fastRender.setDisable(false);
+                viewMode.setDisable(false);
             }
         });
 
 
         viewMenu.getItems().addAll(zoomIn, zoomOut, zoomReset);
         viewMenu.getItems().add(new SeparatorMenuItem());
-        viewMenu.getItems().add(showNames);
-        viewMenu.getItems().add(new SeparatorMenuItem());
-        viewMenu.getItems().add(fastRender);
+        viewMenu.getItems().add(viewMode);
+        viewMenu.getItems().add(configureVisibleInterfaces);
+
     }
 
 
@@ -646,9 +696,14 @@ public class HeaderMenu {
      * @param matrixView  the matrix view object
      */
     public void refresh(AbstractDSMData matrixData, AbstractIOHandler ioHandler, AbstractMatrixView matrixView) {
+        if(Objects.equals(this.matrixData, matrixData) && Objects.equals(this.ioHandler, ioHandler) && Objects.equals(this.matrixView, matrixView)) {
+            return;
+        }
         this.matrixData = matrixData;
         this.ioHandler = ioHandler;
         this.matrixView = matrixView;
+
+        currentInterfaces = new ArrayList<>();
 
         menuBar.getMenus().clear();
         fileMenu.getItems().clear();
@@ -662,7 +717,6 @@ public class HeaderMenu {
         setUpToolsMenu();
         setupViewMenu();
         setupHelpMenu();
-
         menuBar.getMenus().addAll(fileMenu, editMenu, viewMenu, toolsMenu, helpMenu);
     }
 
@@ -672,7 +726,12 @@ public class HeaderMenu {
      *
      * @param disabled  if the edit menu should be disabled
      */
-    public void setEditDisabled(boolean disabled) {
+    public void setDisabled(boolean disabled) {
+        this.disabled = disabled;
         editMenu.setDisable(disabled);
+
+        RadioMenuItem currentMode = (RadioMenuItem) toggleGroup.getSelectedToggle();
+        toggleGroup.selectToggle(null);
+        toggleGroup.selectToggle(currentMode);  // force update to the view mode
     }
 }

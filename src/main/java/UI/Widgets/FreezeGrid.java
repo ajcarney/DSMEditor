@@ -382,7 +382,6 @@ public class FreezeGrid {
             try {
                 width += colPrefWidths.get(i).doubleValue();
             } catch (Exception e) {
-                System.out.println(c + " " + i + " " + cells.get(r).get(c).getColSpan());
                 e.printStackTrace();
             }
         }

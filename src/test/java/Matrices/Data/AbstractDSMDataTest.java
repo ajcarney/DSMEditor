@@ -60,7 +60,7 @@ public class AbstractDSMDataTest {
         matrix.addInterfaceTypeGrouping("mechanical");
 
         matrix.setCurrentStateAsCheckpoint();
-        DSMInterfaceType interfaceType = new DSMInterfaceType("m1");
+        DSMInterfaceType interfaceType = new DSMInterfaceType("m1", "a");
         matrix.addInterface("mechanical", interfaceType);
 
         stressUndoRedo(matrix);
@@ -78,7 +78,7 @@ public class AbstractDSMDataTest {
     public void removeInterfaceTypeGrouping() {
         SymmetricDSMData matrix = new SymmetricDSMData();
         matrix.addInterfaceTypeGrouping("mechanical");
-        DSMInterfaceType interfaceType = new DSMInterfaceType("m1");
+        DSMInterfaceType interfaceType = new DSMInterfaceType("m1", "a");
         matrix.addInterface("mechanical", interfaceType);
 
         matrix.setCurrentStateAsCheckpoint();
@@ -103,7 +103,7 @@ public class AbstractDSMDataTest {
     public void removeInterface() {
         SymmetricDSMData matrix = new SymmetricDSMData();
         matrix.addInterfaceTypeGrouping("mechanical");
-        DSMInterfaceType interfaceType = new DSMInterfaceType("m1");
+        DSMInterfaceType interfaceType = new DSMInterfaceType("m1", "a");
         matrix.addInterface("mechanical", interfaceType);
 
         matrix.setCurrentStateAsCheckpoint();
@@ -126,7 +126,7 @@ public class AbstractDSMDataTest {
     @Test
     public void renameInterfaceTypeGrouping() {
         SymmetricDSMData matrix = new SymmetricDSMData();
-        DSMInterfaceType interfaceType = new DSMInterfaceType("m1");
+        DSMInterfaceType interfaceType = new DSMInterfaceType("m1", "a");
         matrix.addInterfaceTypeGrouping("mechanical");
         matrix.addInterface("mechanical", interfaceType);
 
@@ -152,7 +152,7 @@ public class AbstractDSMDataTest {
     @Test
     public void renameInterfaceType() {
         SymmetricDSMData matrix = new SymmetricDSMData();
-        DSMInterfaceType interfaceType = new DSMInterfaceType("m1");
+        DSMInterfaceType interfaceType = new DSMInterfaceType("m1", "a");
         matrix.addInterfaceTypeGrouping("mechanical");
         matrix.addInterface("mechanical", interfaceType);
 
@@ -162,7 +162,27 @@ public class AbstractDSMDataTest {
         stressUndoRedo(matrix);
 
         Assertions.assertTrue(matrix.getInterfaceTypes().get("mechanical").contains(interfaceType));
-        Assertions.assertTrue(interfaceType.getName().equals("m2"));
+        Assertions.assertEquals("m2", interfaceType.getName());
+    }
+
+
+    /**
+     * Tests changing an interface's abbreviation. Stresses the undo/redo cycle
+     */
+    @Test
+    public void updateInterfaceTypeAbbreviation() {
+        SymmetricDSMData matrix = new SymmetricDSMData();
+        DSMInterfaceType interfaceType = new DSMInterfaceType("m1", "a");
+        matrix.addInterfaceTypeGrouping("mechanical");
+        matrix.addInterface("mechanical", interfaceType);
+
+        matrix.setCurrentStateAsCheckpoint();
+        matrix.updateInterfaceTypeAbbreviation(interfaceType, "a2");
+
+        stressUndoRedo(matrix);
+
+        Assertions.assertTrue(matrix.getInterfaceTypes().get("mechanical").contains(interfaceType));
+        Assertions.assertEquals("a2", interfaceType.getAbbreviation());
     }
 
 
