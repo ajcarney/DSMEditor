@@ -77,6 +77,12 @@ public class HeaderMenu {
             this.matrixView = editor.getFocusedMatrix().getMatrixView();
         }
 
+        setupFileMenu();
+        setupEditMenu();
+        setUpToolsMenu();
+        setupViewMenu();
+        setupHelpMenu();
+
         menuBar.getMenus().addAll(fileMenu, editMenu, viewMenu, toolsMenu, helpMenu);
     }
 
@@ -452,10 +458,12 @@ public class HeaderMenu {
             if(matrixData == null) {
                 undo.setDisable(true);
                 redo.setDisable(true);
+                invert.setDisable(true);
                 convertToMDM.setDisable(true);
             } else {
                 undo.setDisable(!matrixData.canUndo());
                 redo.setDisable(!matrixData.canRedo());
+                invert.setDisable(false);
                 convertToMDM.setDisable(false);
             }
         });
@@ -560,6 +568,7 @@ public class HeaderMenu {
             currentInterfaces = ConfigureConnectionInterfaces.configureConnectionInterfaces(matrixData.getInterfaceTypes(), currentInterfaces);
             matrixView.setVisibleInterfaces(currentInterfaces);
         });
+        configureVisibleInterfaces.setVisible(false);  // default to invisible, can be over-ridden if matrix data is not null when default view is selected
 
         toggleGroup = new ToggleGroup();
         toggleGroup.selectedToggleProperty().addListener((o, oldValue, newValue) -> {
@@ -693,6 +702,8 @@ public class HeaderMenu {
         this.matrixData = matrixData;
         this.ioHandler = ioHandler;
         this.matrixView = matrixView;
+
+        currentInterfaces = new ArrayList<>();
 
         menuBar.getMenus().clear();
         fileMenu.getItems().clear();

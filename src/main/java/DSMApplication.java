@@ -1,11 +1,12 @@
-import Matrices.*;
+import Matrices.IDSM;
+import Matrices.MatricesCollection;
+import Matrices.MultiDomainDSM;
 import UI.EditorPane;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
 import javafx.scene.control.Tab;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
@@ -50,7 +51,7 @@ public class DSMApplication extends Application {
 //            if(f.exists()) {
 //                editor.addTab(new SymmetricDSM(f));
 //            }
-
+            Constants.Constants.isDebug = true;
             File f = new File("/home/aiden/Documents/DSMEditor/multi_domain.dsm");
             if(f.exists()) {
                 editor.addTab(new MultiDomainDSM(f, editor.getHeaderMenu()));
@@ -120,11 +121,16 @@ public class DSMApplication extends Application {
         }
 
         File recoveryDir = new File("./.recovery");
-        if(!recoveryDir.exists()) recoveryDir.mkdir();
-        for(Map.Entry<Integer, IDSM> matrix : editor.getMatricesCollection().getMatrices().entrySet()) {
-            File f = new File("./.recovery/" + matrix.getValue().getMatrixIOHandler().getSavePath().getName());
-            //matrix.getValue().getMatrixIOHandler().saveMatrixToFile(matrix.getValue().getMatrixData(), f);
-            matrix.getValue().getMatrixData().setWasModified();  // matrix is not saved to known location, so don't display it as saved to the user
+        boolean exists = recoveryDir.exists();
+        if(!exists)  {
+            exists = recoveryDir.mkdir();
+        }
+        if(exists) {  // make sure recovery directory exists before saving there
+            for (Map.Entry<Integer, IDSM> matrix : editor.getMatricesCollection().getMatrices().entrySet()) {
+                File f = new File("./.recovery/" + matrix.getValue().getMatrixIOHandler().getSavePath().getName());
+                matrix.getValue().getMatrixIOHandler().saveMatrixToFile(f);
+                matrix.getValue().getMatrixData().setWasModified();  // matrix is not saved to known location, so don't display it as saved to the user
+            }
         }
 
     }

@@ -339,6 +339,7 @@
     </build>
 
     <properties>
+        <debug>false</debug>
         <maven.compiler.source>16</maven.compiler.source>
         <maven.compiler.target>16</maven.compiler.target>
     </properties>
