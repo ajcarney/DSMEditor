@@ -19,9 +19,9 @@ public class DSMConnectionTest {
     @Test
     public void equalsTrueTest() {
         ArrayList<DSMInterfaceType> interfaces = new ArrayList<>();
-        interfaces.add(new DSMInterfaceType("interface1"));
-        interfaces.add(new DSMInterfaceType("interface2"));
-        interfaces.add(new DSMInterfaceType("interface3"));
+        interfaces.add(new DSMInterfaceType("interface1", "1"));
+        interfaces.add(new DSMInterfaceType("interface2", "2"));
+        interfaces.add(new DSMInterfaceType("interface3", "3"));
 
         DSMConnection conn1 = new DSMConnection("conn", 1.0, 1, 2, interfaces);
         DSMConnection conn2 = new DSMConnection("conn", 1.0, 1, 2, interfaces);
@@ -36,9 +36,9 @@ public class DSMConnectionTest {
     @Test
     public void equalsFalseTest() {
         ArrayList<DSMInterfaceType> interfaces = new ArrayList<>();
-        interfaces.add(new DSMInterfaceType("interface1"));
-        interfaces.add(new DSMInterfaceType("interface2"));
-        interfaces.add(new DSMInterfaceType("interface3"));
+        interfaces.add(new DSMInterfaceType("interface1", "1"));
+        interfaces.add(new DSMInterfaceType("interface2", "2"));
+        interfaces.add(new DSMInterfaceType("interface3", "3"));
 
         DSMConnection conn1 = new DSMConnection("conn", 1.0, 1, 2, interfaces);
         DSMConnection conn2 = new DSMConnection("conn", 1.0, 1, 2, new ArrayList<>());
@@ -54,9 +54,9 @@ public class DSMConnectionTest {
     @Test
     public void isSameConnectionTypeTrueTest() {
         ArrayList<DSMInterfaceType> interfaces = new ArrayList<>();
-        interfaces.add(new DSMInterfaceType("interface1"));
-        interfaces.add(new DSMInterfaceType("interface2"));
-        interfaces.add(new DSMInterfaceType("interface3"));
+        interfaces.add(new DSMInterfaceType("interface1", "1"));
+        interfaces.add(new DSMInterfaceType("interface2", "2"));
+        interfaces.add(new DSMInterfaceType("interface3", "3"));
 
         DSMConnection conn1 = new DSMConnection("conn", 1.0, 1, 2, interfaces);
         DSMConnection conn2 = new DSMConnection("conn", 1.0, 3, 4, interfaces);
@@ -72,9 +72,9 @@ public class DSMConnectionTest {
     @Test
     public void isSameConnectionTypeFalseTest() {
         ArrayList<DSMInterfaceType> interfaces = new ArrayList<>();
-        interfaces.add(new DSMInterfaceType("interface1"));
-        interfaces.add(new DSMInterfaceType("interface2"));
-        interfaces.add(new DSMInterfaceType("interface3"));
+        interfaces.add(new DSMInterfaceType("interface1", "1"));
+        interfaces.add(new DSMInterfaceType("interface2", "2"));
+        interfaces.add(new DSMInterfaceType("interface3", "3"));
 
         DSMConnection conn1 = new DSMConnection("conn", 1.0, 1, 2, interfaces);
         DSMConnection conn2 = new DSMConnection("conn", 1.0, 3, 4, new ArrayList<>());

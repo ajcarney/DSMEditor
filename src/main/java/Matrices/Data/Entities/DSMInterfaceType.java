@@ -19,9 +19,10 @@ public class DSMInterfaceType {
      *
      * @param name  the starting name of the interface type
      */
-    public DSMInterfaceType(String name) {
+    public DSMInterfaceType(String name, String abbreviation) {
         this.uid = java.util.UUID.randomUUID().hashCode();
         this.name = name;
+        this.abbreviation = abbreviation;
     }
 
 
@@ -32,9 +33,10 @@ public class DSMInterfaceType {
      * @param uid      the uid of the interface type
      * @param name     the name of the interface type
      */
-    public DSMInterfaceType(Integer uid, String name) {
+    public DSMInterfaceType(Integer uid, String name, String abbreviation) {
         this.uid = uid;
         this.name = name;
+        this.abbreviation = abbreviation;
     }
 
 

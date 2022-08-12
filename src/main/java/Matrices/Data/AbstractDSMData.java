@@ -777,6 +777,26 @@ public abstract class AbstractDSMData {
 
 
     /**
+     * Renames an interface type's abbreviation. Puts the change on the stack but does not set a checkpoint.
+     *
+     * @param interfaceType    the interface who's abbreviation should be changed
+     * @param newAbbreviation  the new abbreviation for the interface grouping
+     */
+    public void updateInterfaceTypeAbbreviation(DSMInterfaceType interfaceType, String newAbbreviation) {
+        String oldName = interfaceType.getName();
+        addChangeToStack(new MatrixChange(
+                () -> {  // do function
+                    interfaceType.setAbbreviation(newAbbreviation);
+                },
+                () -> {  // undo function
+                    interfaceType.setName(oldName);
+                },
+                false
+        ));
+    }
+
+
+    /**
      * Modifies a connection with given row item uid and column item uid. First checks to see if the connection
      * exists, if not it creates it. If it does exist, it will update the connection name and weight. Cannot be used to
      * delete connections. Puts the change on the stack but does not set a checkpoint.

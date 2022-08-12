@@ -20,10 +20,6 @@ import Matrices.MultiDomainDSM;
 import Matrices.SymmetricDSM;
 import Matrices.Views.AbstractMatrixView;
 import Matrices.Views.Flags.ISymmetricHighlight;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -33,8 +29,6 @@ import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
-import UI.ConfigureConnectionInterfaces;
-import org.jdom2.Element;
 
 import java.io.File;
 import java.util.*;
@@ -54,7 +48,7 @@ public class HeaderMenu {
     private final Menu toolsMenu = new Menu("_Tools");
     private final Menu helpMenu = new Menu("_Help");
 
-    private final ToggleGroup toggleGroup = new ToggleGroup();
+    private ToggleGroup toggleGroup = new ToggleGroup();
     private RadioMenuItem namesView = new RadioMenuItem("Names");
     private RadioMenuItem weightsView = new RadioMenuItem("Weights");
     private RadioMenuItem interfacesView = new RadioMenuItem("Interfaces");
@@ -82,12 +76,6 @@ public class HeaderMenu {
             this.ioHandler = editor.getFocusedMatrix().getMatrixIOHandler();
             this.matrixView = editor.getFocusedMatrix().getMatrixView();
         }
-
-        setupFileMenu();
-        setupEditMenu();
-        setUpToolsMenu();
-        setupViewMenu();
-        setupHelpMenu();
 
         menuBar.getMenus().addAll(fileMenu, editMenu, viewMenu, toolsMenu, helpMenu);
     }
@@ -567,20 +555,15 @@ public class HeaderMenu {
         interfacesView = new RadioMenuItem("Interfaces");
         fastRenderView = new RadioMenuItem("Fast Render");
 
-        namesView.setToggleGroup(toggleGroup);
-        weightsView.setToggleGroup(toggleGroup);
-        interfacesView.setToggleGroup(toggleGroup);
-        fastRenderView.setToggleGroup(toggleGroup);
-
-
         MenuItem configureVisibleInterfaces = new MenuItem("Configure Visible Interfaces...");
         configureVisibleInterfaces.setOnAction(e -> {
             currentInterfaces = ConfigureConnectionInterfaces.configureConnectionInterfaces(matrixData.getInterfaceTypes(), currentInterfaces);
+            matrixView.setVisibleInterfaces(currentInterfaces);
         });
 
+        toggleGroup = new ToggleGroup();
         toggleGroup.selectedToggleProperty().addListener((o, oldValue, newValue) -> {
             if(matrixData == null || newValue == null) return;
-
             if(newValue.equals(namesView)) {
                 configureVisibleInterfaces.setVisible(false);
                 if(this.disabled) {
@@ -610,8 +593,12 @@ public class HeaderMenu {
                 matrixView.setCurrentMode(AbstractMatrixView.MatrixViewMode.FAST_RENDER);
             }
 
-            matrixView.refreshView();
         });
+
+        namesView.setToggleGroup(toggleGroup);
+        weightsView.setToggleGroup(toggleGroup);
+        interfacesView.setToggleGroup(toggleGroup);
+        fastRenderView.setToggleGroup(toggleGroup);
 
         viewMode.getItems().addAll(namesView, weightsView, interfacesView, fastRenderView);
 
@@ -700,6 +687,9 @@ public class HeaderMenu {
      * @param matrixView  the matrix view object
      */
     public void refresh(AbstractDSMData matrixData, AbstractIOHandler ioHandler, AbstractMatrixView matrixView) {
+        if(Objects.equals(this.matrixData, matrixData) && Objects.equals(this.ioHandler, ioHandler) && Objects.equals(this.matrixView, matrixView)) {
+            return;
+        }
         this.matrixData = matrixData;
         this.ioHandler = ioHandler;
         this.matrixView = matrixView;
@@ -716,7 +706,6 @@ public class HeaderMenu {
         setUpToolsMenu();
         setupViewMenu();
         setupHelpMenu();
-
         menuBar.getMenus().addAll(fileMenu, editMenu, viewMenu, toolsMenu, helpMenu);
     }
 
