@@ -10,19 +10,28 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Vector;
+import java.util.*;
 
+
+/**
+ * Class for selecting interfaces graphically
+ */
 public class ConfigureConnectionInterfaces {
-    public static ArrayList<DSMInterfaceType> configureConnectionInterfaces(HashMap<String, Vector<DSMInterfaceType>> interfaces, ArrayList<DSMInterfaceType> currentInterfaces) {
+
+    /**
+     * Opens a popup window where the user can select different interfaces
+     *
+     * @param interfaces         the available interfaces grouped by their grouping
+     * @param currentInterfaces  the currently selected interfaces
+     * @return
+     */
+    public static ArrayList<DSMInterfaceType> configureConnectionInterfaces(HashMap<String, Vector<DSMInterfaceType>> interfaces, Collection<DSMInterfaceType> currentInterfaces) {
         // create popup window to edit the connection
         Stage window = new Stage();
 
         // Create Root window
         window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
-        window.setTitle("Modify Connection Interfaces");
+        window.setTitle("Interfaces");
 
         final Accordion accordion = new Accordion ();
         ArrayList<DSMInterfaceType> selectedInterfaces = new ArrayList<>(currentInterfaces);  // copy
@@ -54,9 +63,7 @@ public class ConfigureConnectionInterfaces {
         }
 
         Button okButton = new Button("Ok");
-        okButton.setOnAction(ee -> {
-            window.close();
-        });
+        okButton.setOnAction(ee -> window.close());
 
         VBox rootLayout = new VBox();
         rootLayout.setSpacing(5);

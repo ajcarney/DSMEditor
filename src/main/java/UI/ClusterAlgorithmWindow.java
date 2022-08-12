@@ -501,7 +501,7 @@ public class ClusterAlgorithmWindow {
         popup.showAndWait();  // wait for it to finish
 
         SymmetricView gui = new SymmetricView(outputMatrix, 10);
-        gui.setCurrentMode(AbstractMatrixView.MatrixViewMode.STATIC);
+        gui.setCurrentMode(AbstractMatrixView.MatrixViewMode.STATIC_NAMES);
         gui.refreshView();
 
         outputMatrixLayout.getChildren().removeAll(outputMatrixLayout.getChildren());

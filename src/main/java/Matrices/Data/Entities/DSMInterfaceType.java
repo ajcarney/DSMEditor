@@ -12,15 +12,17 @@ public class DSMInterfaceType {
 
     private final Integer uid;
     private String name;
+    private String abbreviation;
 
     /**
      * Creates a new DSMInterfaceType with a given name
      *
      * @param name  the starting name of the interface type
      */
-    public DSMInterfaceType(String name) {
+    public DSMInterfaceType(String name, String abbreviation) {
         this.uid = java.util.UUID.randomUUID().hashCode();
         this.name = name;
+        this.abbreviation = abbreviation;
     }
 
 
@@ -31,9 +33,10 @@ public class DSMInterfaceType {
      * @param uid      the uid of the interface type
      * @param name     the name of the interface type
      */
-    public DSMInterfaceType(Integer uid, String name) {
+    public DSMInterfaceType(Integer uid, String name, String abbreviation) {
         this.uid = uid;
         this.name = name;
+        this.abbreviation = abbreviation;
     }
 
 
@@ -45,6 +48,11 @@ public class DSMInterfaceType {
     public DSMInterfaceType(Element xml) {
         this.uid = Integer.parseInt(xml.getChild("uid").getText());
         this.name = xml.getChild("name").getText();
+        try {
+            this.abbreviation = xml.getChild("abbrev").getText();
+        } catch(Exception e) {
+            this.abbreviation = String.valueOf(this.name.charAt(0));
+        }
     }
 
 
@@ -56,11 +64,12 @@ public class DSMInterfaceType {
     public DSMInterfaceType(DSMInterfaceType copy) {
         uid = copy.getUid();
         name = copy.getName();
+        abbreviation = copy.getAbbreviation();
     }
 
 
     /**
-     * @return the uid of the interface type
+     * @return  the uid of the interface type
      */
     public Integer getUid() {
         return uid;
@@ -68,10 +77,18 @@ public class DSMInterfaceType {
 
 
     /**
-     * @return the name of the interface type
+     * @return  the name of the interface type
      */
     public String getName() {
         return name;
+    }
+
+
+    /**
+     * @return  the abbreviation of the interface type
+     */
+    public String getAbbreviation() {
+        return abbreviation;
     }
 
 
@@ -84,6 +101,7 @@ public class DSMInterfaceType {
     public Element getXML(Element interfaceElement) {
         interfaceElement.addContent(new Element("uid").setText(getUid().toString()));
         interfaceElement.addContent(new Element("name").setText(getName()));
+        interfaceElement.addContent(new Element("abbrev").setText(getAbbreviation()));
 
         return interfaceElement;
     }
@@ -96,6 +114,16 @@ public class DSMInterfaceType {
      */
     public void setName(String name) {
         this.name = name;
+    }
+
+
+    /**
+     * Setter function for the abbreviation of the interface type
+     *
+     * @param abbreviation the new abbreviation of the interface type
+     */
+    public void setAbbreviation(String abbreviation) {
+        this.abbreviation = abbreviation;
     }
 
 

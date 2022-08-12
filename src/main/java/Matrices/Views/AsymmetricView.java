@@ -76,7 +76,7 @@ public class AsymmetricView extends AbstractMatrixView {
      * @return      this
      */
     public AsymmetricView withMode(MatrixViewMode mode) {
-        this.currentMode = mode;
+        this.currentMode.set(mode);
         return this;
     }
 
@@ -92,7 +92,6 @@ public class AsymmetricView extends AbstractMatrixView {
         AsymmetricView copy = new AsymmetricView(matrix.createCopy(), fontSize.doubleValue());
 
         copy.setCurrentMode(getCurrentMode());
-        copy.setShowNames(getShowNames());
 
         // no need to copy gridUidLookup HashMap because those values are generated from the matrix on the
         // refreshView call which can be done later
@@ -496,14 +495,7 @@ public class AsymmetricView extends AbstractMatrixView {
                         int rowUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getKey().getUid();
                         int colUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getValue().getUid();
                         DSMConnection conn = matrix.getConnection(rowUid, colUid);
-                        label = new Label();
-                        if (showNames.getValue() && conn != null) {
-                            label.setText(conn.getConnectionName());
-                        } else if (!showNames.getValue() && conn != null) {
-                            label.setText(String.valueOf(conn.getWeight()));
-                        } else {
-                            label.setText("");
-                        }
+                        label = new Label(getConnectionCellText(conn));
 
                         cell.setAlignment(Pos.CENTER);  // center the text
 

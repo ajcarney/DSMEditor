@@ -7,4 +7,5 @@ public class Constants {
     };
     public static final double fastRenderMinFontSize = 4;
     public static final double fastRenderMaxFontSize = 18;
+    public static boolean isDebug = false;
 }

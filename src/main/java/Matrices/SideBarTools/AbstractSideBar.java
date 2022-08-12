@@ -258,6 +258,9 @@ public abstract class AbstractSideBar {
     private static HBox configureInterfaceEditorRow(AbstractDSMData matrix, StringProperty interfaceTypeGroup, DSMInterfaceType interfaceType, VBox parent) {
         HBox display = new HBox();
 
+        Label nameLabel = new Label("Name:");
+        nameLabel.setPadding(new Insets(0, 10, 0, 10));
+
         TextField interfaceName = new TextField();     // use a text field to display the name so that it can be renamed easily
         interfaceName.setText(interfaceType.getName());
         interfaceName.setMaxWidth(Double.MAX_VALUE);
@@ -266,6 +269,21 @@ public abstract class AbstractSideBar {
             if (!newPropertyValue) {  // TextField changed to be not focused so update the new name in the matrix
                 if(!interfaceName.getText().equals(interfaceType.getName())) {  // name changed
                     matrix.renameInterfaceType(interfaceType, interfaceName.getText());
+                }
+            }
+        });
+
+
+        Label abbreviationLabel = new Label("Abbreviation:");
+        abbreviationLabel.setPadding(new Insets(0, 10, 0, 10));
+
+        TextField interfaceAbbreviation = new TextField();     // use a text field to display the name so that it can be renamed easily
+        interfaceAbbreviation.setText(interfaceType.getAbbreviation());
+        interfaceAbbreviation.setPrefColumnCount(3);
+        interfaceAbbreviation.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
+            if (!newPropertyValue) {  // TextField changed to be not focused so update the new name in the matrix
+                if(!interfaceAbbreviation.getText().equals(interfaceType.getName())) {  // name changed
+                    matrix.updateInterfaceTypeAbbreviation(interfaceType, interfaceAbbreviation.getText());
                 }
             }
         });
@@ -280,12 +298,20 @@ public abstract class AbstractSideBar {
         });
         deleteButtonSpace.getChildren().add(deleteButton);
 
-        display.getChildren().addAll(interfaceName, Misc.getHorizontalSpacer(), deleteButtonSpace);
+        display.getChildren().addAll(nameLabel, interfaceName, Misc.getHorizontalSpacer(), abbreviationLabel, interfaceAbbreviation, deleteButtonSpace);
 
         return display;
     }
 
 
+    /**
+     * Creates a row to be able to edit an interface type grouping. Does not add the created widget to its parent
+     *
+     * @param matrix              the matrix data
+     * @param interfaceTypeGroup  the group for the interface
+     * @param parent              the parent object
+     * @return  the node to be displayed
+     */
     private static VBox configureInterfaceGroupingEditorRow(AbstractDSMData matrix, String interfaceTypeGroup, VBox parent) {
         VBox interfacesLayout = new VBox();
         HBox groupingEditRow = new HBox();
@@ -335,7 +361,7 @@ public abstract class AbstractSideBar {
         addInterfaceButtonPane.setAlignment(Pos.CENTER);
         Button addInterfaceButton = new Button("Add New Interface");
         addInterfaceButton.setOnAction(e -> {
-            DSMInterfaceType newInterface = new DSMInterfaceType("New Interface");
+            DSMInterfaceType newInterface = new DSMInterfaceType("New Interface", "I");
             matrix.addInterface(interfaceGroupName.getValue(), newInterface);
             HBox interfaceTypePane = configureInterfaceEditorRow(matrix, interfaceGroupName, newInterface, interfacesPane);
             interfacesPane.getChildren().add(interfaceTypePane);

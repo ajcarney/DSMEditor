@@ -437,12 +437,13 @@ public abstract class AbstractIOHandler implements IStandardExports {
             }
 
             HBox centeredMatrix = new HBox();
-            matrixView.setShowNames(showConnectionNames.isSelected());
 
             if(fastRender.isSelected()) {
                 matrixView.setCurrentMode(AbstractMatrixView.MatrixViewMode.FAST_RENDER);
+            } else if(showConnectionNames.isSelected()) {
+                matrixView.setCurrentMode(AbstractMatrixView.MatrixViewMode.STATIC_NAMES);
             } else {
-                matrixView.setCurrentMode(AbstractMatrixView.MatrixViewMode.STATIC);
+                matrixView.setCurrentMode(AbstractMatrixView.MatrixViewMode.STATIC_WEIGHTS);
             }
             matrixView.refreshView();
 
@@ -463,7 +464,7 @@ public abstract class AbstractIOHandler implements IStandardExports {
         addAnnotation.selectedProperty().addListener((observable, oldValue, newValue) -> updatePreview.run());
         annotation.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
             if (!newPropertyValue) {  // TextField changed to be not focused so update the view
-             updatePreview.run();
+                 updatePreview.run();
             }
         });
         updatePreview.run();  // initial update to show the matrix
