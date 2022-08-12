@@ -28,14 +28,12 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.CycleMethod;
 import javafx.scene.paint.LinearGradient;
 import javafx.scene.paint.Stop;
+import javafx.scene.text.Font;
 import javafx.util.Callback;
 import javafx.util.Pair;
 import org.javatuples.Triplet;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Vector;
+import java.util.*;
 
 
 /**
@@ -131,19 +129,19 @@ public class AsymmetricView extends AbstractMatrixView {
             Integer rowUid = getUidsFromGridLoc(cell.getGridLocation()).getKey();
             Integer colUid = getUidsFromGridLoc(cell.getGridLocation()).getValue();
             if (rowUid == null && colUid != null) {  // highlight with column color
-                cell.setCellHighlight(matrix.getItem(colUid).getGroup1().getColor());
-                cell.setCellTextColor(matrix.getItem(colUid).getGroup1().getFontColor());
+                cell.setCellHighlight(matrix.getColItem(colUid).getGroup1().getColor());
+                cell.setCellTextColor(matrix.getColItem(colUid).getGroup1().getFontColor());
                 return;
             } else if (rowUid != null && colUid == null) {  // highlight with row color
-                cell.setCellHighlight(matrix.getItem(rowUid).getGroup1().getColor());
-                cell.setCellTextColor(matrix.getItem(rowUid).getGroup1().getFontColor());
+                cell.setCellHighlight(matrix.getRowItem(rowUid).getGroup1().getColor());
+                cell.setCellTextColor(matrix.getRowItem(rowUid).getGroup1().getFontColor());
                 return;
             } else if (rowUid != null && colUid != null) {  // highlight with row group color col group color
-                Stop[] stops = new Stop[] { new Stop(0, matrix.getItem(rowUid).getGroup1().getColor()), new Stop(1, matrix.getItem(colUid).getGroup1().getColor())};
+                Stop[] stops = new Stop[] { new Stop(0, matrix.getRowItem(rowUid).getGroup1().getColor()), new Stop(1, matrix.getColItem(colUid).getGroup1().getColor())};
                 LinearGradient lg1 = new LinearGradient(0, 0, 1, 1, true, CycleMethod.NO_CYCLE, stops);
 
                 cell.setCellHighlight(new Background(new BackgroundFill(lg1, new CornerRadii(3), new Insets(0))));  // row and column color will be the same because row and column
-                cell.setCellTextColor(matrix.getItem(rowUid).getGroup1().getFontColor());
+                cell.setCellTextColor(matrix.getRowItem(rowUid).getGroup1().getFontColor());
                 return;
             }
 
@@ -250,39 +248,11 @@ public class AsymmetricView extends AbstractMatrixView {
                         ComboBox<Grouping> groupings = new ComboBox<>();
                         groupings.setMinWidth(Region.USE_PREF_SIZE);
                         groupings.setPadding(new Insets(0));
-                        groupings.setStyle(
-                                "-fx-background-color: transparent;" +
-                                        "-fx-padding: 0, 0, 0, 0;" +
-                                        "-fx-font-size: " + (fontSize.doubleValue()) + " };"
-                        );
+                        groupings.setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, new CornerRadii(3), new Insets(0))));
 
-                        Callback<ListView<Grouping>, ListCell<Grouping>> cellFactory = new Callback<>() {
-                            @Override
-                            public ListCell<Grouping> call(ListView<Grouping> l) {
-                                return new ListCell<>() {
-
-                                    @Override
-                                    protected void updateItem(Grouping group, boolean empty) {
-                                        super.updateItem(group, empty);
-
-                                        if (empty || group == null) {
-                                            setText(null);
-                                        } else {
-                                            setText(group.getName());
-                                            // this is a stupid janky hack because javafx styling is stupid and hard to work with when you want it to be dynamic
-                                            // this sets the text color of the grouping item so that the font color can be updated
-                                            if(group.equals(groupings.getValue())) {
-                                                setTextFill(group.getFontColor());
-                                            } else {
-                                                setTextFill(Grouping.DEFAULT_FONT_COLOR);
-                                            }
-                                        }
-                                    }
-                                };
-                            }
-                        };
-                        groupings.setCellFactory(cellFactory);
-                        groupings.setButtonCell(cellFactory.call(null));
+                        Callback<ListView<Grouping>, ListCell<Grouping>> groupingItemCellFactory = getGroupingDropDownFactory(groupings);
+                        groupings.setCellFactory(groupingItemCellFactory);
+                        groupings.setButtonCell(groupingItemCellFactory.call(null));
 
                         groupings.getItems().addAll(matrix.getGroupings(true));
                         groupings.getSelectionModel().select(((DSMItem) item.getValue()).getGroup1());
@@ -300,40 +270,12 @@ public class AsymmetricView extends AbstractMatrixView {
                         ComboBox<Grouping> groupings = new ComboBox<>();
                         groupings.setMinWidth(Region.USE_PREF_SIZE);
                         groupings.setPadding(new Insets(0));
-                        groupings.setStyle(
-                                "-fx-background-color: transparent;" +
-                                        "-fx-padding: 0, 0, 0, 0;" +
-                                        "-fx-font-size: " + (fontSize.doubleValue()) + " };"
-                        );
+                        groupings.setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, new CornerRadii(3), new Insets(0))));
                         groupings.setRotate(-90);
 
-                        Callback<ListView<Grouping>, ListCell<Grouping>> cellFactory = new Callback<>() {
-                            @Override
-                            public ListCell<Grouping> call(ListView<Grouping> l) {
-                                return new ListCell<>() {
-
-                                    @Override
-                                    protected void updateItem(Grouping group, boolean empty) {
-                                        super.updateItem(group, empty);
-
-                                        if (empty || group == null) {
-                                            setText(null);
-                                        } else {
-                                            setText(group.getName());
-                                            // this is a stupid janky hack because javafx styling is stupid and hard to work with when you want it to be dynamic
-                                            // this sets the text color of the grouping item so that the font color can be updated
-                                            if(group.equals(groupings.getValue())) {
-                                                setTextFill(group.getFontColor());
-                                            } else {
-                                                setTextFill(Grouping.DEFAULT_FONT_COLOR);
-                                            }
-                                        }
-                                    }
-                                };
-                            }
-                        };
-                        groupings.setCellFactory(cellFactory);
-                        groupings.setButtonCell(cellFactory.call(null));
+                        Callback<ListView<Grouping>, ListCell<Grouping>> groupingItemCellFactory = getGroupingDropDownFactory(groupings);
+                        groupings.setCellFactory(groupingItemCellFactory);
+                        groupings.setButtonCell(groupingItemCellFactory.call(null));
 
                         groupings.getItems().addAll(matrix.getGroupings(false));
                         groupings.getSelectionModel().select(((DSMItem) item.getValue()).getGroup1());
@@ -399,7 +341,10 @@ public class AsymmetricView extends AbstractMatrixView {
         grid.setGridDataHBox(gridData);
         grid.setFreezeLeft(3);
         grid.setFreezeHeader(2);  // freeze top two rows for symmetric matrix
-        grid.resizeGrid(true);
+
+        ArrayList<Integer> importantRows = new ArrayList<>(Arrays.asList(0, 1, 2, 3));
+        ArrayList<Integer> importantCols = new ArrayList<>(Arrays.asList(0, 1, 2, 3));
+        grid.resizeGrid(true, importantRows, importantCols);
         grid.updateGrid();
 
         rootLayout.getChildren().addAll(grid.getGrid(), locationLabel);
@@ -710,8 +655,8 @@ public class AsymmetricView extends AbstractMatrixView {
                         DSMConnection conn = matrix.getConnection(rowUid, colUid);
                         if(conn != null) {  // only add connections that exist
                             Color color = Color.BLACK;  // default to black
-                            if(matrix.getItem(rowUid).getGroup1().equals(matrix.getItem(colUid).getGroup1())) {
-                                color = matrix.getItem(rowUid).getGroup1().getFontColor();
+                            if(matrix.getRowItem(rowUid).getGroup1().equals(matrix.getColItem(colUid).getGroup1())) {
+                                color = matrix.getRowItem(rowUid).getGroup1().getFontColor();
                             }
                             connectionLocations.add(new Triplet<>(r, c, color));
                         }

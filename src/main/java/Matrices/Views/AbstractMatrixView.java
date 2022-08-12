@@ -4,6 +4,7 @@ import Matrices.Data.AbstractDSMData;
 import Matrices.Data.Entities.DSMConnection;
 import Matrices.Data.Entities.DSMInterfaceType;
 import Matrices.Data.Entities.DSMItem;
+import Matrices.Data.Entities.Grouping;
 import Matrices.Views.Entities.Cell;
 import UI.ConfigureConnectionInterfaces;
 import UI.Widgets.Misc;
@@ -17,14 +18,14 @@ import javafx.event.EventType;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.util.Callback;
 import javafx.util.Pair;
 
 import java.util.ArrayList;
@@ -133,6 +134,42 @@ public abstract class AbstractMatrixView {
 
 
 //region Getters
+
+    /**
+     * Creates a cell factory for groupings selectors
+     *
+     * @param groupings  the combobox with the items (this is needed as a hack to set the text color)
+     * @return  the cell factory
+     */
+    public final Callback<ListView<Grouping>, ListCell<Grouping>> getGroupingDropDownFactory(ComboBox<Grouping> groupings) {
+        return new Callback<>() {
+            @Override
+            public ListCell<Grouping> call(ListView<Grouping> l) {
+                return new ListCell<>() {
+
+                    @Override
+                    protected void updateItem(Grouping group, boolean empty) {
+                        super.updateItem(group, empty);
+                        if (empty || group == null) {
+                            setText("");
+                        } else {
+                            setFont(new Font(fontSize.doubleValue()));
+                            setText(group.getName());
+                            // this is a stupid janky hack because javafx styling is stupid and hard to work with when you want it to be dynamic
+                            // this sets the text color of the grouping item so that the font color can be updated. The conditional is so that
+                            // when the combobox is opened and the font color is white the list doesn't appear empty
+                            if(group.equals(groupings.getValue())) {
+                                setTextFill(group.getFontColor());
+                            } else {
+                                setTextFill(Grouping.DEFAULT_FONT_COLOR);
+                            }
+                        }
+                    }
+                };
+            }
+        };
+    }
+
 
     /**
      * @return  the current view mode of the matrix

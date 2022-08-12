@@ -1,6 +1,9 @@
 package Matrices.Data;
 
-import Matrices.Data.Entities.*;
+import Matrices.Data.Entities.DSMConnection;
+import Matrices.Data.Entities.DSMInterfaceType;
+import Matrices.Data.Entities.DSMItem;
+import Matrices.Data.Entities.RenderMode;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -386,7 +389,39 @@ public abstract class AbstractDSMData {
                 return col;
             }
         }
-        return null;
+        throw new NoSuchElementException();
+    }
+
+
+    /**
+     * Searches the rows for an uid
+     *
+     * @param rowUid  the uid of the row item to look for
+     * @return        the row item
+     */
+    public final DSMItem getRowItem(int rowUid) {
+        for(DSMItem row : rows) {
+            if(row.getUid() == rowUid) {
+                return row;
+            }
+        }
+        throw new NoSuchElementException();
+    }
+
+
+    /**
+     * Searches the columns for an uid
+     *
+     * @param colUid  the uid of the column item to look for
+     * @return        the col item
+     */
+    public final DSMItem getColItem(int colUid) {
+        for(DSMItem col : cols) {
+            if(col.getUid() == colUid) {
+                return col;
+            }
+        }
+        throw new NoSuchElementException();
     }
 
 
@@ -407,7 +442,7 @@ public abstract class AbstractDSMData {
                 return col;
             }
         }
-        return null;
+        throw new NoSuchElementException();
     }
 
 

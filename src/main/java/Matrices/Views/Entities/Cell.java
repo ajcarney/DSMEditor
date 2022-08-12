@@ -1,13 +1,12 @@
 package Matrices.Views.Entities;
 
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import javafx.beans.property.*;
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
 import javafx.util.Pair;
 
 import java.util.HashMap;
@@ -23,7 +22,7 @@ public class Cell {
     protected Label label;
 
     protected DoubleProperty fontSize;
-    protected StringProperty fontColorCss = new SimpleStringProperty("-fx-text-fill: rgb(0, 0, 0);");
+    protected ObjectProperty<Color> fontColor = new SimpleObjectProperty<>(Color.color(0.0, 0.0, 0.0));
 
     protected Boolean crossHighlightEnabled = false;
 
@@ -52,11 +51,12 @@ public class Cell {
         this.fontSize = fontSize;
         this.label = label;
 
-        if(this.guiCell != null) {
-            this.guiCell.styleProperty().bind(Bindings.concat("-fx-font-size: ", fontSize));
-        }
         if(this.label != null) {
-            this.label.styleProperty().bind(fontColorCss);
+            this.label.fontProperty().bind(Bindings.createObjectBinding(
+                    () -> new Font(fontSize.doubleValue()),
+                    fontSize
+            ));
+            this.label.textFillProperty().bind(fontColor);
         }
     }
 
@@ -109,7 +109,7 @@ public class Cell {
      * @param color  the new text color
      */
     public void setCellTextColor(Color color) {
-        fontColorCss.set("-fx-text-fill: rgb(" + 255 * color.getRed() + ", " + 255 * color.getGreen() + ", " + 255 * color.getBlue() + ");");
+        fontColor.set(color);
     }
 
 

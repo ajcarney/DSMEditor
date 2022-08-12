@@ -52,7 +52,7 @@ public class DSMApplication extends Application {
 //                editor.addTab(new SymmetricDSM(f));
 //            }
             Constants.Constants.isDebug = true;
-            File f = new File("/home/aiden/Documents/DSMEditor/multi_domain.dsm");
+            File f = new File("/home/aiden/Documents/DSMEditor/big_mdm.dsm");
             if(f.exists()) {
                 editor.addTab(new MultiDomainDSM(f, editor.getHeaderMenu()));
             }
