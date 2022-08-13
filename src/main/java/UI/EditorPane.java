@@ -264,6 +264,8 @@ public class EditorPane {
 
         tabs.put(tab, matrixUid);
         tabPane.getTabs().add(tab);
+
+        focusTab(matrixUid);
     }
 
 
@@ -306,16 +308,6 @@ public class EditorPane {
 
 
     /**
-     * Refreshes a tabs content by redrawing the content
-     */
-    public void refreshSelectedTab() {
-        if(getFocusedMatrixUid() != null) {
-            this.matrices.getMatrix(getFocusedMatrixUid()).getMatrixView().refreshView();
-        }
-    }
-
-
-    /**
      * Closes a tab. It will be removed from the HashMaps as well because each tab has a closing policy that
      * does this
      *
@@ -336,7 +328,6 @@ public class EditorPane {
 
         this.matrices.getMatrix(getFocusedMatrixUid()).getMatrixView().setFontSize(Constants.fontSizes[currentFontSizeIndex]);
         this.matrices.getMatrix(getFocusedMatrixUid()).getMatrixView().refreshView();
-        refreshSelectedTab();
     }
 
 
@@ -350,7 +341,6 @@ public class EditorPane {
 
         this.matrices.getMatrix(getFocusedMatrixUid()).getMatrixView().setFontSize(Constants.fontSizes[currentFontSizeIndex]);
         this.matrices.getMatrix(getFocusedMatrixUid()).getMatrixView().refreshView();
-        refreshSelectedTab();
     }
 
 
@@ -368,26 +358,6 @@ public class EditorPane {
 
         this.matrices.getMatrix(getFocusedMatrixUid()).getMatrixView().setFontSize(DEFAULT_FONT_SIZE);
         this.matrices.getMatrix(getFocusedMatrixUid()).getMatrixView().refreshView();
-        refreshSelectedTab();
-    }
-
-
-    /**
-     * Configures the keyboard bindings to run on a given scene. Use scene so that binding will trigger no
-     * matter which node is focused
-     *
-     * @param scene
-     */
-    public void configureKeyboardBindings(Scene scene) {
-        scene.setOnKeyPressed(e -> {  // add keybinding to toggle cross-highlighting on the editor
-            if (e.getCode() == KeyCode.F) {
-                for(IEditorTab editorPane : matrices.getMatrices().values().stream().map(IDSM::getMatrixEditorTab).toList()) {
-                    for(AbstractMatrixView view : editorPane.getAllMatrixViews()) {
-                        view.toggleCrossHighlighting();
-                    }
-                }
-            }
-        });
     }
 
 }

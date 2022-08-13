@@ -41,7 +41,6 @@ public class DSMApplication extends Application {
         Platform.setImplicitExit(true);
 
         editor = new EditorPane(new MatricesCollection(), root);
-        editor.configureKeyboardBindings(scene);
 
         Thread.setDefaultUncaughtExceptionHandler(DSMApplication::handleError);
 

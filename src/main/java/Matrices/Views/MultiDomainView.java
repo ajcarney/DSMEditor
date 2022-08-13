@@ -16,7 +16,6 @@ import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
@@ -29,7 +28,6 @@ import javafx.scene.control.ListView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
 import javafx.util.Callback;
 import javafx.util.Pair;
 import org.javatuples.Quartet;
@@ -284,7 +282,7 @@ public class MultiDomainView extends AbstractMatrixView implements ISymmetricHig
         _g.add(longestGroup);
         _groupings.setItems(_g);
         _groupings.setMinWidth(Region.USE_COMPUTED_SIZE);
-        _groupings.setStyle("-fx-padding: 0, 0, 0, 0; -fx-font-size: " + (fontSize.doubleValue()) + " };");
+        _groupings.setStyle("-fx-font-size: " + (fontSize.doubleValue()) + " };");
         double maxHeight = Misc.calculateNodeSize(_groupings).getHeight();
 
         // Use a label to calculate the width of a grouping because a combobox is grossly inaccurate
@@ -451,13 +449,13 @@ public class MultiDomainView extends AbstractMatrixView implements ISymmetricHig
             gridData.add(rowData);
         }
 
-        // only run this section if symmetryValidation is enabled because it cells default to not being highlighted
-        // and it is a waste of precious time to clear something that is already cleared
+        // only run this section if symmetryValidation is enabled because if cells default to not being highlighted
+        // then it is a waste of precious time to clear something that is already cleared
         if(symmetryValidation) {
             symmetryHighlightAllCells();
         }
 
-        for (Cell c_ : cells) {  // this is needed outsize the render loop so that the groupings and item names are highlighted correctly
+        for (Cell c_ : cells) {  // this is needed outside the render loop so that the groupings and item names are highlighted correctly
             refreshCellHighlight(c_);
         }
 

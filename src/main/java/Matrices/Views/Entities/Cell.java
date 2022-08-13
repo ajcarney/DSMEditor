@@ -51,11 +51,10 @@ public class Cell {
         this.fontSize = fontSize;
         this.label = label;
 
+        if(this.guiCell != null) {
+            this.guiCell.styleProperty().bind(Bindings.concat("-fx-font-size: ", fontSize));
+        }
         if(this.label != null) {
-            this.label.fontProperty().bind(Bindings.createObjectBinding(
-                    () -> new Font(fontSize.doubleValue()),
-                    fontSize
-            ));
             this.label.textFillProperty().bind(fontColor);
         }
     }

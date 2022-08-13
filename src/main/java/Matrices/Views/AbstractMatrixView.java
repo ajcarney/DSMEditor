@@ -274,23 +274,7 @@ public abstract class AbstractMatrixView {
      * @param mode  the new mode for the matrix
      */
     public final void setCurrentMode(MatrixViewMode mode) {
-        boolean refresh = true;
-        MatrixViewMode oldMode = currentMode.getValue();
-        if(  // if staying within either static or edit there is not need for a refresh because the bindings will update the value automatically
-            ((oldMode.equals(MatrixViewMode.EDIT_NAMES) || oldMode.equals(MatrixViewMode.EDIT_WEIGHTS) || oldMode.equals(MatrixViewMode.EDIT_INTERFACES)) &&
-            (mode.equals(MatrixViewMode.EDIT_NAMES) || mode.equals(MatrixViewMode.EDIT_WEIGHTS) || mode.equals(MatrixViewMode.EDIT_INTERFACES)))
-            ||
-            ((oldMode.equals(MatrixViewMode.STATIC_NAMES) || oldMode.equals(MatrixViewMode.STATIC_WEIGHTS) || oldMode.equals(MatrixViewMode.STATIC_INTERFACES)) &&
-            (mode.equals(MatrixViewMode.STATIC_NAMES) || mode.equals(MatrixViewMode.STATIC_WEIGHTS) || mode.equals(MatrixViewMode.STATIC_INTERFACES)))
-        ) {
-            refresh = false;
-        }
-
         currentMode.set(mode);
-
-        if(refresh) {
-            refreshView();
-        }
     }
 
 
@@ -460,6 +444,30 @@ public abstract class AbstractMatrixView {
     public void toggleCrossHighlighting() {
         for(Cell cell : cells) {
             cell.setCrossHighlightEnabled(!cell.getCrossHighlightEnabled());
+            refreshCellHighlight(cell);
+        }
+    }
+
+
+    /**
+     * enables cross-highlighting for a cell and then updates all cells to either remove or
+     * add cross highlighting
+     */
+    public void enableCrossHighlighting() {
+        for(Cell cell : cells) {
+            cell.setCrossHighlightEnabled(true);
+            refreshCellHighlight(cell);
+        }
+    }
+
+
+    /**
+     * disables cross-highlighting for a cell and then updates all cells to either remove or
+     * add cross highlighting
+     */
+    public void disableCrossHighlighting() {
+        for(Cell cell : cells) {
+            cell.setCrossHighlightEnabled(false);
             refreshCellHighlight(cell);
         }
     }
