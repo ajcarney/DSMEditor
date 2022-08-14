@@ -1,13 +1,12 @@
 package Matrices.Views.Entities;
 
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import javafx.beans.property.*;
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
 import javafx.util.Pair;
 
 import java.util.HashMap;
@@ -23,9 +22,7 @@ public class Cell {
     protected Label label;
 
     protected DoubleProperty fontSize;
-    protected StringProperty fontColorCss = new SimpleStringProperty("-fx-text-fill: rgb(0, 0, 0);");
-
-    protected Boolean crossHighlightEnabled = false;
+    protected ObjectProperty<Color> fontColor = new SimpleObjectProperty<>(Color.color(0.0, 0.0, 0.0));
 
     // dictionary of all the different highlight types that are supported
     protected HashMap<String, Background> highlightBGs = new HashMap<>() {{
@@ -56,7 +53,7 @@ public class Cell {
             this.guiCell.styleProperty().bind(Bindings.concat("-fx-font-size: ", fontSize));
         }
         if(this.label != null) {
-            this.label.styleProperty().bind(fontColorCss);
+            this.label.textFillProperty().bind(fontColor);
         }
     }
 
@@ -109,17 +106,7 @@ public class Cell {
      * @param color  the new text color
      */
     public void setCellTextColor(Color color) {
-        fontColorCss.set("-fx-text-fill: rgb(" + 255 * color.getRed() + ", " + 255 * color.getGreen() + ", " + 255 * color.getBlue() + ");");
-    }
-
-
-    /**
-     * Getter function for the crossHighlightEnabled field
-     *
-     * @return if cross highlighting is enabled
-     */
-    public Boolean getCrossHighlightEnabled() {
-        return crossHighlightEnabled;
+        fontColor.set(color);
     }
 
 
@@ -160,16 +147,6 @@ public class Cell {
             default -> null;
         };
 
-    }
-
-
-    /**
-     * Setter function for the crossHighlightEnabled field
-     *
-     * @param crossHighlightEnabled the new value for the crossHighlightField
-     */
-    public void setCrossHighlightEnabled(Boolean crossHighlightEnabled) {
-        this.crossHighlightEnabled = crossHighlightEnabled;
     }
 
 
