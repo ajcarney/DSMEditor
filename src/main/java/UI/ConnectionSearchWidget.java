@@ -23,7 +23,6 @@ import java.util.Set;
 
 /**
  * Widget that allows users of the application to search for and highlight different connections in the DSM
- * TODO: this should probably be a singleton class
  *
  * @author Aiden Carney
  */
@@ -117,7 +116,7 @@ public class ConnectionSearchWidget {
                     prevView = view;
                 }
 
-                synchronized (view) {  // TODO: maybe this synchronization call can be removed. Idk, i was too scared to check
+                synchronized (view) {
                     matches = getMatches(searchInput.getText(), matrix);
                     Set<Pair<Integer, Integer>> prevAndCurrentErrors = new HashSet<>(prevMatches);
                     prevAndCurrentErrors.addAll(matches);

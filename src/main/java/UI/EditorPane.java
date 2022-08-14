@@ -2,15 +2,12 @@ package UI;
 
 import Constants.Constants;
 import Matrices.Data.AbstractDSMData;
-import Matrices.EditorTabs.IEditorTab;
 import Matrices.IDSM;
 import Matrices.MatricesCollection;
 import Matrices.Views.AbstractMatrixView;
 import UI.Widgets.DraggableTab;
 import javafx.beans.binding.Bindings;
-import javafx.scene.Scene;
 import javafx.scene.control.TabPane;
-import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 
@@ -72,7 +69,6 @@ public class EditorPane {
 
     /**
      * Finds the uid of the matrix the user is focused on by using a lookup table
-     * TODO: this function and getFocusedTab() are implemented really stupidly and inefficiently
      *
      * @return  the uid of the matrix that is focused
      */
@@ -125,23 +121,6 @@ public class EditorPane {
         } catch(Exception e) {
             return null;
         }
-    }
-
-
-    /**
-     * Finds the tab that is currently focused on by the user
-     *
-     * @return  the DraggableTab object that is selected
-     */
-    public DraggableTab getFocusedTab() {
-        DraggableTab tab = null;
-        for (HashMap.Entry<DraggableTab, Integer> m : tabs.entrySet()) {  // remove from HashMap by uid
-            if(m.getValue().equals(getFocusedMatrixUid())) {
-                tab = m.getKey();
-                break;
-            }
-        }
-        return tab;
     }
 
 

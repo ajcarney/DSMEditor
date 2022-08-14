@@ -770,7 +770,7 @@ public abstract class AbstractDSMData {
     /**
      * Renames an interface grouping. Puts the change on the stack but does not set a checkpoint.
      *
-     * @param oldName  the interface grouping who's name should be changed
+     * @param oldName  the interface grouping whose name should be changed
      * @param newName  the new name for the interface grouping
      */
     public void renameInterfaceTypeGrouping(String oldName, String newName) {

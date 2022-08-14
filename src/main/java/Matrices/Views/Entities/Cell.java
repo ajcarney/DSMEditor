@@ -24,8 +24,6 @@ public class Cell {
     protected DoubleProperty fontSize;
     protected ObjectProperty<Color> fontColor = new SimpleObjectProperty<>(Color.color(0.0, 0.0, 0.0));
 
-    protected Boolean crossHighlightEnabled = false;
-
     // dictionary of all the different highlight types that are supported
     protected HashMap<String, Background> highlightBGs = new HashMap<>() {{
         put("default", null);
@@ -113,16 +111,6 @@ public class Cell {
 
 
     /**
-     * Getter function for the crossHighlightEnabled field
-     *
-     * @return if cross highlighting is enabled
-     */
-    public Boolean getCrossHighlightEnabled() {
-        return crossHighlightEnabled;
-    }
-
-
-    /**
      * Getter function for the gridLocation field of the class
      *
      * @return gridLocation of the instance
@@ -159,16 +147,6 @@ public class Cell {
             default -> null;
         };
 
-    }
-
-
-    /**
-     * Setter function for the crossHighlightEnabled field
-     *
-     * @param crossHighlightEnabled the new value for the crossHighlightField
-     */
-    public void setCrossHighlightEnabled(Boolean crossHighlightEnabled) {
-        this.crossHighlightEnabled = crossHighlightEnabled;
     }
 
 

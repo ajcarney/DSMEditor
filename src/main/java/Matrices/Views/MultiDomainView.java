@@ -117,7 +117,7 @@ public class MultiDomainView extends AbstractMatrixView implements ISymmetricHig
             cell.setCellHighlight(cell.getHighlightBG("symmetryError"));
             cell.setCellTextColor(Grouping.DEFAULT_FONT_COLOR);
 
-        } else if (cell.getHighlightBG("cross") != null && cell.getCrossHighlightEnabled()) {
+        } else if (cell.getHighlightBG("cross") != null) {
             cell.setCellHighlight(cell.getHighlightBG("cross"));
             cell.setCellTextColor(Grouping.DEFAULT_FONT_COLOR);
 
@@ -277,7 +277,7 @@ public class MultiDomainView extends AbstractMatrixView implements ISymmetricHig
         // create a test item to determine layout width for a vertical item cell to square up the matrix when viewed
         // as well as to determine the width of grouping ComboBoxes because they all contain different items
         ComboBox<Grouping> _groupings = new ComboBox<>();
-        Grouping longestGroup = matrix.getDomainGroupings().stream().max(Comparator.comparing(g -> g.getName().length())).orElse(null);
+        Grouping longestGroup = matrix.getDomainGroupings().stream().max(Comparator.comparing(g -> g.getName().length())).orElse(new Grouping("", Color.WHITE));
         ObservableList<Grouping> _g = FXCollections.observableArrayList();
         _g.add(longestGroup);
         _groupings.setItems(_g);

@@ -59,6 +59,15 @@ public abstract class AbstractMatrixView {
     protected Vector<Cell> cells;  // contains information for highlighting
     protected HashMap<String, HashMap<Integer, Integer>> gridUidLookup;
 
+    /**
+     * contains the data for how to cross highlight a cell
+     *
+     * @param hoverGridX             the x grid location of the mouse
+     * @param hoverGridY             the y grid location of the mouse
+     * @param crossHighlightEnabled  if cross highlighting is enabled
+     */
+    protected record CrossHighlightData(int hoverGridX, int hoverGridY, boolean crossHighlightEnabled) { }
+    protected final ObjectProperty<CrossHighlightData> crossHighlightData = new SimpleObjectProperty<>(new CrossHighlightData(-1, -1, false));
 
     /**
      * Contains the different types of valid view modes for the matrix. Each of these defines
@@ -103,6 +112,13 @@ public abstract class AbstractMatrixView {
 
         this.fontSize = new SimpleDoubleProperty(fontSize);
         currentMode = new SimpleObjectProperty<>(MatrixViewMode.EDIT_NAMES);
+
+        // set up the binding for cross highlighting
+        crossHighlightData.addListener((o, oldValue, newValue) -> {
+            crossHighlightCell(oldValue.hoverGridX, oldValue.hoverGridY, false);  // always unhighlight previous location
+            crossHighlightCell(newValue.hoverGridX, newValue.hoverGridY, newValue.crossHighlightEnabled);
+        });
+
     }
 
 //endregion
@@ -382,27 +398,19 @@ public abstract class AbstractMatrixView {
     /**
      * Sets whether a cell should be cross highlighted. Cross highlights by taking grid location
      * and keeping row constant and decrementing column location to minimum and then keeping column
-     * constant and decrementing the row location to minimum.
+     * constant and decrementing the row location to minimum. When highlighting horizontally and
+     * coming across an empty (null) cell, it will then look upwards until it does find a cell. This
+     * is to ensure it deals with multi-span cells in a desirable way
      *
-     * @param endLocation      the cell passed by location (row, column) to cross highlight to, no cells will be highlighted past this cell
+     * @param endRow           the index of the last row to highlight
+     * @param endCol           the index of the last column to highlight
      * @param shouldHighlight  whether to cross highlight the cell
      */
-    private void crossHighlightCell(Pair<Integer, Integer> endLocation, boolean shouldHighlight) {
-        int endRow = endLocation.getKey();
-        int endCol = endLocation.getValue();
+    private void crossHighlightCell(int endRow, int endCol, boolean shouldHighlight) {
+        if(endRow == -1 || endCol == -1) {
+            return;
+        }
 
-//        int minRow = Integer.MAX_VALUE;
-//        int minCol = Integer.MAX_VALUE;
-//        for(Cell cell : cells) {  // determine the value to decrease to
-//            if(cell.getGridLocation().getKey() < minRow) {
-//                minRow = cell.getGridLocation().getKey();
-//            }
-//            if(cell.getGridLocation().getValue() < minCol) {
-//                minCol = cell.getGridLocation().getValue();
-//            }
-//        }
-//        System.out.println(minRow);
-//        System.out.println(minCol);
         int minRow = 0;
         int minCol = 0;
 
@@ -423,6 +431,15 @@ public abstract class AbstractMatrixView {
         for(int i=endCol - 1; i>=minCol; i--) {  // highlight horizontally, start at one less because first cell it will find is already highlighted
             for(Cell cell : cells) {  // find the cell to modify
                 if(cell.getGridLocation().getValue() == i && cell.getGridLocation().getKey() == endRow) {
+                    if(cell.getGuiCell() == null) {  // look upwards until finding a non-null cell and highlight this one
+                        for(int row=endRow; row>minRow; row--) {
+                            if(getCellByLoc(new Pair<>(row, i)).getGuiCell() != null) {
+                                cell = getCellByLoc(new Pair<>(row, i));  // update cell with the non-null one
+                                break;
+                            }
+                        }
+                    }
+
                     if(shouldHighlight) {
                         cell.updateHighlightBG(CROSS_HIGHLIGHT_BACKGROUND, "cross");
                     } else {
@@ -442,10 +459,7 @@ public abstract class AbstractMatrixView {
      * add cross highlighting
      */
     public void toggleCrossHighlighting() {
-        for(Cell cell : cells) {
-            cell.setCrossHighlightEnabled(!cell.getCrossHighlightEnabled());
-            refreshCellHighlight(cell);
-        }
+        crossHighlightData.set(new CrossHighlightData(crossHighlightData.getValue().hoverGridX, crossHighlightData.getValue().hoverGridY, !crossHighlightData.getValue().crossHighlightEnabled));
     }
 
 
@@ -454,10 +468,7 @@ public abstract class AbstractMatrixView {
      * add cross highlighting
      */
     public void enableCrossHighlighting() {
-        for(Cell cell : cells) {
-            cell.setCrossHighlightEnabled(true);
-            refreshCellHighlight(cell);
-        }
+        crossHighlightData.set(new CrossHighlightData(crossHighlightData.getValue().hoverGridX, crossHighlightData.getValue().hoverGridY, true));
     }
 
 
@@ -466,10 +477,7 @@ public abstract class AbstractMatrixView {
      * add cross highlighting
      */
     public void disableCrossHighlighting() {
-        for(Cell cell : cells) {
-            cell.setCrossHighlightEnabled(false);
-            refreshCellHighlight(cell);
-        }
+        crossHighlightData.set(new CrossHighlightData(crossHighlightData.getValue().hoverGridX, crossHighlightData.getValue().hoverGridY, false));
     }
 
 
@@ -695,12 +703,12 @@ public abstract class AbstractMatrixView {
         });
 
         cell.setOnMouseEntered(e -> {
-            crossHighlightCell(new Pair<>(gridRowIndex, gridColIndex), true);
+            crossHighlightData.set(new CrossHighlightData(gridRowIndex, gridColIndex, crossHighlightData.getValue().crossHighlightEnabled));
             locationLabel.setText(matrix.getItem(rowUid).getName().getValue() + ":" + matrix.getItem(colUid).getName().getValue());
         });
 
         cell.setOnMouseExited(e -> {
-            crossHighlightCell(new Pair<>(gridRowIndex, gridColIndex), false);
+            crossHighlightData.set(new CrossHighlightData(-1, -1, crossHighlightData.getValue().crossHighlightEnabled));
             locationLabel.setText("");
         });
         //endregion

@@ -22,7 +22,6 @@ import java.util.*;
  * @author Aiden Carney
  */
 public class DSMApplication extends Application {
-    private static BorderPane root;
     private static EditorPane editor;
     private static ArrayList<String> cliArgs;
 
@@ -33,7 +32,7 @@ public class DSMApplication extends Application {
      */
     @Override
     public void start(Stage primaryStage) {
-        root = new BorderPane();
+        BorderPane root = new BorderPane();
         Scene scene = new Scene(root, 1400, 800);
         primaryStage.setTitle("DSM Editor");
         primaryStage.setScene(scene);
@@ -51,7 +50,7 @@ public class DSMApplication extends Application {
 //                editor.addTab(new SymmetricDSM(f));
 //            }
             Constants.Constants.isDebug = true;
-            File f = new File("/home/aiden/Documents/DSMEditor/big_mdm.dsm");
+            File f = new File("/home/aiden/Documents/DSMEditor/multi_domain.dsm");
             if(f.exists()) {
                 editor.addTab(new MultiDomainDSM(f, editor.getHeaderMenu()));
             }
@@ -68,7 +67,7 @@ public class DSMApplication extends Application {
                 EventHandler<Event> handler = entry.getKey().getOnCloseRequest();
                 handler.handle(null);
 
-                if (editor.getTabs().get(entry.getKey()) != null) {
+                if (editor.getTabs().get(entry.getKey()) != null) {  // this is certainly suspicious but don't touch unless you know what you are doing
                     ev.consume();
                     return;
                 }

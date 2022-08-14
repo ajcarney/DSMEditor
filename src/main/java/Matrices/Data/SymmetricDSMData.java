@@ -467,7 +467,7 @@ public class SymmetricDSMData extends AbstractDSMData implements IPropagationAna
         Vector<DSMItem> newCols = new Vector<>();
 
         for(DSMItem row : rows) {  // sort the new columns according to the rows (this does not need to be on the change stack because
-                                   // only the index numbers are what matters to the change stack TODO: confirm this
+                                   // only the index numbers are what matters to the change stack
             for(DSMItem col : cols) {
                 if(col.getAliasUid() == row.getUid()) {
                     assert col.getGroup1().getUid().equals(row.getGroup1().getUid()) : "Groups were not the same when redistributing sort indices";

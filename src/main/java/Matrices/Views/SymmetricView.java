@@ -113,7 +113,7 @@ public class SymmetricView extends AbstractMatrixView implements ISymmetricHighl
             cell.setCellHighlight(cell.getHighlightBG("symmetryError"));
             cell.setCellTextColor(Grouping.DEFAULT_FONT_COLOR);
 
-        } else if (cell.getHighlightBG("cross") != null && cell.getCrossHighlightEnabled()) {
+        } else if (cell.getHighlightBG("cross") != null) {
             cell.setCellHighlight(cell.getHighlightBG("cross"));
             cell.setCellTextColor(Grouping.DEFAULT_FONT_COLOR);
 
