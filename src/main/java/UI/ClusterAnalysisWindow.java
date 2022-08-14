@@ -352,7 +352,7 @@ public class ClusterAnalysisWindow {
         table.setGridDataHBox(data);
         table.setFreezeHeader(1);
         table.setFreezeLeft(2);
-        table.resizeGrid(true);
+        table.resizeGrid(true, new ArrayList<>(), new ArrayList<>());
         table.updateGrid();
 
         bidsLayout.getChildren().clear();

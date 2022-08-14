@@ -2,15 +2,12 @@ package UI;
 
 import Constants.Constants;
 import Matrices.Data.AbstractDSMData;
-import Matrices.EditorTabs.IEditorTab;
 import Matrices.IDSM;
 import Matrices.MatricesCollection;
 import Matrices.Views.AbstractMatrixView;
 import UI.Widgets.DraggableTab;
 import javafx.beans.binding.Bindings;
-import javafx.scene.Scene;
 import javafx.scene.control.TabPane;
-import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 
@@ -72,7 +69,6 @@ public class EditorPane {
 
     /**
      * Finds the uid of the matrix the user is focused on by using a lookup table
-     * TODO: this function and getFocusedTab() are implemented really stupidly and inefficiently
      *
      * @return  the uid of the matrix that is focused
      */
@@ -125,23 +121,6 @@ public class EditorPane {
         } catch(Exception e) {
             return null;
         }
-    }
-
-
-    /**
-     * Finds the tab that is currently focused on by the user
-     *
-     * @return  the DraggableTab object that is selected
-     */
-    public DraggableTab getFocusedTab() {
-        DraggableTab tab = null;
-        for (HashMap.Entry<DraggableTab, Integer> m : tabs.entrySet()) {  // remove from HashMap by uid
-            if(m.getValue().equals(getFocusedMatrixUid())) {
-                tab = m.getKey();
-                break;
-            }
-        }
-        return tab;
     }
 
 
@@ -264,6 +243,8 @@ public class EditorPane {
 
         tabs.put(tab, matrixUid);
         tabPane.getTabs().add(tab);
+
+        focusTab(matrixUid);
     }
 
 
@@ -306,16 +287,6 @@ public class EditorPane {
 
 
     /**
-     * Refreshes a tabs content by redrawing the content
-     */
-    public void refreshSelectedTab() {
-        if(getFocusedMatrixUid() != null) {
-            this.matrices.getMatrix(getFocusedMatrixUid()).getMatrixView().refreshView();
-        }
-    }
-
-
-    /**
      * Closes a tab. It will be removed from the HashMaps as well because each tab has a closing policy that
      * does this
      *
@@ -336,7 +307,6 @@ public class EditorPane {
 
         this.matrices.getMatrix(getFocusedMatrixUid()).getMatrixView().setFontSize(Constants.fontSizes[currentFontSizeIndex]);
         this.matrices.getMatrix(getFocusedMatrixUid()).getMatrixView().refreshView();
-        refreshSelectedTab();
     }
 
 
@@ -350,7 +320,6 @@ public class EditorPane {
 
         this.matrices.getMatrix(getFocusedMatrixUid()).getMatrixView().setFontSize(Constants.fontSizes[currentFontSizeIndex]);
         this.matrices.getMatrix(getFocusedMatrixUid()).getMatrixView().refreshView();
-        refreshSelectedTab();
     }
 
 
@@ -368,26 +337,6 @@ public class EditorPane {
 
         this.matrices.getMatrix(getFocusedMatrixUid()).getMatrixView().setFontSize(DEFAULT_FONT_SIZE);
         this.matrices.getMatrix(getFocusedMatrixUid()).getMatrixView().refreshView();
-        refreshSelectedTab();
-    }
-
-
-    /**
-     * Configures the keyboard bindings to run on a given scene. Use scene so that binding will trigger no
-     * matter which node is focused
-     *
-     * @param scene
-     */
-    public void configureKeyboardBindings(Scene scene) {
-        scene.setOnKeyPressed(e -> {  // add keybinding to toggle cross-highlighting on the editor
-            if (e.getCode() == KeyCode.F) {
-                for(IEditorTab editorPane : matrices.getMatrices().values().stream().map(IDSM::getMatrixEditorTab).toList()) {
-                    for(AbstractMatrixView view : editorPane.getAllMatrixViews()) {
-                        view.toggleCrossHighlighting();
-                    }
-                }
-            }
-        });
     }
 
 }

@@ -26,7 +26,7 @@ import java.util.*;
 public class MultiDomainDSMData extends AbstractDSMData implements IZoomable, IPropagationAnalysis {
     private final Grouping defaultDomain = new Grouping(DEFAULT_GROUP_UID, Grouping.DEFAULT_PRIORITY, "default", Color.WHITE, Grouping.DEFAULT_FONT_COLOR);
     private ObservableMap<Grouping, ObservableList<Grouping>> domains;  // hashmap of domains and list of groupings corresponding to that domain
-    private ObservableList<Grouping> sortedDomains;
+    private final ObservableList<Grouping> sortedDomains;
 
     public static final Integer DEFAULT_GROUP_UID = Integer.MAX_VALUE;
 
@@ -952,11 +952,15 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable, IP
                     // clear connections in this domain and this row
                     ArrayList<DSMConnection> domainConnections = new ArrayList<>();
                     for(DSMConnection conn : getConnections()) {
-                        DSMItem connRowItem = getItem(conn.getRowUid());
-                        DSMItem connColItem = getItem(conn.getColUid());
-                        if(connRowItem == null || connColItem == null) {
+                        DSMItem connRowItem;
+                        DSMItem connColItem;
+                        try {
+                            connRowItem = getItem(conn.getRowUid());
+                            connColItem = getItem(conn.getColUid());
+                        } catch (NoSuchElementException e) {
                             continue;
                         }
+
                         if(connRowItem.getUid() == rowItem.getUid() && connRowItem.getGroup2().equals(fromGroup) && connColItem.getGroup2().equals(toGroup)) {
                             domainConnections.add(conn);
                         }
@@ -975,7 +979,8 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable, IP
 
                     rowsToDelete.remove(rowItem);
                 } else {  // item is not contained so add it
-                    DSMItem col = new DSMItem(importedRow);
+                    DSMItem col = new DSMItem();
+                    col.copyProperties(importedRow);
                     col.setAliasUid(importedRow.getUid());
                     importedRow.setAliasUid(col.getUid());
 
@@ -989,10 +994,6 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable, IP
 
             // merge the connections
             for(DSMConnection conn : symmetricMatrix.getConnections()) {
-                DSMItem connRowItem = getItem(conn.getRowUid());
-                DSMItem connColItem = getItem(conn.getColUid());
-                assert connRowItem != null && connColItem != null : "Merging rows from symmetric DSM failed";
-
                 modifyConnection(conn.getRowUid(), conn.getColUid(), conn.getConnectionName(), conn.getWeight(), conn.getInterfaces());
             }
 
@@ -1038,11 +1039,15 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable, IP
                     // clear connections in this domain and this row
                     ArrayList<DSMConnection> domainConnections = new ArrayList<>();
                     for(DSMConnection conn : getConnections()) {
-                        DSMItem connRowItem = getItem(conn.getRowUid());
-                        DSMItem connColItem = getItem(conn.getColUid());
-                        if(connRowItem == null || connColItem == null) {
+                        DSMItem connRowItem;
+                        DSMItem connColItem;
+                        try {
+                            connRowItem = getItem(conn.getRowUid());
+                            connColItem = getItem(conn.getColUid());
+                        } catch (NoSuchElementException e) {
                             continue;
                         }
+
                         if(connRowItem.getUid() == rowItem.getUid() && connRowItem.getGroup2().equals(fromGroup) && connColItem.getGroup2().equals(toGroup)) {
                             domainConnections.add(conn);
                         }
@@ -1094,11 +1099,15 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable, IP
                     // clear connections in this domain and this column
                     ArrayList<DSMConnection> domainConnections = new ArrayList<>();
                     for(DSMConnection conn : getConnections()) {
-                        DSMItem connRowItem = getItem(conn.getRowUid());
-                        DSMItem connColItem = getItem(conn.getColUid());
-                        if(connRowItem == null || connColItem == null) {
+                        DSMItem connRowItem;
+                        DSMItem connColItem;
+                        try {
+                            connRowItem = getItem(conn.getRowUid());
+                            connColItem = getItem(conn.getColUid());
+                        } catch (NoSuchElementException e) {
                             continue;
                         }
+
                         if(connColItem.getUid() == colItem.getUid() && connRowItem.getGroup2().equals(fromGroup) && connColItem.getGroup2().equals(toGroup)) {
                             domainConnections.add(conn);
                         }
@@ -1134,10 +1143,6 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable, IP
 
             // merge the connections
             for(DSMConnection conn : asymmetricMatrix.getConnections()) {
-                DSMItem connRowItem = getItem(conn.getRowUid());
-                DSMItem connColItem = getItem(conn.getColUid());
-                assert connRowItem != null && connColItem != null : "Merging rows from symmetric DSM failed";
-
                 modifyConnection(conn.getRowUid(), conn.getColUid(), conn.getConnectionName(), conn.getWeight(), conn.getInterfaces());
             }
 

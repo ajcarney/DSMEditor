@@ -30,10 +30,7 @@ import javafx.util.Callback;
 import javafx.util.Pair;
 import org.javatuples.Triplet;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Vector;
+import java.util.*;
 
 public class SymmetricView extends AbstractMatrixView implements ISymmetricHighlight {
 
@@ -116,7 +113,7 @@ public class SymmetricView extends AbstractMatrixView implements ISymmetricHighl
             cell.setCellHighlight(cell.getHighlightBG("symmetryError"));
             cell.setCellTextColor(Grouping.DEFAULT_FONT_COLOR);
 
-        } else if (cell.getHighlightBG("cross") != null && cell.getCrossHighlightEnabled()) {
+        } else if (cell.getHighlightBG("cross") != null) {
             cell.setCellHighlight(cell.getHighlightBG("cross"));
             cell.setCellTextColor(Grouping.DEFAULT_FONT_COLOR);
 
@@ -128,20 +125,20 @@ public class SymmetricView extends AbstractMatrixView implements ISymmetricHighl
             Integer rowUid = getUidsFromGridLoc(cell.getGridLocation()).getKey();  // null is used to check if it is an item or grouping cell
             Integer colUid = getUidsFromGridLoc(cell.getGridLocation()).getValue();
             if (rowUid == null && colUid != null) {  // highlight with column color
-                cell.setCellHighlight(matrix.getItem(colUid).getGroup1().getColor());
-                cell.setCellTextColor(matrix.getItem(colUid).getGroup1().getFontColor());
+                cell.setCellHighlight(matrix.getColItem(colUid).getGroup1().getColor());
+                cell.setCellTextColor(matrix.getColItem(colUid).getGroup1().getFontColor());
             } else if (rowUid != null && colUid == null) {  // highlight with row color
-                cell.setCellHighlight(matrix.getItem(rowUid).getGroup1().getColor());
-                cell.setCellTextColor(matrix.getItem(rowUid).getGroup1().getFontColor());
+                cell.setCellHighlight(matrix.getRowItem(rowUid).getGroup1().getColor());
+                cell.setCellTextColor(matrix.getRowItem(rowUid).getGroup1().getFontColor());
             } else if (
                     rowUid != null && colUid != null
-                    && !rowUid.equals(matrix.getItem(colUid).getAliasUid())
-                    && matrix.getItem(rowUid).getGroup1().equals(matrix.getItem(colUid).getGroup1())
+                    && !rowUid.equals(matrix.getColItem(colUid).getAliasUid())
+                    && matrix.getRowItem(rowUid).getGroup1().equals(matrix.getColItem(colUid).getGroup1())
             ) {
                 // row and column color will be the same because row and column
                 // have same group in symmetric matrix
-                cell.setCellHighlight(matrix.getItem(rowUid).getGroup1().getColor());
-                cell.setCellTextColor(matrix.getItem(rowUid).getGroup1().getFontColor());
+                cell.setCellHighlight(matrix.getRowItem(rowUid).getGroup1().getColor());
+                cell.setCellTextColor(matrix.getRowItem(rowUid).getGroup1().getFontColor());
             } else {
                 cell.setCellHighlight(cell.getHighlightBG("default"));
             }
@@ -339,38 +336,9 @@ public class SymmetricView extends AbstractMatrixView implements ISymmetricHighl
                         ComboBox<Grouping> groupings = new ComboBox<>();
                         groupings.setMinWidth(Region.USE_PREF_SIZE);
                         groupings.setPadding(new Insets(0));
-                        groupings.setStyle(
-                                "-fx-background-color: transparent;" +
-                                "-fx-padding: 0, 0, 0, 0;" +
-                                "-fx-font-size: " + (fontSize.doubleValue()) + ";"
-                        );
+                        groupings.setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, new CornerRadii(3), new Insets(0))));
 
-                        Callback<ListView<Grouping>, ListCell<Grouping>> groupingItemCellFactory = new Callback<>() {
-                            @Override
-                            public ListCell<Grouping> call(ListView<Grouping> l) {
-                                return new ListCell<>() {
-
-                                    @Override
-                                    protected void updateItem(Grouping group, boolean empty) {
-                                        super.updateItem(group, empty);
-
-                                        if (empty || group == null) {
-                                            setText(null);
-                                        } else {
-                                            setText(group.getName());
-                                            // this is a stupid janky hack because javafx styling is stupid and hard to work with when you want it to be dynamic
-                                            // this sets the text color of the grouping item so that the font color can be updated. The conditional is so that
-                                            // when the combobox is opened and the font color is white the list doesn't appear empty
-                                            if(group.equals(groupings.getValue())) {
-                                                setTextFill(group.getFontColor());
-                                            } else {
-                                                setTextFill(Grouping.DEFAULT_FONT_COLOR);
-                                            }
-                                        }
-                                    }
-                                };
-                            }
-                        };
+                        Callback<ListView<Grouping>, ListCell<Grouping>> groupingItemCellFactory = getGroupingDropDownFactory(groupings);
                         groupings.setCellFactory(groupingItemCellFactory);
                         groupings.setButtonCell(groupingItemCellFactory.call(null));
 
@@ -450,7 +418,10 @@ public class SymmetricView extends AbstractMatrixView implements ISymmetricHighl
         grid.setGridDataHBox(gridData);
         grid.setFreezeLeft(3);
         grid.setFreezeHeader(2);  // freeze top two rows for symmetric matrix
-        grid.resizeGrid(true);
+
+        ArrayList<Integer> importantRows = new ArrayList<>(Arrays.asList(0, 1, 2));
+        ArrayList<Integer> importantCols = new ArrayList<>(Arrays.asList(0, 1, 2, 3));
+        grid.resizeGrid(true, importantRows, importantCols);
         grid.updateGrid();
 
         rootLayout.getChildren().addAll(grid.getGrid(), locationLabel);
@@ -739,8 +710,8 @@ public class SymmetricView extends AbstractMatrixView implements ISymmetricHighl
                         DSMConnection conn = matrix.getConnection(rowUid, colUid);
                         if(conn != null) {  // only add connections that exist
                             Color color = Color.BLACK;  // default to black
-                            if(matrix.getItem(rowUid).getGroup1().equals(matrix.getItem(colUid).getGroup1())) {
-                                color = matrix.getItem(rowUid).getGroup1().getFontColor();
+                            if(matrix.getRowItem(rowUid).getGroup1().equals(matrix.getColItem(colUid).getGroup1())) {
+                                color = matrix.getRowItem(rowUid).getGroup1().getFontColor();
                             }
                             connectionLocations.add(new Triplet<>(r, c, color));
                         }
@@ -827,7 +798,7 @@ public class SymmetricView extends AbstractMatrixView implements ISymmetricHighl
         gridData.get(connectionsRow).set(connectionsCol, canvasPane);  // update the item to be the canvas
         //endregion
 
-        for (Cell c_ : cells) {  // this is needed outsize the render loop so that the groupings and item names are highlighted correctly
+        for (Cell c_ : cells) {  // this is needed outside the render loop so that the groupings and item names are highlighted correctly
             refreshCellHighlight(c_);
         }
 

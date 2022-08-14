@@ -23,6 +23,9 @@ import Matrices.Views.Flags.ISymmetricHighlight;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
@@ -65,6 +68,7 @@ public class HeaderMenu {
     private AbstractMatrixView matrixView;
 
     private boolean disabled = false;
+    private boolean crossHighlight = false;
 
     /**
      * Creates a new instance of the header menu and instantiate widgets on it
@@ -167,7 +171,6 @@ public class HeaderMenu {
 
         MenuItem newMultiDomain = new MenuItem("Multi-Domain Matrix");
         newMultiDomain.setOnAction(e -> {
-            MultiDomainDSMData matrix = new MultiDomainDSMData();
             File file = new File("./untitled" + defaultName);
             while(file.exists()) {  // make sure file does not exist
                 defaultName += 1;
@@ -277,6 +280,8 @@ public class HeaderMenu {
                     System.out.println("there was an error reading the file " + file);
                 } else if(!this.editor.getMatricesCollection().getMatrixFileAbsoluteSavePaths().contains(file.getAbsolutePath())) {
                     File importedFile = new File(file.getParent(), file.getName().substring(0, file.getName().lastIndexOf('.')) + ".dsm");  // convert .m extension to .dsm
+                    ioHandler.setMatrix(matrix);
+                    ioHandler.setSavePath(importedFile);
                     this.editor.addTab(new SymmetricDSM(matrix, ioHandler));
                 } else {
                     editor.focusTab(file);  // focus on that tab because it is already open
@@ -357,6 +362,7 @@ public class HeaderMenu {
             matrixData.undoToCheckpoint();
             matrixView.refreshView();
         });
+        undo.setAccelerator(new KeyCodeCombination(KeyCode.Z, KeyCombination.SHORTCUT_DOWN));
 
         MenuItem redo = new MenuItem("Redo");
         redo.setOnAction(e -> {
@@ -366,6 +372,7 @@ public class HeaderMenu {
             matrixData.redoToCheckpoint();
             matrixView.refreshView();
         });
+        redo.setAccelerator(new KeyCodeCombination(KeyCode.Y, KeyCombination.SHORTCUT_DOWN));
 
 
         MenuItem invert = new MenuItem("Transpose Matrix");
@@ -486,8 +493,24 @@ public class HeaderMenu {
     private void setUpToolsMenu() {
         if(matrixData == null) return;
 
+        MenuItem toggleCrossHighlight = new MenuItem("Toggle Cross-Highlight");
+        toggleCrossHighlight.setOnAction(e -> {
+            matrixView.toggleCrossHighlighting();
+            crossHighlight = !crossHighlight;
+        });
+        if(crossHighlight) {
+            matrixView.enableCrossHighlighting();
+            crossHighlight = true;
+        } else {
+            matrixView.disableCrossHighlighting();
+            crossHighlight = false;
+        }
+        toggleCrossHighlight.setAccelerator(new KeyCodeCombination(KeyCode.F));
+        toolsMenu.getItems().add(toggleCrossHighlight);
+
         MenuItem search = new MenuItem("Find Connections");
         search.setOnAction(e -> editor.getSearchWidget().open());
+        search.setAccelerator(new KeyCodeCombination(KeyCode.F, KeyCombination.SHORTCUT_DOWN));
         toolsMenu.getItems().add(search);
 
 
@@ -549,10 +572,14 @@ public class HeaderMenu {
      * sets up the Menu object for the view menu
      */
     protected void setupViewMenu() {
-        MenuItem zoomIn = new MenuItem("Zoom In");  // TODO: ensure this works in editor when new matrices are opened
+        MenuItem zoomIn = new MenuItem("Zoom In");
         zoomIn.setOnAction(e -> editor.increaseFontScaling());
+        zoomIn.setAccelerator(new KeyCodeCombination(KeyCode.I, KeyCombination.SHORTCUT_DOWN));
+
         MenuItem zoomOut = new MenuItem("Zoom Out");
         zoomOut.setOnAction(e -> editor.decreaseFontScaling());
+        zoomOut.setAccelerator(new KeyCodeCombination(KeyCode.O, KeyCombination.SHORTCUT_DOWN));
+
         MenuItem zoomReset = new MenuItem("Reset Zoom");
         zoomReset.setOnAction(e -> editor.resetFontScaling());
 
@@ -573,6 +600,8 @@ public class HeaderMenu {
         toggleGroup = new ToggleGroup();
         toggleGroup.selectedToggleProperty().addListener((o, oldValue, newValue) -> {
             if(matrixData == null || newValue == null) return;
+
+            AbstractMatrixView.MatrixViewMode oldMode = matrixView.getCurrentMode();
             if(newValue.equals(namesView)) {
                 configureVisibleInterfaces.setVisible(false);
                 if(this.disabled) {
@@ -600,6 +629,22 @@ public class HeaderMenu {
             } else if(newValue.equals(fastRenderView)) {
                 configureVisibleInterfaces.setVisible(false);
                 matrixView.setCurrentMode(AbstractMatrixView.MatrixViewMode.FAST_RENDER);
+            }
+            AbstractMatrixView.MatrixViewMode newMode = matrixView.getCurrentMode();
+
+
+            boolean refresh = true;
+            if(  // if staying within either static or edit there is not need for a refresh because the bindings will update the value automatically
+                    ((oldMode.equals(AbstractMatrixView.MatrixViewMode.EDIT_NAMES) || oldMode.equals(AbstractMatrixView.MatrixViewMode.EDIT_WEIGHTS) || oldMode.equals(AbstractMatrixView.MatrixViewMode.EDIT_INTERFACES)) &&
+                    (newMode.equals(AbstractMatrixView.MatrixViewMode.EDIT_NAMES) || newMode.equals(AbstractMatrixView.MatrixViewMode.EDIT_WEIGHTS) || newMode.equals(AbstractMatrixView.MatrixViewMode.EDIT_INTERFACES)))
+                    ||
+                    ((oldMode.equals(AbstractMatrixView.MatrixViewMode.STATIC_NAMES) || oldMode.equals(AbstractMatrixView.MatrixViewMode.STATIC_WEIGHTS) || oldMode.equals(AbstractMatrixView.MatrixViewMode.STATIC_INTERFACES)) &&
+                    (newMode.equals(AbstractMatrixView.MatrixViewMode.STATIC_NAMES) || newMode.equals(AbstractMatrixView.MatrixViewMode.STATIC_WEIGHTS) || newMode.equals(AbstractMatrixView.MatrixViewMode.STATIC_INTERFACES)))
+            ) {
+                refresh = false;
+            }
+            if(refresh) {
+                matrixView.refreshView();
             }
 
         });
@@ -698,6 +743,10 @@ public class HeaderMenu {
     public void refresh(AbstractDSMData matrixData, AbstractIOHandler ioHandler, AbstractMatrixView matrixView) {
         if(Objects.equals(this.matrixData, matrixData) && Objects.equals(this.ioHandler, ioHandler) && Objects.equals(this.matrixView, matrixView)) {
             return;
+        }
+        if(this.matrixView != null) {  // disable cross highlighting of old matrix if there was an old matrix
+            this.matrixView.disableCrossHighlighting();
+            crossHighlight = false;
         }
         this.matrixData = matrixData;
         this.ioHandler = ioHandler;

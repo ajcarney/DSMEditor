@@ -16,6 +16,7 @@ import javafx.stage.Stage;
 import javafx.util.Pair;
 
 import java.util.ArrayList;
+import java.util.Collection;
 
 
 /**
@@ -190,32 +191,51 @@ public class FreezeGrid {
     /**
      * Re-calculates the pref widths and heights of the grid
      *
-     * @param addToDummy  if all nodes need to be added to a dummy scene so that the size can be accurately calculated
-     *                    set to true if the grid has not been added to a scene yet
+     * @param addToDummy     if all nodes need to be added to a dummy scene so that the size can be accurately calculated
+     *                       set to true if the grid has not been added to a scene yet
+     * @param importantRows  the rows to factor into the pref sizing (used to cheat if there are a lot of nodes to size
+     *                       so that they do not all have to be added to a scene and sized because that is really slow).
+     *                       Leave empty to factor in all rows. Ignored if items are already on a scene
+     * @param importantCols  the cols to factor into the pref sizing (used to cheat if there are a lot of nodes to size
+     *                       so that they do not all have to be added to a scene and sized because that is really slow).
+     *                       Leave empty to factor in all cols. Ignored if items are already on a scene
+     *
      */
-    public void resizeGrid(boolean addToDummy) {
-        if(cells.isEmpty()) {
+    public void resizeGrid(boolean addToDummy, Collection<Integer> importantRows, Collection<Integer> importantCols) {
+        if(cells.isEmpty() || cells.get(0).isEmpty()) {
             return;
         }
         colPrefWidths.clear();
         rowPrefHeights.clear();
 
+        if(importantRows.isEmpty()) {
+            for(int r=0; r<cells.size(); r++) {
+                importantRows.add(r);
+            }
+        }
+        if(importantCols.isEmpty()) {
+            for(int c=0; c<cells.get(0).size(); c++) {
+                importantRows.add(c);
+            }
+        }
+
         // optionally allow adding to scene because this is expensive and may mess up nodes parents if update grid is
         // not called afterwards
         if(addToDummy) {
             // a dummy scene is needed to calculate preferred sizes of nodes
-            VBox ghostPane = new VBox();
+            StackPane ghostPane = new StackPane();
             Scene ghostScene = new Scene(ghostPane);
 
             // add all cells to the node for sizing
             ArrayList<HBox> flatCells = new ArrayList<>();
-            for (ArrayList<FreezeGridCell> cell : cells) {
-                for (FreezeGridCell freezeGridCell : cell) {
-                    if (freezeGridCell.getNode() != null) {
-                        flatCells.add(freezeGridCell.getNode());
+            for(int r=0; r<cells.size(); r++) {
+                for(int c=0; c<cells.get(r).size(); c++) {
+                    if(cells.get(r).get(c).getNode() != null && (importantRows.contains(r) || importantCols.contains(c))) {
+                        flatCells.add(cells.get(r).get(c).getNode());
                     }
                 }
             }
+
             ghostPane.getChildren().addAll(flatCells);
             ghostPane.applyCss();
             ghostPane.layout();
@@ -263,15 +283,15 @@ public class FreezeGrid {
         // perform search to ensure no null nodes because if there are this means a multi-span cell
         // needs resizing and therefore the whole grid should be resized out of an abundance of caution
         boolean nulls = false;
-        for (ArrayList<FreezeGridCell> cell : cells) {
-            if (cell.get(index).getNode() == null) {
+        for (ArrayList<FreezeGridCell> cellRowList : cells) {
+            if (cellRowList.get(index).getNode() == null) {
                 nulls = true;
                 break;
             }
         }
 
         if(nulls) {
-            resizeGrid(false);  // node should already be laid out. Why else would anyone resize an individual column?
+            resizeGrid(false, new ArrayList<>(), new ArrayList<>());  // node should already be laid out. Why else would anyone resize an individual column?
         } else {
             colPrefWidths.get(index).set(0);  // set to 0 so that real maximum can be found
             // update the pref widths array so that sizes can be set accurately
@@ -288,8 +308,11 @@ public class FreezeGrid {
             for(int r=0; r<cells.size(); r++) {
                 double width = getCellPrefWidth(r, index);
                 double height = getCellPrefHeight(r, index);
-                cells.get(r).get(index).getNode().setMinSize(width, height);
-                cells.get(r).get(index).getNode().setMaxSize(width, height);
+                HBox node = cells.get(r).get(index).getNode();
+                if(node != null) {
+                    node.setMinSize(width, height);
+                    node.setMaxSize(width, height);
+                }
             }
         }
     }
@@ -308,21 +331,20 @@ public class FreezeGrid {
         // perform search to ensure no null nodes because if there are this means a multi-span cell
         // needs resizing and therefore the whole grid should be resized out of an abundance of caution
         boolean nulls = false;
-        for (ArrayList<FreezeGridCell> cell : cells) {
-            if (cell.get(index).getNode() == null) {
+        for (FreezeGridCell cell : cells.get(index)) {
+            if (cell.getNode() == null) {
                 nulls = true;
                 break;
             }
         }
-
         if(nulls) {
-            resizeGrid(false);  // node should already be laid out. Why else would anyone resize an individual column?
+            resizeGrid(false, new ArrayList<>(), new ArrayList<>());  // node should already be laid out. Why else would anyone resize an individual column?
         } else {
             rowPrefHeights.get(index).set(0);  // set to 0 so that real maximum can be found
             // update the pref widths array so that sizes can be set accurately
             for(int c=0; c<cells.get(index).size(); c++) {
-                cells.get(index).get(c).getNode().resize(0, 0);  // resizing to nothing ensures that it will find the min height
-                cells.get(index).get(c).getNode().layout();  // layout so that bounds are accurate
+                cells.get(index).get(c).getNode().resize(0, 0);  // resizing to nothing ensures that it will find the actual min height
+                cells.get(index).get(c).getNode().layout();  // layout again so that bounds are accurate
                 double height = cells.get(index).get(c).getNode().getBoundsInLocal().getHeight();  // calculate the height
                 if (height > rowPrefHeights.get(index).doubleValue()) {
                     rowPrefHeights.get(index).set(height);
@@ -330,17 +352,14 @@ public class FreezeGrid {
             }
 
             // update all the sizes
-            for(int r=0; r<cells.size(); r++) {
-                double width = getCellPrefWidth(r, index);
-                double height = getCellPrefHeight(r, index);
-                cells.get(r).get(index).getNode().setMinSize(width, height);
-                cells.get(r).get(index).getNode().setMaxSize(width, height);
-            }
             for(int c=0; c<cells.get(index).size(); c++) {  // update the sizes
                 double width = getCellPrefWidth(index, c);
                 double height = getCellPrefHeight(index, c);
-                cells.get(index).get(c).getNode().setMinSize(width, height);
-                cells.get(index).get(c).getNode().setMaxSize(width, height);
+                HBox node = cells.get(index).get(c).getNode();
+                if(node != null) {
+                    node.setMinSize(width, height);
+                    node.setMaxSize(width, height);
+                }
             }
         }
 
@@ -467,7 +486,7 @@ public class FreezeGrid {
 
             cells.add(newRow);
 
-            assert r <= 0 || (newRow.size() == cells.get(0).size());
+            assert r == 0 || (newRow.size() == cells.get(0).size());
         }
 
         // initialize pref width arrays
@@ -503,7 +522,7 @@ public class FreezeGrid {
 
             cells.add(newRow);
 
-            assert r <= 0 || (newRow.size() == cells.get(0).size());
+            assert r == 0 || (newRow.size() == cells.get(0).size());
         }
 
 
@@ -637,13 +656,13 @@ public class FreezeGrid {
         HBox sBox = new HBox();
 
 
-        // create nw box
+        // create NW box
         GridPane nwBox = createCornerBox(nwGridConstraints.getKey().getKey(), nwGridConstraints.getKey().getValue(), nwGridConstraints.getValue().getValue(), nwGridConstraints.getValue().getKey());
         if(!nwBox.getChildren().isEmpty()) {
             nBox.getChildren().add(nwBox);
         }
 
-        // create nn box
+        // create NN box
         GridPane nnBox = createCornerBox(
             nwGridConstraints.getKey().getValue(),    // nw start y
             nwGridConstraints.getValue().getKey(),    // nw end x
@@ -656,13 +675,13 @@ public class FreezeGrid {
             nBox.getChildren().add(scrollNBox);
         }
 
-        // create ne box
+        // create NE box
         GridPane neBox = createCornerBox(neGridConstraints.getKey().getValue(), neGridConstraints.getKey().getKey(), neGridConstraints.getValue().getValue(), neGridConstraints.getValue().getKey());
         if(!neBox.getChildren().isEmpty()) {
             nBox.getChildren().add(neBox);
         }
 
-        // create ww box
+        // create WW box
         GridPane wBox = createCornerBox(
             nwGridConstraints.getValue().getValue(),  // nw end y
             nwGridConstraints.getKey().getKey(),      // nw start x
@@ -681,14 +700,14 @@ public class FreezeGrid {
         ScrollPane scrollCBox = new ScrollPane(cBox);  // configure scroll pane later
 
 
-        // create sw box
+        // create SW box
         GridPane swBox = createCornerBox(swGridConstraints.getKey().getValue(), swGridConstraints.getKey().getKey(), swGridConstraints.getValue().getValue(), swGridConstraints.getValue().getKey());
 
         if(!swBox.getChildren().isEmpty()) {
             sBox.getChildren().add(swBox);
         }
 
-        // create ss box
+        // create SS box
         GridPane ssBox = createCornerBox(
             swGridConstraints.getKey().getValue(),    // sw start y
             swGridConstraints.getValue().getKey(),    // sw end x
@@ -701,13 +720,13 @@ public class FreezeGrid {
             sBox.getChildren().add(scrollSBox);
         }
 
-        // create se box
+        // create SE box
         GridPane seBox = createCornerBox(seGridConstraints.getKey().getValue(), seGridConstraints.getKey().getKey(), seGridConstraints.getValue().getValue(), seGridConstraints.getValue().getKey());
         if(!seBox.getChildren().isEmpty()) {
             sBox.getChildren().add(seBox);
         }
 
-        // create ee box
+        // create EE box
         GridPane eBox = createCornerBox(
             neGridConstraints.getValue().getValue(),  // ne end y
             neGridConstraints.getKey().getKey(),      // ne start x
