@@ -141,6 +141,7 @@ public class SymmetricView extends AbstractMatrixView implements ISymmetricHighl
                 cell.setCellTextColor(matrix.getRowItem(rowUid).getGroup1().getFontColor());
             } else {
                 cell.setCellHighlight(cell.getHighlightBG("default"));
+                cell.setCellTextColor(Grouping.DEFAULT_FONT_COLOR);
             }
 
         }
