@@ -254,8 +254,11 @@ public class HeaderMenu {
             fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("DSM File", "*.dsm"));  // dsm is the only file type usable
             File file = fileChooser.showSaveDialog(menuBar.getScene().getWindow());
             if(file != null) {
+                file = AbstractIOHandler.forceExtension(file, ".dsm");
                 int code = ioHandler.saveMatrixToFile(file);  // TODO: add checking with the return code
                 ioHandler.setSavePath(file);
+                matrixData.setWasModified();  // flash the modified flag to trigger an update
+                matrixData.clearWasModifiedFlag();
             }
         });
     }
