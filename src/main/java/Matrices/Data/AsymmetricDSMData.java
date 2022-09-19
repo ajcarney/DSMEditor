@@ -386,6 +386,42 @@ public class AsymmetricDSMData extends AbstractDSMData implements IPropagationAn
 
 
     /**
+     * Inverts a matrix by flipping its rows and columns and switching the connection rows and columns. Adds changes to
+     * the stack to be handled, but does not set a checkpoint
+     */
+    public final void transposeMatrix() {
+        Vector<DSMItem> oldRows = new Vector<>(rows);
+        Vector<DSMItem> oldCols = new Vector<>(cols);
+        Vector<DSMConnection> oldConnections = new Vector<>(connections);
+        ObservableList<Grouping> oldRowGroupings = FXCollections.observableArrayList(rowGroupings);
+        ObservableList<Grouping> oldColGroupings = FXCollections.observableArrayList(colGroupings);
+
+        addChangeToStack(new MatrixChange(
+                () -> {  // do function
+                    cols = oldRows;
+                    rows = oldCols;
+                    colGroupings = oldRowGroupings;
+                    rowGroupings = oldColGroupings;
+
+                    connections.clear();
+                    for(DSMConnection conn : oldConnections) {
+                        createConnection(conn.getColUid(), conn.getRowUid(), conn.getConnectionName(), conn.getWeight(), conn.getInterfaces());
+                    }
+                },
+                () -> {  // undo function
+                    cols = new Vector<>(oldCols);
+                    rows = new Vector<>(oldRows);
+                    colGroupings = FXCollections.observableArrayList(oldColGroupings);
+                    rowGroupings = FXCollections.observableArrayList(oldRowGroupings);
+                    connections = new Vector<>(oldConnections);
+                },
+                false
+        ));
+
+    }
+
+
+    /**
      * Creates a 2d ArrayList of the matrix so that it can be displayed. Each cell in the grid is made
      * up of a RenderMode, which is the key, and an Object that is different based on the key.
      *
