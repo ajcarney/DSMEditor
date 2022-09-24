@@ -131,21 +131,19 @@ public class AsymmetricView extends AbstractMatrixView {
             if (rowUid == null && colUid != null) {  // highlight with column color
                 cell.setCellHighlight(matrix.getColItem(colUid).getGroup1().getColor());
                 cell.setCellTextColor(matrix.getColItem(colUid).getGroup1().getFontColor());
-                return;
             } else if (rowUid != null && colUid == null) {  // highlight with row color
                 cell.setCellHighlight(matrix.getRowItem(rowUid).getGroup1().getColor());
                 cell.setCellTextColor(matrix.getRowItem(rowUid).getGroup1().getFontColor());
-                return;
             } else if (rowUid != null && colUid != null) {  // highlight with row group color col group color
                 Stop[] stops = new Stop[] { new Stop(0, matrix.getRowItem(rowUid).getGroup1().getColor()), new Stop(1, matrix.getColItem(colUid).getGroup1().getColor())};
                 LinearGradient lg1 = new LinearGradient(0, 0, 1, 1, true, CycleMethod.NO_CYCLE, stops);
 
                 cell.setCellHighlight(new Background(new BackgroundFill(lg1, new CornerRadii(3), new Insets(0))));  // row and column color will be the same because row and column
                 cell.setCellTextColor(matrix.getRowItem(rowUid).getGroup1().getFontColor());
-                return;
+            } else {
+                cell.setCellHighlight(cell.getHighlightBG("default"));
+                cell.setCellTextColor(Grouping.DEFAULT_FONT_COLOR);
             }
-
-            cell.setCellHighlight(cell.getHighlightBG("default"));
         }
     }
 

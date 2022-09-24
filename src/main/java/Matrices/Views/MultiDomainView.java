@@ -154,6 +154,7 @@ public class MultiDomainView extends AbstractMatrixView implements ISymmetricHig
                 cell.setCellTextColor(row.getGroup1().getFontColor());
             } else {
                 cell.setCellHighlight(cell.getHighlightBG("default"));
+                cell.setCellTextColor(Grouping.DEFAULT_FONT_COLOR);
             }
 
         }
