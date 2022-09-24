@@ -941,7 +941,7 @@ public abstract class AbstractDSMData {
      * deletes all connections in the matrix. Adds changes to the stack, but does not set a checkpoint
      */
     public final void deleteAllConnections() {
-        Vector<DSMConnection> connectionsClone = (Vector<DSMConnection>) connections.clone();
+        Vector<DSMConnection> connectionsClone = new Vector<>(connections);
         for(DSMConnection connection : connectionsClone) {     // check to see if uid is in the rows
             deleteConnection(connection.getRowUid(), connection.getColUid());
         }
@@ -952,10 +952,10 @@ public abstract class AbstractDSMData {
      * Inverts a matrix by flipping its rows and columns and switching the connection rows and columns. Adds changes to
      * the stack to be handled, but does not set a checkpoint
      */
-    public final void transposeMatrix() {
-        Vector<DSMItem> oldRows = (Vector<DSMItem>)rows.clone();
-        Vector<DSMItem> oldCols = (Vector<DSMItem>)cols.clone();
-        Vector<DSMConnection> oldConnections = (Vector<DSMConnection>)connections.clone();
+    public void transposeMatrix() {
+        Vector<DSMItem> oldRows = new Vector<>(rows);
+        Vector<DSMItem> oldCols = new Vector<>(cols);
+        Vector<DSMConnection> oldConnections = new Vector<>(connections);
 
         for(DSMConnection conn : oldConnections) {  // these function calls already put a change on the stack so they don't need to be wrapped
             deleteConnection(conn.getRowUid(), conn.getColUid());
