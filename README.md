@@ -11,6 +11,7 @@ Design Structure Matrix editor (DSM editor) - An open-source application for edi
 * Fast Render mode that removes a lot of graphical detail to load bigger matrices faster and see a bigger picture
 * Propagation Analysis
 * Export to various formats: CSV, Excel, PNG, Thebeau Matlab File 
+* Clustering algorithm based on [Ronnie Thebeau's clustering algorithm](https://dsmweb.org/matlab-macro-for-clustering-dsms/). NOTE: this is a beta feature and has not been fully validated
 
 
 ### To Install for Developers (version >= 2.0.0)
@@ -23,7 +24,7 @@ Maven will install all the dependencies. There may be issues with the java runti
 
 ### To Install for Users (version >= 2.0.0)
 * Go to the [releases page](https://github.com/ajcarney/DSMEditor/releases) and download the latest zip or tar file for your operating system
-* Unzip the file to a known directory with write permissions so that the program can save to files
+* Unzip the file to a known directory with write permissions so that the program can save to files.
 * No need to install anything else (including java) as the program comes pre-packaged with an open-source version of the Java runtime from [Adoptium](https://adoptium.net/) (no need to mess with Oracle anymore)
 * The zip file includes an executable (.exe for windows or .sh for unix) that will start the program
 
@@ -70,6 +71,5 @@ If you encounter any bugs or would like to submit a feature request, feel free t
 This project is in semi-active development. As a college student, the school year is busy, and as such, the majority of development is done during the summer months
 ##### What's Next?
 * Better Support for Interface Types
-* ICM Transformations
-* UI Fixes
+* UI Fixes and Improvements
 * Performance improvements
