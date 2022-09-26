@@ -1,2 +1,0 @@
-java -jar --module-path "/home/aiden/Documents/DSMEditor/lib/openjfx-11.0.2_linux-x64_bin-sdk/javafx-sdk-11.0.2/lib" --add-modules=javafx.controls /home/aiden/Documents/DSMEditor/out/artifacts/DSMEditor_jar/DSMEditor.jar
-

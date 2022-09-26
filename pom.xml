@@ -1,0 +1,347 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>groupId</groupId>
+    <artifactId>DSMEditor</artifactId>
+    <version>2.0-SNAPSHOT</version>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.jdom</groupId>
+            <artifactId>jdom2</artifactId>
+            <version>2.0.6.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi</artifactId>
+            <version>5.2.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>5.2.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>17.0.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-graphics</artifactId>
+            <version>17.0.2</version>
+            <classifier>win</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-graphics</artifactId>
+            <version>17.0.2</version>
+            <classifier>mac</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-graphics</artifactId>
+            <version>17.0.2</version>
+            <classifier>linux</classifier>
+        </dependency>
+
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-swing</artifactId>
+            <version>17-ea+3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.javatuples</groupId>
+            <artifactId>javatuples</artifactId>
+            <version>1.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.8.2</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>  <!--javafx build for testing-->
+        <plugins>
+            <plugin>
+                <artifactId>maven-clean-plugin</artifactId>
+                <version>2.4.1</version>
+                <configuration>
+                    <filesets>
+                        <fileset>
+                            <directory>release</directory>
+                            <includes>
+                                <include>**</include>
+                            </includes>
+                            <followSymlinks>false</followSymlinks>
+                        </fileset>
+                    </filesets>
+                </configuration>
+            </plugin>
+
+
+            <plugin>
+                <groupId>org.openjfx</groupId>
+                <artifactId>javafx-maven-plugin</artifactId>
+                <version>0.0.8</version>
+                <configuration>
+                    <mainClass>Launcher</mainClass>
+                    <commandlineArgs>debug=${debug}</commandlineArgs>
+                </configuration>
+            </plugin>
+
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.22.2</version>
+            </plugin>
+
+
+            <plugin>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.2.1</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>Launcher</mainClass>
+                                </transformer>
+                            </transformers>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <finalName>DSMEditor</finalName>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>wagon-maven-plugin</artifactId>
+                <version>1.0</version>
+                <executions>
+                    <execution>
+                        <id>download-win-jre</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>download-single</goal>
+                        </goals>
+                        <configuration>
+                            <url>https://github.com/adoptium/temurin16-binaries/releases/download/jdk-16.0.2%2B7</url>
+                            <fromFile>OpenJDK16U-jdk_x64_windows_hotspot_16.0.2_7.zip</fromFile>
+                            <toDir>target</toDir>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>download-mac-jre</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>download-single</goal>
+                        </goals>
+                        <configuration>
+                            <url>https://github.com/adoptium/temurin16-binaries/releases/download/jdk-16.0.2%2B7</url>
+                            <fromFile>OpenJDK16U-jdk_x64_mac_hotspot_16.0.2_7.tar.gz</fromFile>
+                            <toDir>target</toDir>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>download-linux-jre</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>download-single</goal>
+                        </goals>
+                        <configuration>
+                            <url>https://github.com/adoptium/temurin16-binaries/releases/download/jdk-16.0.2%2B7</url>
+                            <fromFile>OpenJDK16U-jdk_x64_linux_hotspot_16.0.2_7.tar.gz</fromFile>
+                            <toDir>target</toDir>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>createDirs</id>
+                        <phase>package</phase>
+                        <configuration>
+                            <tasks>
+                                <delete dir="./release"/>
+                                <mkdir dir="./release"/>
+                                <mkdir dir="./release/win64"/>
+                                <mkdir dir="./release/mac"/>
+                                <mkdir dir="./release/linux"/>
+
+                                <echo message="unzipping win jre..."/>
+                                <unzip src="./target/OpenJDK16U-jdk_x64_windows_hotspot_16.0.2_7.zip" dest="release/win64/" />
+
+                                <echo message="untarring mac jre..."/>
+                                <untar src="./target/OpenJDK16U-jdk_x64_mac_hotspot_16.0.2_7.tar.gz" compression="gzip" dest="release/mac/" />
+
+
+                                <echo message="untarring linux jre..."/>
+                                <untar src="./target/OpenJDK16U-jdk_x64_linux_hotspot_16.0.2_7.tar.gz" compression="gzip" dest="release/linux/" />
+
+                                <echo message="cleaning up..."/>
+                                <delete>
+                                    <fileset file="./target/OpenJDK16U-jdk_x64_windows_hotspot_16.0.2_7.zip" includes="*.xml" />
+                                </delete>
+                                <delete>
+                                    <fileset file="./target/OpenJDK16U-jdk_x64_mac_hotspot_16.0.2_7.tar.gz" includes="*.xml" />
+                                </delete>
+                                <delete>
+                                    <fileset file="./target/OpenJDK16U-jdk_x64_linux_hotspot_16.0.2_7.tar.gz" includes="*.xml" />
+                                </delete>
+
+                                <echo message="copying jar..."/>
+                                <copy todir="./release">
+                                    <fileset file="${project.build.directory}/DSMEditor.jar"/>
+                                </copy>
+                                <copy todir="./release/win64">
+                                    <fileset file="${project.build.directory}/DSMEditor.jar"/>
+                                </copy>
+                                <copy todir="./release/mac">
+                                    <fileset file="${project.build.directory}/DSMEditor.jar"/>
+                                </copy>
+                                <copy todir="./release/linux">
+                                    <fileset file="${project.build.directory}/DSMEditor.jar"/>
+                                </copy>
+
+                                <echo message="copying unix shell script..."/>
+                                <copy todir="./release/mac">
+                                    <fileset file="./src/main/resources/DSMEditor-Mac.sh"/>
+                                </copy>
+                                <copy todir="./release/linux">
+                                    <fileset file="./src/main/resources/DSMEditor-Linux.sh"/>
+                                </copy>
+
+                                <echo message="updating file permissions..."/>
+                                <chmod file="./release/mac/jdk-16.0.2+7/Contents/Home/bin/java" perm="ugo+rwx"/>
+                                <chmod file="./release/linux/jdk-16.0.2+7/bin/java" perm="ugo+rwx"/>
+                                <chmod file="./release/mac/DSMEditor-Mac.sh" perm="ugo+rwx"/>
+                                <chmod file="./release/linux/DSMEditor-Linux.sh" perm="ugo+rwx"/>
+
+                            </tasks>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+
+            <plugin>  <!-- This calls launch4j to create the program EXE -->
+                <groupId>com.akathist.maven.plugins.launch4j</groupId>
+                <artifactId>launch4j-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>l4j</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>launch4j</goal>
+                        </goals>
+                        <configuration>
+                            <headerType>gui</headerType>
+                            <outfile>./release/win64/DSMEditor.exe</outfile>
+                            <jar>./release/win64/DSMEditor.jar</jar>
+                            <errTitle>Error</errTitle>
+                            <classPath>
+                                <mainClass>Launcher</mainClass>
+                                <addDependencies>true</addDependencies>
+                            </classPath>
+                            <jre>
+                                <path>./jdk-16.0.2+7</path>
+                            </jre>
+                            <versionInfo>
+                                <fileVersion>1.0.0.0</fileVersion>
+                                <txtFileVersion>${project.version}</txtFileVersion>
+                                <fileDescription>${project.name}</fileDescription>
+                                <copyright>N/A</copyright>
+                                <productVersion>1.0.0.0</productVersion>
+                                <txtProductVersion>1.0.0.0</txtProductVersion>
+                                <productName>${project.name}</productName>
+                                <companyName>N/A</companyName>
+                                <internalName>DSMEditor</internalName>
+                                <originalFilename>DSMEditor.exe</originalFilename>
+                            </versionInfo>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.3.0</version>
+                <executions>
+                    <execution>
+                        <id>win-assembly</id>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <descriptors>
+                                <descriptor>src/main/resources/win64-release.xml</descriptor>
+                            </descriptors>
+                            <finalName>../release/Win64-DSMEditor</finalName>
+                            <appendAssemblyId>false</appendAssemblyId>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>mac-assembly</id>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <descriptors>
+                                <descriptor>src/main/resources/mac-release.xml</descriptor>
+                            </descriptors>
+                            <finalName>../release/mac-DSMEditor</finalName>
+                            <appendAssemblyId>false</appendAssemblyId>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>linux-assembly</id>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <descriptors>
+                                <descriptor>src/main/resources/linux-release.xml</descriptor>
+                            </descriptors>
+                            <finalName>../release/Linux-DSMEditor</finalName>
+                            <appendAssemblyId>false</appendAssemblyId>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+        </plugins>
+    </build>
+
+    <properties>
+        <debug>false</debug>
+        <maven.compiler.source>16</maven.compiler.source>
+        <maven.compiler.target>16</maven.compiler.target>
+    </properties>
+    
+</project>

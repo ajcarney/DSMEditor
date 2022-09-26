@@ -1,12 +1,10 @@
-lib/
-out/
-.idea/
+target/
+release/
 .log/
 .recovery/
-*.iml
 *.dsm
 *.m
 *.csv
-prod/
 *.py
-*.MF
+*.xlsx
+.idea/workspace.xml
