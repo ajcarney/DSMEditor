@@ -278,7 +278,7 @@ public class HeaderMenu {
             if(file != null) {  // make sure user did not just close out of the file chooser window
                 SymmetricIOHandler ioHandler = new SymmetricIOHandler(file);
                 SymmetricDSMData matrix = ioHandler.importThebeauMatlabFile(file);
-                if(matrixData == null) {
+                if(matrix == null) {
                     // TODO: open window saying there was an error parsing the document
                     System.out.println("there was an error reading the file " + file);
                 } else if(!this.editor.getMatricesCollection().getMatrixFileAbsoluteSavePaths().contains(file.getAbsolutePath())) {
@@ -704,27 +704,14 @@ public class HeaderMenu {
      * sets up the Menu object for the help menu
      */
     protected void setupHelpMenu() {
+        MenuItem submitBugReport = new MenuItem("Submit Bug Report");
+        submitBugReport.setOnAction(e -> HelpMenu.openBugReportMenu());
+
+
         MenuItem about = new MenuItem("About");
-        about.setOnAction(e -> {
-            // bring up window asking to delete rows or columns
-            Stage window = new Stage();
-            window.setTitle("About");
-            window.initModality(Modality.APPLICATION_MODAL);  // Block events to other windows
+        about.setOnAction(e -> HelpMenu.openAboutMenu());
 
-            VBox rootLayout = new VBox();
-            rootLayout.setPadding(new Insets(10, 10, 10, 10));
-            rootLayout.setSpacing(10);
-
-            Label versionLabel = new Label("Version: " + Constants.version);
-
-            rootLayout.getChildren().addAll(versionLabel);
-
-            Scene scene = new Scene(rootLayout);
-            window.setScene(scene);
-            window.showAndWait();
-        });
-
-        helpMenu.getItems().addAll(about);
+        helpMenu.getItems().addAll(submitBugReport, about);
     }
 
 

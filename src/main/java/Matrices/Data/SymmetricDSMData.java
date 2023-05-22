@@ -869,5 +869,12 @@ public class SymmetricDSMData extends AbstractDSMData implements IPropagationAna
 
         return bestSolution;
     }
-//endregion
+
+
+    static public SymmetricDSMData art1Algorithm(SymmetricDSMData inputMatrix) {
+        SymmetricDSMData matrix = inputMatrix.createCopy();
+
+        return matrix;
+    }
+    //endregion
 }

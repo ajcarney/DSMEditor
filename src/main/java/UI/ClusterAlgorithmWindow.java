@@ -5,9 +5,14 @@ import Matrices.Data.SymmetricDSMData;
 import Matrices.IOHandlers.SymmetricIOHandler;
 import Matrices.Views.AbstractMatrixView;
 import Matrices.Views.SymmetricView;
+import UI.ClusterAlgorithmViews.ART1View;
+import UI.ClusterAlgorithmViews.IAlgorithmView;
+import UI.ClusterAlgorithmViews.ThebeauView;
 import UI.Widgets.NumericTextField;
 import javafx.application.Platform;
 import javafx.beans.property.*;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
@@ -15,7 +20,9 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
@@ -32,34 +39,31 @@ import java.util.Map;
  * @author Aiden Carney
  */
 public class ClusterAlgorithmWindow {
+    ObservableList<String> algorithms = FXCollections.observableArrayList(
+        "Thebeau",
+            "ART1"
+    );
+    IAlgorithmView algorithmView;
+
     SymmetricDSMData matrix;
 
     Stage window;
-    private BorderPane rootLayout;
+    private final BorderPane rootLayout;
 
-    // layouts in the border pane
-    private MenuBar menuBar;        // top bar
-    private VBox configLayout;      // side bar
-    private SplitPane mainContent;  // center
-
-    // config parameters for the algorithm
     private DoubleProperty optimalSizeCluster;
     private DoubleProperty powcc;
     private DoubleProperty powdep;
     private DoubleProperty powbid;
     private DoubleProperty randBid;
     private DoubleProperty randAccept;
-    private DoubleProperty numLevels;
     private DoubleProperty randSeed;
+    private CheckBox countByWeight;
 
     SymmetricDSMData outputMatrix = null;
 
     // main content panes
-    private VBox coordinationLayout;
-    private VBox outputMatrixLayout;
-
-    private CheckBox countByWeight;
-    private CheckBox debug;
+    private final VBox coordinationLayout;
+    private final VBox outputMatrixLayout;
 
 
     /**
@@ -74,91 +78,30 @@ public class ClusterAlgorithmWindow {
         window = new Stage();
         window.setTitle(matrix.getTitle() + " - Cluster Algorithm");
 
-        // side bar
-        updateConfigWidgets();
-        outputMatrixLayout = new VBox();
-        ScrollPane configScrollPane = new ScrollPane(configLayout);
-        configScrollPane.setFitToWidth(true);
-        configScrollPane.setFitToHeight(true);
+
+        // left sidebar
+        algorithmView = new ThebeauView();  // default to thebeau mode
+        VBox leftSideBar = getAlgorithmParametersView();
+
+        ScrollPane leftSidebarScrollPane = new ScrollPane(leftSideBar);
+        leftSidebarScrollPane.setFitToWidth(true);
+        leftSidebarScrollPane.setFitToHeight(true);
+
+
+        // right sidebar
+        VBox rightSideBar = getCostParametersView();
+        ScrollPane rightSidebarScrollPane = new ScrollPane(rightSideBar);
+        rightSidebarScrollPane.setFitToWidth(true);
+        rightSidebarScrollPane.setFitToHeight(true);
+
 
         // menu
-        menuBar = new MenuBar();
-
-
-        // file menu
-        Menu fileMenu = new Menu("File");
-
-        Menu exportMenu = new Menu("Export Results");
-        MenuItem dsm = new MenuItem("DSM File");
-        dsm.setOnAction(e -> {
-           if(outputMatrix == null) {
-               return;
-           }
-           SymmetricIOHandler ioHandler = new SymmetricIOHandler(new File(""));
-           ioHandler.setMatrix(outputMatrix);
-           ioHandler.promptSaveToFile(menuBar.getScene().getWindow());
-        });
-        MenuItem csv = new MenuItem("CSV File");
-        csv.setOnAction(e -> {
-            if(outputMatrix == null) {
-                return;
-            }
-            SymmetricIOHandler ioHandler = new SymmetricIOHandler(new File(""));
-            ioHandler.setMatrix(outputMatrix);
-            ioHandler.promptExportToCSV(menuBar.getScene().getWindow());
-        });
-        MenuItem excel = new MenuItem("Excel File");
-        excel.setOnAction(e -> {
-            if(outputMatrix == null) {
-                return;
-            }
-            SymmetricIOHandler ioHandler = new SymmetricIOHandler(new File(""));
-            ioHandler.setMatrix(outputMatrix);
-            ioHandler.promptExportToExcel(menuBar.getScene().getWindow());
-        });
-        MenuItem thebeau = new MenuItem("Thebeau Matlab File");
-        thebeau.setOnAction(e -> {
-            if(outputMatrix == null) {
-                return;
-            }
-            SymmetricIOHandler ioHandler = new SymmetricIOHandler(new File(""));
-            ioHandler.setMatrix(outputMatrix);
-            ioHandler.promptExportToThebeau(menuBar.getScene().getWindow());
-        });
-
-        exportMenu.getItems().addAll(dsm, csv, excel, thebeau);
-        exportMenu.setOnShown(e -> {
-            if(outputMatrix == null) {
-                dsm.setDisable(true);
-                csv.setDisable(true);
-                excel.setDisable(true);
-                thebeau.setDisable(true);
-            } else {
-                dsm.setDisable(false);
-                csv.setDisable(false);
-                excel.setDisable(false);
-                thebeau.setDisable(false);
-            }
-        });
-
-        fileMenu.getItems().add(exportMenu);
-
-        // run menu
-        Menu runMenu = new Menu("Run");
-        MenuItem run = new MenuItem("Run Algorithm");
-        run.setOnAction(e -> {
-            SymmetricDSMData outputMatrix = runThebeauAlgorithm();
-            runCoordinationScore(outputMatrix);
-        });
-        runMenu.getItems().addAll(run);
-
-
-        menuBar.getMenus().addAll(fileMenu, runMenu);
+        MenuBar menuBar = getMenuBar();
 
 
         // main content
-        mainContent = new SplitPane();
-        mainContent.setOrientation(Orientation.VERTICAL);
+        SplitPane dsmOutputLayout = new SplitPane();
+        dsmOutputLayout.setOrientation(Orientation.VERTICAL);
 
         outputMatrixLayout = new VBox();
         ScrollPane matrixScrollPane = new ScrollPane(outputMatrixLayout);
@@ -170,21 +113,74 @@ public class ClusterAlgorithmWindow {
         coordinationScrollPane.setFitToWidth(true);
         coordinationScrollPane.setFitToHeight(true);
 
-        mainContent.getItems().addAll(matrixScrollPane, coordinationScrollPane);
+        dsmOutputLayout.getItems().addAll(matrixScrollPane, coordinationScrollPane);
 
 
         // set up main layout
         rootLayout = new BorderPane();
-        rootLayout.setLeft(configScrollPane);
+        rootLayout.setLeft(leftSidebarScrollPane);
+        rootLayout.setRight(rightSidebarScrollPane);
         rootLayout.setTop(menuBar);
-        rootLayout.setCenter(mainContent);
+        rootLayout.setCenter(dsmOutputLayout);
     }
 
 
     /**
-     * Function to initialize the widgets on the side pane. Called from constructor
+     * Creates the layout that manages the parameters for the algorithm
+     *
+     * @return the created layout with all widgets configured properly
      */
-    private void updateConfigWidgets() {
+    private VBox getAlgorithmParametersView() {
+        VBox leftSideBar = new VBox();
+
+        Label parametersLabel = new Label("Algorithm Parameters");
+        parametersLabel.setFont(new Font(18));
+        parametersLabel.setPadding(new Insets(5));
+
+        VBox algorithmParametersPane = new VBox();
+        algorithmParametersPane.getChildren().add(algorithmView.getParametersPane());
+
+        // label and combobox for choosing the clustering algorithm
+        HBox algorithmTypePane = new HBox();
+        algorithmTypePane.setSpacing(5);
+
+        Label algorithmTypeLabel = new Label("Algorithm\nType:");
+        algorithmTypeLabel.setMinHeight(Region.USE_PREF_SIZE);
+
+        ComboBox<String> algorithmType = new ComboBox<>();
+        algorithmType.setItems(algorithms);
+        algorithmType.getSelectionModel().selectedItemProperty().addListener((options, oldValue, newValue) -> {
+            if("Thebeau".equals(newValue)) {
+                algorithmView = new ThebeauView();
+            } else if("ART1".equals(newValue)) {
+                algorithmView = new ART1View();
+            }
+            algorithmParametersPane.getChildren().clear();
+            algorithmParametersPane.getChildren().add(algorithmView.getParametersPane());
+        });
+        algorithmType.setValue("Thebeau");  // default to thebeau algorithm
+        algorithmTypePane.getChildren().addAll(algorithmTypeLabel, algorithmType);
+
+
+        leftSideBar.getChildren().addAll(parametersLabel, algorithmTypePane, new Separator(), algorithmParametersPane);
+        leftSideBar.setSpacing(10);
+        leftSideBar.setMinWidth(Region.USE_PREF_SIZE);
+
+        return leftSideBar;
+    }
+
+
+    /**
+     * Creates a layout containing all the parameters for analyzing clusters
+     *
+     * @return VBox containing all the widgets configured properly
+     */
+    private VBox getCostParametersView() {
+        // title label
+        Label parametersLabel = new Label("Cluster Analysis Parameters");
+        parametersLabel.setFont(new Font(18.0));
+        parametersLabel.setPadding(new Insets(5));
+
         // optimal size layout
         VBox optimalSizeLayout = new VBox();
 
@@ -304,23 +300,6 @@ public class ClusterAlgorithmWindow {
         countMethodLayout.setAlignment(Pos.CENTER);
         countMethodLayout.setPadding(new Insets(10));
 
-
-        // levels layout
-        VBox levelsArea = new VBox();
-
-        Label levelsLabel = new Label("Number of Iterations");
-        
-        numLevels = new SimpleDoubleProperty(1000);
-        NumericTextField levelsEntry = new NumericTextField(numLevels.getValue());
-        levelsEntry.textProperty().addListener((obs, oldText, newText) -> {
-            numLevels.setValue(levelsEntry.getNumericValue());
-        });
-
-        levelsArea.getChildren().addAll(levelsLabel, levelsEntry);
-        levelsArea.setSpacing(5);
-        levelsArea.setPadding(new Insets(10));
-        levelsArea.setAlignment(Pos.CENTER);
-
         
         // randSeed layout
         VBox randSeedArea = new VBox();
@@ -338,23 +317,100 @@ public class ClusterAlgorithmWindow {
         randSeedArea.setPadding(new Insets(10));
         randSeedArea.setAlignment(Pos.CENTER);
 
-
-        // debug checkbox
-        VBox debugLayout = new VBox();
-        debugLayout.setSpacing(10);
-
-        debug = new CheckBox("Debug to stdout");
-        debug.setMaxWidth(Double.MAX_VALUE);
-
-        debugLayout.getChildren().addAll(debug);
-        debugLayout.setAlignment(Pos.CENTER);
-        debugLayout.setPadding(new Insets(10));
+        // button the re-run analysis
+        Button rerun = new Button("Update Analysis");
+        rerun.setOnAction(e -> runCoordinationScore(outputMatrix));
 
         // config layout
-        configLayout = new VBox();
-        configLayout.getChildren().addAll(optimalSizeLayout, powccArea, powdepArea, powbidArea, randBidArea, randAcceptArea, countMethodLayout, randSeedArea, levelsArea, debugLayout);
-        configLayout.setSpacing(15);
-        configLayout.setAlignment(Pos.TOP_CENTER);
+        VBox costParametersLayout = new VBox();
+        costParametersLayout.getChildren().addAll(parametersLabel, optimalSizeLayout, powccArea, powdepArea, powbidArea, randBidArea, randAcceptArea, countMethodLayout, randSeedArea, new Separator(), rerun);
+        costParametersLayout.setSpacing(15);
+        costParametersLayout.setAlignment(Pos.TOP_CENTER);
+        costParametersLayout.setMinWidth(Region.USE_PREF_SIZE);
+
+        return costParametersLayout;
+    }
+
+
+    /**
+     * Creates a menu-bar object for the window
+     *
+     * @return the created menu-bar with all the widgets added and configured properly
+     */
+    private MenuBar getMenuBar() {
+        MenuBar menuBar = new MenuBar();
+
+        // file menu
+        Menu fileMenu = new Menu("File");
+
+        Menu exportMenu = new Menu("Export Results");
+        MenuItem dsm = new MenuItem("DSM File");
+        dsm.setOnAction(e -> {
+            if(outputMatrix == null) {
+                return;
+            }
+            SymmetricIOHandler ioHandler = new SymmetricIOHandler(new File(""));
+            ioHandler.setMatrix(outputMatrix);
+            ioHandler.promptSaveToFile(menuBar.getScene().getWindow());
+        });
+        MenuItem csv = new MenuItem("CSV File");
+        csv.setOnAction(e -> {
+            if(outputMatrix == null) {
+                return;
+            }
+            SymmetricIOHandler ioHandler = new SymmetricIOHandler(new File(""));
+            ioHandler.setMatrix(outputMatrix);
+            ioHandler.promptExportToCSV(menuBar.getScene().getWindow());
+        });
+        MenuItem excel = new MenuItem("Excel File");
+        excel.setOnAction(e -> {
+            if(outputMatrix == null) {
+                return;
+            }
+            SymmetricIOHandler ioHandler = new SymmetricIOHandler(new File(""));
+            ioHandler.setMatrix(outputMatrix);
+            ioHandler.promptExportToExcel(menuBar.getScene().getWindow());
+        });
+        MenuItem thebeau = new MenuItem("Thebeau Matlab File");
+        thebeau.setOnAction(e -> {
+            if(outputMatrix == null) {
+                return;
+            }
+            SymmetricIOHandler ioHandler = new SymmetricIOHandler(new File(""));
+            ioHandler.setMatrix(outputMatrix);
+            ioHandler.promptExportToThebeau(menuBar.getScene().getWindow());
+        });
+
+        exportMenu.getItems().addAll(dsm, csv, excel, thebeau);
+        exportMenu.setOnShown(e -> {
+            if(outputMatrix == null) {
+                dsm.setDisable(true);
+                csv.setDisable(true);
+                excel.setDisable(true);
+                thebeau.setDisable(true);
+            } else {
+                dsm.setDisable(false);
+                csv.setDisable(false);
+                excel.setDisable(false);
+                thebeau.setDisable(false);
+            }
+        });
+
+        fileMenu.getItems().add(exportMenu);
+
+        // run menu
+        Menu runMenu = new Menu("Run");
+        MenuItem run = new MenuItem("Run Algorithm");
+        run.setOnAction(e -> {
+            runAlgorithm();
+            runCoordinationScore(outputMatrix);
+        });
+        runMenu.getItems().addAll(run);
+
+
+        menuBar.getMenus().addAll(fileMenu, runMenu);
+
+        return menuBar;
     }
 
 
@@ -365,6 +421,8 @@ public class ClusterAlgorithmWindow {
      * @param matrix the matrix output from the algorithm
      */
     private void runCoordinationScore(SymmetricDSMData matrix) {
+        if(matrix == null) return;
+
         HashMap<String, Object> coordinationScore = SymmetricDSMData.getCoordinationScore(matrix, optimalSizeCluster.doubleValue(), powcc.doubleValue(), countByWeight.isSelected());
         HashMap<String, Object> currentScores = SymmetricDSMData.getCoordinationScore(this.matrix, optimalSizeCluster.doubleValue(), powcc.doubleValue(), countByWeight.isSelected());
 
@@ -422,32 +480,15 @@ public class ClusterAlgorithmWindow {
     /**
      * Runs the algorithm with the parameters from the gui and returns the output matrix object. Displays the
      * matrix in the main window of the gui
-     *
-     * @return the new clustered matrix
      */
-    private SymmetricDSMData runThebeauAlgorithm() {
+    private void runAlgorithm() {
         BooleanProperty completedProperty = new SimpleBooleanProperty();  // used to know when to close popup
         completedProperty.set(false);
 
         Thread t = new Thread(() -> {  // thread to perform the function
-            outputMatrix = SymmetricDSMData.thebeauAlgorithm(
-                    matrix,
-                    optimalSizeCluster.doubleValue(),
-                    powdep.doubleValue(),
-                    powbid.doubleValue(),
-                    powcc.doubleValue(),
-                    randBid.doubleValue(),
-                    randAccept.doubleValue(),
-                    countByWeight.isSelected(),
-                    numLevels.intValue(),
-                    randSeed.longValue(),
-                    debug.isSelected()
-            );
-            outputMatrix.reDistributeSortIndicesByGroup();
+            outputMatrix = algorithmView.runSimulation(matrix);
             completedProperty.set(true);
         });
-        t.setDaemon(true);
-        t.start();
 
         // create popup window saying how long it has been running for
         Stage popup = new Stage();
@@ -487,27 +528,28 @@ public class ClusterAlgorithmWindow {
                 text.set("Finished...");
             });
         });
-        t2.setDaemon(true);
-        t2.start();
 
         completedProperty.addListener((observable, oldValue, newValue) -> {  // close window when completed
             if(newValue) {
-                Platform.runLater(() -> {
-                    popup.close();
-                });
+                Platform.runLater(popup::close);
             }
         });
 
+
+        t.setDaemon(true);
+        t2.setDaemon(true);
+        t.start();
+        t2.start();
         popup.showAndWait();  // wait for it to finish
 
-        SymmetricView gui = new SymmetricView(outputMatrix, 10);
-        gui.setCurrentMode(AbstractMatrixView.MatrixViewMode.STATIC_NAMES);
-        gui.refreshView();
+        if(outputMatrix != null) {
+            SymmetricView gui = new SymmetricView(outputMatrix, 10);
+            gui.setCurrentMode(AbstractMatrixView.MatrixViewMode.STATIC_NAMES);
+            gui.refreshView();
 
-        outputMatrixLayout.getChildren().removeAll(outputMatrixLayout.getChildren());
-        outputMatrixLayout.getChildren().addAll(gui.getView());
-
-        return outputMatrix;
+            outputMatrixLayout.getChildren().removeAll(outputMatrixLayout.getChildren());
+            outputMatrixLayout.getChildren().addAll(gui.getView());
+        }
     }
 
 
@@ -515,7 +557,7 @@ public class ClusterAlgorithmWindow {
      * opens the gui window
      */
     public void start() {
-        Scene scene = new Scene(rootLayout, 800, 600);
+        Scene scene = new Scene(rootLayout, 1200, 700);
         window.setScene(scene);
         window.show();
     }
