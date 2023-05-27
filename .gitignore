@@ -8,3 +8,4 @@ release/
 *.py
 *.xlsx
 .idea/workspace.xml
+.idea/

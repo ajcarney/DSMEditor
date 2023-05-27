@@ -12,6 +12,7 @@ import javafx.scene.control.TextField;
  */
 public class NumericTextField extends TextField {
     private final DoubleProperty numericValue;
+    private boolean integerMode = false;
 
 
     /**
@@ -40,24 +41,34 @@ public class NumericTextField extends TextField {
             StringBuilder modifiedValue = new StringBuilder();
             for (int i = 0; i < newValue.length(); i++) {  // rebuild the string with no characters that are not numeric or have multiple decimal places
                 if (newValue.charAt(i) == '.') {
-                    numPeriods += 1;
-                    if (numPeriods > 1) {
-                        modifiedValue.append("");
+                    if(!integerMode) {
+                        numPeriods += 1;
+                        if (numPeriods <= 1) {
+                            modifiedValue.append(".");
+                        }
                     } else {
-                        modifiedValue.append(".");
+                        break;  // don't add anything after the decimal
                     }
-                } else if (!"0123456789".contains(String.valueOf(newValue.charAt(i)))) { // char is not numeric and should be removed
-                    modifiedValue.append("");
-                } else {
+                } else if ("0123456789".contains(String.valueOf(newValue.charAt(i)))) { // char is not numeric and should be removed
                     modifiedValue.append(newValue.charAt(i));
                 }
             }
 
-            if(!"".equals(modifiedValue.toString()) && !".".equals(modifiedValue.toString())) {
+            if(!"".contentEquals(modifiedValue) && !".".contentEquals(modifiedValue)) {
                 numericValue.set(Double.parseDouble(modifiedValue.toString()));
             }
             numericTextField.setText(modifiedValue.toString());
         });
+    }
+
+
+    /**
+     * Sets the new value for integer mode
+     *
+     * @param integerMode if the input box should only allow integers or also doubles
+     */
+    public void setIntegerMode(boolean integerMode) {
+        this.integerMode = integerMode;
     }
 
 

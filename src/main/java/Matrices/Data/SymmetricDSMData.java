@@ -10,6 +10,7 @@ import javafx.util.Pair;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 /**
@@ -871,10 +872,5 @@ public class SymmetricDSMData extends AbstractDSMData implements IPropagationAna
     }
 
 
-    static public SymmetricDSMData art1Algorithm(SymmetricDSMData inputMatrix) {
-        SymmetricDSMData matrix = inputMatrix.createCopy();
-
-        return matrix;
-    }
     //endregion
 }
