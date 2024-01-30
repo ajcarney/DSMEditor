@@ -1,5 +1,6 @@
 package UI;
 
+import Matrices.ClusterAlgorithms.Thebeau;
 import Matrices.Data.Entities.Grouping;
 import Matrices.Data.SymmetricDSMData;
 import Matrices.IOHandlers.SymmetricIOHandler;
@@ -423,8 +424,8 @@ public class ClusterAlgorithmWindow {
     private void runCoordinationScore(SymmetricDSMData matrix) {
         if(matrix == null) return;
 
-        HashMap<String, Object> coordinationScore = SymmetricDSMData.getCoordinationScore(matrix, optimalSizeCluster.doubleValue(), powcc.doubleValue(), countByWeight.isSelected());
-        HashMap<String, Object> currentScores = SymmetricDSMData.getCoordinationScore(this.matrix, optimalSizeCluster.doubleValue(), powcc.doubleValue(), countByWeight.isSelected());
+        HashMap<String, Object> coordinationScore = Thebeau.getCoordinationScore(matrix, optimalSizeCluster.doubleValue(), powcc.doubleValue(), countByWeight.isSelected());
+        HashMap<String, Object> currentScores = Thebeau.getCoordinationScore(this.matrix, optimalSizeCluster.doubleValue(), powcc.doubleValue(), countByWeight.isSelected());
 
         Label titleLabel = new Label("Cluster Cost Analysis");
         titleLabel.setStyle(titleLabel.getStyle() + "-fx-font-weight: bold;");

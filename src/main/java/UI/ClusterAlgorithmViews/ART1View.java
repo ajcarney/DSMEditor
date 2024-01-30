@@ -1,6 +1,6 @@
 package UI.ClusterAlgorithmViews;
 
-import Matrices.Data.ART1ClusterAlgorithm;
+import Matrices.ClusterAlgorithms.ART1;
 import Matrices.Data.SymmetricDSMData;
 import UI.Widgets.NumericTextField;
 import javafx.beans.property.DoubleProperty;
@@ -104,7 +104,7 @@ public class ART1View implements IAlgorithmView {
 
     @Override
     public SymmetricDSMData runSimulation(SymmetricDSMData matrix) {
-        ART1ClusterAlgorithm algo = new ART1ClusterAlgorithm(matrix);
+        ART1 algo = new ART1(matrix.createCopy());
         return algo.art1Algorithm(maxGroups.intValue(), vigilance.doubleValue(), beta.doubleValue());
     }
 }

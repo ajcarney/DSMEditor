@@ -1,5 +1,6 @@
 package UI;
 
+import Matrices.ClusterAlgorithms.Thebeau;
 import Matrices.Data.Entities.Grouping;
 import Matrices.Data.SymmetricDSMData;
 import Matrices.Data.Entities.DSMItem;
@@ -204,7 +205,7 @@ public class ClusterAnalysisWindow {
      * runs the algorithm that determines the coordination score of a matrix. Updates content on the main window of the gui
      */
     private void runCoordinationScore() {
-        HashMap<String, Object> coordinationScore = SymmetricDSMData.getCoordinationScore(matrix, optimalSizeCluster.doubleValue(), powcc.doubleValue(), countByWeight.isSelected());
+        HashMap<String, Object> coordinationScore = Thebeau.getCoordinationScore(matrix, optimalSizeCluster.doubleValue(), powcc.doubleValue(), countByWeight.isSelected());
 
         Label titleLabel = new Label("Cluster Cost Analysis");
         titleLabel.setStyle(titleLabel.getStyle() + "-fx-font-weight: bold;");
@@ -275,7 +276,7 @@ public class ClusterAnalysisWindow {
                 } else if(c == 1) {
                     rowBids.add(items.get(r).getName().getValue());
                 } else {
-                    HashMap<Integer, Double> groupBids = SymmetricDSMData.calculateClusterBids(matrix, groupOrder.get(c - 2), optimalSizeCluster.doubleValue(), powdep.doubleValue(), powbid.doubleValue(), countByWeight.isSelected());
+                    HashMap<Integer, Double> groupBids = Thebeau.calculateClusterBids(matrix, groupOrder.get(c - 2), optimalSizeCluster.doubleValue(), powdep.doubleValue(), powbid.doubleValue(), countByWeight.isSelected());
 
                     double bid = groupBids.get(items.get(r).getUid());
                     rowBids.add(String.valueOf(bid));

@@ -1,13 +1,20 @@
-package Matrices.Data;
+package Matrices.ClusterAlgorithms;
 
 import Matrices.Data.Entities.DSMConnection;
 import Matrices.Data.Entities.DSMItem;
 import Matrices.Data.Entities.Grouping;
-import javafx.scene.paint.Color;
+import Matrices.Data.SymmetricDSMData;
+import Util.RandomColorGenerator;
 
 import java.util.ArrayList;
 
-public class ART1ClusterAlgorithm {
+/**
+ * Contains java implementation of the ART1 algorithm.
+ * TODO: broken. Need to merge in code from somewhere?
+ *
+ * @author: Aiden Carney
+ */
+public class ART1 {
 
     ArrayList<DSMItem> sortedItems;
 
@@ -20,7 +27,7 @@ public class ART1ClusterAlgorithm {
     ArrayList<Grouping> prototypeGroups;
 
 
-    public ART1ClusterAlgorithm(SymmetricDSMData inputMatrix) {
+    public ART1(SymmetricDSMData inputMatrix) {
         matrix = inputMatrix.createCopy();
 
         numItems = matrix.getRows().size();
@@ -39,33 +46,36 @@ public class ART1ClusterAlgorithm {
         }
 
         // set all items to not having a group
-        matrix.clearGroupings();
+        matrix.resetGroupings();
         itemMemberships = new ArrayList<>();
         prototypes = new ArrayList<>();  // list of column uids where the prototype has a value
         prototypeGroups = new ArrayList<>();
     }
 
 
+    /**
+     * initializes all groupings each with a unique color
+     * @param maxGroups the number of groups to generate
+     */
     private void initGroupings(int maxGroups) {
         // create groupings with distinct colors
-        // this method for generating random colors is from stack overflow, it generates colors based on a start value
-        // and the golden ratio conjugate (golden ratio method)
-        double h = 0.2423353;  // use random start value for color generation
+        RandomColorGenerator rgc = new RandomColorGenerator(0.2423353);
+
         for(int i = 0; i < maxGroups; i++) {
             Grouping group = new Grouping("G" + i, null);
-            h += 0.618033988749895;  // golden_ratio_conjugate, this is a part of the golden ratio method for generating unique colors
-            h %= 1;
-            java.awt.Color hsvColor = java.awt.Color.getHSBColor((float)h, (float)0.5, (float)0.95);
 
-            double r = hsvColor.getRed() / 255.0;
-            double g = hsvColor.getGreen() / 255.0;
-            double b = hsvColor.getBlue() / 255.0;
-            group.setColor(Color.color(r, g, b));
+            group.setColor(rgc.next());
             prototypeGroups.set(i, group);
         }
     }
 
 
+    /**
+     * performs an index-by-index fuzzy and of two vectors. ex <1, 0, 1> and <1, 0, 0> = <1, 0, 0>
+     * @param v1 the first vector
+     * @param v2 the second vector
+     * @return the resulting vector
+     */
     private ArrayList<Integer> andVectors(ArrayList<Integer> v1, ArrayList<Integer> v2) {
         ArrayList<Integer> v = new ArrayList<>();
         for(int i = 0; i < v1.size(); i++) {
@@ -80,6 +90,11 @@ public class ART1ClusterAlgorithm {
     }
 
 
+    /**
+     * returns magnitude of vector defined as sum of all elements
+     * @param v vector
+     * @return magnitude
+     */
     private int vectorMagnitude(ArrayList<Integer> v) {
         int sum = 0;
         for (Integer i : v) {
@@ -120,6 +135,14 @@ public class ART1ClusterAlgorithm {
     }
 
 
+    /**
+     * Performs art1 algorithm on a symmetric DSM
+     *
+     * @param maxGroups - the max number of groups to allow
+     * @param vigilance - algo parameter
+     * @param beta - algo parameter
+     * @return the new clustered matrix
+     */
     public SymmetricDSMData art1Algorithm(int maxGroups, double vigilance, double beta) {
         initGroupings(maxGroups);
 
@@ -128,7 +151,6 @@ public class ART1ClusterAlgorithm {
         createPrototype(0, 0);
         matrix.addGrouping(prototypeGroups.get(0));  // add this grouping because it is now in use
         matrix.setItemGroup(sortedItems.get(0), prototypeGroups.get(0));
-
 
         boolean done = false;
         while(!done) {
@@ -189,9 +211,6 @@ public class ART1ClusterAlgorithm {
             }
 
         }
-
-
-
 
         return matrix;
     }

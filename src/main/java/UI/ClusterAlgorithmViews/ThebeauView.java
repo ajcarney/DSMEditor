@@ -10,6 +10,7 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.VBox;
+import Matrices.ClusterAlgorithms.Thebeau;
 
 public class ThebeauView implements IAlgorithmView {
 
@@ -204,8 +205,8 @@ public class ThebeauView implements IAlgorithmView {
 
     @Override
     public SymmetricDSMData runSimulation(SymmetricDSMData matrix) {
-        SymmetricDSMData outputMatrix = SymmetricDSMData.thebeauAlgorithm(
-                matrix,
+        SymmetricDSMData outputMatrix = Thebeau.thebeauAlgorithm(
+                matrix.createCopy(),  // use copy to not modify this matrix
                 optimalSizeCluster.doubleValue(),
                 powdep.doubleValue(),
                 powbid.doubleValue(),

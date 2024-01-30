@@ -82,7 +82,7 @@ public abstract class AbstractIOHandler implements IStandardExports {
      * @param extension the extension to force
      * @return          a file object with the extension at the end
      */
-    static public File forceExtension(File file, String extension) {
+    public static File forceExtension(File file, String extension) {
         String path = file.getAbsolutePath();
         if(!path.endsWith(extension)) {
             path += extension;
