@@ -31,11 +31,11 @@ public class ART1View implements IAlgorithmView {
         // optimal size layout
         VBox maxGroupsLayout = new VBox();
 
-        Label maxGroupsLabel = new Label("Optimal Cluster Size");
+        Label maxGroupsLabel = new Label("Max Clusters");
 
-        maxGroups = new SimpleIntegerProperty(15);
+        maxGroups = new SimpleIntegerProperty(50);
         NumericTextField maxGroupsEntry = new NumericTextField(Double.valueOf(maxGroups.getValue()));
-        maxGroupsEntry.setIntegerMode(true);
+        // maxGroupsEntry.setIntegerMode(true);
         maxGroupsEntry.textProperty().addListener((obs, oldText, newText) -> {
             maxGroups.setValue(maxGroupsEntry.getNumericValue());
         });
@@ -104,7 +104,10 @@ public class ART1View implements IAlgorithmView {
 
     @Override
     public SymmetricDSMData runSimulation(SymmetricDSMData matrix) {
-        ART1 algo = new ART1(matrix.createCopy());
-        return algo.art1Algorithm(maxGroups.intValue(), vigilance.doubleValue(), beta.doubleValue());
+        ART1 algo = new ART1(matrix);
+        SymmetricDSMData outputMatrix = algo.art1Algorithm(maxGroups.intValue(), vigilance.doubleValue(), beta.doubleValue());
+
+        outputMatrix.reDistributeSortIndicesByGroup();
+        return outputMatrix;
     }
 }

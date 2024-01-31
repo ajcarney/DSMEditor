@@ -48,9 +48,9 @@ public class DSMApplication extends Application {
 //                editor.addTab(new SymmetricDSM(f));
 //            }
             Constants.Constants.isDebug = true;
-            File f = new File("/home/aiden/Documents/DSMEditor/input_nonsymmetric_Test_Propagation_analysis.dsm");
+            File f = new File("/home/aiden/Documents/DSMEditor/dsms/Elevator_DSM.dsm");
             if(f.exists()) {
-                editor.addTab(new AsymmetricDSM(f));
+                editor.addTab(new SymmetricDSM(f));
             }
         }
 
