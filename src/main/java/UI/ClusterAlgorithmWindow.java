@@ -8,6 +8,7 @@ import Matrices.Views.AbstractMatrixView;
 import Matrices.Views.SymmetricView;
 import UI.ClusterAlgorithmViews.ART1View;
 import UI.ClusterAlgorithmViews.IAlgorithmView;
+import UI.ClusterAlgorithmViews.ParameterBuilder;
 import UI.ClusterAlgorithmViews.ThebeauView;
 import UI.Widgets.NumericTextField;
 import javafx.application.Platform;
@@ -58,7 +59,7 @@ public class ClusterAlgorithmWindow {
     private DoubleProperty randBid;
     private DoubleProperty randAccept;
     private DoubleProperty randSeed;
-    private CheckBox countByWeight;
+    private BooleanProperty countByWeight;
 
     SymmetricDSMData outputMatrix = null;
 
@@ -77,8 +78,11 @@ public class ClusterAlgorithmWindow {
         this.matrix = matrix;
 
         window = new Stage();
-        window.setTitle(matrix.getTitle() + " - Cluster Algorithm");
-
+        if(!matrix.getTitle().isEmpty()) {
+            window.setTitle(matrix.getTitle() + " - Cluster Algorithms");
+        } else {
+            window.setTitle("Cluster Algorithms");
+        }
 
         // left sidebar
         algorithmView = new ThebeauView();  // default to thebeau mode
@@ -116,13 +120,17 @@ public class ClusterAlgorithmWindow {
 
         dsmOutputLayout.getItems().addAll(matrixScrollPane, coordinationScrollPane);
 
+        // put main content in splitpane so it can be moved around
+        SplitPane content = new SplitPane();
+        content.getItems().addAll(leftSidebarScrollPane, dsmOutputLayout, rightSidebarScrollPane);
+        content.setDividerPosition(0, 0.2);
+        content.setDividerPosition(1, 0.8);
+
 
         // set up main layout
         rootLayout = new BorderPane();
-        rootLayout.setLeft(leftSidebarScrollPane);
-        rootLayout.setRight(rightSidebarScrollPane);
         rootLayout.setTop(menuBar);
-        rootLayout.setCenter(dsmOutputLayout);
+        rootLayout.setCenter(content);
     }
 
 
@@ -177,157 +185,33 @@ public class ClusterAlgorithmWindow {
      * @return VBox containing all the widgets configured properly
      */
     private VBox getCostParametersView() {
-        // title label
-        Label parametersLabel = new Label("Cluster Analysis Parameters");
-        parametersLabel.setFont(new Font(18.0));
-        parametersLabel.setPadding(new Insets(5));
-
-        // optimal size layout
-        VBox optimalSizeLayout = new VBox();
-
-        Label optimalClusterSizeLabel = new Label("Optimal Cluster Size");
-
         optimalSizeCluster = new SimpleDoubleProperty(4.5);
-        NumericTextField optimalSizeEntry = new NumericTextField(optimalSizeCluster.getValue());
-        optimalSizeEntry.textProperty().addListener((obs, oldText, newText) -> {
-            optimalSizeCluster.setValue(optimalSizeEntry.getNumericValue());
-        });
-
-        optimalSizeLayout.getChildren().addAll(optimalClusterSizeLabel, optimalSizeEntry);
-        optimalSizeLayout.setSpacing(5);
-        optimalSizeLayout.setPadding(new Insets(10));
-        optimalSizeLayout.setAlignment(Pos.CENTER);
-
-
-        // powcc layout
-        VBox powccArea = new VBox();
-
-        Label powccLabel = new Label("powcc constant");
-        powccLabel.setTooltip(new Tooltip("Exponential to penalize size of clusters when calculating cluster cost"));
-
         powcc = new SimpleDoubleProperty(1.0);
-        NumericTextField powccEntry = new NumericTextField(powcc.getValue());
-        powccEntry.textProperty().addListener((obs, oldText, newText) -> {
-            powcc.setValue(powccEntry.getNumericValue());
-        });
-
-        powccArea.getChildren().addAll(powccLabel, powccEntry);
-        powccArea.setSpacing(5);
-        powccArea.setPadding(new Insets(10));
-        powccArea.setAlignment(Pos.CENTER);
-
-
-        // powdep layout
-        VBox powdepArea = new VBox();
-
-        Label powdepLabel = new Label("powdep constant");
-        powdepLabel.setTooltip(new Tooltip("Exponential to emphasize connections when calculating bids"));
-
         powdep = new SimpleDoubleProperty(4.0);
-        NumericTextField powdepEntry = new NumericTextField(powdep.getValue());
-        powdepEntry.textProperty().addListener((obs, oldText, newText) -> {
-            powdep.setValue(powdepEntry.getNumericValue());
-        });
-
-        powdepArea.getChildren().addAll(powdepLabel, powdepEntry);
-        powdepArea.setSpacing(5);
-        powdepArea.setPadding(new Insets(10));
-        powdepArea.setAlignment(Pos.CENTER);
-
-
-        // powbid layout
-        VBox powbidArea = new VBox();
-
-        Label powbidLabel = new Label("powbid constant");
-        powbidLabel.setTooltip(new Tooltip("Exponential to penalize size of clusters when calculating bids"));
-
         powbid = new SimpleDoubleProperty(1.0);
-        NumericTextField powBidEntry = new NumericTextField(powbid.getValue());
-        powBidEntry.textProperty().addListener((obs, oldText, newText) -> {
-            powbid.setValue(powdepEntry.getNumericValue());
-        });
-
-        powbidArea.getChildren().addAll(powbidLabel, powBidEntry);
-        powbidArea.setSpacing(5);
-        powbidArea.setPadding(new Insets(10));
-        powbidArea.setAlignment(Pos.CENTER);
-        
-        
-        // randbid layout
-        VBox randBidArea = new VBox();
-
-        Label randBidLabel = new Label("rand_bid constant");
-        randBidLabel.setTooltip(new Tooltip("Constant to determine how often to make slightly suboptimal change"));
-
         randBid = new SimpleDoubleProperty(122);
-        NumericTextField randBidEntry = new NumericTextField(randBid.getValue());
-        randBidEntry.textProperty().addListener((obs, oldText, newText) -> {
-            randBid.setValue(randBidEntry.getNumericValue());
-        });
-
-        randBidArea.getChildren().addAll(randBidLabel, randBidEntry);
-        randBidArea.setSpacing(5);
-        randBidArea.setPadding(new Insets(10));
-        randBidArea.setAlignment(Pos.CENTER);
-
-
-        // randAccept layout
-        VBox randAcceptArea = new VBox();
-
-        Label randAcceptLabel = new Label("rand_accept constant");
-        randAcceptLabel.setTooltip(new Tooltip("Constant to determine how often to make a suboptimal change"));
-
         randAccept = new SimpleDoubleProperty(122);
-        NumericTextField randAcceptEntry = new NumericTextField(randAccept.getValue());
-        randAcceptEntry.textProperty().addListener((obs, oldText, newText) -> {
-            randAccept.setValue(randAcceptEntry.getNumericValue());
-        });
-
-        randAcceptArea.getChildren().addAll(randAcceptLabel, randAcceptEntry);
-        randAcceptArea.setSpacing(5);
-        randAcceptArea.setPadding(new Insets(10));
-        randAcceptArea.setAlignment(Pos.CENTER);
-
-
-        // count method layout
-        VBox countMethodLayout = new VBox();
-        countMethodLayout.setSpacing(10);
-
-        countByWeight = new CheckBox("Count by Weight");
-        countByWeight.setSelected(true);
-        countByWeight.setMaxWidth(Double.MAX_VALUE);
-
-        countMethodLayout.getChildren().addAll(countByWeight);
-        countMethodLayout.setAlignment(Pos.CENTER);
-        countMethodLayout.setPadding(new Insets(10));
-
-        
-        // randSeed layout
-        VBox randSeedArea = new VBox();
-
-        Label randSeedLabel = new Label("Random Seed");
-
+        countByWeight = new SimpleBooleanProperty(false);
         randSeed = new SimpleDoubleProperty(30);
-        NumericTextField randSeedEntry = new NumericTextField(powbid.getValue());
-        randSeedEntry.textProperty().addListener((obs, oldText, newText) -> {
-            randSeed.setValue(randSeedEntry.getNumericValue());
-        });
-
-        randSeedArea.getChildren().addAll(randSeedLabel, randSeedEntry);
-        randSeedArea.setSpacing(5);
-        randSeedArea.setPadding(new Insets(10));
-        randSeedArea.setAlignment(Pos.CENTER);
 
         // button the re-run analysis
         Button rerun = new Button("Update Analysis");
         rerun.setOnAction(e -> runCoordinationScore(outputMatrix));
 
         // config layout
-        VBox costParametersLayout = new VBox();
-        costParametersLayout.getChildren().addAll(parametersLabel, optimalSizeLayout, powccArea, powdepArea, powbidArea, randBidArea, randAcceptArea, countMethodLayout, randSeedArea, new Separator(), rerun);
-        costParametersLayout.setSpacing(15);
-        costParametersLayout.setAlignment(Pos.TOP_CENTER);
-        costParametersLayout.setMinWidth(Region.USE_PREF_SIZE);
+        VBox costParametersLayout = new ParameterBuilder()
+                .newLabel("Cluster Analysis Parameters", 18.0)
+                .newNumericEntry(optimalSizeCluster, "Optimal Cluster Size", "", false)
+                .newNumericEntry(powcc, "powcc constant", "Exponential to penalize size of clusters when calculating cluster cost", false)
+                .newNumericEntry(powdep, "powdep constant", "Exponential to emphasize connections when calculating bids", false)
+                .newNumericEntry(powbid, "powbid constant", "Exponential to penalize size of clusters when calculating bids", false)
+                .newNumericEntry(randBid, "rand_bid constant", "Constant to determine how often to make slightly suboptimal change", false)
+                .newNumericEntry(randAccept, "rand_accept constant", "Constant to determine how often to make a suboptimal change", false)
+                .newCheckbox(countByWeight, "Count by Weight")
+                .newNumericEntry(randSeed, "Random Seed", "", false)
+                .build();
+
+        costParametersLayout.getChildren().addAll(new Separator(), rerun);
 
         return costParametersLayout;
     }
@@ -424,8 +308,8 @@ public class ClusterAlgorithmWindow {
     private void runCoordinationScore(SymmetricDSMData matrix) {
         if(matrix == null) return;
 
-        HashMap<String, Object> coordinationScore = Thebeau.getCoordinationScore(matrix, optimalSizeCluster.doubleValue(), powcc.doubleValue(), countByWeight.isSelected());
-        HashMap<String, Object> currentScores = Thebeau.getCoordinationScore(this.matrix, optimalSizeCluster.doubleValue(), powcc.doubleValue(), countByWeight.isSelected());
+        HashMap<String, Object> coordinationScore = Thebeau.getCoordinationScore(matrix, optimalSizeCluster.doubleValue(), powcc.doubleValue(), countByWeight.getValue());
+        HashMap<String, Object> currentScores = Thebeau.getCoordinationScore(this.matrix, optimalSizeCluster.doubleValue(), powcc.doubleValue(), countByWeight.getValue());
 
         Label titleLabel = new Label("Cluster Cost Analysis");
         titleLabel.setStyle(titleLabel.getStyle() + "-fx-font-weight: bold;");
@@ -558,7 +442,7 @@ public class ClusterAlgorithmWindow {
      * opens the gui window
      */
     public void start() {
-        Scene scene = new Scene(rootLayout, 1200, 700);
+        Scene scene = new Scene(rootLayout, 1400, 700);
         window.setScene(scene);
         window.show();
     }

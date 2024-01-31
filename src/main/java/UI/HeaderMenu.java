@@ -556,8 +556,8 @@ public class HeaderMenu {
                 c.start();
             });
 
-            MenuItem thebeau = new MenuItem("Thebeau Algorithm...");
-            thebeau.setOnAction(e -> {
+            MenuItem cluster = new MenuItem("Cluster Algorithms...");
+            cluster.setOnAction(e -> {
                 if (editor.getFocusedMatrixUid() == null) {
                     return;
                 }
@@ -566,7 +566,7 @@ public class HeaderMenu {
                 c.start();
             });
 
-            toolsMenu.getItems().addAll(coordinationScore, thebeau);
+            toolsMenu.getItems().addAll(coordinationScore, cluster);
         }
     }
 
