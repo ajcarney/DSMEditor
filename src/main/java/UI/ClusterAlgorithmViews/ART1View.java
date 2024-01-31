@@ -1,6 +1,6 @@
 package UI.ClusterAlgorithmViews;
 
-import Matrices.Data.ART1ClusterAlgorithm;
+import Matrices.Data.ClusterAlgorithms.ART1ClusterAlgorithm;
 import Matrices.Data.SymmetricDSMData;
 import UI.Widgets.NumericTextField;
 import javafx.beans.property.DoubleProperty;
@@ -31,11 +31,11 @@ public class ART1View implements IAlgorithmView {
         // optimal size layout
         VBox maxGroupsLayout = new VBox();
 
-        Label maxGroupsLabel = new Label("Optimal Cluster Size");
+        Label maxGroupsLabel = new Label("Max Clusters");
 
-        maxGroups = new SimpleIntegerProperty(15);
+        maxGroups = new SimpleIntegerProperty(50);
         NumericTextField maxGroupsEntry = new NumericTextField(Double.valueOf(maxGroups.getValue()));
-        maxGroupsEntry.setIntegerMode(true);
+        // maxGroupsEntry.setIntegerMode(true);
         maxGroupsEntry.textProperty().addListener((obs, oldText, newText) -> {
             maxGroups.setValue(maxGroupsEntry.getNumericValue());
         });
@@ -105,6 +105,9 @@ public class ART1View implements IAlgorithmView {
     @Override
     public SymmetricDSMData runSimulation(SymmetricDSMData matrix) {
         ART1ClusterAlgorithm algo = new ART1ClusterAlgorithm(matrix);
-        return algo.art1Algorithm(maxGroups.intValue(), vigilance.doubleValue(), beta.doubleValue());
+        SymmetricDSMData outputMatrix = algo.art1Algorithm(maxGroups.intValue(), vigilance.doubleValue(), beta.doubleValue());
+
+        outputMatrix.reDistributeSortIndicesByGroup();
+        return outputMatrix;
     }
 }

@@ -34,7 +34,7 @@ import java.util.Map;
 
 
 /**
- * A class that graphically runs Thebeau's dsm clustering algorithm. Currently only works for symmetric DSMs
+ * A class that graphically runs different clustering algorithms. Currently only works for symmetric DSMs
  *
  * @author Aiden Carney
  */

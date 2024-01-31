@@ -658,6 +658,10 @@ public class SymmetricDSMData extends AbstractDSMData implements IPropagationAna
         HashMap<String, Object> results = new HashMap<>();
 
         HashMap<Grouping, Double> intraCostBreakdown = new HashMap<>();
+        for(Grouping g : matrix.getGroupings()) {
+            intraCostBreakdown.put(g, 0.0);
+        }
+
         double totalIntraCost = 0.0;
         double totalExtraCost = 0.0;
         for(DSMConnection conn : matrix.getConnections()) {
@@ -813,7 +817,7 @@ public class SymmetricDSMData extends AbstractDSMData implements IPropagationAna
             // calculate bids
             HashMap<Grouping, Double> bids = new HashMap<>();
             for (Grouping group : matrix.getGroupings()) {
-                double bid = matrix.calculateClusterBids(matrix, group, optimalSizeCluster, powdep, powbid, calculateByWeight).get(item.getUid());
+                double bid = calculateClusterBids(matrix, group, optimalSizeCluster, powdep, powbid, calculateByWeight).get(item.getUid());
                 bids.put(group, bid);
             }
 

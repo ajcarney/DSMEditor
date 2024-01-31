@@ -11,6 +11,9 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.VBox;
 
+/**
+ * The Thebeau algorithm
+ */
 public class ThebeauView implements IAlgorithmView {
 
     private DoubleProperty optimalSizeCluster;
@@ -25,6 +28,11 @@ public class ThebeauView implements IAlgorithmView {
     private CheckBox countByWeight;
     private CheckBox debug;
 
+    /**
+     * Creates a pane with widgets for all the necessary parameters
+     *
+     * @return the pane to display on the gui
+     */
     @Override
     public VBox getParametersPane() {
         VBox parametersPane = new VBox();
@@ -202,6 +210,13 @@ public class ThebeauView implements IAlgorithmView {
         return parametersPane;
     }
 
+
+    /**
+     * Runs the Thebeau algorithm on the input matrix
+     *
+     * @param matrix - the symmetric matrix to run the algorithm on
+     * @return the matrix with new groupings
+     */
     @Override
     public SymmetricDSMData runSimulation(SymmetricDSMData matrix) {
         SymmetricDSMData outputMatrix = SymmetricDSMData.thebeauAlgorithm(
