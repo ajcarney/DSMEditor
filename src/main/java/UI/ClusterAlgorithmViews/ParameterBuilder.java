@@ -1,16 +1,25 @@
 package UI.ClusterAlgorithmViews;
 
+import Matrices.Data.Entities.DSMItem;
+import Matrices.Data.SymmetricDSMData;
+import UI.Widgets.DSMItemSelector;
 import UI.Widgets.NumericTextField;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.Tooltip;
+import javafx.scene.control.*;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
+import javafx.util.Callback;
+import org.controlsfx.control.CheckComboBox;
+import org.controlsfx.control.ListSelectionView;
+
+import java.util.ArrayList;
 
 /**
  * Class with builder pattern to be able to create views for cluster algorithms with less code
@@ -26,7 +35,10 @@ public class ParameterBuilder {
         parametersPane = new VBox();
         parametersPane.setSpacing(15);
         parametersPane.setAlignment(Pos.TOP_CENTER);
-        parametersPane.setMinWidth(Region.USE_PREF_SIZE);
+        parametersPane.setMaxWidth(200);
+
+        parametersPane.maxWidthProperty().bind(parametersPane.prefWidthProperty());
+
     }
 
 
@@ -86,6 +98,25 @@ public class ParameterBuilder {
 
         return this;
     }
+
+
+
+    public ParameterBuilder newDSMItemSelect(String label, String tooltip, SymmetricDSMData matrix, ObservableList<Integer> selected) {
+        VBox layout = new VBox();
+        layout.setSpacing(10);
+
+        Label l = new Label(label);
+        l.setTooltip(new Tooltip(tooltip));
+
+        DSMItemSelector itemSelector = new DSMItemSelector(matrix);
+        VBox exclusionsLayout = itemSelector.getItemSelector("Exclusions", true, selected);
+
+
+        parametersPane.getChildren().addAll(layout, exclusionsLayout);
+
+        return this;
+    }
+
 
 
     /**

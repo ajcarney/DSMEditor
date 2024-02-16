@@ -13,7 +13,7 @@ public interface IAlgorithmView {
      *
      * @return VBox - a pane containing the widgets
      */
-    VBox getParametersPane();
+    VBox getParametersPane(SymmetricDSMData matrix);
 
 
     /**

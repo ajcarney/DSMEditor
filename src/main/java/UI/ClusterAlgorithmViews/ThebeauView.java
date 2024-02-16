@@ -1,12 +1,17 @@
 package UI.ClusterAlgorithmViews;
 
 import Matrices.ClusterAlgorithms.Thebeau;
+import Matrices.Data.Entities.DSMItem;
 import Matrices.Data.SymmetricDSMData;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.scene.layout.VBox;
+
+import java.util.ArrayList;
 
 /**
  * The Thebeau algorithm view. Generates the pane that contains all the entry areas
@@ -24,6 +29,7 @@ public class ThebeauView implements IAlgorithmView {
     private final DoubleProperty numLevels = new SimpleDoubleProperty(1000);
     private final DoubleProperty randSeed = new SimpleDoubleProperty(30);
     private final BooleanProperty debug = new SimpleBooleanProperty(false);
+    private final ObservableList<Integer> exclusions = FXCollections.observableArrayList();
 
 
     /**
@@ -32,7 +38,12 @@ public class ThebeauView implements IAlgorithmView {
      * @return the pane to display on the gui
      */
     @Override
-    public VBox getParametersPane() {
+    public VBox getParametersPane(SymmetricDSMData matrix) {
+        ArrayList<Integer> items = new ArrayList<>();
+        for(DSMItem row : matrix.getRows()) {
+            items.add(row.getUid());
+        }
+
         return new ParameterBuilder()
                 .newNumericEntry(optimalSizeCluster, "Optimal Cluster Size", "", false)
                 .newNumericEntry(powcc, "powcc constant", "Exponential to penalize size of clusters when calculating cluster cost", false)
@@ -42,6 +53,7 @@ public class ThebeauView implements IAlgorithmView {
                 .newNumericEntry(randAccept, "rand_accept constant", "Constant to determine how often to make a suboptimal change", false)
                 .newCheckbox(countByWeight, "Count by Weight")
                 .newNumericEntry(numLevels, "Number of Iterations", "", false)
+                .newDSMItemSelect("", "", matrix, exclusions)
                 .newNumericEntry(randSeed, "Random Seed", "", false)
                 .newCheckbox(debug, "Debug to stdout")
                 .build();
@@ -56,6 +68,10 @@ public class ThebeauView implements IAlgorithmView {
      */
     @Override
     public SymmetricDSMData runSimulation(SymmetricDSMData matrix) {
+        for (Integer i : exclusions) {
+            System.out.println(matrix.getItem(i).getName());
+        }
+
         SymmetricDSMData outputMatrix = Thebeau.thebeauAlgorithm(
                 matrix.createCopy(),  // use copy to not modify this matrix
                 optimalSizeCluster.doubleValue(),

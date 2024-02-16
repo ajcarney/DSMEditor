@@ -123,7 +123,7 @@ public class ClusterAlgorithmWindow {
         // put main content in splitpane so it can be moved around
         SplitPane content = new SplitPane();
         content.getItems().addAll(leftSidebarScrollPane, dsmOutputLayout, rightSidebarScrollPane);
-        content.setDividerPosition(0, 0.2);
+        content.setDividerPosition(0, 0.22);
         content.setDividerPosition(1, 0.8);
 
 
@@ -147,7 +147,7 @@ public class ClusterAlgorithmWindow {
         parametersLabel.setPadding(new Insets(5));
 
         VBox algorithmParametersPane = new VBox();
-        algorithmParametersPane.getChildren().add(algorithmView.getParametersPane());
+        algorithmParametersPane.getChildren().add(algorithmView.getParametersPane(matrix));
 
         // label and combobox for choosing the clustering algorithm
         HBox algorithmTypePane = new HBox();
@@ -165,7 +165,7 @@ public class ClusterAlgorithmWindow {
                 algorithmView = new ART1View();
             }
             algorithmParametersPane.getChildren().clear();
-            algorithmParametersPane.getChildren().add(algorithmView.getParametersPane());
+            algorithmParametersPane.getChildren().add(algorithmView.getParametersPane(matrix));
         });
         algorithmType.setValue("Thebeau");  // default to thebeau algorithm
         algorithmTypePane.getChildren().addAll(algorithmTypeLabel, algorithmType);

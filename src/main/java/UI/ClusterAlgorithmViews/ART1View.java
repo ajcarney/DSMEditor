@@ -21,7 +21,7 @@ public class ART1View implements IAlgorithmView {
 
 
     @Override
-    public VBox getParametersPane() {
+    public VBox getParametersPane(SymmetricDSMData matrix) {
         return new ParameterBuilder()
                 .newNumericEntry(maxGroups, "Max Clusters", "", true)
                 .newNumericEntry(vigilance, "vigilance constant", "Value between 0 and 1 to determine how closely features must match prototypes", false)
