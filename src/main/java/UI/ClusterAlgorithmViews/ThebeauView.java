@@ -49,10 +49,10 @@ public class ThebeauView implements IAlgorithmView {
                 .newNumericEntry(powcc, "powcc constant", "Exponential to penalize size of clusters when calculating cluster cost", false)
                 .newNumericEntry(powdep, "powdep constant", "Exponential to emphasize connections when calculating bids", false)
                 .newNumericEntry(powbid, "powbid constant", "Exponential to penalize size of clusters when calculating bids", false)
-                .newNumericEntry(randBid, "rand_bid constant", "Constant to determine how often to make slightly suboptimal change", false)
-                .newNumericEntry(randAccept, "rand_accept constant", "Constant to determine how often to make a suboptimal change", false)
+                .newNumericEntry(randBid, "rand_bid constant", "Constant to determine how often to make slightly suboptimal change", true)
+                .newNumericEntry(randAccept, "rand_accept constant", "Constant to determine how often to make a suboptimal change", true)
                 .newCheckbox(countByWeight, "Count by Weight")
-                .newNumericEntry(numLevels, "Number of Iterations", "", false)
+                .newNumericEntry(numLevels, "Number of Iterations", "", true)
                 .newDSMItemSelect("", "", matrix, exclusions)
                 .newNumericEntry(randSeed, "Random Seed", "", false)
                 .newCheckbox(debug, "Debug to stdout")
@@ -78,8 +78,9 @@ public class ThebeauView implements IAlgorithmView {
                 powdep.doubleValue(),
                 powbid.doubleValue(),
                 powcc.doubleValue(),
-                randBid.doubleValue(),
-                randAccept.doubleValue(),
+                randBid.intValue(),
+                randAccept.intValue(),
+                new ArrayList<>(exclusions),
                 countByWeight.getValue(),
                 numLevels.intValue(),
                 randSeed.longValue(),

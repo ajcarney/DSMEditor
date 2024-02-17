@@ -9,6 +9,7 @@ import Util.RandomColorGenerator;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -19,6 +20,33 @@ import java.util.Random;
  * @author Aiden Carney
  */
 public class Thebeau {
+
+//
+//    private static int getClusterSize(SymmetricDSMData matrix, Grouping group) {
+//        int size = 0;
+//        for (DSMItem row : matrix.getRows()) {
+//            if (row.getGroup1().equals(group)) {
+//                size += 1;
+//            }
+//        }
+//        return size;
+//    }
+//
+//
+//    private static double getConnectionSum(boolean byWeight, DSMConnection ... connections) {
+//        double sum = 0;
+//        for (DSMConnection conn : connections) {
+//            if (conn != null) {
+//                if (byWeight) {
+//                    sum += conn.getWeight();
+//                } else {
+//                    sum += 1;
+//                }
+//            }
+//        }
+//        return sum;
+//    }
+
 
     /**
      * Function to calculate the coordination score of a DSM using Fernandez's thesis (https://dsmweborg.files.wordpress.com/2019/05/msc_thebeau.pdf p28-29)
@@ -40,29 +68,29 @@ public class Thebeau {
         HashMap<Grouping, Double> intraCostBreakdown = new HashMap<>();
         double totalIntraCost = 0.0;
         double totalExtraCost = 0.0;
-        for(DSMConnection conn : matrix.getConnections()) {
-            if(matrix.getItem(conn.getRowUid()).getGroup1().equals(matrix.getItem(conn.getColUid()).getGroup1())) {  // row and col groups are the same so add to intra cluster
-                Integer clusterSize = 0;  // calculate cluster size
-                for(DSMItem row : matrix.getRows()) {
-                    if(row.getGroup1().equals(matrix.getItem(conn.getRowUid()).getGroup1())) {
-                        clusterSize += 1;
-                    }
-                }
 
-                Double intraCost = Math.pow(Math.abs(optimalSizeCluster - clusterSize), powcc);
+        int dsmSize = matrix.getRows().size();
+
+        // determine cluster sizes
+        HashMap<Grouping, Integer> clusterSizes = new HashMap<>();
+        for (DSMItem row : matrix.getRows()) {
+            clusterSizes.merge(row.getGroup1(), 1, Integer::sum);  // increment or add new key to cluster size
+        }
+
+        for(DSMConnection conn : matrix.getConnections()) {
+            DSMItem rowItem = matrix.getRowItem(conn.getRowUid());
+            DSMItem colItem = matrix.getColItem(conn.getColUid());
+
+            if(!SymmetricDSMData.DEFAULT_GROUP_UID.equals(rowItem.getGroup1().getUid()) && rowItem.getGroup1().equals(colItem.getGroup1())) {
+                // row and col groups are the same so add to intra cluster
+                double intraCost = Math.pow(Math.abs(optimalSizeCluster - clusterSizes.get(rowItem.getGroup1())), powcc);
                 if(calculateByWeight) {
                     intraCost = conn.getWeight() * intraCost;
                 }
 
-                if(intraCostBreakdown.get(matrix.getItem(conn.getRowUid()).getGroup1()) != null) {
-                    intraCostBreakdown.put(matrix.getItem(conn.getRowUid()).getGroup1(), intraCostBreakdown.get(matrix.getItem(conn.getRowUid()).getGroup1()) + intraCost);
-                } else {
-                    intraCostBreakdown.put(matrix.getItem(conn.getRowUid()).getGroup1(), intraCost);
-                }
-
+                intraCostBreakdown.merge(rowItem.getGroup1(), intraCost, Double::sum);  // increment or add new key to breakdown
                 totalIntraCost += intraCost;
             } else {
-                int dsmSize = matrix.getRows().size();
                 if(calculateByWeight) {
                     totalExtraCost += conn.getWeight() * Math.pow(dsmSize, powcc);
                 } else {
@@ -85,14 +113,14 @@ public class Thebeau {
      *
      * @param matrix             the matrix to use
      * @param group              the group in the matrix to use
+     * @param rowItem            the row item to calculate bid for
      * @param optimalSizeCluster optimal cluster size that will receive no penalty
      * @param powdep             exponential to emphasize connections
      * @param powbid             exponential to penalize non-optimal cluster size
      * @param calculateByWeight  calculate bid by weight or occurrence
-     *
-     * @return HashMap of rowUid and bid for the given group
+     * @return the cluster bid for a given row item
      */
-    public static HashMap<Integer, Double> calculateClusterBids(SymmetricDSMData matrix, Grouping group, Double optimalSizeCluster, Double powdep, Double powbid, Boolean calculateByWeight) {
+    public static double calculateClusterBid(SymmetricDSMData matrix, Grouping group, DSMItem rowItem, Double optimalSizeCluster, Double powdep, Double powbid, Boolean calculateByWeight) {
         HashMap<Integer, Double> bids = new HashMap<>();
 
         Integer clusterSize = 0;
@@ -102,25 +130,37 @@ public class Thebeau {
             }
         }
 
-        for(DSMItem row : matrix.getRows()) {  // calculate bid of each item in the matrix for the given cluster
-            double inout = 0.0;  // sum of DSM interactions of the item with each of the items in the cluster
+        double inout = 0.0;  // sum of DSM interactions of the item with each of the items in the cluster
 
-            for(DSMItem col : matrix.getCols()) {
-                if(col.getGroup1().equals(group) && col.getAliasUid() != row.getUid()) {  // make connection a part of inout score
-                    DSMConnection conn = matrix.getConnection(row.getUid(), col.getUid());
-                    if(calculateByWeight && conn != null) {
-                        inout += conn.getWeight();
-                    } else if(conn != null) {
-                        inout += 1;
-                    }
+        for(DSMItem col : matrix.getCols()) {
+            if(col.getGroup1().equals(group) && col.getAliasUid() != rowItem.getUid()) {  // make connection a part of inout score
+                DSMConnection conn = matrix.getConnection(rowItem.getUid(), col.getUid());
+                if(calculateByWeight && conn != null) {
+                    inout += conn.getWeight();
+                } else if(conn != null) {
+                    inout += 1;
                 }
             }
-
-            Double clusterBid = Math.pow(inout, powdep) / Math.pow(Math.abs(optimalSizeCluster - clusterSize), powbid);
-            bids.put(row.getUid(), clusterBid);
         }
 
-        return bids;
+        return Math.pow(inout, powdep) / Math.pow(Math.abs(optimalSizeCluster - clusterSize), powbid);
+    }
+
+
+    /**
+     * Deletes a grouping from a symmetric dsm if no items are contained in it
+     * @param matrix  the matrix the group is from
+     * @param group   the group to check if empty
+     */
+    private static void deleteClusterIfEmpty(SymmetricDSMData matrix, Grouping group) {
+        int clusterSize = 0;
+        for (DSMItem row : matrix.getRows()) {
+            if (row.getGroup1().equals(group)) clusterSize++;
+        }
+
+        if (clusterSize == 0) {
+            matrix.removeGrouping(group);
+        }
     }
 
 
@@ -133,8 +173,8 @@ public class Thebeau {
      * 3. Randomly choose an element
      * 4. Calculate bid from all clusters for the selected element
      * 5. Randomly choose a number between 1 and rand_bid (algorithm parameter)
-     * 6. Calculate the total Coordination Cost if the selected element becomes a member of the cluster with highest bid (use second highest bid if step 5 is equal to rand_bid)
-     * 7. Randomly choose a number between I and rand_accept (algorithm parameter)
+     * 6. Calculate the total Coordination Cost if the selected element becomes a member of the cluster with highest bid (use second-highest bid if step 5 is equal to rand_bid)
+     * 7. Randomly choose a number between 1 and rand_accept (algorithm parameter)
      * 8. If new Coordination Cost is lower than the old coordination cost or the number chosen in step 7 is equal to rand_accept, make the change permanent otherwise make no changes
      * 9. Go back to Step 3 until repeated a set number of times
      *
@@ -145,13 +185,16 @@ public class Thebeau {
      * @param powcc              constant to penalize size of cluster in cost calculation
      * @param randBid            constant to determine how often to perform an action based on the second highest bid
      * @param randAccept         constant to determine how often to perform a not necessarily optimal action
+     * @param exclusions         a list of uids to exclude from clustering
      * @param calculateByWeight  calculate scores and bidding by weight or by number of occurrences
      * @param numLevels          number of iterations
      * @param randSeed           seed for random number generator
      * @param debug              debug to stdout
      * @return                   SymmetricDSMData object of the new clustered matrix
      */
-    public static SymmetricDSMData thebeauAlgorithm(SymmetricDSMData inputMatrix, Double optimalSizeCluster, Double powdep, Double powbid, Double powcc, Double randBid, Double randAccept, Boolean calculateByWeight, int numLevels, long randSeed, boolean debug) {
+    public static SymmetricDSMData thebeauAlgorithm(SymmetricDSMData inputMatrix, Double optimalSizeCluster, Double powdep,
+                Double powbid, Double powcc, Integer randBid, Integer randAccept, ArrayList<Integer> exclusions,
+                Boolean calculateByWeight, int numLevels,long randSeed, boolean debug) {
         Random generator = new Random(randSeed);
 
         // place each element in the matrix in its own cluster
@@ -167,11 +210,13 @@ public class Thebeau {
             matrix.updateGroupingColor(group, rgc.next());
         }
 
-        // save the best solution
-        SymmetricDSMData bestSolution = matrix.createCopy();
-
         // calculate initial coordination cost
         double coordinationCost = (Double)getCoordinationScore(matrix, optimalSizeCluster, powcc, calculateByWeight).get("TotalCost");
+
+        // save the best solution
+        SymmetricDSMData bestSolution = matrix.createCopy();
+        double bestSolutionCost = coordinationCost;  // best solution is just a copy of matrix so this number is the same and
+                                                     // does not need to be calculated twice
 
         StringBuilder debugString = new StringBuilder("iteration,start time, elapsed time,coordination score\n");
         Instant absStart = Instant.now();
@@ -179,54 +224,65 @@ public class Thebeau {
         for(int i=0; i < numLevels; i++) {  // iterate numLevels times
             Instant start = Instant.now();
 
-            // choose an element from the matrix
-            int n = (int)(generator.nextDouble() * (matrix.getRows().size() - 1));  // double from 0 to 1.0 multiplied by max index cast to integer
+            // Choose an element from the matrix. Keep choosing randomly until chosen item is not excluded
+            int n = generator.nextInt(matrix.getRows().size());
             DSMItem item = matrix.getRows().elementAt(n);
+            while (exclusions.contains(item.getUid())) {
+                n = generator.nextInt(matrix.getRows().size());
+                item = matrix.getRows().elementAt(n);
+            }
+
             // calculate bids
             HashMap<Grouping, Double> bids = new HashMap<>();
             for (Grouping group : matrix.getGroupings()) {
-                double bid = calculateClusterBids(matrix, group, optimalSizeCluster, powdep, powbid, calculateByWeight).get(item.getUid());
+                double bid = calculateClusterBid(matrix, group, item, optimalSizeCluster, powdep, powbid, calculateByWeight);
                 bids.put(group, bid);
+            }
+
+
+            // find first and second-highest bidders
+            Grouping highestBidder = null;
+            Grouping secondHighestBidder = null;
+            double highestBid = -1;
+            double secondHighestBid = -1;
+            for (Map.Entry<Grouping, Double> entry : bids.entrySet()) {
+                if (Double.compare(entry.getValue(), highestBid) > 0) {
+                    secondHighestBidder = highestBidder;
+                    secondHighestBid = highestBid;
+
+                    highestBidder = entry.getKey();
+                    highestBid = entry.getValue();
+                } else if (Double.compare(entry.getValue(), secondHighestBid) > 0) {
+                    secondHighestBidder = entry.getKey();
+                    secondHighestBid = entry.getValue();
+                }
             }
 
             // choose a number between 0 and randBid to determine if it should make a suboptimal change
             SymmetricDSMData tempMatrix = matrix.createCopy();
             item = tempMatrix.getRows().elementAt(n);  // update item to the item from the new matrix so that it is not modifying a copy
-            int nBid = (int) (generator.nextDouble() * (randBid + 1));  // add one to randBid because with truncation nBid will never be equal to randBid
+            int nBid = generator.nextInt(randBid) + 1;  // add one to randBid because with truncation nBid will never be equal to randBid
 
-            // find if the change is optimal
-            Grouping highestBidder = bids.entrySet().iterator().next().getKey();  // start with a default value so comparison doesn't throw NullPointerException
-            if (nBid == randBid) {  // assign item group to second highest bidder
-                Grouping secondHighestBidder = new Grouping("", null);
-                for (Map.Entry<Grouping, Double> entry : bids.entrySet()) {
-                    if (Double.compare(entry.getValue(), bids.get(highestBidder)) >= 0) {
-                        highestBidder = entry.getKey();
-                        secondHighestBidder = highestBidder;
-                    } else if (Double.compare(entry.getValue(), bids.get(secondHighestBidder)) >= 0) {
-                        secondHighestBidder = entry.getKey();
-                    }
-                }
+            Grouping oldGroup = item.getGroup1();
+            if (nBid == randBid) {  // assign item group to second-highest bidder
                 tempMatrix.setItemGroup(item, secondHighestBidder);
 
             } else {  // assign to highest bidder
-                for (Map.Entry<Grouping, Double> entry : bids.entrySet()) {
-                    if (Double.compare(entry.getValue(), bids.get(highestBidder)) >= 0) {
-                        highestBidder = entry.getKey();
-                    }
-                }
                 tempMatrix.setItemGroup(item, highestBidder);
             }
+            deleteClusterIfEmpty(tempMatrix, oldGroup);
 
             // choose a number between 0 and randAccept to determine if change is permanent regardless of it being optimal
-            int nAccept = (int) (generator.nextDouble() * (randAccept + 1));  // add one to randAccept because with truncation nAccept will never be equal to randAccept
+            int nAccept = generator.nextInt(randAccept) + 1;  // add one to randAccept because with truncation nAccept will never be equal to randAccept
             Double newCoordinationScore = (Double) getCoordinationScore(tempMatrix, optimalSizeCluster, powcc, calculateByWeight).get("TotalCost");
 
             if (nAccept == randAccept || newCoordinationScore < coordinationCost) {  // make the change permanent
                 coordinationCost = newCoordinationScore;
-                matrix = tempMatrix.createCopy();
+                matrix = tempMatrix;
 
-                if (coordinationCost < (Double) getCoordinationScore(bestSolution, optimalSizeCluster, powcc, calculateByWeight).get("TotalCost")) {  // save the new solution as the best one
-                    bestSolution = matrix.createCopy();
+                if (coordinationCost < bestSolutionCost) {  // save the new solution as the best one
+                    bestSolution = matrix.createCopy();  // use copy so this is permanent
+                    bestSolutionCost = coordinationCost;
                 }
             }
 

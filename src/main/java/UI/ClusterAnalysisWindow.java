@@ -276,9 +276,7 @@ public class ClusterAnalysisWindow {
                 } else if(c == 1) {
                     rowBids.add(items.get(r).getName().getValue());
                 } else {
-                    HashMap<Integer, Double> groupBids = Thebeau.calculateClusterBids(matrix, groupOrder.get(c - 2), optimalSizeCluster.doubleValue(), powdep.doubleValue(), powbid.doubleValue(), countByWeight.isSelected());
-
-                    double bid = groupBids.get(items.get(r).getUid());
+                    double bid = Thebeau.calculateClusterBid(matrix, groupOrder.get(c - 2), items.get(r), optimalSizeCluster.doubleValue(), powdep.doubleValue(), powbid.doubleValue(), countByWeight.isSelected());
                     rowBids.add(String.valueOf(bid));
 
                     if(bid > maxBid) {  // check for max or min bids

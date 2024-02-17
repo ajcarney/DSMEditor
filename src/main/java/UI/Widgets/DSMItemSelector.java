@@ -2,23 +2,18 @@ package UI.Widgets;
 
 import Matrices.Data.AbstractDSMData;
 import Matrices.Data.Entities.DSMItem;
-import Matrices.Data.Entities.Grouping;
-import javafx.beans.binding.Bindings;
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.collections.transformation.SortedList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.util.Callback;
+import javafx.util.StringConverter;
 import org.controlsfx.control.SearchableComboBox;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 
 
 public class DSMItemSelector {
@@ -73,8 +68,6 @@ public class DSMItemSelector {
         items.setMinHeight(70);
 
 
-
-
         // set up delete button
         Button deleteSelected = new Button("Delete Selected Item(s)");
         deleteSelected.setOnAction(
@@ -94,8 +87,20 @@ public class DSMItemSelector {
 
         // make the combobox selector
         SearchableComboBox<Integer> itemSelector = new SearchableComboBox<>();
-        itemSelector.setButtonCell(cellFactory.call(null));
-        itemSelector.setCellFactory(cellFactory);
+        itemSelector.setConverter(new StringConverter<>() {  // use converter to allow to search for things
+            @Override
+            public String toString(Integer i) {
+                if (i != null) {
+                    return matrix.getItem(i).getName().getValue();
+                }
+                return "";
+            }
+
+            @Override
+            public Integer fromString(String string) {
+                return null;
+            }
+        });
 
         itemSelector.getItems().addAll(canSelect);
         itemSelector.setMaxWidth(Double.MAX_VALUE);
