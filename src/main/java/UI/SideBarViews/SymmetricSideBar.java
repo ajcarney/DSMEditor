@@ -11,10 +11,13 @@ import UI.Widgets.Misc;
 import UI.Widgets.NumericTextField;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
@@ -45,9 +48,6 @@ public class SymmetricSideBar extends AbstractSideBar {
     public SymmetricSideBar(SymmetricDSMData matrix, SymmetricView matrixView) {
         super(matrix, matrixView);
         this.matrix = matrix;
-
-        addMatrixItems.setText("Add Rows/Columns");
-        deleteMatrixItems.setText("Delete Rows/Columns");
 
         configureGroupings.setOnAction(e -> configureGroupingsCallback());
         configureGroupings.setMaxWidth(Double.MAX_VALUE);
@@ -134,11 +134,21 @@ public class SymmetricSideBar extends AbstractSideBar {
 
         Button addItem = new Button("Add Item");
         addItem.setOnAction(e -> {
-            changesToMakeView.getItems().add(textField.getText());
+            if (!textField.getText().isEmpty()) {
+                changesToMakeView.getItems().add(textField.getText());
+            }
         });
         entryArea.getChildren().addAll(textField, addItem);
         entryArea.setPadding(new Insets(10, 10, 10, 10));
         entryArea.setSpacing(20);
+
+        textField.setOnKeyPressed(ke -> {  // set up callback to act like add button was pressed when hitting enter
+            if (ke.getCode().equals(KeyCode.ENTER)) {
+                addItem.fire();
+                textField.selectAll();
+            }
+        });
+
 
         // create HBox for user to close with our without changes
         HBox closeArea = new HBox();

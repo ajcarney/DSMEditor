@@ -15,6 +15,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.Modality;
@@ -46,9 +47,6 @@ public class MultiDomainSideBar extends AbstractSideBar {
     public MultiDomainSideBar(MultiDomainDSMData matrix, MultiDomainView matrixView) {
         super(matrix, matrixView);
         this.matrix = matrix;
-
-        addMatrixItems.setText("Add Rows/Columns");
-        deleteMatrixItems.setText("Delete Rows/Columns");
 
         configureGroupings.setOnAction(e -> configureGroupingsCallback());
         configureGroupings.setMaxWidth(Double.MAX_VALUE);
@@ -161,10 +159,19 @@ public class MultiDomainSideBar extends AbstractSideBar {
 
         Button addItem = new Button("Add Item");
         addItem.setOnAction(e -> {
-            if(domainSelector.getValue() != null) {
+            if(domainSelector.getValue() != null && !textField.getText().isEmpty()) {
                 changesToMakeView.getItems().add(new Pair<>(textField.getText(), domainSelector.getValue()));
             }
         });
+
+        textField.setOnKeyPressed(ke -> {  // set up callback to act like add button was pressed when hitting enter
+            if (ke.getCode().equals(KeyCode.ENTER)) {
+                addItem.fire();
+                textField.selectAll();
+            }
+        });
+
+
         HBox entryArea = new HBox();
         entryArea.getChildren().addAll(itemData, Misc.getHorizontalSpacer(), addItem);
         entryArea.setPadding(new Insets(10, 10, 10, 10));

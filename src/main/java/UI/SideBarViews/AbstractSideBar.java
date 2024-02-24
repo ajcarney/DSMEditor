@@ -17,11 +17,13 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Callback;
+import javafx.util.Pair;
 import javafx.util.StringConverter;
 
 import java.util.ArrayList;
@@ -36,8 +38,8 @@ import java.util.Map;
 public abstract class AbstractSideBar {
     protected VBox layout;
 
-    protected final Button addMatrixItems = new Button();
-    protected final Button deleteMatrixItems = new Button();
+    protected final Button addMatrixItems = new Button("Add Rows/Columns");
+    protected final Button deleteMatrixItems = new Button("Delete Rows/Columns");
     protected final Button appendConnections = new Button("Append Connections");
     protected final Button setConnections = new Button("Set Connections");
     protected final Button deleteConnections = new Button("Delete Connections");
@@ -154,7 +156,7 @@ public abstract class AbstractSideBar {
         addMatrixItems.setMaxWidth(Double.MAX_VALUE);
 
         // default to rows only for deleting items
-        deleteMatrixItems.setOnAction(e -> deleteMatrixItemsCallback(matrix.getRows()));
+        deleteMatrixItems.setOnAction(e -> deleteMatrixItemsCallback(true));
         deleteMatrixItems.setMaxWidth(Double.MAX_VALUE);
 
         appendConnections.setOnAction(e -> appendConnectionsCallback());
@@ -198,7 +200,7 @@ public abstract class AbstractSideBar {
     /**
      * Sets up the button callback for deleting items from the matrix
      */
-    protected void deleteMatrixItemsCallback(List<DSMItem> items) {
+    protected void deleteMatrixItemsCallback(boolean onlyRows) {
         Stage window = new Stage();  // Create Root window
         window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
         window.setTitle("Delete Rows/Columns");
@@ -234,11 +236,21 @@ public abstract class AbstractSideBar {
         itemSelector.setMaxWidth(Double.MAX_VALUE);
         HBox.setHgrow(itemSelector, Priority.ALWAYS);
         itemSelector.setPromptText("Item Name");
-        itemSelector.getItems().addAll(items);
+        if (onlyRows) {
+            itemSelector.getItems().addAll(matrix.getRows());
+        } else {
+            List<DSMItem> items = new ArrayList<>();
+            items.addAll(matrix.getRows());
+            items.addAll(matrix.getCols());
+            itemSelector.getItems().addAll(items);
+        }
 
         Button deleteItem = new Button("Delete Item");
         deleteItem.setOnAction(e -> {
-            changesToMakeView.getItems().add(itemSelector.getValue().getUid());
+            // item must exist and cannot already be added
+            if (itemSelector.getValue() != null && !changesToMakeView.getItems().contains(itemSelector.getValue().getUid())) {
+                changesToMakeView.getItems().add(itemSelector.getValue().getUid());
+            }
         });
 
         entryArea.getChildren().addAll(itemSelector, deleteItem);

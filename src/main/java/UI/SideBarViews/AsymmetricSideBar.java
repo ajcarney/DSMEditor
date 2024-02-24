@@ -15,6 +15,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
@@ -49,15 +50,8 @@ public class AsymmetricSideBar extends AbstractSideBar {
         super(matrix, matrixView);
         this.matrix = matrix;
 
-        addMatrixItems.setText("Add Rows/Columns");
-
-        deleteMatrixItems.setText("Delete Rows/Columns");
-
         // override callback function to provide both row and column items
-        ArrayList<DSMItem> items = new ArrayList<>();
-        items.addAll(matrix.getRows());
-        items.addAll(matrix.getCols());
-        deleteMatrixItems.setOnAction(e -> deleteMatrixItemsCallback(items));
+        deleteMatrixItems.setOnAction(e -> deleteMatrixItemsCallback(false));
 
         configureGroupings.setOnAction(e -> configureGroupingsCallback());
         configureGroupings.setMaxWidth(Double.MAX_VALUE);
@@ -114,20 +108,22 @@ public class AsymmetricSideBar extends AbstractSideBar {
 
         // Create changes view and button for it
         Label label = new Label("Changes to be made");
-        ListView<Pair<String, String>> changesToMakeView = new ListView<>();  // item name, row/column
+
+        enum addOption {
+            ROW, COL
+        }
+        ListView<Pair<String, addOption>> changesToMakeView = new ListView<>();  // item name, row/column
         changesToMakeView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         changesToMakeView.setCellFactory(param -> new ListCell<>() {  // item name
             @Override
-            protected void updateItem(Pair<String, String> item, boolean empty) {
+            protected void updateItem(Pair<String, addOption> item, boolean empty) {
                 super.updateItem(item, empty);
-
                 if (empty || item == null) {
                     setText(null);
                 } else {
-                    if(item.getValue().equals("row")) {
-                        setText(item.getKey() + " Row");
-                    } else {
-                        setText(item.getKey() + " Column");
+                    switch(item.getValue()) {
+                        case ROW:  setText(item.getKey() + " Row"); break;
+                        case COL:  setText(item.getKey() + " Col"); break;
                     }
                 }
             }
@@ -146,15 +142,37 @@ public class AsymmetricSideBar extends AbstractSideBar {
         textField.setPromptText("Row/Column Name");
         HBox.setHgrow(textField, Priority.ALWAYS);
 
-        Button addRow = new Button("Add as Row");
-        addRow.setOnAction(e -> {
-            changesToMakeView.getItems().add(new Pair<>(textField.getText(), "row"));
+        // selector for row or column
+        VBox itemTypeView = new VBox();
+        ToggleGroup itemTypeGroup = new ToggleGroup();
+        RadioButton isRowToggle = new RadioButton("Row");
+        RadioButton isColToggle = new RadioButton("Col");
+        isRowToggle.setToggleGroup(itemTypeGroup);
+        isColToggle.setToggleGroup(itemTypeGroup);
+        itemTypeView.getChildren().addAll(isRowToggle, isColToggle);
+        itemTypeGroup.selectToggle(isRowToggle);  // default to row selected
+
+
+        // add item
+        Button addItem = new Button("Add Item");
+        addItem.setOnAction(e -> {
+            if (itemTypeGroup.getSelectedToggle().equals(isRowToggle)) {
+                changesToMakeView.getItems().add(new Pair<>(textField.getText(), addOption.ROW));
+            } else {
+                changesToMakeView.getItems().add(new Pair<>(textField.getText(), addOption.COL));
+            }
         });
-        Button addCol = new Button("Add as Column");
-        addCol.setOnAction(e -> {
-            changesToMakeView.getItems().add(new Pair<>(textField.getText(), "col"));
+
+        textField.setOnKeyPressed(ke -> {  // set up callback to act like add button was pressed when hitting enter
+            if (ke.getCode().equals(KeyCode.ENTER) && !textField.getText().isEmpty()) {
+                addItem.fire();
+                textField.selectAll();
+            }
         });
-        entryArea.getChildren().addAll(textField, addRow, addCol);
+
+        // add they entry area children. Simply don't show the select row/column toggles if allowSelectIsRow is false
+        entryArea.getChildren().addAll(textField, itemTypeView, addItem);
+
         entryArea.setPadding(new Insets(10, 10, 10, 10));
         entryArea.setSpacing(20);
 
@@ -162,9 +180,8 @@ public class AsymmetricSideBar extends AbstractSideBar {
         HBox closeArea = new HBox();
         Button applyButton = new Button("Apply Changes");
         applyButton.setOnAction(e -> {
-            for(Pair<String, String> item : changesToMakeView.getItems()) {
-                boolean isRow = item.getValue().equals("row");
-                matrix.createItem(item.getKey(), isRow);
+            for(Pair<String, addOption> item : changesToMakeView.getItems()) {
+                matrix.createItem(item.getKey(), item.getValue().equals(addOption.ROW));
             }
             matrix.setCurrentStateAsCheckpoint();
             window.close();
