@@ -479,7 +479,7 @@ public class AsymmetricView extends AbstractMatrixView {
      * Creates the gui that displays with minimal detail so it can render large matrices faster
      */
     @Override
-    protected void refreshFastRenderView() {
+    protected void refreshFastRenderView(boolean isStatic) {
         cells = new ArrayList<>();
         gridUidLookup = new HashMap<>();
         gridUidLookup.put("rows", new HashMap<>());
@@ -489,6 +489,7 @@ public class AsymmetricView extends AbstractMatrixView {
         rootLayout.setAlignment(Pos.CENTER);
 
         FreezeGrid grid = new FreezeGrid();
+        grid.setStatic(isStatic);
 
         ArrayList<ArrayList<Pair<RenderMode, Object>>> template = matrix.getGridArray();
         ArrayList<ArrayList<HBox>> gridData = new ArrayList<>();

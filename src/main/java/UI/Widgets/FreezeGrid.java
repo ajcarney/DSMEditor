@@ -132,6 +132,12 @@ public class FreezeGrid {
     private final ScrollBar xScroll = new ScrollBar();
     private final ScrollBar yScroll = new ScrollBar();
 
+    private final ScrollPane scrollNBox = new ScrollPane();
+    private final ScrollPane scrollWBox = new ScrollPane();
+    private final ScrollPane scrollCBox = new ScrollPane();
+    private final ScrollPane scrollSBox = new ScrollPane();
+    private final ScrollPane scrollEBox = new ScrollPane();
+
     private final BorderPane grid;
 
 
@@ -220,7 +226,7 @@ public class FreezeGrid {
         }
 
         // optionally allow adding to scene because this is expensive and may mess up nodes parents if update grid is
-        // not called afterwards
+        // not called afterward
         if(addToDummy) {
             // a dummy scene is needed to calculate preferred sizes of nodes
             StackPane ghostPane = new StackPane();
@@ -477,7 +483,7 @@ public class FreezeGrid {
                 box.getChildren().add(l);
                 box.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
                 HBox.setHgrow(box, Priority.ALWAYS);
-                if(row.get(c).equals("")) {
+                if(row.get(c).isEmpty()) {
                     box = null;
                 }
                 FreezeGridCell cell = new FreezeGridCell(new Pair<>(r, c), box);
@@ -670,7 +676,7 @@ public class FreezeGrid {
             neGridConstraints.getKey().getKey()       // ne start x
         );
 
-        ScrollPane scrollNBox = new ScrollPane(nnBox);  // configure scroll pane later
+        scrollNBox.setContent(nnBox);  // configure scroll pane later
         if(!nnBox.getChildren().isEmpty()) {
             nBox.getChildren().add(scrollNBox);
         }
@@ -688,7 +694,7 @@ public class FreezeGrid {
             swGridConstraints.getKey().getValue(),    // sw start y
             swGridConstraints.getValue().getKey()     // sw end x
         );
-        ScrollPane scrollWBox = new ScrollPane(wBox);  // configure scroll pane later
+        scrollWBox.setContent(wBox);  // configure scroll pane later
 
         // create center box
         GridPane cBox = createCornerBox(
@@ -697,7 +703,7 @@ public class FreezeGrid {
                 seGridConstraints.getKey().getValue(),    // se start y
                 seGridConstraints.getKey().getKey()       // se start x
         );
-        ScrollPane scrollCBox = new ScrollPane(cBox);  // configure scroll pane later
+        scrollCBox.setContent(cBox);  // configure scroll pane later
 
 
         // create SW box
@@ -715,7 +721,7 @@ public class FreezeGrid {
             seGridConstraints.getKey().getKey()       // se start x
         );
 
-        ScrollPane scrollSBox = new ScrollPane(ssBox);  // configure scroll pane later
+        scrollSBox.setContent(ssBox);  // configure scroll pane later
         if(!ssBox.getChildren().isEmpty()) {
             sBox.getChildren().add(scrollSBox);
         }
@@ -733,7 +739,7 @@ public class FreezeGrid {
             seGridConstraints.getKey().getValue(),    // se start y
             seGridConstraints.getValue().getKey()     // se end x
         );
-        ScrollPane scrollEBox = new ScrollPane(eBox);  // configure scroll pane later
+        scrollEBox.setContent(eBox);
 
 
         // set cell pref sizes to row/col sizes
@@ -831,6 +837,24 @@ public class FreezeGrid {
         yScrollPane.getChildren().addAll(xScrollPane, yScroll);
         yScrollPane.setAlignment(Pos.CENTER);
         return yScrollPane;
+    }
+
+
+    /**
+     * shows or hides the scroll bars
+     * @param isStatic true if nothing should be able to move around
+     */
+    public void setStatic(boolean isStatic) {
+        xScroll.setVisible(!isStatic);
+        yScroll.setVisible(!isStatic);
+        xScroll.setManaged(!isStatic);
+        yScroll.setManaged(!isStatic);
+
+        scrollNBox.setPannable(!isStatic);
+        scrollSBox.setPannable(!isStatic);
+        scrollWBox.setPannable(!isStatic);
+        scrollEBox.setPannable(!isStatic);
+        scrollCBox.setPannable(!isStatic);
     }
 
 

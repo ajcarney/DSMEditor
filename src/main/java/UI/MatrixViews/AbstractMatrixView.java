@@ -82,7 +82,8 @@ public abstract class AbstractMatrixView {
         FAST_RENDER,
         STATIC_NAMES,
         STATIC_WEIGHTS,
-        STATIC_INTERFACES
+        STATIC_INTERFACES,
+        STATIC_FAST_RENDER
     }
 
 
@@ -117,7 +118,7 @@ public abstract class AbstractMatrixView {
 
         // set up the binding for cross highlighting
         crossHighlightData.addListener((o, oldValue, newValue) -> {
-            crossHighlightCell(oldValue.hoverGridX, oldValue.hoverGridY, false);  // always unhighlight previous location
+            crossHighlightCell(oldValue.hoverGridX, oldValue.hoverGridY, false);  // always un-highlight previous location
             crossHighlightCell(newValue.hoverGridX, newValue.hoverGridY, newValue.crossHighlightEnabled);
         });
 
@@ -276,7 +277,7 @@ public abstract class AbstractMatrixView {
 
 //region Setters
     /**
-     * Sets the font size to a new value. This value is bound to in the gui so it will be auto updated.
+     * Sets the font size to a new value. This value is bound to in the gui, so it will be auto updated.
      *
      * @param newSize the new font size to use in the gui
      */
@@ -286,7 +287,7 @@ public abstract class AbstractMatrixView {
 
 
     /**
-     * Sets the new current view mode for the matrix. If switching outside of the class of view
+     * Sets the new current view mode for the matrix. If switching outside the class of view
      * mode (static, edit, fast) then a refresh will be triggered
      *
      * @param mode  the new mode for the matrix
@@ -655,7 +656,7 @@ public abstract class AbstractMatrixView {
                 HBox closeArea = new HBox();
                 Button applyButton = new Button("Apply");
                 applyButton.setOnAction(ee -> {
-                    if(!nameField.getText().equals("")) {
+                    if(!nameField.getText().isEmpty()) {
                         double weight;
                         try {
                             weight = Double.parseDouble(weightField.getText());
@@ -680,9 +681,7 @@ public abstract class AbstractMatrixView {
                 });
 
                 Button cancelButton = new Button("Cancel");
-                cancelButton.setOnAction(ee -> {
-                    window.close();
-                });
+                cancelButton.setOnAction(ee -> window.close());
                 closeArea.getChildren().addAll(cancelButton, Misc.getHorizontalSpacer(), applyButton);
 
                 //Display window and wait for it to be closed before returning
@@ -790,9 +789,11 @@ public abstract class AbstractMatrixView {
 
 
     /**
-     * Creates the gui that displays with minimal detail so it can render large matrices faster
+     * Creates a fast rendered view of the matrix. Because there is no updating by clicking in this view, a
+     * static version of this can be made with a simple flag to not allow scrolling or panning
+     * @param isStatic if the view is static
      */
-    protected abstract void refreshFastRenderView();
+    protected abstract void refreshFastRenderView(boolean isStatic);
 
 
     /**
@@ -802,7 +803,8 @@ public abstract class AbstractMatrixView {
         switch(currentMode.getValue()) {
             case EDIT_NAMES, EDIT_WEIGHTS, EDIT_INTERFACES -> refreshEditView();
             case STATIC_NAMES, STATIC_WEIGHTS, STATIC_INTERFACES -> refreshStaticView();
-            case FAST_RENDER -> refreshFastRenderView();
+            case STATIC_FAST_RENDER -> refreshFastRenderView(true);
+            case FAST_RENDER -> refreshFastRenderView(false);
         }
     }
 //endregion

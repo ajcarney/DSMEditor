@@ -439,7 +439,7 @@ public abstract class AbstractIOHandler implements IStandardExports {
             HBox centeredMatrix = new HBox();
 
             if(fastRender.isSelected()) {
-                matrixView.setCurrentMode(AbstractMatrixView.MatrixViewMode.FAST_RENDER);
+                matrixView.setCurrentMode(AbstractMatrixView.MatrixViewMode.STATIC_FAST_RENDER);
             } else if(showConnectionNames.isSelected()) {
                 matrixView.setCurrentMode(AbstractMatrixView.MatrixViewMode.STATIC_NAMES);
             } else {
