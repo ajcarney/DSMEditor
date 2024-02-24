@@ -187,7 +187,7 @@ public class HeaderMenu {
      *
      * @param menu  the menu item to set the callback for
      */
-    private <T extends MenuItem> void setupOpenMenuButton(T menu) {
+    private void setupOpenMenuButton(MenuItem menu) {
         menu.setOnAction( e -> {
             FileChooser fileChooser = new FileChooser();
             fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("DSM File", "*.dsm"));  // dsm is the only file type usable
@@ -215,7 +215,7 @@ public class HeaderMenu {
      *
      * @param menu  the Menu object
      */
-    public void setupSaveFileMenuButton(MenuItem menu) {
+    private void setupSaveFileMenuButton(MenuItem menu) {
         menu.setOnAction(e -> {
             if(matrixData == null) return;
 
@@ -232,6 +232,7 @@ public class HeaderMenu {
             }
             int code = ioHandler.saveMatrixToFile(ioHandler.getSavePath());  // TODO: add checking with the return code
         });
+        menu.setAccelerator(new KeyCodeCombination(KeyCode.S, KeyCombination.SHORTCUT_DOWN));
     }
 
 
@@ -240,7 +241,7 @@ public class HeaderMenu {
      *
      * @param menu  the Menu object
      */
-    public <T extends MenuItem> void setupSaveAsFileMenuButton(T menu) {
+    private void setupSaveAsFileMenuButton(MenuItem menu) {
         menu.setOnAction(e -> {
             if(matrixData == null) return;
 
@@ -255,6 +256,7 @@ public class HeaderMenu {
                 matrixData.clearWasModifiedFlag();
             }
         });
+        menu.setAccelerator(new KeyCodeCombination(KeyCode.S, KeyCombination.SHIFT_DOWN, KeyCombination.SHORTCUT_DOWN));
     }
 
 
@@ -568,7 +570,7 @@ public class HeaderMenu {
     /**
      * sets up the Menu object for the view menu
      */
-    protected void setupViewMenu() {
+    private void setupViewMenu() {
         MenuItem zoomIn = new MenuItem("Zoom In");
         zoomIn.setOnAction(e -> editor.increaseFontScaling());
         zoomIn.setAccelerator(new KeyCodeCombination(KeyCode.I, KeyCombination.SHORTCUT_DOWN));
@@ -697,7 +699,7 @@ public class HeaderMenu {
     /**
      * sets up the Menu object for the help menu
      */
-    protected void setupHelpMenu() {
+    private void setupHelpMenu() {
         MenuItem submitBugReport = new MenuItem("Submit Bug Report");
         submitBugReport.setOnAction(e -> HelpMenu.openBugReportMenu());
 
