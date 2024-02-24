@@ -6,6 +6,7 @@ import Matrices.Data.Entities.DSMInterfaceType;
 import Matrices.Data.Entities.DSMItem;
 import Matrices.Data.Entities.Grouping;
 import UI.MatrixViews.AsymmetricView;
+import UI.Widgets.DSMItemComboBox;
 import UI.Widgets.Misc;
 import UI.Widgets.NumericTextField;
 import javafx.collections.FXCollections;
@@ -22,11 +23,11 @@ import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Pair;
+import org.controlsfx.control.SearchableComboBox;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Vector;
 
 
 /**
@@ -215,7 +216,7 @@ public class AsymmetricSideBar extends AbstractSideBar {
 
         // set up the items needed by the builder
         HBox connectionsArea = new HBox();
-        ComboBox<DSMItem> itemSelector = new ComboBox<>();
+        DSMItemComboBox itemSelector = new DSMItemComboBox();
         HashMap<CheckBox, DSMItem> connections = new HashMap<>();
         ToggleGroup tg = new ToggleGroup();
         RadioButton selectByRow = new RadioButton("Row");
@@ -225,7 +226,7 @@ public class AsymmetricSideBar extends AbstractSideBar {
         ArrayList<DSMInterfaceType> selectedInterfaces = new ArrayList<>();
 
         // create the viewer for connections
-        WidgetBuilders.createConnectionsViewerScrollPane(
+        createConnectionsViewerScrollPane(
                 matrix,
                 connectionsArea,
                 itemSelector,
@@ -330,7 +331,7 @@ public class AsymmetricSideBar extends AbstractSideBar {
 
         // set up the items needed by the builder
         HBox connectionsArea = new HBox();
-        ComboBox<DSMItem> itemSelector = new ComboBox<>();
+        DSMItemComboBox itemSelector = new DSMItemComboBox();
         HashMap<CheckBox, DSMItem> connections = new HashMap<>();
         ToggleGroup tg = new ToggleGroup();
         RadioButton selectByRow = new RadioButton("Row");
@@ -340,7 +341,7 @@ public class AsymmetricSideBar extends AbstractSideBar {
         ArrayList<DSMInterfaceType> selectedInterfaces = new ArrayList<>();
 
         // create the viewer for connections
-        WidgetBuilders.createConnectionsViewerScrollPane(
+        createConnectionsViewerScrollPane(
             matrix,
             connectionsArea,
             itemSelector,
@@ -462,10 +463,10 @@ public class AsymmetricSideBar extends AbstractSideBar {
         HBox entryArea = new HBox();
 
         // ComboBox to choose which row or column to modify connections of
-        ComboBox<Integer> firstItemSelector = new ComboBox<>();
-        firstItemSelector.setButtonCell(MATRIX_ITEM_INTEGER_COMBOBOX_CELL_FACTORY.call(null));
-        firstItemSelector.setCellFactory(MATRIX_ITEM_INTEGER_COMBOBOX_CELL_FACTORY);
-        Vector<Integer> items = new Vector<>();
+        SearchableComboBox<Integer> firstItemSelector = new SearchableComboBox<>();
+        firstItemSelector.setConverter(DSM_ITEM_COMBOBOX_CONVERTER);
+
+        ArrayList<Integer> items = new ArrayList<>();
         items.add(Integer.MAX_VALUE);  // this will be used for selecting all items
         for(DSMItem row : matrix.getRows()) {
             items.add(row.getUid());
@@ -484,9 +485,8 @@ public class AsymmetricSideBar extends AbstractSideBar {
         // ComboBox to choose the second item of the connection (row or column)
         ObservableList<Integer> connectionItems = FXCollections.observableArrayList();
 
-        ComboBox<Integer> secondItemSelector = new ComboBox<>();
-        secondItemSelector.setButtonCell(MATRIX_ITEM_INTEGER_COMBOBOX_CELL_FACTORY.call(null));
-        secondItemSelector.setCellFactory(MATRIX_ITEM_INTEGER_COMBOBOX_CELL_FACTORY);
+        SearchableComboBox<Integer> secondItemSelector = new SearchableComboBox<>();
+        secondItemSelector.setConverter(DSM_ITEM_COMBOBOX_CONVERTER);
         secondItemSelector.setItems(connectionItems);
 
         secondItemSelector.setMaxWidth(Double.MAX_VALUE);
@@ -495,6 +495,8 @@ public class AsymmetricSideBar extends AbstractSideBar {
 
         // add listener to first item to update options in second column
         firstItemSelector.valueProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue == null) return;  // ignore null values
+
             if(matrix.isRow(newValue)) {
                 connectionItems.clear();
                 connectionItems.add(Integer.MAX_VALUE);  // add the all option

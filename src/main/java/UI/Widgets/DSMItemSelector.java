@@ -10,8 +10,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.util.Callback;
-import javafx.util.StringConverter;
-import org.controlsfx.control.SearchableComboBox;
 
 import java.util.ArrayList;
 
@@ -75,32 +73,13 @@ public class DSMItemSelector {
 
 
         // make a list of all the items that can be selected
-        ArrayList<Integer> canSelect = new ArrayList<>();
-        for (DSMItem row : matrix.getRows()) {
-            canSelect.add(row.getUid());
-        }
+        ArrayList<DSMItem> canSelect = new ArrayList<>(matrix.getRows());
         if (!onlyRows) {  // add columns if desired
-            for (DSMItem col : matrix.getCols()) {
-                canSelect.add(col.getUid());
-            }
+            canSelect.addAll(matrix.getCols());
         }
 
         // make the combobox selector
-        SearchableComboBox<Integer> itemSelector = new SearchableComboBox<>();
-        itemSelector.setConverter(new StringConverter<>() {  // use converter to allow to search for things
-            @Override
-            public String toString(Integer i) {
-                if (i != null) {
-                    return matrix.getItem(i).getName().getValue();
-                }
-                return "";
-            }
-
-            @Override
-            public Integer fromString(String string) {
-                return null;
-            }
-        });
+        DSMItemComboBox itemSelector = new DSMItemComboBox();
 
         itemSelector.getItems().addAll(canSelect);
         itemSelector.setMaxWidth(Double.MAX_VALUE);
@@ -110,9 +89,9 @@ public class DSMItemSelector {
         Button addItem = new Button("Add Item");
         addItem.setOnAction(e -> {
             if (itemSelector.getValue() == null || items.getItems()
-                    .contains(itemSelector.getValue()))
+                    .contains(itemSelector.getValue().getUid()))
                 return;
-            items.getItems().add(itemSelector.getValue());
+            items.getItems().add(itemSelector.getValue().getUid());
             items.getItems().sort((arg0, arg1) ->    // sort the list
                     matrix.getItem(arg0).getName().toString().compareToIgnoreCase(matrix.getItem(arg1).getName().toString())
             );
