@@ -256,7 +256,7 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
             }
 
             // create interface type elements
-            for(Map.Entry<String, Vector<DSMInterfaceType>> interfaces : matrix.getInterfaceTypes().entrySet()) {
+            for(Map.Entry<String, List<DSMInterfaceType>> interfaces : matrix.getInterfaceTypes().entrySet()) {
                 Element interfacesGroupingElement = new Element("grouping");
                 interfacesGroupingElement.setAttribute("name", interfaces.getKey());
                 for(DSMInterfaceType i : interfaces.getValue()) {

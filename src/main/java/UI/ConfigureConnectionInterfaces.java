@@ -23,9 +23,9 @@ public class ConfigureConnectionInterfaces {
      *
      * @param interfaces         the available interfaces grouped by their grouping
      * @param currentInterfaces  the currently selected interfaces
-     * @return
+     * @return the new selected interfaces
      */
-    public static ArrayList<DSMInterfaceType> configureConnectionInterfaces(HashMap<String, Vector<DSMInterfaceType>> interfaces, Collection<DSMInterfaceType> currentInterfaces) {
+    public static ArrayList<DSMInterfaceType> configureConnectionInterfaces(HashMap<String, List<DSMInterfaceType>> interfaces, Collection<DSMInterfaceType> currentInterfaces) {
         // create popup window to edit the connection
         Stage window = new Stage();
 
@@ -36,7 +36,7 @@ public class ConfigureConnectionInterfaces {
         final Accordion accordion = new Accordion ();
         ArrayList<DSMInterfaceType> selectedInterfaces = new ArrayList<>(currentInterfaces);  // copy
 
-        for(Map.Entry<String, Vector<DSMInterfaceType>> interfaceGrouping : interfaces.entrySet()) {
+        for(Map.Entry<String, List<DSMInterfaceType>> interfaceGrouping : interfaces.entrySet()) {
             TitledPane root = new TitledPane();
             root.setText(interfaceGrouping.getKey());
 

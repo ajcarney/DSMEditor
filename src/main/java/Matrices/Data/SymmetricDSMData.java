@@ -32,7 +32,6 @@ public class SymmetricDSMData extends AbstractDSMData implements IPropagationAna
     public SymmetricDSMData() {
         super();
 
-        connections = new Vector<>();
         groupings = FXCollections.observableArrayList();
         addGrouping(new Grouping(DEFAULT_GROUP_UID, Grouping.DEFAULT_PRIORITY, "(none)", Color.WHITE, Grouping.DEFAULT_FONT_COLOR));
 
@@ -51,7 +50,6 @@ public class SymmetricDSMData extends AbstractDSMData implements IPropagationAna
     public SymmetricDSMData(Collection<Grouping> groupings) {
         super();
 
-        connections = new Vector<>();
         this.groupings = FXCollections.observableArrayList(groupings);
 
         setWasModified();
@@ -86,8 +84,8 @@ public class SymmetricDSMData extends AbstractDSMData implements IPropagationAna
             copy.groupings.add(new Grouping(group));
         }
 
-        for(Map.Entry<String, Vector<DSMInterfaceType>> interfaceGroup : getInterfaceTypes().entrySet()) {
-            Vector<DSMInterfaceType> interfaces = new Vector<>();
+        for(Map.Entry<String, List<DSMInterfaceType>> interfaceGroup : getInterfaceTypes().entrySet()) {
+            List<DSMInterfaceType> interfaces = new ArrayList<>();
             for(DSMInterfaceType i : interfaceGroup.getValue()) {
                 interfaces.add(new DSMInterfaceType(i));
             }
@@ -222,7 +220,7 @@ public class SymmetricDSMData extends AbstractDSMData implements IPropagationAna
     /**
      * Renames a grouping. Puts the change on the stack but does not set a checkpoint.
      *
-     * @param grouping  the group who's name should be changed
+     * @param grouping  the group whose name should be changed
      * @param newName   the new name for the group
      */
     public void renameGrouping(Grouping grouping, String newName) {
@@ -243,7 +241,7 @@ public class SymmetricDSMData extends AbstractDSMData implements IPropagationAna
     /**
      * Changes a color of a grouping. Puts the change on the stack but does not set a checkpoint.
      *
-     * @param grouping  the group who's name should be changed
+     * @param grouping  the group whose name should be changed
      * @param newColor  the new color of the grouping
      */
     public void updateGroupingColor(Grouping grouping, Color newColor) {
@@ -263,7 +261,7 @@ public class SymmetricDSMData extends AbstractDSMData implements IPropagationAna
     /**
      * Changes a color of a grouping. Puts the change on the stack but does not set a checkpoint.
      *
-     * @param grouping  the grouping who's font color should be changed
+     * @param grouping  the grouping whose font color should be changed
      * @param newColor  the new color of the grouping
      */
     public void updateGroupingFontColor(Grouping grouping, Color newColor) {
@@ -471,7 +469,7 @@ public class SymmetricDSMData extends AbstractDSMData implements IPropagationAna
      */
     public void reDistributeSortIndicesByGroup() {
         rows.sort(Comparator.comparing((DSMItem item) -> item.getGroup1().getName()).thenComparing((DSMItem item) -> item.getName().getValue()));
-        Vector<DSMItem> newCols = new Vector<>();
+        List<DSMItem> newCols = new ArrayList<>();
 
         for(DSMItem row : rows) {  // sort the new columns according to the rows (this does not need to be on the change stack because
                                    // only the index numbers are what matters to the change stack
@@ -487,10 +485,10 @@ public class SymmetricDSMData extends AbstractDSMData implements IPropagationAna
         cols = newCols;
 
         for(int i=0; i<rows.size(); i++) {  // reset row sort Indices 1 -> n
-            setItemSortIndex(rows.elementAt(i), i + 1);
+            setItemSortIndex(rows.get(i), i + 1);
         }
         for(int i=0; i<cols.size(); i++) {  // reset col sort Indices 1 -> n
-            setItemSortIndex(cols.elementAt(i), i + 1);
+            setItemSortIndex(cols.get(i), i + 1);
         }
     }
 

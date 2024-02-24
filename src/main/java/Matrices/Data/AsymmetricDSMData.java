@@ -33,7 +33,6 @@ public class AsymmetricDSMData extends AbstractDSMData implements IPropagationAn
     public AsymmetricDSMData() {
         super();
 
-        connections = new Vector<>();
         rowGroupings = FXCollections.observableArrayList();
         colGroupings = FXCollections.observableArrayList();
         addGrouping(true, new Grouping(DEFAULT_GROUP_UID, Grouping.DEFAULT_PRIORITY,  "(none)", Color.WHITE, Grouping.DEFAULT_FONT_COLOR));
@@ -55,7 +54,6 @@ public class AsymmetricDSMData extends AbstractDSMData implements IPropagationAn
     public AsymmetricDSMData(Collection<Grouping> rowGroupings, Collection<Grouping> colGroupings) {
         super();
 
-        connections = new Vector<>();
         this.rowGroupings = FXCollections.observableArrayList(rowGroupings);
         this.colGroupings = FXCollections.observableArrayList(colGroupings);
 
@@ -93,8 +91,8 @@ public class AsymmetricDSMData extends AbstractDSMData implements IPropagationAn
             copy.colGroupings.add(new Grouping(group));
         }
 
-        for(Map.Entry<String, Vector<DSMInterfaceType>> interfaceGroup : getInterfaceTypes().entrySet()) {
-            Vector<DSMInterfaceType> interfaces = new Vector<>();
+        for(Map.Entry<String, List<DSMInterfaceType>> interfaceGroup : getInterfaceTypes().entrySet()) {
+            List<DSMInterfaceType> interfaces = new ArrayList<>();
             for(DSMInterfaceType i : interfaceGroup.getValue()) {
                 interfaces.add(new DSMInterfaceType(i));
             }
@@ -389,10 +387,11 @@ public class AsymmetricDSMData extends AbstractDSMData implements IPropagationAn
      * Inverts a matrix by flipping its rows and columns and switching the connection rows and columns. Adds changes to
      * the stack to be handled, but does not set a checkpoint
      */
+    @Override
     public final void transposeMatrix() {
-        Vector<DSMItem> oldRows = new Vector<>(rows);
-        Vector<DSMItem> oldCols = new Vector<>(cols);
-        Vector<DSMConnection> oldConnections = new Vector<>(connections);
+        List<DSMItem> oldRows = new ArrayList<>(rows);
+        List<DSMItem> oldCols = new ArrayList<>(cols);
+        List<DSMConnection> oldConnections = new ArrayList<>(connections);
         ObservableList<Grouping> oldRowGroupings = FXCollections.observableArrayList(rowGroupings);
         ObservableList<Grouping> oldColGroupings = FXCollections.observableArrayList(colGroupings);
 
@@ -409,11 +408,11 @@ public class AsymmetricDSMData extends AbstractDSMData implements IPropagationAn
                     }
                 },
                 () -> {  // undo function
-                    cols = new Vector<>(oldCols);
-                    rows = new Vector<>(oldRows);
+                    cols = new ArrayList<>(oldCols);
+                    rows = new ArrayList<>(oldRows);
                     colGroupings = FXCollections.observableArrayList(oldColGroupings);
                     rowGroupings = FXCollections.observableArrayList(oldRowGroupings);
-                    connections = new Vector<>(oldConnections);
+                    connections = new ArrayList<>(oldConnections);
                 },
                 false
         ));
@@ -427,6 +426,7 @@ public class AsymmetricDSMData extends AbstractDSMData implements IPropagationAn
      *
      * @return 2d ArrayList of matrix
      */
+    @Override
     public ArrayList<ArrayList<Pair<RenderMode, Object>>> getGridArray() {
         ArrayList<ArrayList<Pair<RenderMode, Object>>> grid = new ArrayList<>();
 

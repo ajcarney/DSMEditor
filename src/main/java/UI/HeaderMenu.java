@@ -425,9 +425,9 @@ public class HeaderMenu {
                 }
 
                 // create the interfaces
-                HashMap<String, Vector<DSMInterfaceType>> interfaceTypes = new HashMap<>();
-                for(Map.Entry<String, Vector<DSMInterfaceType>> interfaceGroup : symmetricMatrix.getInterfaceTypes().entrySet()) {
-                    Vector<DSMInterfaceType> interfaces = new Vector<>();
+                HashMap<String, List<DSMInterfaceType>> interfaceTypes = new HashMap<>();
+                for(Map.Entry<String, List<DSMInterfaceType>> interfaceGroup : symmetricMatrix.getInterfaceTypes().entrySet()) {
+                    List<DSMInterfaceType> interfaces = new ArrayList<>();
                     for(DSMInterfaceType i : interfaceGroup.getValue()) {
                         interfaces.add(new DSMInterfaceType(i));
                     }
@@ -436,7 +436,7 @@ public class HeaderMenu {
                 for(String interfaceGrouping : interfaceTypes.keySet()) {  // add the groupings
                     multiDomainMatrix.addInterfaceTypeGrouping(interfaceGrouping);
                 }
-                for(Map.Entry<String, Vector<DSMInterfaceType>> interfaces : interfaceTypes.entrySet()) {  // add the interfaces
+                for(Map.Entry<String, List<DSMInterfaceType>> interfaces : interfaceTypes.entrySet()) {  // add the interfaces
                     for(DSMInterfaceType i : interfaces.getValue()) {
                         multiDomainMatrix.addInterface(interfaces.getKey(), i);
                     }

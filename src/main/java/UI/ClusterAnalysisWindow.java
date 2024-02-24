@@ -256,8 +256,8 @@ public class ClusterAnalysisWindow {
      * Runs the bidding analysis algorithm for the input matrix. Updates content on the main window of the gui
      */
     private void runClusterBidsAnalysis() {
-        Vector<Grouping> groupOrder = new Vector<>(matrix.getGroupings());
-        Vector<DSMItem> items = matrix.getRows();
+        List<Grouping> groupOrder = new ArrayList<>(matrix.getGroupings());
+        List<DSMItem> items = matrix.getRows();
         items.sort(Comparator.comparing(DSMItem::getSortIndex));
 
         // create data structure for the table

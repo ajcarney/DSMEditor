@@ -5,12 +5,15 @@ import Matrices.Data.Entities.DSMConnection;
 import Matrices.Data.Entities.DSMInterfaceType;
 import Matrices.Data.Entities.DSMItem;
 import Matrices.Data.Entities.Grouping;
-import UI.MatrixViews.Entities.Cell;
 import UI.ConfigureConnectionInterfaces;
+import UI.MatrixViews.Entities.Cell;
 import UI.Widgets.Misc;
 import UI.Widgets.NumericTextField;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.*;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.Event;
@@ -31,7 +34,6 @@ import javafx.util.Pair;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Optional;
-import java.util.Vector;
 import java.util.stream.Collectors;
 
 
@@ -56,7 +58,7 @@ public abstract class AbstractMatrixView {
 
     protected VBox rootLayout;
 
-    protected Vector<Cell> cells;  // contains information for highlighting
+    protected ArrayList<Cell> cells;  // contains information for highlighting
     protected HashMap<String, HashMap<Integer, Integer>> gridUidLookup;
 
     /**
@@ -103,7 +105,7 @@ public abstract class AbstractMatrixView {
      */
     public AbstractMatrixView(AbstractDSMData matrix, double fontSize) {
         this.matrix = matrix;
-        cells = new Vector<>();
+        cells = new ArrayList<>();
         gridUidLookup = new HashMap<>();
         gridUidLookup.put("rows", new HashMap<>());
         gridUidLookup.put("cols", new HashMap<>());
@@ -205,7 +207,7 @@ public abstract class AbstractMatrixView {
      * @return        the cell object with the specified grid location
      */
     protected Cell getCellByLoc(Pair<Integer, Integer> cellLoc) {
-        // searching in parallel can add some performance improvements once the size of the cells vector increases
+        // searching in parallel can add some performance improvements once the size of the cells increases
         // to a certain point and the overhead is not such that it will detriment smaller matrices significantly
         assert cellLoc != null : "cellLoc was null";
 
@@ -246,7 +248,7 @@ public abstract class AbstractMatrixView {
             return new Pair<>(null, null);
         }
 
-        // searching in parallel can add some performance improvements once the size of the cells vector increases
+        // searching in parallel can add some performance improvements once the size of the cells list increases
         // to a certain point and the overhead is not such that it will detriment smaller matrices significantly
         Optional<Cell> c = cells.stream().parallel().filter(cell -> {
             Pair<Integer, Integer> testUids = getUidsFromGridLoc(cell.getGridLocation());
@@ -388,7 +390,7 @@ public abstract class AbstractMatrixView {
      * @param highlightType the highlight type to assign to (userHighlight, errorHighlight, symmetryErrorHighlight)
      */
     public void clearAllCellsHighlight(String highlightType) {
-        for(Cell cell : (Vector<Cell>)cells.clone()) {  // use a clone so we don't run into concurrent modification exceptions
+        for(Cell cell : new ArrayList<>(cells)) {  // use a clone, so we don't run into concurrent modification exceptions
             cell.updateHighlightBG(null, highlightType);
             refreshCellHighlight(cell);
         }

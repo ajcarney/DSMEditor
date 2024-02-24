@@ -24,10 +24,7 @@ import javafx.util.Callback;
 import javafx.util.Pair;
 import org.controlsfx.control.SearchableComboBox;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Vector;
+import java.util.*;
 
 
 /**
@@ -605,7 +602,7 @@ public class MultiDomainSideBar extends AbstractSideBar {
         SearchableComboBox<Integer> firstItemSelector = new SearchableComboBox<>();
         firstItemSelector.setConverter(DSM_ITEM_COMBOBOX_CONVERTER);
 
-        Vector<Integer> items = new Vector<>();
+        List<Integer> items = new ArrayList<>();
         items.add(Integer.MAX_VALUE);  // this will be used for selecting all items
         for(DSMItem row : matrix.getRows()) {
             items.add(row.getUid());

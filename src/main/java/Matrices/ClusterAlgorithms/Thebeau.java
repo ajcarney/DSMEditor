@@ -205,7 +205,7 @@ public class Thebeau {
         RandomColorGenerator rgc = new RandomColorGenerator(0.2423353);  // use "random" start value for color generation
         for(int i = 0; i < matrix.getRows().size(); i++) {
             Grouping group = new Grouping("G" + i, null);
-            matrix.setItemGroup(matrix.getRows().elementAt(i), group);
+            matrix.setItemGroup(matrix.getRows().get(i), group);
 
             matrix.updateGroupingColor(group, rgc.next());
         }
@@ -226,10 +226,10 @@ public class Thebeau {
 
             // Choose an element from the matrix. Keep choosing randomly until chosen item is not excluded
             int n = generator.nextInt(matrix.getRows().size());
-            DSMItem item = matrix.getRows().elementAt(n);
+            DSMItem item = matrix.getRows().get(n);
             while (exclusions.contains(item.getUid())) {
                 n = generator.nextInt(matrix.getRows().size());
-                item = matrix.getRows().elementAt(n);
+                item = matrix.getRows().get(n);
             }
 
             // calculate bids
@@ -260,7 +260,7 @@ public class Thebeau {
 
             // choose a number between 0 and randBid to determine if it should make a suboptimal change
             SymmetricDSMData tempMatrix = matrix.createCopy();
-            item = tempMatrix.getRows().elementAt(n);  // update item to the item from the new matrix so that it is not modifying a copy
+            item = tempMatrix.getRows().get(n);  // update item to the item from the new matrix so that it is not modifying a copy
             int nBid = generator.nextInt(randBid) + 1;  // add one to randBid because with truncation nBid will never be equal to randBid
 
             Grouping oldGroup = item.getGroup1();

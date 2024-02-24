@@ -153,7 +153,7 @@ public class AsymmetricView extends AbstractMatrixView {
      */
     @Override
     protected void refreshEditView() {
-        cells = new Vector<>();
+        cells = new ArrayList<>();
         gridUidLookup = new HashMap<>();
         gridUidLookup.put("rows", new HashMap<>());
         gridUidLookup.put("cols", new HashMap<>());
@@ -353,7 +353,7 @@ public class AsymmetricView extends AbstractMatrixView {
      */
     @Override
     protected void refreshStaticView() {
-        cells = new Vector<>();
+        cells = new ArrayList<>();
         gridUidLookup = new HashMap<>();
         gridUidLookup.put("rows", new HashMap<>());
         gridUidLookup.put("cols", new HashMap<>());
@@ -480,7 +480,7 @@ public class AsymmetricView extends AbstractMatrixView {
      */
     @Override
     protected void refreshFastRenderView() {
-        cells = new Vector<>();
+        cells = new ArrayList<>();
         gridUidLookup = new HashMap<>();
         gridUidLookup.put("rows", new HashMap<>());
         gridUidLookup.put("cols", new HashMap<>());
