@@ -107,8 +107,8 @@ public class DSMItemSelector {
         HBox.setHgrow(itemSelector, Priority.ALWAYS);
         itemSelector.setPromptText("Item");
 
-        Button addException = new Button("Add Item");
-        addException.setOnAction(e -> {
+        Button addItem = new Button("Add Item");
+        addItem.setOnAction(e -> {
             if (itemSelector.getValue() == null || items.getItems()
                     .contains(itemSelector.getValue()))
                 return;
@@ -119,7 +119,7 @@ public class DSMItemSelector {
         });
 
         HBox itemSelectorLayout = new HBox();
-        itemSelectorLayout.getChildren().addAll(itemSelector, addException);
+        itemSelectorLayout.getChildren().addAll(itemSelector, addItem);
 
         VBox layout = new VBox();
         layout.getChildren().addAll(titleLabel, items, deleteSelected, itemSelectorLayout);

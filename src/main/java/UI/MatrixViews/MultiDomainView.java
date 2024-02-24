@@ -1,19 +1,21 @@
-package Matrices.Views;
+package UI.MatrixViews;
 
 import Constants.Constants;
 import Matrices.Data.Entities.DSMConnection;
 import Matrices.Data.Entities.DSMItem;
 import Matrices.Data.Entities.Grouping;
 import Matrices.Data.Entities.RenderMode;
-import Matrices.Data.SymmetricDSMData;
-import Matrices.Views.Entities.Cell;
-import Matrices.Views.Flags.ISymmetricHighlight;
+import Matrices.Data.MultiDomainDSMData;
+import UI.MatrixViews.Entities.Cell;
+import UI.MatrixViews.Flags.ISymmetricHighlight;
 import UI.Widgets.FreezeGrid;
 import UI.Widgets.Misc;
 import UI.Widgets.NumericTextField;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
@@ -28,15 +30,17 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.util.Callback;
 import javafx.util.Pair;
+import org.javatuples.Quartet;
 import org.javatuples.Triplet;
 
 import java.util.*;
 
-public class SymmetricView extends AbstractMatrixView implements ISymmetricHighlight {
+public class MultiDomainView extends AbstractMatrixView implements ISymmetricHighlight {
 
     private boolean symmetryValidation = false;
+    private Integer domainColumn;
 
-    SymmetricDSMData matrix;
+    MultiDomainDSMData matrix;
 
     /**
      * Returns a MatrixGuiHandler object for a given matrix
@@ -44,7 +48,7 @@ public class SymmetricView extends AbstractMatrixView implements ISymmetricHighl
      * @param matrix   the SymmetricDSMData object to display
      * @param fontSize the default font size to display the matrix with
      */
-    public SymmetricView(SymmetricDSMData matrix, double fontSize) {
+    public MultiDomainView(MultiDomainDSMData matrix, double fontSize) {
         super(matrix, fontSize);
         this.matrix = matrix;
     }
@@ -56,7 +60,7 @@ public class SymmetricView extends AbstractMatrixView implements ISymmetricHighl
      * @param fontSize  the new font size for the matrix view
      * @return          this
      */
-    public SymmetricView withFontSize(double fontSize) {
+    public MultiDomainView withFontSize(double fontSize) {
         this.fontSize.set(fontSize);
         return this;
     }
@@ -68,21 +72,21 @@ public class SymmetricView extends AbstractMatrixView implements ISymmetricHighl
      * @param mode  the new mode for the matrix view
      * @return      this
      */
-    public SymmetricView withMode(MatrixViewMode mode) {
+    public MultiDomainView withMode(MatrixViewMode mode) {
         this.currentMode.set(mode);
         return this;
     }
 
 
     /**
-     * Copy constructor for SymmetricView class. Performs a deep copy on the matrix data. Everything else will be
+     * Copy constructor for MultiDomainView class. Performs a deep copy on the matrix data. Everything else will be
      * generated when the refreshView method is called
      *
-     * @return  the copy of the current SymmetricView
+     * @return  the copy of the current MultiDomainView
      */
     @Override
-    public SymmetricView createCopy() {
-        SymmetricView copy = new SymmetricView(matrix.createCopy(), fontSize.doubleValue());
+    public MultiDomainView createCopy() {
+        MultiDomainView copy = new MultiDomainView(matrix.createCopy(), fontSize.doubleValue());
 
         copy.setCurrentMode(getCurrentMode());
 
@@ -125,20 +129,29 @@ public class SymmetricView extends AbstractMatrixView implements ISymmetricHighl
             Integer rowUid = getUidsFromGridLoc(cell.getGridLocation()).getKey();  // null is used to check if it is an item or grouping cell
             Integer colUid = getUidsFromGridLoc(cell.getGridLocation()).getValue();
             if (rowUid == null && colUid != null) {  // highlight with column color
-                cell.setCellHighlight(matrix.getColItem(colUid).getGroup1().getColor());
-                cell.setCellTextColor(matrix.getColItem(colUid).getGroup1().getFontColor());
+                DSMItem col = matrix.getColItem(colUid);
+                cell.setCellHighlight(col.getGroup1().getColor());
+                cell.setCellTextColor(col.getGroup1().getFontColor());
             } else if (rowUid != null && colUid == null) {  // highlight with row color
-                cell.setCellHighlight(matrix.getRowItem(rowUid).getGroup1().getColor());
-                cell.setCellTextColor(matrix.getRowItem(rowUid).getGroup1().getFontColor());
+                DSMItem row = matrix.getRowItem(rowUid);
+                if(cell.getGridLocation().getValue().equals(domainColumn)) {
+                    cell.setCellHighlight(row.getGroup2().getColor());
+                    cell.setCellTextColor(row.getGroup2().getFontColor());
+                } else {
+                    cell.setCellHighlight(row.getGroup1().getColor());
+                    cell.setCellTextColor(row.getGroup1().getFontColor());
+                }
             } else if (
                     rowUid != null && colUid != null
                     && !rowUid.equals(matrix.getColItem(colUid).getAliasUid())
                     && matrix.getRowItem(rowUid).getGroup1().equals(matrix.getColItem(colUid).getGroup1())
+                    && matrix.getRowItem(rowUid).getGroup2().equals(matrix.getColItem(colUid).getGroup2())
             ) {
                 // row and column color will be the same because row and column
                 // have same group in symmetric matrix
-                cell.setCellHighlight(matrix.getRowItem(rowUid).getGroup1().getColor());
-                cell.setCellTextColor(matrix.getRowItem(rowUid).getGroup1().getFontColor());
+                DSMItem row = matrix.getRowItem(rowUid);
+                cell.setCellHighlight(row.getGroup1().getColor());
+                cell.setCellTextColor(row.getGroup1().getFontColor());
             } else {
                 cell.setCellHighlight(cell.getHighlightBG("default"));
                 cell.setCellTextColor(Grouping.DEFAULT_FONT_COLOR);
@@ -258,23 +271,38 @@ public class SymmetricView extends AbstractMatrixView implements ISymmetricHighl
 
         ArrayList<ArrayList<Pair<RenderMode, Object>>> template = matrix.getGridArray();
         ArrayList<ArrayList<HBox>> gridData = new ArrayList<>();
-
         int rows = template.size();
         int columns = template.get(0).size();
 
+
         // create a test item to determine layout width for a vertical item cell to square up the matrix when viewed
+        // as well as to determine the width of grouping ComboBoxes because they all contain different items
         ComboBox<Grouping> _groupings = new ComboBox<>();
-        _groupings.setMinWidth(Region.USE_PREF_SIZE);
-        _groupings.setPadding(new Insets(0));
-        _groupings.setStyle("-fx-background-color: transparent; -fx-padding: 0, 0, 0, 0; -fx-font-size: " + (fontSize.doubleValue()) + " ;");
+        Grouping longestGroup = matrix.getDomainGroupings().stream().max(Comparator.comparing(g -> g.getName().length())).orElse(new Grouping("", Color.WHITE));
+        ObservableList<Grouping> _g = FXCollections.observableArrayList();
+        _g.add(longestGroup);
+        _groupings.setItems(_g);
+        _groupings.setMinWidth(Region.USE_COMPUTED_SIZE);
+        _groupings.setStyle("-fx-font-size: " + (fontSize.doubleValue()) + " };");
         double maxHeight = Misc.calculateNodeSize(_groupings).getHeight();
 
+        // Use a label to calculate the width of a grouping because a combobox is grossly inaccurate
+        // Add a constant to the width to add extra padding that javafx gives between text and the arrow so that
+        // the ComboBox's text is not cut off. A possible reason for the poor size calculation is given at
+        // from this StackOverflow issue: https://stackoverflow.com/questions/24852429/making-a-smaller-javafx-combobox
+        Label _groupingsWidthLabel = new Label(longestGroup.getName());
+        double groupingWidth = Misc.calculateNodeSize(_groupingsWidthLabel).getWidth() + 40;
+
+
+        // create a list to update the cell spans once the matrix has been created. Order is:
+        // row location, column location, row span, column span
+        ArrayList<Quartet<Integer, Integer, Integer, Integer>> cellSpans = new ArrayList<>();
 
         for(int r=0; r<rows; r++) {
             ArrayList<HBox> rowData = new ArrayList<>();
             for(int c=0; c<columns; c++) {
                 Pair<RenderMode, Object> item = template.get(r).get(c);
-                final HBox cell = new HBox();  // wrap everything in an HBox so a border can be added easily
+                HBox cell = new HBox();  // wrap everything in an HBox so a border can be added easily
                 Label label = null;
 
                 Background defaultBackground = DEFAULT_BACKGROUND;
@@ -296,6 +324,18 @@ public class SymmetricView extends AbstractMatrixView implements ISymmetricHighl
                         g.getChildren().add(label);
                         cell.getChildren().add(g);
                     }
+                    case MULTI_SPAN_DOMAIN_TEXT -> {
+                        Triplet<Grouping, Integer, Integer> data = (Triplet<Grouping, Integer, Integer>) item.getValue();
+                        label = new Label(data.getValue0().getName());
+                        label.setMinWidth(Region.USE_PREF_SIZE);
+                        label.setPadding(new Insets(1, 5, 1, 5));
+                        cell.getChildren().add(label);
+                        cell.setAlignment(Pos.CENTER);
+
+                        cellSpans.add(new Quartet<>(r, c, data.getValue1(), data.getValue2()));
+                        domainColumn = c;
+                    }
+                    case MULTI_SPAN_NULL -> cell = null;  // set cell to null so it can be expanded into
                     case ITEM_NAME -> {
                         label = new Label();
                         label.setPadding(new Insets(0, 5, 0, 5));
@@ -334,8 +374,9 @@ public class SymmetricView extends AbstractMatrixView implements ISymmetricHighl
                                                       // explicitly set due to how the freeze grid is set up)
                     }
                     case GROUPING_ITEM -> {  // dropdown box for choosing group
+                        DSMItem matrixItem = ((DSMItem) item.getValue());
                         ComboBox<Grouping> groupings = new ComboBox<>();
-                        groupings.setMinWidth(Region.USE_PREF_SIZE);
+                        groupings.setMinWidth(groupingWidth);
                         groupings.setPadding(new Insets(0));
                         groupings.setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, new CornerRadii(3), new Insets(0))));
 
@@ -343,10 +384,10 @@ public class SymmetricView extends AbstractMatrixView implements ISymmetricHighl
                         groupings.setCellFactory(groupingItemCellFactory);
                         groupings.setButtonCell(groupingItemCellFactory.call(null));
 
-                        groupings.getItems().addAll(matrix.getGroupings());
-                        groupings.getSelectionModel().select(((DSMItem) item.getValue()).getGroup1());
+                        groupings.getItems().addAll(matrix.getDomainGroupings(matrixItem.getGroup2()));
+                        groupings.getSelectionModel().select(matrixItem.getGroup1());
                         groupings.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
-                            matrix.setItemGroup((DSMItem) item.getValue(), groupings.getValue());
+                            matrix.setItemDomainGroup(matrixItem, matrixItem.getGroup2(), groupings.getValue());
                             matrix.setCurrentStateAsCheckpoint();
                             for (Cell c_ : cells) {
                                 refreshCellHighlight(c_);
@@ -363,8 +404,9 @@ public class SymmetricView extends AbstractMatrixView implements ISymmetricHighl
                         cell.setAlignment(Pos.CENTER);
                         int finalR = r;
                         int finalC = c;
+                        HBox finalCell = cell;
                         entry.setOnAction(e -> {  // remove focus when enter key is pressed
-                            cell.getParent().requestFocus();
+                            finalCell.getParent().requestFocus();
                         });
 
                         entry.focusedProperty().addListener((obs, oldVal, newVal) -> {
@@ -395,7 +437,9 @@ public class SymmetricView extends AbstractMatrixView implements ISymmetricHighl
 
                 }
 
-                cell.setPadding(new Insets(0));
+                if(cell != null) {
+                    cell.setPadding(new Insets(0));
+                }
                 rowData.add(cell);
 
                 Cell cellObject = new Cell(new Pair<>(r, c), cell, label, fontSize);
@@ -406,21 +450,25 @@ public class SymmetricView extends AbstractMatrixView implements ISymmetricHighl
             gridData.add(rowData);
         }
 
-        // only run this section if symmetryValidation is enabled because it cells default to not being highlighted
-        // and it is a waste of precious time to clear something that is already cleared
+        // only run this section if symmetryValidation is enabled because if cells default to not being highlighted
+        // then it is a waste of precious time to clear something that is already cleared
         if(symmetryValidation) {
             symmetryHighlightAllCells();
         }
 
-        for (Cell c_ : cells) {  // this is needed outsize the render loop so that the groupings and item names are highlighted correctly
+        for (Cell c_ : cells) {  // this is needed outside the render loop so that the groupings and item names are highlighted correctly
             refreshCellHighlight(c_);
         }
 
         grid.setGridDataHBox(gridData);
-        grid.setFreezeLeft(3);
+        for(Quartet<Integer, Integer, Integer, Integer> cell : cellSpans) {  // update the cell spans
+            grid.setCellSpan(cell.getValue0(), cell.getValue1(), cell.getValue2(), cell.getValue3());
+        }
+
+        grid.setFreezeLeft(4);
         grid.setFreezeHeader(2);  // freeze top two rows for symmetric matrix
 
-        ArrayList<Integer> importantRows = new ArrayList<>(Arrays.asList(0, 1, 2));
+        ArrayList<Integer> importantRows = new ArrayList<>(Arrays.asList(0, 1));
         ArrayList<Integer> importantCols = new ArrayList<>(Arrays.asList(0, 1, 2, 3));
         grid.resizeGrid(true, importantRows, importantCols);
         grid.updateGrid();
@@ -457,18 +505,20 @@ public class SymmetricView extends AbstractMatrixView implements ISymmetricHighl
         for(int r=0; r<rows; r++) {
             for(int c=0; c<columns; c++) {
                 Pair<RenderMode, Object> item = template.get(r).get(c);
-                HBox cell = new HBox();  // wrap everything in an HBox so a border can be added easily
+                HBox cell = null;  // wrap everything in an HBox so a border can be added easily
                 Label label = null;
 
                 Background defaultBackground = DEFAULT_BACKGROUND;
 
                 switch (item.getKey()) {
                     case PLAIN_TEXT -> {
+                        cell = new HBox();
                         label = new Label((String) item.getValue());
                         label.setMinWidth(Region.USE_PREF_SIZE);
                         cell.getChildren().add(label);
                     }
                     case PLAIN_TEXT_V -> {
+                        cell = new HBox();
                         label = new Label((String) item.getValue());
                         label.setRotate(-90);
                         cell.setAlignment(Pos.BOTTOM_RIGHT);
@@ -477,7 +527,19 @@ public class SymmetricView extends AbstractMatrixView implements ISymmetricHighl
                         g.getChildren().add(label);
                         cell.getChildren().add(g);
                     }
+                    case MULTI_SPAN_DOMAIN_TEXT -> {
+                        cell = new HBox();
+                        Triplet<Grouping, Integer, Integer> data = (Triplet<Grouping, Integer, Integer>) item.getValue();
+                        label = new Label(data.getValue0().getName());
+                        cell.setAlignment(Pos.CENTER);
+                        cell.getChildren().add(label);
+
+                        GridPane.setRowSpan(cell, data.getValue1());
+                        GridPane.setColumnSpan(cell, data.getValue2());
+                        domainColumn = c;
+                    }
                     case ITEM_NAME -> {
+                        cell = new HBox();
                         label = new Label(((DSMItem) item.getValue()).getName().getValue());
                         label.setPadding(new Insets(0, 5, 0, 5));
                         cell.setAlignment(Pos.BOTTOM_RIGHT);
@@ -485,6 +547,7 @@ public class SymmetricView extends AbstractMatrixView implements ISymmetricHighl
                         cell.getChildren().add(label);
                     }
                     case ITEM_NAME_V -> {
+                        cell = new HBox();
                         label = new Label(((DSMItem) item.getValue()).getName().getValue());
                         label.setPadding(new Insets(0, 5, 0, 5));
                         label.setRotate(-90);
@@ -495,19 +558,25 @@ public class SymmetricView extends AbstractMatrixView implements ISymmetricHighl
                         cell.getChildren().add(g);
                     }
                     case GROUPING_ITEM -> {
+                        cell = new HBox();
                         label = new Label(((DSMItem) item.getValue()).getGroup1().getName());
                         cell.setAlignment(Pos.BOTTOM_RIGHT);
                         label.setMinWidth(Region.USE_PREF_SIZE);
                         cell.getChildren().add(label);
                     }
                     case INDEX_ITEM -> {
+                        cell = new HBox();
                         label = new Label(String.valueOf(((DSMItem) item.getValue()).getSortIndex()));
                         cell.setAlignment(Pos.BOTTOM_RIGHT);
                         label.setMinWidth(Region.USE_PREF_SIZE);
                         cell.getChildren().add(label);
                     }
-                    case UNEDITABLE_CONNECTION -> defaultBackground = UNEDITABLE_CONNECTION_BACKGROUND;
+                    case UNEDITABLE_CONNECTION -> {
+                        cell = new HBox();
+                        defaultBackground = UNEDITABLE_CONNECTION_BACKGROUND;
+                    }
                     case EDITABLE_CONNECTION -> {
+                        cell = new HBox();
                         int rowUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getKey().getUid();
                         int colUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getValue().getUid();
                         DSMConnection conn = matrix.getConnection(rowUid, colUid);
@@ -530,10 +599,12 @@ public class SymmetricView extends AbstractMatrixView implements ISymmetricHighl
                         cell.getChildren().add(label);
                     }
                 }
-                cell.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
-                cell.setPadding(new Insets(0));
-                GridPane.setConstraints(cell, c, r);
-                grid.getChildren().add(cell);
+                if(cell != null) {
+                    cell.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
+                    cell.setPadding(new Insets(0));
+                    GridPane.setConstraints(cell, c, r);
+                    grid.getChildren().add(cell);
+                }
 
                 Cell cellData = new Cell(new Pair<>(r, c), cell, label, fontSize);
                 cellData.updateHighlightBG(defaultBackground, "default");
@@ -589,22 +660,32 @@ public class SymmetricView extends AbstractMatrixView implements ISymmetricHighl
         HBox testCell = new HBox();  // wrap everything in an HBox so a border can be added easily
         testCell.getChildren().add(testLabel);
 
-        // Start by calculating the width of column 1 (groupings)
-        String longestGroupingName = matrix.getGroupings().stream().max(Comparator.comparing(g -> g.getName().length())).orElse(new Grouping("", Color.BLACK)).getName();
-        longestGroupingName = longestGroupingName.length() > "Groupings".length() ? longestGroupingName: "Groupings";
-        testLabel.setText(longestGroupingName);
+        // Start by calculating the width of column 1 (domains)
+        String longestDomainName = matrix.getDomains().stream().max(Comparator.comparing(g -> g.getName().length())).orElse(new Grouping("", Color.BLACK)).getName();
+        longestDomainName = longestDomainName.length() > "Groupings".length() ? longestDomainName: "Groupings";
+        testLabel.setText(longestDomainName);
         double col1Width = Misc.calculateNodeSize(testCell).getWidth();
 
-        // calculate width of column 2 and height of row 1 (item names)
+        // calculate width of column 2
+        ArrayList<Grouping> domainGroupings = new ArrayList<>();
+        for(Grouping domain : matrix.getDomains()) {
+            domainGroupings.addAll(matrix.getDomainGroupings(domain));
+        }
+        String longestGroupingName = domainGroupings.stream().max(Comparator.comparing(g -> g.getName().length())).orElse(new Grouping("", Color.BLACK)).getName();
+        longestGroupingName = longestGroupingName.length() > "Groupings".length() ? longestGroupingName: "Groupings";
+        testLabel.setText(longestGroupingName);
+        double col2Width = Misc.calculateNodeSize(testCell).getWidth();
+
+        // calculate width of column 3 and height of row 1 (item names)
         String longestItemName = matrix.getRows().stream().max(Comparator.comparing((DSMItem item) -> item.getName().toString().length())).orElse(new DSMItem(-1.0, "")).getName().getValue();
         longestItemName = longestItemName.length() > "Column Items".length() ? longestItemName: "Column Items";
         testLabel.setText(longestItemName);
-        double col2Width = Misc.calculateNodeSize(testCell).getWidth();
-        double row1Height = col2Width;
+        double col3Width = Misc.calculateNodeSize(testCell).getWidth();
+        double row1Height = col3Width;
 
         // calculate width of column 3
         testLabel.setText("Re-Sort Index");
-        double col3Width = Misc.calculateNodeSize(testCell).getWidth();
+        double col4Width = Misc.calculateNodeSize(testCell).getWidth();
 
         // calculate height of row 2 and connection cell size
         testLabel.setText("x");
@@ -626,6 +707,9 @@ public class SymmetricView extends AbstractMatrixView implements ISymmetricHighl
         ArrayList<Triplet<Integer, Integer, Color>> connectionLocations = new ArrayList<>();
         ArrayList<Pair<Integer, Integer>> uneditableConnectionLocations = new ArrayList<>();
 
+        // create a list to update the cell spans once the matrix has been created. Order is:
+        // row location, column location, row span, column span
+        ArrayList<Quartet<Integer, Integer, Integer, Integer>> cellSpans = new ArrayList<>();
 
         // update the cells so they can be displayed by the freeze grid
         for(int r=0; r<numRows; r++) {
@@ -654,6 +738,18 @@ public class SymmetricView extends AbstractMatrixView implements ISymmetricHighl
                         g.getChildren().add(label);
                         cell.getChildren().add(g);
                     }
+                    case MULTI_SPAN_DOMAIN_TEXT -> {
+                        Triplet<Grouping, Integer, Integer> data = (Triplet<Grouping, Integer, Integer>) item.getValue();
+                        label = new Label(data.getValue0().getName());
+                        label.setMinWidth(Region.USE_PREF_SIZE);
+                        label.setPadding(new Insets(1, 5, 1, 5));
+                        cell.getChildren().add(label);
+                        cell.setAlignment(Pos.CENTER);
+
+                        cellSpans.add(new Quartet<>(r, c, data.getValue1(), data.getValue2()));
+                        domainColumn = c;
+                    }
+                    case MULTI_SPAN_NULL -> cell = null;  // set cell to null so it can be expanded into
                     case ITEM_NAME -> {
                         label = new Label();
                         label.setPadding(new Insets(0, 5, 0, 5));
@@ -711,8 +807,10 @@ public class SymmetricView extends AbstractMatrixView implements ISymmetricHighl
                         DSMConnection conn = matrix.getConnection(rowUid, colUid);
                         if(conn != null) {  // only add connections that exist
                             Color color = Color.BLACK;  // default to black
-                            if(matrix.getRowItem(rowUid).getGroup1().equals(matrix.getColItem(colUid).getGroup1())) {
-                                color = matrix.getRowItem(rowUid).getGroup1().getFontColor();
+                            DSMItem rowItem = matrix.getRowItem(rowUid);
+                            DSMItem colItem = matrix.getColItem(colUid);
+                            if(rowItem.getGroup1().equals(colItem.getGroup1())) {
+                                color = rowItem.getGroup1().getFontColor();
                             }
                             connectionLocations.add(new Triplet<>(r, c, color));
                         }
@@ -765,7 +863,7 @@ public class SymmetricView extends AbstractMatrixView implements ISymmetricHighl
         double y = 0;
         for(DSMItem rowItem : matrix.getRows()) {
             for(DSMItem colItem : matrix.getCols()) {
-                if(rowItem.getGroup1().equals(colItem.getGroup1())) {
+                if(rowItem.getGroup1().equals(colItem.getGroup1()) && rowItem.getGroup2().equals(colItem.getGroup2())) {
                     graphics_context.setFill(rowItem.getGroup1().getColor());
                 } else {
                     graphics_context.setFill(defaultColor);
@@ -799,17 +897,22 @@ public class SymmetricView extends AbstractMatrixView implements ISymmetricHighl
         gridData.get(connectionsRow).set(connectionsCol, canvasPane);  // update the item to be the canvas
         //endregion
 
-        for (Cell c_ : cells) {  // this is needed outside the render loop so that the groupings and item names are highlighted correctly
+        for (Cell c_ : cells) {  // this is needed outsize the render loop so that the groupings and item names are highlighted correctly
             refreshCellHighlight(c_);
         }
 
         grid.setGridDataHBox(gridData);
 
+        // update the cell spans
+        for(Quartet<Integer, Integer, Integer, Integer> cell : cellSpans) {
+            grid.setCellSpan(cell.getValue0(), cell.getValue1(), cell.getValue2(), cell.getValue3());
+        }
+
         // set the span of the canvas item
         grid.setCellSpan(connectionsRow, connectionsCol, matrix.getRows().size(), matrix.getCols().size());
 
         // set up the freezing
-        grid.setFreezeLeft(3);
+        grid.setFreezeLeft(4);
         grid.setFreezeHeader(2);
 
         // manually size all the items to save time and be more accurate
@@ -818,6 +921,7 @@ public class SymmetricView extends AbstractMatrixView implements ISymmetricHighl
         grid.setColPrefWidth(0, col1Width);
         grid.setColPrefWidth(1, col2Width);
         grid.setColPrefWidth(2, col3Width);
+        grid.setColPrefWidth(3, col4Width);
 
         for(int r=connectionsRow; r<(connectionsRow + matrix.getRows().size()); r++) {  // manually force sizes for rows and columns
             grid.setRowPrefHeight(r, cellSize);

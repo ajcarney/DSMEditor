@@ -1,4 +1,4 @@
-package Matrices.Views.Flags;
+package UI.MatrixViews.Flags;
 
 
 /**

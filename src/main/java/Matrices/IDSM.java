@@ -3,7 +3,7 @@ package Matrices;
 import Matrices.Data.AbstractDSMData;
 import Matrices.EditorTabs.IEditorTab;
 import Matrices.IOHandlers.AbstractIOHandler;
-import Matrices.Views.AbstractMatrixView;
+import UI.MatrixViews.AbstractMatrixView;
 
 
 /**

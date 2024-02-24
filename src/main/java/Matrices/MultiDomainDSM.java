@@ -3,9 +3,9 @@ package Matrices;
 import Matrices.Data.MultiDomainDSMData;
 import Matrices.EditorTabs.MultiDomainEditorTab;
 import Matrices.IOHandlers.MultiDomainIOHandler;
-import Matrices.SideBarTools.MultiDomainSideBar;
-import Matrices.Views.AbstractMatrixView;
-import Matrices.Views.MultiDomainView;
+import UI.SideBarViews.MultiDomainSideBar;
+import UI.MatrixViews.AbstractMatrixView;
+import UI.MatrixViews.MultiDomainView;
 import UI.HeaderMenu;
 
 import java.io.File;

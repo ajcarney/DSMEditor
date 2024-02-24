@@ -4,7 +4,7 @@ import Constants.Constants;
 import Matrices.Data.Entities.*;
 import Matrices.Data.SymmetricDSMData;
 import Matrices.IOHandlers.Flags.IThebeauExport;
-import Matrices.Views.AbstractMatrixView;
+import UI.MatrixViews.AbstractMatrixView;
 import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;

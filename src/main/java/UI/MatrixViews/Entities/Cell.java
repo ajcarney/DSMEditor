@@ -1,4 +1,4 @@
-package Matrices.Views.Entities;
+package UI.MatrixViews.Entities;
 
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
@@ -6,7 +6,6 @@ import javafx.geometry.Insets;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
 import javafx.util.Pair;
 
 import java.util.HashMap;

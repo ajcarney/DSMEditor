@@ -3,8 +3,8 @@ package Matrices;
 import Matrices.Data.SymmetricDSMData;
 import Matrices.EditorTabs.SymmetricEditorTab;
 import Matrices.IOHandlers.SymmetricIOHandler;
-import Matrices.SideBarTools.SymmetricSideBar;
-import Matrices.Views.SymmetricView;
+import UI.SideBarViews.SymmetricSideBar;
+import UI.MatrixViews.SymmetricView;
 
 import java.io.File;
 

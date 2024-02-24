@@ -3,7 +3,7 @@ package Matrices.IOHandlers;
 import Constants.Constants;
 import Matrices.Data.Entities.*;
 import Matrices.Data.MultiDomainDSMData;
-import Matrices.Views.AbstractMatrixView;
+import UI.MatrixViews.AbstractMatrixView;
 import javafx.scene.paint.Color;
 import javafx.util.Pair;
 import org.apache.poi.ss.usermodel.*;

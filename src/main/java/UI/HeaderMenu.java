@@ -1,6 +1,5 @@
 package UI;
 
-import Constants.Constants;
 import Matrices.AsymmetricDSM;
 import Matrices.Data.AbstractDSMData;
 import Matrices.Data.AsymmetricDSMData;
@@ -18,19 +17,14 @@ import Matrices.IOHandlers.MultiDomainIOHandler;
 import Matrices.IOHandlers.SymmetricIOHandler;
 import Matrices.MultiDomainDSM;
 import Matrices.SymmetricDSM;
-import Matrices.Views.AbstractMatrixView;
-import Matrices.Views.Flags.ISymmetricHighlight;
-import javafx.geometry.Insets;
-import javafx.scene.Scene;
+import UI.MatrixViews.AbstractMatrixView;
+import UI.MatrixViews.Flags.ISymmetricHighlight;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
-import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
-import javafx.stage.Modality;
-import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
 import java.io.File;

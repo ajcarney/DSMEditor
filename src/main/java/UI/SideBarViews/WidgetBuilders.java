@@ -1,4 +1,4 @@
-package Matrices.SideBarTools;
+package UI.SideBarViews;
 
 import Matrices.Data.AbstractDSMData;
 import Matrices.Data.Entities.DSMConnection;

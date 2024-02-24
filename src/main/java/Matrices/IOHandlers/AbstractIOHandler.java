@@ -2,7 +2,7 @@ package Matrices.IOHandlers;
 
 import Matrices.Data.AbstractDSMData;
 import Matrices.IOHandlers.Flags.IStandardExports;
-import Matrices.Views.AbstractMatrixView;
+import UI.MatrixViews.AbstractMatrixView;
 import UI.Widgets.Misc;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.geometry.Insets;

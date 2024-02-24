@@ -1,7 +1,7 @@
 package Matrices.IOHandlers.Flags;
 
 import Matrices.Data.AbstractDSMData;
-import Matrices.Views.AbstractMatrixView;
+import UI.MatrixViews.AbstractMatrixView;
 import javafx.stage.Window;
 
 import java.io.File;

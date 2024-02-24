@@ -1,11 +1,11 @@
-package Matrices.Views;
+package UI.MatrixViews;
 
 import Matrices.Data.AbstractDSMData;
 import Matrices.Data.Entities.DSMConnection;
 import Matrices.Data.Entities.DSMInterfaceType;
 import Matrices.Data.Entities.DSMItem;
 import Matrices.Data.Entities.Grouping;
-import Matrices.Views.Entities.Cell;
+import UI.MatrixViews.Entities.Cell;
 import UI.ConfigureConnectionInterfaces;
 import UI.Widgets.Misc;
 import UI.Widgets.NumericTextField;

@@ -1,11 +1,11 @@
-package Matrices.SideBarTools;
+package UI.SideBarViews;
 
 import Matrices.Data.Entities.DSMConnection;
 import Matrices.Data.Entities.DSMInterfaceType;
 import Matrices.Data.Entities.DSMItem;
 import Matrices.Data.Entities.Grouping;
 import Matrices.Data.SymmetricDSMData;
-import Matrices.Views.SymmetricView;
+import UI.MatrixViews.SymmetricView;
 import UI.Widgets.Misc;
 import UI.Widgets.NumericTextField;
 import javafx.collections.FXCollections;
@@ -26,9 +26,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
-
-import static Matrices.SideBarTools.WidgetBuilders.createConnectionsViewerScrollPane;
-
 
 /**
  * Creates a sidebar with methods to interact with a symmetric matrix
@@ -174,102 +171,6 @@ public class SymmetricSideBar extends AbstractSideBar {
 
 
     /**
-     * Sets up the button for deleting items from the matrix
-     */
-    @Override
-    protected void deleteMatrixItemsCallback() {
-        Stage window = new Stage();  // Create Root window
-        window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
-        window.setTitle("Delete Rows/Columns");
-
-        // Create changes view and button for it
-        Label label = new Label("Changes to be made");
-        ListView<Integer> changesToMakeView = new ListView<>();
-        changesToMakeView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        changesToMakeView.setCellFactory(param -> new ListCell<>() {  // item uid
-            @Override
-            protected void updateItem(Integer item, boolean empty) {
-                super.updateItem(item, empty);
-
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    setText(matrix.getItem(item).getName().getValue() + " (Row/Column)");
-                }
-            }
-        });
-
-        Button deleteSelected = new Button("Delete Selected from Change Stack");
-        deleteSelected.setOnAction(e -> {
-            changesToMakeView.getItems().removeAll(changesToMakeView.getSelectionModel().getSelectedItems());
-        });
-
-        // Create user input area
-        HBox entryArea = new HBox();
-
-        // ComboBox to choose which row or column to modify connections of
-        ComboBox<DSMItem> itemSelector = new ComboBox<>();  // rowUid | colUid | name | weight
-        itemSelector.setCellFactory(param -> new ListCell<>() {
-            @Override
-            protected void updateItem(DSMItem item, boolean empty) {
-                super.updateItem(item, empty);
-
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    setText(item.getName().getValue());
-                }
-            }
-        });
-        itemSelector.setMaxWidth(Double.MAX_VALUE);
-        HBox.setHgrow(itemSelector, Priority.ALWAYS);
-        itemSelector.setPromptText("Item Name");
-        itemSelector.getItems().addAll(matrix.getRows());
-
-        Button deleteItem = new Button("Delete Item");
-        deleteItem.setOnAction(e -> {
-            changesToMakeView.getItems().add(itemSelector.getValue().getUid());
-        });
-
-        entryArea.getChildren().addAll(itemSelector, deleteItem);
-        entryArea.setPadding(new Insets(10, 10, 10, 10));
-        entryArea.setSpacing(20);
-
-        // create HBox for user to close with our without changes
-        HBox closeArea = new HBox();
-        Button applyButton = new Button("Apply Changes");
-        applyButton.setOnAction(e -> {
-            for(Integer uid : changesToMakeView.getItems()) {
-                DSMItem item = matrix.getItem(uid);  // null check in case user tries to delete the same item twice
-                if(item != null) {
-                    matrix.deleteItem(item);
-                }
-            }
-            window.close();
-            matrixView.refreshView();
-            matrix.setCurrentStateAsCheckpoint();
-        });
-
-        Button cancelButton = new Button("Cancel");
-        cancelButton.setOnAction(e -> {
-            window.close();
-        });
-        closeArea.getChildren().addAll(cancelButton, Misc.getHorizontalSpacer(), applyButton);
-
-        VBox layout = new VBox(10);
-        layout.getChildren().addAll(label, changesToMakeView, deleteSelected, entryArea, Misc.getVerticalSpacer(), closeArea);
-        layout.setAlignment(Pos.CENTER);
-        layout.setPadding(new Insets(10, 10, 10, 10));
-        layout.setSpacing(10);
-
-        //Display window and wait for it to be closed before returning
-        Scene scene = new Scene(layout, 700, 350);
-        window.setScene(scene);
-        window.showAndWait();
-    }
-
-
-    /**
      * Sets up the button for appending connections to the matrix
      */
     @Override
@@ -305,7 +206,7 @@ public class SymmetricSideBar extends AbstractSideBar {
         ArrayList<DSMInterfaceType> selectedInterfaces = new ArrayList<>();
 
         // create the viewer for connections
-        createConnectionsViewerScrollPane(
+        WidgetBuilders.createConnectionsViewerScrollPane(
             matrix,
             connectionsArea,
             itemSelector,
@@ -465,7 +366,7 @@ public class SymmetricSideBar extends AbstractSideBar {
         ArrayList<DSMInterfaceType> selectedInterfaces = new ArrayList<>();
 
         // create the viewer for connections
-        createConnectionsViewerScrollPane(
+        WidgetBuilders.createConnectionsViewerScrollPane(
             matrix,
             connectionsArea,
             itemSelector,

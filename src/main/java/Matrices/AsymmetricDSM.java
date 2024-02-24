@@ -3,8 +3,8 @@ package Matrices;
 import Matrices.Data.AsymmetricDSMData;
 import Matrices.EditorTabs.AsymmetricEditorTab;
 import Matrices.IOHandlers.AsymmetricIOHandler;
-import Matrices.SideBarTools.AsymmetricSideBar;
-import Matrices.Views.AsymmetricView;
+import UI.SideBarViews.AsymmetricSideBar;
+import UI.MatrixViews.AsymmetricView;
 
 import java.io.File;
 
