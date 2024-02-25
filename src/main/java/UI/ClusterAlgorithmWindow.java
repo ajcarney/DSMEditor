@@ -26,6 +26,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import javafx.stage.Window;
 
 import java.io.File;
 import java.time.Duration;
@@ -439,10 +440,12 @@ public class ClusterAlgorithmWindow {
 
     /**
      * opens the gui window
+     * @param parentWindow the parents window so that the scene can open centered
      */
-    public void start() {
+    public void start(Window parentWindow) {
         Scene scene = new Scene(rootLayout, 1400, 700);
         window.setScene(scene);
+        window.initOwner(parentWindow);
         window.show();
     }
 

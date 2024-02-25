@@ -9,6 +9,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.Window;
 
 import java.util.*;
 
@@ -21,15 +22,21 @@ public class ConfigureConnectionInterfaces {
     /**
      * Opens a popup window where the user can select different interfaces
      *
+     * @param parentWindow       the parent window so that the popup can be centered
      * @param interfaces         the available interfaces grouped by their grouping
      * @param currentInterfaces  the currently selected interfaces
      * @return the new selected interfaces
      */
-    public static ArrayList<DSMInterfaceType> configureConnectionInterfaces(HashMap<String, List<DSMInterfaceType>> interfaces, Collection<DSMInterfaceType> currentInterfaces) {
+    public static ArrayList<DSMInterfaceType> configureConnectionInterfaces(
+            Window parentWindow,
+            HashMap<String, List<DSMInterfaceType>> interfaces,
+            Collection<DSMInterfaceType> currentInterfaces)
+    {
         // create popup window to edit the connection
         Stage window = new Stage();
 
         // Create Root window
+        window.initOwner(parentWindow);
         window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
         window.setTitle("Interfaces");
 

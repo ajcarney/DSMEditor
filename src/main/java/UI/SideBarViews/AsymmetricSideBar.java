@@ -37,13 +37,13 @@ import java.util.Map;
 public class AsymmetricSideBar extends AbstractSideBar {
 
     protected final Button configureGroupings = new Button("Configure Groupings");
-    private AsymmetricDSMData matrix;
+    private final AsymmetricDSMData matrix;
 
 
     /**
-     * Constructor for a new side bar for an asymmetric matrix
+     * Constructor for a new sidebar for an asymmetric matrix
      *
-     * @param matrix      the matrix the side bar will make changes to
+     * @param matrix      the matrix the sidebar will make changes to
      * @param matrixView  the matrix view instance for the matrix
      */
     public AsymmetricSideBar(AsymmetricDSMData matrix, AsymmetricView matrixView) {
@@ -103,6 +103,7 @@ public class AsymmetricSideBar extends AbstractSideBar {
         Stage window = new Stage();
 
         // Create Root window
+        window.initOwner(layout.getScene().getWindow());
         window.initModality(Modality.APPLICATION_MODAL); // Block events to other windows
         window.setTitle("Add Row/Column");
 
@@ -215,6 +216,7 @@ public class AsymmetricSideBar extends AbstractSideBar {
         Stage window = new Stage();
 
         // Create Root window
+        window.initOwner(layout.getScene().getWindow());
         window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
         window.setTitle("Append Connections");
 
@@ -330,6 +332,7 @@ public class AsymmetricSideBar extends AbstractSideBar {
         Stage window = new Stage();
 
         // Create Root window
+        window.initOwner(layout.getScene().getWindow());
         window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
         window.setTitle("Set Connections");
 
@@ -460,6 +463,7 @@ public class AsymmetricSideBar extends AbstractSideBar {
         Stage window = new Stage();
 
         // Create Root window
+        window.initOwner(layout.getScene().getWindow());
         window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
         window.setTitle("Delete Connections");
 
@@ -713,6 +717,7 @@ public class AsymmetricSideBar extends AbstractSideBar {
     private void configureGroupingsCallback() {
         // Create Root window
         Stage window = new Stage();
+        window.initOwner(layout.getScene().getWindow());
         window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
         window.setTitle("Configure Groupings");
 

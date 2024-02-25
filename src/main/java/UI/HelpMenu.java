@@ -8,15 +8,25 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import Logging.Logger;
+import javafx.stage.Window;
 
-import java.awt.*;
+import java.awt.Desktop;
 import java.net.URI;
 
+
+/**
+ * Contains methods for popups containing help/other information
+ */
 public class HelpMenu {
 
-    public static void openAboutMenu() {
+    /**
+     * Opens a window with information about the executable
+     * @param parentWindow the parent window so that the popup is centered
+     */
+    public static void openAboutMenu(Window parentWindow) {
         // bring up window asking to delete rows or columns
         Stage window = new Stage();
+        window.initOwner(parentWindow);
         window.setTitle("About DSMEditor");
         window.initModality(Modality.APPLICATION_MODAL);  // Block events to other windows
 

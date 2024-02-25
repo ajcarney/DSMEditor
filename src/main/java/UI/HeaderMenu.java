@@ -323,7 +323,7 @@ public class HeaderMenu {
             if(editor.getFocusedMatrixUid() == null) {
                 return;
             }
-            ioHandler.exportToImage(matrixData.createCopy(), matrixView.createCopy());
+            ioHandler.exportToImage(menuBar.getScene().getWindow(), matrixData.createCopy(), matrixView.createCopy());
         });
 
 
@@ -535,7 +535,7 @@ public class HeaderMenu {
                 }
 
                 PropagationAnalysisWindow p = new PropagationAnalysisWindow(this.editor.getFocusedMatrixData());
-                p.start();
+                p.start(menuBar.getScene().getWindow());
             });
 
             toolsMenu.getItems().add(propagationAnalysis);
@@ -549,7 +549,7 @@ public class HeaderMenu {
                 }
 
                 ClusterAnalysisWindow c = new ClusterAnalysisWindow((SymmetricDSMData) this.editor.getFocusedMatrixData());
-                c.start();
+                c.start(menuBar.getScene().getWindow());
             });
 
             MenuItem cluster = new MenuItem("Cluster Algorithms...");
@@ -559,7 +559,7 @@ public class HeaderMenu {
                 }
 
                 ClusterAlgorithmWindow c = new ClusterAlgorithmWindow((SymmetricDSMData) this.editor.getFocusedMatrixData());
-                c.start();
+                c.start(menuBar.getScene().getWindow());
             });
 
             toolsMenu.getItems().addAll(coordinationScore, cluster);
@@ -591,7 +591,8 @@ public class HeaderMenu {
 
         MenuItem configureVisibleInterfaces = new MenuItem("Configure Visible Interfaces...");
         configureVisibleInterfaces.setOnAction(e -> {
-            currentInterfaces = ConfigureConnectionInterfaces.configureConnectionInterfaces(matrixData.getInterfaceTypes(), currentInterfaces);
+            currentInterfaces = ConfigureConnectionInterfaces.configureConnectionInterfaces(
+                    menuBar.getScene().getWindow(), matrixData.getInterfaceTypes(), currentInterfaces);
             matrixView.setVisibleInterfaces(currentInterfaces);
         });
         configureVisibleInterfaces.setVisible(false);  // default to invisible, can be over-ridden if matrix data is not null when default view is selected
@@ -705,7 +706,7 @@ public class HeaderMenu {
 
 
         MenuItem about = new MenuItem("About");
-        about.setOnAction(e -> HelpMenu.openAboutMenu());
+        about.setOnAction(e -> HelpMenu.openAboutMenu(menuBar.getScene().getWindow()));
 
         helpMenu.getItems().addAll(submitBugReport, about);
     }

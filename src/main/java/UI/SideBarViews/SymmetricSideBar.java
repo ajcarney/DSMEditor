@@ -11,13 +11,11 @@ import UI.Widgets.Misc;
 import UI.Widgets.NumericTextField;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
@@ -37,12 +35,12 @@ import java.util.Map;
 public class SymmetricSideBar extends AbstractSideBar {
 
     protected final Button configureGroupings = new Button("Configure Groupings");
-    private SymmetricDSMData matrix;
+    private final SymmetricDSMData matrix;
 
     /**
-     * Constructor for a new side bar for a symmetric matrix
+     * Constructor for a new sidebar for a symmetric matrix
      *
-     * @param matrix      the matrix the side bar will make changes to
+     * @param matrix      the matrix the sidebar will make changes to
      * @param matrixView  the matrix view instance for the matrix
      */
     public SymmetricSideBar(SymmetricDSMData matrix, SymmetricView matrixView) {
@@ -99,6 +97,7 @@ public class SymmetricSideBar extends AbstractSideBar {
         Stage window = new Stage();
 
         // Create Root window
+        window.initOwner(layout.getScene().getWindow());
         window.initModality(Modality.APPLICATION_MODAL); // Block events to other windows
         window.setTitle("Add Row/Column");
 
@@ -189,6 +188,7 @@ public class SymmetricSideBar extends AbstractSideBar {
         Stage window = new Stage();
 
         // Create Root window
+        window.initOwner(layout.getScene().getWindow());
         window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
         window.setTitle("Append Connections");
 
@@ -349,6 +349,7 @@ public class SymmetricSideBar extends AbstractSideBar {
         Stage window = new Stage();
 
         // Create Root window
+        window.initOwner(layout.getScene().getWindow());
         window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
         window.setTitle("Set Connections");
 
@@ -554,6 +555,7 @@ public class SymmetricSideBar extends AbstractSideBar {
         Stage window = new Stage();
 
         // Create Root window
+        window.initOwner(layout.getScene().getWindow());
         window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
         window.setTitle("Delete Connections");
 
@@ -898,6 +900,7 @@ public class SymmetricSideBar extends AbstractSideBar {
     private void configureGroupingsCallback() {
         // Create Root window
         Stage window = new Stage();
+        window.initOwner(layout.getScene().getWindow());
         window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
         window.setTitle("Configure Groupings");
 

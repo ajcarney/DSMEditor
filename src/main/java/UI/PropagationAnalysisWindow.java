@@ -28,6 +28,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.stage.Window;
 import javafx.util.Callback;
 import javafx.util.Pair;
 
@@ -351,10 +352,12 @@ public class PropagationAnalysisWindow<T extends AbstractDSMData & IPropagationA
 
     /**
      * Opens and starts the gui so users can interact with it.
+     * @param parentWindow the parents window so that the scene can open centered
      */
-    public void start() {
+    public void start(Window parentWindow) {
         Scene scene = new Scene(rootLayout, 1200, 800);
         window.setScene(scene);
+        window.initOwner(parentWindow);
         window.show();
     }
 

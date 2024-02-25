@@ -202,6 +202,7 @@ public abstract class AbstractSideBar {
      */
     protected void deleteMatrixItemsCallback(boolean onlyRows) {
         Stage window = new Stage();  // Create Root window
+        window.initOwner(layout.getScene().getWindow());
         window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
         window.setTitle("Delete Rows/Columns");
 
@@ -489,7 +490,8 @@ public abstract class AbstractSideBar {
 
         Button configureInterfacesButton = new Button("Configure Interfaces");
         configureInterfacesButton.setOnAction(e -> {
-            ArrayList<DSMInterfaceType> newInterfaceTypes = ConfigureConnectionInterfaces.configureConnectionInterfaces(matrix.getInterfaceTypes(), selectedInterfaces);
+            ArrayList<DSMInterfaceType> newInterfaceTypes = ConfigureConnectionInterfaces.configureConnectionInterfaces(
+                    connectionsArea.getScene().getWindow(), matrix.getInterfaceTypes(), selectedInterfaces);
             selectedInterfaces.clear();
             selectedInterfaces.addAll(newInterfaceTypes);  // copy all the interfaces to the array
         });
@@ -641,6 +643,7 @@ public abstract class AbstractSideBar {
     protected void configureInterfacesCallback() {
         // Create Root window
         Stage window = new Stage();
+        window.initOwner(layout.getScene().getWindow());
         window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
         window.setTitle("Configure Groupings");
 

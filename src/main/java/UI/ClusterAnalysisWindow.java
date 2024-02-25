@@ -17,6 +17,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import javafx.stage.Window;
 
 import java.util.*;
 
@@ -364,10 +365,12 @@ public class ClusterAnalysisWindow {
 
     /**
      * Opens the gui window for user interaction
+     * @param parentWindow the parents window so that the scene can open centered
      */
-    public void start() {
+    public void start(Window parentWindow) {
         Scene scene = new Scene(rootLayout, 800, 600);
         window.setScene(scene);
+        window.initOwner(parentWindow);
         window.show();
     }
 

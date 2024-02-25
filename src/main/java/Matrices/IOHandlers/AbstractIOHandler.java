@@ -283,13 +283,15 @@ public abstract class AbstractIOHandler implements IStandardExports {
     /**
      * Opens a window to export a matrix to a png file with different configuration options
      *
-     * @param matrix      the matrix object to save to an image
-     * @param matrixView  the matrix gui handler for the matrix object
+     * @param parentWindow the parent window so that the popup can open centered
+     * @param matrix       the matrix object to save to an image
+     * @param matrixView   the matrix gui handler for the matrix object
      */
     @Override
-     public void exportToImage(AbstractDSMData matrix, AbstractMatrixView matrixView) {
+    public void exportToImage(Window parentWindow, AbstractDSMData matrix, AbstractMatrixView matrixView) {
         // Create Root window
         Stage window = new Stage();
+        window.initOwner(parentWindow);
         window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
         window.setTitle("DSMEditor");
 
@@ -375,7 +377,7 @@ public abstract class AbstractIOHandler implements IStandardExports {
 
         Button saveButton = new Button("Save");
         saveButton.setOnAction(e -> {
-            if(!saveLocation.getText().equals("")){
+            if(!saveLocation.getText().isEmpty()){
                 File file = new File(saveLocation.getText());
                 BufferedImage img = SwingFXUtils.fromFXImage(preview.snapshot(new SnapshotParameters(), null), null);
                 try {

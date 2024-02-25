@@ -574,6 +574,7 @@ public abstract class AbstractMatrixView {
                 Stage window = new Stage();
 
                 // Create Root window
+                window.initOwner(rootLayout.getScene().getWindow());
                 window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
                 window.setTitle("Modify Connection");
 
@@ -641,7 +642,8 @@ public abstract class AbstractMatrixView {
 
                 Button configureInterfacesButton = new Button("Configure");
                 configureInterfacesButton.setOnAction(ee -> {
-                    ArrayList<DSMInterfaceType> newInterfaceTypes = ConfigureConnectionInterfaces.configureConnectionInterfaces(matrix.getInterfaceTypes(), interfaceTypes);
+                    ArrayList<DSMInterfaceType> newInterfaceTypes = ConfigureConnectionInterfaces.configureConnectionInterfaces(
+                            cell.getScene().getWindow(), matrix.getInterfaceTypes(), interfaceTypes);
                     interfaceTypes.clear();
                     interfaceTypes.addAll(newInterfaceTypes);  // copy all the interfaces to the array
                 });
@@ -729,6 +731,7 @@ public abstract class AbstractMatrixView {
         Stage window = new Stage();
 
         // Create Root window
+        window.initOwner(rootLayout.getScene().getWindow());
         window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
         window.setTitle("Modify Item Name");
 
