@@ -235,7 +235,11 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
                     connections.add(data);
                 }
             } else if(line.contains("DSMLABEL{")) {
-                int loc = Integer.parseInt(line.split(Pattern.quote("DSMLABEL{"))[1].split(Pattern.quote(","))[0]);
+                // start with line of form 'DSMLABEL{#1, #2} = '...';'
+                String s1 = line.split("^\\s*DSMLABEL*\\{")[1];  // split out to '#1, #2} ...'
+                String s2 = s1.split("\\s*,")[0];                // split out to '#1'
+                int loc = Integer.parseInt(s2);                        // parse #1 as integer, removes whitespace
+
                 String name = line.split(Pattern.quote("'"))[1];
                 double sortIndex = (uid / 2) + 1;  // this will make the sort indices appear like they are normally distributed
                 DSMItem rowItem = new DSMItem(uid, uid + 1, sortIndex, name, matrix.getDefaultGroup(), null);
@@ -589,7 +593,7 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
                 String l = "DSMLABEL{"
                         + (int)row.getSortIndex()
                         + ",1} = '"
-                        + row.getName()
+                        + row.getName().getValue()
                         + "';\n";
                 labelsString.append(l);
             }
