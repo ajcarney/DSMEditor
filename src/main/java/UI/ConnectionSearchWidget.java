@@ -3,7 +3,7 @@ package UI;
 import Matrices.Data.AbstractDSMData;
 import Matrices.Data.Entities.DSMConnection;
 import Matrices.IDSM;
-import Matrices.Views.AbstractMatrixView;
+import UI.MatrixViews.AbstractMatrixView;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.IntegerProperty;

@@ -1,6 +1,5 @@
 package UI;
 
-import Constants.Constants;
 import Matrices.AsymmetricDSM;
 import Matrices.Data.AbstractDSMData;
 import Matrices.Data.AsymmetricDSMData;
@@ -18,19 +17,14 @@ import Matrices.IOHandlers.MultiDomainIOHandler;
 import Matrices.IOHandlers.SymmetricIOHandler;
 import Matrices.MultiDomainDSM;
 import Matrices.SymmetricDSM;
-import Matrices.Views.AbstractMatrixView;
-import Matrices.Views.Flags.ISymmetricHighlight;
-import javafx.geometry.Insets;
-import javafx.scene.Scene;
+import UI.MatrixViews.AbstractMatrixView;
+import UI.MatrixViews.Flags.ISymmetricHighlight;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
-import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
-import javafx.stage.Modality;
-import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
 import java.io.File;
@@ -193,7 +187,7 @@ public class HeaderMenu {
      *
      * @param menu  the menu item to set the callback for
      */
-    private <T extends MenuItem> void setupOpenMenuButton(T menu) {
+    private void setupOpenMenuButton(MenuItem menu) {
         menu.setOnAction( e -> {
             FileChooser fileChooser = new FileChooser();
             fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("DSM File", "*.dsm"));  // dsm is the only file type usable
@@ -221,7 +215,7 @@ public class HeaderMenu {
      *
      * @param menu  the Menu object
      */
-    public void setupSaveFileMenuButton(MenuItem menu) {
+    private void setupSaveFileMenuButton(MenuItem menu) {
         menu.setOnAction(e -> {
             if(matrixData == null) return;
 
@@ -238,6 +232,7 @@ public class HeaderMenu {
             }
             int code = ioHandler.saveMatrixToFile(ioHandler.getSavePath());  // TODO: add checking with the return code
         });
+        menu.setAccelerator(new KeyCodeCombination(KeyCode.S, KeyCombination.SHORTCUT_DOWN));
     }
 
 
@@ -246,7 +241,7 @@ public class HeaderMenu {
      *
      * @param menu  the Menu object
      */
-    public <T extends MenuItem> void setupSaveAsFileMenuButton(T menu) {
+    private void setupSaveAsFileMenuButton(MenuItem menu) {
         menu.setOnAction(e -> {
             if(matrixData == null) return;
 
@@ -261,6 +256,7 @@ public class HeaderMenu {
                 matrixData.clearWasModifiedFlag();
             }
         });
+        menu.setAccelerator(new KeyCodeCombination(KeyCode.S, KeyCombination.SHIFT_DOWN, KeyCombination.SHORTCUT_DOWN));
     }
 
 
@@ -278,7 +274,7 @@ public class HeaderMenu {
             if(file != null) {  // make sure user did not just close out of the file chooser window
                 SymmetricIOHandler ioHandler = new SymmetricIOHandler(file);
                 SymmetricDSMData matrix = ioHandler.importThebeauMatlabFile(file);
-                if(matrixData == null) {
+                if(matrix == null) {
                     // TODO: open window saying there was an error parsing the document
                     System.out.println("there was an error reading the file " + file);
                 } else if(!this.editor.getMatricesCollection().getMatrixFileAbsoluteSavePaths().contains(file.getAbsolutePath())) {
@@ -327,7 +323,7 @@ public class HeaderMenu {
             if(editor.getFocusedMatrixUid() == null) {
                 return;
             }
-            ioHandler.exportToImage(matrixData.createCopy(), matrixView.createCopy());
+            ioHandler.exportToImage(menuBar.getScene().getWindow(), matrixData.createCopy(), matrixView.createCopy());
         });
 
 
@@ -429,9 +425,9 @@ public class HeaderMenu {
                 }
 
                 // create the interfaces
-                HashMap<String, Vector<DSMInterfaceType>> interfaceTypes = new HashMap<>();
-                for(Map.Entry<String, Vector<DSMInterfaceType>> interfaceGroup : symmetricMatrix.getInterfaceTypes().entrySet()) {
-                    Vector<DSMInterfaceType> interfaces = new Vector<>();
+                HashMap<String, List<DSMInterfaceType>> interfaceTypes = new HashMap<>();
+                for(Map.Entry<String, List<DSMInterfaceType>> interfaceGroup : symmetricMatrix.getInterfaceTypes().entrySet()) {
+                    List<DSMInterfaceType> interfaces = new ArrayList<>();
                     for(DSMInterfaceType i : interfaceGroup.getValue()) {
                         interfaces.add(new DSMInterfaceType(i));
                     }
@@ -440,7 +436,7 @@ public class HeaderMenu {
                 for(String interfaceGrouping : interfaceTypes.keySet()) {  // add the groupings
                     multiDomainMatrix.addInterfaceTypeGrouping(interfaceGrouping);
                 }
-                for(Map.Entry<String, Vector<DSMInterfaceType>> interfaces : interfaceTypes.entrySet()) {  // add the interfaces
+                for(Map.Entry<String, List<DSMInterfaceType>> interfaces : interfaceTypes.entrySet()) {  // add the interfaces
                     for(DSMInterfaceType i : interfaces.getValue()) {
                         multiDomainMatrix.addInterface(interfaces.getKey(), i);
                     }
@@ -539,7 +535,7 @@ public class HeaderMenu {
                 }
 
                 PropagationAnalysisWindow p = new PropagationAnalysisWindow(this.editor.getFocusedMatrixData());
-                p.start();
+                p.start(menuBar.getScene().getWindow());
             });
 
             toolsMenu.getItems().add(propagationAnalysis);
@@ -553,20 +549,20 @@ public class HeaderMenu {
                 }
 
                 ClusterAnalysisWindow c = new ClusterAnalysisWindow((SymmetricDSMData) this.editor.getFocusedMatrixData());
-                c.start();
+                c.start(menuBar.getScene().getWindow());
             });
 
-            MenuItem thebeau = new MenuItem("Thebeau Algorithm...");
-            thebeau.setOnAction(e -> {
+            MenuItem cluster = new MenuItem("Cluster Algorithms...");
+            cluster.setOnAction(e -> {
                 if (editor.getFocusedMatrixUid() == null) {
                     return;
                 }
 
                 ClusterAlgorithmWindow c = new ClusterAlgorithmWindow((SymmetricDSMData) this.editor.getFocusedMatrixData());
-                c.start();
+                c.start(menuBar.getScene().getWindow());
             });
 
-            toolsMenu.getItems().addAll(coordinationScore, thebeau);
+            toolsMenu.getItems().addAll(coordinationScore, cluster);
         }
     }
 
@@ -574,7 +570,7 @@ public class HeaderMenu {
     /**
      * sets up the Menu object for the view menu
      */
-    protected void setupViewMenu() {
+    private void setupViewMenu() {
         MenuItem zoomIn = new MenuItem("Zoom In");
         zoomIn.setOnAction(e -> editor.increaseFontScaling());
         zoomIn.setAccelerator(new KeyCodeCombination(KeyCode.I, KeyCombination.SHORTCUT_DOWN));
@@ -595,7 +591,8 @@ public class HeaderMenu {
 
         MenuItem configureVisibleInterfaces = new MenuItem("Configure Visible Interfaces...");
         configureVisibleInterfaces.setOnAction(e -> {
-            currentInterfaces = ConfigureConnectionInterfaces.configureConnectionInterfaces(matrixData.getInterfaceTypes(), currentInterfaces);
+            currentInterfaces = ConfigureConnectionInterfaces.configureConnectionInterfaces(
+                    menuBar.getScene().getWindow(), matrixData.getInterfaceTypes(), currentInterfaces);
             matrixView.setVisibleInterfaces(currentInterfaces);
         });
         configureVisibleInterfaces.setVisible(false);  // default to invisible, can be over-ridden if matrix data is not null when default view is selected
@@ -703,28 +700,15 @@ public class HeaderMenu {
     /**
      * sets up the Menu object for the help menu
      */
-    protected void setupHelpMenu() {
+    private void setupHelpMenu() {
+        MenuItem submitBugReport = new MenuItem("Submit Bug Report");
+        submitBugReport.setOnAction(e -> HelpMenu.openBugReportMenu());
+
+
         MenuItem about = new MenuItem("About");
-        about.setOnAction(e -> {
-            // bring up window asking to delete rows or columns
-            Stage window = new Stage();
-            window.setTitle("About");
-            window.initModality(Modality.APPLICATION_MODAL);  // Block events to other windows
+        about.setOnAction(e -> HelpMenu.openAboutMenu(menuBar.getScene().getWindow()));
 
-            VBox rootLayout = new VBox();
-            rootLayout.setPadding(new Insets(10, 10, 10, 10));
-            rootLayout.setSpacing(10);
-
-            Label versionLabel = new Label("Version: " + Constants.version);
-
-            rootLayout.getChildren().addAll(versionLabel);
-
-            Scene scene = new Scene(rootLayout);
-            window.setScene(scene);
-            window.showAndWait();
-        });
-
-        helpMenu.getItems().addAll(about);
+        helpMenu.getItems().addAll(submitBugReport, about);
     }
 
 

@@ -3,7 +3,7 @@ package Matrices.IOHandlers;
 import Constants.Constants;
 import Matrices.Data.Entities.*;
 import Matrices.Data.MultiDomainDSMData;
-import Matrices.Views.AbstractMatrixView;
+import UI.MatrixViews.AbstractMatrixView;
 import javafx.scene.paint.Color;
 import javafx.util.Pair;
 import org.apache.poi.ss.usermodel.*;
@@ -271,7 +271,7 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
             }
 
             // create interface type elements
-            for(Map.Entry<String, Vector<DSMInterfaceType>> interfaces : matrix.getInterfaceTypes().entrySet()) {
+            for(Map.Entry<String, List<DSMInterfaceType>> interfaces : matrix.getInterfaceTypes().entrySet()) {
                 Element interfacesGroupingElement = new Element("grouping");
                 interfacesGroupingElement.setAttribute("name", interfaces.getKey());
                 for(DSMInterfaceType i : interfaces.getValue()) {

@@ -4,7 +4,7 @@ import Constants.Constants;
 import Matrices.Data.AbstractDSMData;
 import Matrices.IDSM;
 import Matrices.MatricesCollection;
-import Matrices.Views.AbstractMatrixView;
+import UI.MatrixViews.AbstractMatrixView;
 import UI.Widgets.DraggableTab;
 import javafx.beans.binding.Bindings;
 import javafx.scene.control.TabPane;

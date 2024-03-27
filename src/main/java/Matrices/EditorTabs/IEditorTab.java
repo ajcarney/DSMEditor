@@ -1,10 +1,9 @@
 package Matrices.EditorTabs;
 
 import Matrices.Data.AbstractDSMData;
-import Matrices.Views.AbstractMatrixView;
+import UI.MatrixViews.AbstractMatrixView;
 import javafx.scene.layout.Pane;
 
-import java.util.ArrayList;
 import java.util.Collection;
 
 /**

@@ -50,10 +50,10 @@ public abstract class AbstractDSMData {
 
     }
 
-    protected Vector<DSMItem> rows;
-    protected Vector<DSMItem> cols;
-    protected Vector<DSMConnection> connections;
-    protected HashMap<String, Vector<DSMInterfaceType>> interfaceTypes;
+    protected List<DSMItem> rows;
+    protected List<DSMItem> cols;
+    protected List<DSMConnection> connections;
+    protected HashMap<String, List<DSMInterfaceType>> interfaceTypes;
 
     protected StringProperty title = new SimpleStringProperty("");
     protected StringProperty projectName = new SimpleStringProperty("");
@@ -75,9 +75,9 @@ public abstract class AbstractDSMData {
         undoStack = new Stack<>();
         redoStack = new Stack<>();
 
-        rows = new Vector<>();
-        cols = new Vector<>();
-        connections = new Vector<>();
+        rows = new ArrayList<>();
+        cols = new ArrayList<>();
+        connections = new ArrayList<>();
         interfaceTypes = new HashMap<>();
 
         setWasModified();
@@ -95,26 +95,26 @@ public abstract class AbstractDSMData {
         undoStack = new Stack<>();
         redoStack = new Stack<>();
 
-        rows = new Vector<>();
+        rows = new ArrayList<>();
         for(DSMItem row : copy.getRows()) {
             rows.add(new DSMItem(row));
         }
 
-        cols = new Vector<>();
+        cols = new ArrayList<>();
         for(DSMItem col : copy.getCols()) {
             cols.add(new DSMItem(col));
         }
 
         interfaceTypes = new HashMap<>();
-        for(Map.Entry<String, Vector<DSMInterfaceType>> interfaces : copy.getInterfaceTypes().entrySet()) {
-            Vector<DSMInterfaceType> newInterfaceTypes = new Vector<>();
+        for(Map.Entry<String, List<DSMInterfaceType>> interfaces : copy.getInterfaceTypes().entrySet()) {
+            List<DSMInterfaceType> newInterfaceTypes = new ArrayList<>();
             for(DSMInterfaceType i : interfaces.getValue()) {
                 newInterfaceTypes.add(new DSMInterfaceType(i));
             }
             interfaceTypes.put(interfaces.getKey(), newInterfaceTypes);
         }
 
-        connections = new Vector<>();
+        connections = new ArrayList<>();
         for(DSMConnection conn : copy.getConnections()) {
             connections.add(new DSMConnection(conn));
         }
@@ -164,7 +164,7 @@ public abstract class AbstractDSMData {
     public final void undoToCheckpoint() {
         int iter = 0;
         while(true) {  // undo state until the last checkpoint
-            if(undoStack.size() > 0) {  // make sure stack is not empty
+            if(!undoStack.isEmpty()) {  // make sure stack is not empty
                 MatrixChange change = undoStack.peek();
                 if(change.isCheckpoint() && iter > 0) {  // stop before the checkpoint unless it is the first item
                     break;
@@ -189,7 +189,7 @@ public abstract class AbstractDSMData {
      */
     public final void redoToCheckpoint() {
         while(true) {
-            if(redoStack.size() > 0) {  // make sure stack is not empty
+            if(!redoStack.isEmpty()) {  // make sure stack is not empty
                 MatrixChange change = redoStack.peek();
                 redoStack.pop();  // add change to the redo stack
 
@@ -226,7 +226,7 @@ public abstract class AbstractDSMData {
      * @return if changes are on the undo stack
      */
     public final boolean canUndo() {
-        return undoStack.size() > 0;
+        return !undoStack.isEmpty();
     }
 
 
@@ -236,7 +236,7 @@ public abstract class AbstractDSMData {
      * @return if changes are on the redo stack
      */
     public final boolean canRedo() {
-        return redoStack.size() > 0;
+        return !redoStack.isEmpty();
     }
 
 
@@ -295,7 +295,7 @@ public abstract class AbstractDSMData {
     protected final void removeItem(DSMItem item) {
         int index = -1;
         for(int i=0; i<this.rows.size(); i++) {     // check to see if uid is in the rows
-            if(rows.elementAt(i).getUid() == item.getUid()) {
+            if(rows.get(i).getUid() == item.getUid()) {
                 index = i;
                 break;
             }
@@ -304,7 +304,7 @@ public abstract class AbstractDSMData {
             rows.remove(index);
         } else {                                   // uid was not in a row, must be in a column
             for(int i=0; i<this.cols.size(); i++) {
-                if(cols.elementAt(i).getUid() == item.getUid()) {
+                if(cols.get(i).getUid() == item.getUid()) {
                     index = i;
                     break;
                 }
@@ -355,9 +355,9 @@ public abstract class AbstractDSMData {
     /**
      * Returns the rows in a mutable way
      *
-     * @return a vector of the items declared as rows
+     * @return a list of the items declared as rows
      */
-    public final Vector<DSMItem> getRows() {
+    public final List<DSMItem> getRows() {
         return rows;
     }
 
@@ -365,9 +365,9 @@ public abstract class AbstractDSMData {
     /**
      * Returns the columns in a mutable way
      *
-     * @return a vector of the items declared as columns
+     * @return a list of the items declared as columns
      */
-    public final Vector<DSMItem> getCols() {
+    public final List<DSMItem> getCols() {
         return cols;
     }
 
@@ -449,9 +449,9 @@ public abstract class AbstractDSMData {
     /**
      * Returns connections in a mutable way
      *
-     * @return a vector of the connections in the matrix
+     * @return a list of the connections in the matrix
      */
-    public final Vector<DSMConnection> getConnections() {
+    public final List<DSMConnection> getConnections() {
         return connections;
     }
 
@@ -459,7 +459,7 @@ public abstract class AbstractDSMData {
     /**
      * @return  List of all the interface groupings
      */
-    public final ArrayList<String> getInterfaceGroupings() {
+    public final List<String> getInterfaceGroupings() {
         return new ArrayList<>(interfaceTypes.keySet());
     }
 
@@ -467,7 +467,7 @@ public abstract class AbstractDSMData {
     /**
      * @return  HashMap of the interface groupings and the associated interface types
      */
-    public final HashMap<String, Vector<DSMInterfaceType>> getInterfaceTypes() {
+    public final HashMap<String, List<DSMInterfaceType>> getInterfaceTypes() {
         return interfaceTypes;
     }
 
@@ -495,7 +495,7 @@ public abstract class AbstractDSMData {
 
 //region Advanced Getters
     /**
-     * Checks whether a uid is a row or not
+     * Checks whether uid is a row or not
      *
      * @param uid the uid of the item to check
      * @return    true or false if it is a row or not
@@ -512,7 +512,7 @@ public abstract class AbstractDSMData {
 
 
     /**
-     * Checks whether a uid is a column or not
+     * Checks whether uid is a column or not
      *
      * @param uid the uid of the item to check
      * @return    true or false if it is a column or not
@@ -682,7 +682,7 @@ public abstract class AbstractDSMData {
         if(!interfaceTypes.containsKey(name)) {
             addChangeToStack(new MatrixChange(
                     () -> {  // do function
-                        interfaceTypes.put(name, new Vector<>());
+                        interfaceTypes.put(name, new ArrayList<>());
                     },
                     () -> {  // undo function
                         interfaceTypes.remove(name);
@@ -694,7 +694,7 @@ public abstract class AbstractDSMData {
 
 
     /**
-     * Adds a new interface type of a given grouping to the matrix. Puts the change on the stack but does not
+     * Adds a new interface type of given grouping to the matrix. Puts the change on the stack but does not
      * set a checkpoint
      *
      * @param interfaceTypeGrouping  the name of the grouping for this interface type. Adds the grouping if not present
@@ -726,7 +726,7 @@ public abstract class AbstractDSMData {
      */
     public final void removeInterfaceTypeGrouping(String name) {
         if(interfaceTypes.containsKey(name)) {
-            Vector<DSMInterfaceType> oldInterfaces = interfaceTypes.get(name);
+            List<DSMInterfaceType> oldInterfaces = interfaceTypes.get(name);
 
             addChangeToStack(new MatrixChange(
                     () -> {  // do function
@@ -742,7 +742,7 @@ public abstract class AbstractDSMData {
 
 
     /**
-     * Removes an existing interface type of a given grouping from the matrix. Puts the change on the stack but does not
+     * Removes an existing interface type of given grouping from the matrix. Puts the change on the stack but does not
      * set a checkpoint
      *
      * @param interfaceTypeGrouping  the name of the grouping for this interface type. Adds the grouping if not present
@@ -776,7 +776,7 @@ public abstract class AbstractDSMData {
     public void renameInterfaceTypeGrouping(String oldName, String newName) {
         assert(interfaceTypes.get(oldName) != null);
 
-        Vector<DSMInterfaceType> interfaces = interfaceTypes.get(oldName);
+        List<DSMInterfaceType> interfaces = interfaceTypes.get(oldName);
         addChangeToStack(new MatrixChange(
                 () -> {  // do function
                     interfaceTypes.remove(oldName);
@@ -794,7 +794,7 @@ public abstract class AbstractDSMData {
     /**
      * Renames an interface type. Puts the change on the stack but does not set a checkpoint.
      *
-     * @param interfaceType          the interface who's name should be changed
+     * @param interfaceType          the interface whose name should be changed
      * @param newName                the new name for the interface grouping
      */
     public void renameInterfaceType(DSMInterfaceType interfaceType, String newName) {
@@ -814,7 +814,7 @@ public abstract class AbstractDSMData {
     /**
      * Renames an interface type's abbreviation. Puts the change on the stack but does not set a checkpoint.
      *
-     * @param interfaceType    the interface who's abbreviation should be changed
+     * @param interfaceType    the interface whose abbreviation should be changed
      * @param newAbbreviation  the new abbreviation for the interface grouping
      */
     public void updateInterfaceTypeAbbreviation(DSMInterfaceType interfaceType, String newAbbreviation) {
@@ -941,7 +941,7 @@ public abstract class AbstractDSMData {
      * deletes all connections in the matrix. Adds changes to the stack, but does not set a checkpoint
      */
     public final void deleteAllConnections() {
-        Vector<DSMConnection> connectionsClone = new Vector<>(connections);
+        List<DSMConnection> connectionsClone = new ArrayList<>(connections);
         for(DSMConnection connection : connectionsClone) {     // check to see if uid is in the rows
             deleteConnection(connection.getRowUid(), connection.getColUid());
         }
@@ -953,11 +953,11 @@ public abstract class AbstractDSMData {
      * the stack to be handled, but does not set a checkpoint
      */
     public void transposeMatrix() {
-        Vector<DSMItem> oldRows = new Vector<>(rows);
-        Vector<DSMItem> oldCols = new Vector<>(cols);
-        Vector<DSMConnection> oldConnections = new Vector<>(connections);
+        List<DSMItem> oldRows = new ArrayList<>(rows);
+        List<DSMItem> oldCols = new ArrayList<>(cols);
+        List<DSMConnection> oldConnections = new ArrayList<>(connections);
 
-        for(DSMConnection conn : oldConnections) {  // these function calls already put a change on the stack so they don't need to be wrapped
+        for(DSMConnection conn : oldConnections) {  // these function calls already put a change on the stack, so they don't need to be wrapped
             deleteConnection(conn.getRowUid(), conn.getColUid());
             modifyConnection(conn.getColUid(), conn.getRowUid(), conn.getConnectionName(), conn.getWeight(), conn.getInterfaces());
         }
@@ -986,10 +986,10 @@ public abstract class AbstractDSMData {
         rows.sort(Comparator.comparing(DSMItem::getSortIndex));
         cols.sort(Comparator.comparing(DSMItem::getSortIndex));
         for(int i=0; i<rows.size(); i++) {  // reset row sort Indices 1 -> n
-            setItemSortIndex(rows.elementAt(i), i + 1);
+            setItemSortIndex(rows.get(i), i + 1);
         }
         for(int i=0; i<cols.size(); i++) {  // reset col sort Indices 1 -> n
-            setItemSortIndex(cols.elementAt(i), i + 1);
+            setItemSortIndex(cols.get(i), i + 1);
         }
     }
 //endregion

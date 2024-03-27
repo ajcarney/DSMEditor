@@ -131,7 +131,7 @@ public class SymmetricDSMDataTest {
         matrix.addItem(colItem, false);
 
         matrix.setCurrentStateAsCheckpoint();
-        matrix.clearGroupings();
+        matrix.resetGroupings();
 
         stressUndoRedo(matrix);
 

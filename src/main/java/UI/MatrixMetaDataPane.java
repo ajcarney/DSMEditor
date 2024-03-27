@@ -75,6 +75,7 @@ public class MatrixMetaDataPane {
             Stage window = new Stage();
 
             // Create Root window
+            window.initOwner(layout.getScene().getWindow());
             window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
             window.setTitle("Configure Matrix Info");
 

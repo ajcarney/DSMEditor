@@ -1,9 +1,9 @@
 package Matrices.EditorTabs;
 
 import Matrices.Data.AsymmetricDSMData;
-import Matrices.SideBarTools.AsymmetricSideBar;
-import Matrices.Views.AbstractMatrixView;
-import Matrices.Views.AsymmetricView;
+import UI.SideBarViews.AsymmetricSideBar;
+import UI.MatrixViews.AbstractMatrixView;
+import UI.MatrixViews.AsymmetricView;
 import UI.MatrixMetaDataPane;
 import javafx.scene.layout.Pane;
 

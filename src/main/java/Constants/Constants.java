@@ -1,5 +1,10 @@
 package Constants;
 
+/**
+ * A class with constants used throughout
+ *
+ * @author Aiden Carney
+ */
 public class Constants {
     public static final String version = "v2.0.0";
     public static final double[] fontSizes = {

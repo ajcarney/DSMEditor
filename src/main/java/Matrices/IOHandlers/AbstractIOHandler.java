@@ -2,7 +2,7 @@ package Matrices.IOHandlers;
 
 import Matrices.Data.AbstractDSMData;
 import Matrices.IOHandlers.Flags.IStandardExports;
-import Matrices.Views.AbstractMatrixView;
+import UI.MatrixViews.AbstractMatrixView;
 import UI.Widgets.Misc;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.geometry.Insets;
@@ -82,7 +82,7 @@ public abstract class AbstractIOHandler implements IStandardExports {
      * @param extension the extension to force
      * @return          a file object with the extension at the end
      */
-    static public File forceExtension(File file, String extension) {
+    public static File forceExtension(File file, String extension) {
         String path = file.getAbsolutePath();
         if(!path.endsWith(extension)) {
             path += extension;
@@ -283,13 +283,15 @@ public abstract class AbstractIOHandler implements IStandardExports {
     /**
      * Opens a window to export a matrix to a png file with different configuration options
      *
-     * @param matrix      the matrix object to save to an image
-     * @param matrixView  the matrix gui handler for the matrix object
+     * @param parentWindow the parent window so that the popup can open centered
+     * @param matrix       the matrix object to save to an image
+     * @param matrixView   the matrix gui handler for the matrix object
      */
     @Override
-     public void exportToImage(AbstractDSMData matrix, AbstractMatrixView matrixView) {
+    public void exportToImage(Window parentWindow, AbstractDSMData matrix, AbstractMatrixView matrixView) {
         // Create Root window
         Stage window = new Stage();
+        window.initOwner(parentWindow);
         window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
         window.setTitle("DSMEditor");
 
@@ -375,7 +377,7 @@ public abstract class AbstractIOHandler implements IStandardExports {
 
         Button saveButton = new Button("Save");
         saveButton.setOnAction(e -> {
-            if(!saveLocation.getText().equals("")){
+            if(!saveLocation.getText().isEmpty()){
                 File file = new File(saveLocation.getText());
                 BufferedImage img = SwingFXUtils.fromFXImage(preview.snapshot(new SnapshotParameters(), null), null);
                 try {
@@ -439,7 +441,7 @@ public abstract class AbstractIOHandler implements IStandardExports {
             HBox centeredMatrix = new HBox();
 
             if(fastRender.isSelected()) {
-                matrixView.setCurrentMode(AbstractMatrixView.MatrixViewMode.FAST_RENDER);
+                matrixView.setCurrentMode(AbstractMatrixView.MatrixViewMode.STATIC_FAST_RENDER);
             } else if(showConnectionNames.isSelected()) {
                 matrixView.setCurrentMode(AbstractMatrixView.MatrixViewMode.STATIC_NAMES);
             } else {

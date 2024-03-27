@@ -1,7 +1,7 @@
 package Matrices.IOHandlers.Flags;
 
 import Matrices.Data.AbstractDSMData;
-import Matrices.Views.AbstractMatrixView;
+import UI.MatrixViews.AbstractMatrixView;
 import javafx.stage.Window;
 
 import java.io.File;
@@ -53,9 +53,10 @@ public interface IStandardExports {
     /**
      * Opens a window to export a matrix to a png file with different configuration options
      *
+     * @param parentWindow the parent window so that the popup can open centered
      * @param matrix      the matrix object to save to an image
      * @param matrixView  the matrix gui handler for the matrix object
      */
-    void exportToImage(AbstractDSMData matrix, AbstractMatrixView matrixView);
+    void exportToImage(Window parentWindow, AbstractDSMData matrix, AbstractMatrixView matrixView);
 
 }
