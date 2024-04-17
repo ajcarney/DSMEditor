@@ -53,7 +53,7 @@ public class DSMItem {
      * Creates a new DSMItem with all data fields to be set. Called when creating an item that was saved to a file
      *
      * @param uid      the uid of the item
-     * @param aliasUid the uid of the row associated with a column item. Use null if item is not a column item or item is not part of a symmetric matrix
+     * @param aliasUid the uid of the row associated with a column item. Use null if item is not part of a symmetric matrix
      * @param index    the sort index of the item
      * @param name     the name of the item
      * @param group1   the first group of the item

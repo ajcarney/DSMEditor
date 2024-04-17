@@ -350,6 +350,63 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
 
 
     /**
+     * Saves a matrix as an adjacency matrix in csv format
+     *
+     * @param file      the file to save the csv file to
+     * @return          0 on success, 1 on error
+     */
+    @Override
+    public int exportMatrixToAdjacencyMatrix(File file) {
+        // TODO
+        try {
+            StringBuilder contents = new StringBuilder("Title," + matrix.getTitle() + "\n");
+            contents.append("Project Name,").append(matrix.getProjectName()).append("\n");
+            contents.append("Customer,").append(matrix.getCustomer()).append("\n");
+            contents.append("Version,").append(matrix.getVersionNumber()).append("\n");
+
+            ArrayList<ArrayList<Pair<RenderMode, Object>>> template = matrix.getGridArray();
+            int rows = template.size();
+            int columns = template.get(0).size();
+
+            for(int r=0; r<rows; r++) {
+                for (int c = 0; c < columns; c++) {
+                    Pair<RenderMode, Object> item = template.get(r).get(c);
+
+                    switch(item.getKey()) {
+                        case PLAIN_TEXT, PLAIN_TEXT_V -> contents.append(item.getValue()).append(",");
+                        case ITEM_NAME, ITEM_NAME_V -> contents.append(((DSMItem) item.getValue()).getName().getValue()).append(",");
+                        case GROUPING_ITEM, GROUPING_ITEM_V -> contents.append(((DSMItem) item.getValue()).getGroup1().getName()).append(",");
+                        case INDEX_ITEM -> contents.append(((DSMItem) item.getValue()).getSortIndex()).append(",");
+                        case UNEDITABLE_CONNECTION -> contents.append(",");
+                        case EDITABLE_CONNECTION -> {
+                            int rowUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getKey().getUid();
+                            int colUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getValue().getUid();
+                            if (matrix.getConnection(rowUid, colUid) != null) {
+                                contents.append(matrix.getConnection(rowUid, colUid).getConnectionName());
+                            }
+                            contents.append(",");
+                        }
+                    }
+                }
+                contents.append("\n");
+            }
+
+            file = forceExtension(file, ".csv");
+            System.out.println("Exporting to " + file.getAbsolutePath());
+            FileWriter writer = new FileWriter(file);
+            writer.write(contents.toString());
+            writer.close();
+
+            return 1;
+        } catch(Exception e) {  // TODO: add better error handling and bring up an alert box
+            System.out.println(e.getMessage());
+            e.printStackTrace();
+            return 0;  // 0 means there was an error somewhere
+        }
+    }
+
+
+    /**
      * Saves a matrix to an Excel Spreadsheet file. The spreadsheet includes the matrix metadata.
      * Cells are highlighted and auto sized. The matrix itself is shifted by ROW_START and COL_START (in function body)
      * so that the sizing for it is not impacted by the matrix metadata

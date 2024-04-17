@@ -156,7 +156,7 @@ public abstract class AbstractIOHandler implements IStandardExports {
      * should be called before removing a matrix. Does not save the matrix only decides what
      * should be done
      *
-     * @return     0 = don't save, 1 = save, 2 = cancel
+     * @return     0 = don't save, 1 = save, 2 = cancel  TODO: this should be enum
      */
      public Integer promptSave() {
         AtomicReference<Integer> code = new AtomicReference<>(); // 0 = close the tab, 1 = save and close, 2 = don't close
@@ -224,6 +224,22 @@ public abstract class AbstractIOHandler implements IStandardExports {
         File fileName = fileChooser.showSaveDialog(window);
         if(fileName != null) {
             int code = exportMatrixToCSV(fileName);
+        }
+    }
+
+
+    /**
+     * Opens a file chooser window to choose a location to export a matrix to csv
+     *
+     * @param window the window associated with the file chooser
+     */
+    @Override
+    public void promptExportToAdjacencyMatrix(Window window) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV File", "*.csv"));  // dsm is the only file type usable
+        File fileName = fileChooser.showSaveDialog(window);
+        if(fileName != null) {
+            int code = exportMatrixToAdjacencyMatrix(fileName);
         }
     }
 

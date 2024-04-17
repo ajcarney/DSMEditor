@@ -34,6 +34,23 @@ public interface IStandardExports {
 
 
     /**
+     * Saves a matrix as an adjacency matrix in csv format
+     *
+     * @param file      the file to save the csv file to
+     * @return          0 on success, 1 on error
+     */
+    int exportMatrixToAdjacencyMatrix(File file);
+
+
+    /**
+     * Opens a file chooser window to choose a location to export an adjacency matrix
+     *
+     * @param window the window associated with the file chooser
+     */
+    void promptExportToAdjacencyMatrix(Window window);
+
+
+    /**
      * Saves a matrix to an Excel Spreadsheet file.
      *
      * @param file      A File object of the location of the .xlsx file

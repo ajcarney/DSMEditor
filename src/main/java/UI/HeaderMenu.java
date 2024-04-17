@@ -288,7 +288,29 @@ public class HeaderMenu {
             }
         });
 
-        parent.getItems().add(importThebeau);
+        MenuItem importAdjacencyMatrix = new MenuItem("Adjacency Matrix...");
+        importAdjacencyMatrix.setOnAction(e -> {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV File", "*.csv"));  // matlab is the only file type usable
+            File file = fileChooser.showOpenDialog(menuBar.getScene().getWindow());
+            if(file != null) {  // make sure user did not just close out of the file chooser window
+                SymmetricIOHandler ioHandler = new SymmetricIOHandler(file);
+                SymmetricDSMData matrix = ioHandler.importAdjacencyMatrix(file);
+                if(matrix == null) {
+                    // TODO: open window saying there was an error parsing the document
+                    System.out.println("there was an error reading the file " + file);
+                } else if(!this.editor.getMatricesCollection().getMatrixFileAbsoluteSavePaths().contains(file.getAbsolutePath())) {
+                    File importedFile = new File(file.getParent(), file.getName().substring(0, file.getName().lastIndexOf('.')) + ".dsm");  // convert .m extension to .dsm
+                    ioHandler.setMatrix(matrix);
+                    ioHandler.setSavePath(importedFile);
+                    this.editor.addTab(new SymmetricDSM(matrix, ioHandler));
+                } else {
+                    editor.focusTab(file);  // focus on that tab because it is already open
+                }
+            }
+        });
+
+        parent.getItems().addAll(importThebeau, importAdjacencyMatrix);
     }
 
 
@@ -301,6 +323,7 @@ public class HeaderMenu {
         if (matrixData == null) return;
 
         MenuItem exportCSV = new MenuItem("CSV File (.csv)...");
+        MenuItem exportAdjacency = new MenuItem("Adjacency Matrix (.csv)...");
         MenuItem exportXLSX = new MenuItem("Micro$oft Excel File (.xlsx)...");
         MenuItem exportImage = new MenuItem("PNG Image File (.png)...");
 
@@ -310,6 +333,13 @@ public class HeaderMenu {
                 return;
             }
             ioHandler.promptExportToCSV(menuBar.getScene().getWindow());
+        });
+
+        exportAdjacency.setOnAction(e -> {
+            if(editor.getFocusedMatrixUid() == null) {
+                return;
+            }
+            ioHandler.promptExportToAdjacencyMatrix(menuBar.getScene().getWindow());
         });
 
         exportXLSX.setOnAction(e -> {
@@ -327,7 +357,7 @@ public class HeaderMenu {
         });
 
 
-        parent.getItems().addAll(exportCSV, exportXLSX, exportImage);
+        parent.getItems().addAll(exportCSV, exportAdjacency, exportXLSX, exportImage);
 
 
         if(ioHandler instanceof IThebeauExport) {
