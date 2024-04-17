@@ -1,17 +1,14 @@
 package UI;
 
 import Constants.Constants;
+import Logging.Logger;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import Logging.Logger;
 import javafx.stage.Window;
-
-import java.awt.Desktop;
-import java.net.URI;
 
 
 /**
@@ -54,7 +51,7 @@ public class HelpMenu {
 
     public static void openBugReportMenu() {
         try {
-            Desktop.getDesktop().browse(new URI("https://github.com/ajcarney/DSMEditor/issues"));
+            new ProcessBuilder("x-www-browser", "https://github.com/ajcarney/DSMEditor/issues").start();
         } catch (Exception e) {
             Logger.submitException(e, Logger.LOGGER_PRIORITY.HIGH);
         }
