@@ -115,6 +115,7 @@ public class MultiDomainEditorTab implements IEditorTab {
             zoomButton.setOnAction(ee -> {
                 // Create Root window
                 Stage window = new Stage();
+                window.initOwner(centerLayout.getScene().getWindow());
                 window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
                 window.setTitle("Configure Groupings");
 
