@@ -148,6 +148,15 @@ public abstract class AbstractIOHandler implements IStandardExports {
     }
 
 
+    /**
+     * This method reads an adjacency matrix from a CSV file.
+     * The method uses a Scanner to read the file line by line. Each line is split into a list of strings,
+     * representing the cells of the matrix row. The list of strings is then added to a list of lists,
+     * representing the entire matrix.
+     *
+     * @param file The CSV file to read the adjacency matrix from.
+     * @return A list of lists of strings representing the adjacency matrix. Each inner list represents a row of the matrix.
+     */
     protected List<List<String>> readAdjacencyMatrix(File file) {
         List<List<String>> lines = new ArrayList<>();
         Scanner scanner;

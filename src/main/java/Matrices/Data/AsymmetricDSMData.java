@@ -13,7 +13,6 @@ import java.util.*;
 /**
  * A class that contains data about a matrix. All operations to a matrix come through
  * this class. Handles both symmetrical and non-symmetrical matrices.
- * Note: items in a symmetric dsm will use the property Grouping.group1 to configure groups
  *
  * @author: Aiden Carney
  */
@@ -117,7 +116,7 @@ public class AsymmetricDSMData extends AbstractDSMData implements IPropagationAn
      * @param isRow  if getting the default group for the rows or columns
      * @return       the default grouping object for either a row or a column
      */
-    private Grouping getDefaultGroup(boolean isRow) {
+    public Grouping getDefaultGroup(boolean isRow) {
         if(isRow) {
             for (Grouping grouping : rowGroupings) {
                 if (grouping.getUid().equals(DEFAULT_GROUP_UID)) {

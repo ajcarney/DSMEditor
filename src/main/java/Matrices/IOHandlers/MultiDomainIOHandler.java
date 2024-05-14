@@ -30,7 +30,6 @@ import java.util.*;
  */
 public class MultiDomainIOHandler extends AbstractIOHandler {
 
-    private MultiDomainDSMData matrix;
 
     /**
      * Constructor
@@ -245,11 +244,11 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
             }
 
             // create domain and domain-grouping elements
-            for(Grouping domain: matrix.getDomains()) {
+            for(Grouping domain: ((MultiDomainDSMData) matrix).getDomains()) {
                 Element domainElement = domain.getXML(new Element("domain"));
 
                 Element domainGroupingsElement = new Element("domainGroupings");
-                for(Grouping domainGroup : matrix.getDomainGroupings(domain)) {
+                for(Grouping domainGroup : ((MultiDomainDSMData) matrix).getDomainGroupings(domain)) {
                     domainGroupingsElement.addContent(domainGroup.getXML(new Element("group")));
                 }
                 domainElement.addContent(domainGroupingsElement);

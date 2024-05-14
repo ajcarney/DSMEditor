@@ -32,7 +32,6 @@ import java.util.regex.Pattern;
  */
 public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExport {
 
-    private SymmetricDSMData matrix;
 
     /**
      * Constructor
@@ -178,7 +177,6 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
         } catch(Exception e) {
             // TODO: add alert box that says the file was corrupted in some way and could not be read in
             System.out.println("Error reading file");
-            System.out.println(e);
             e.printStackTrace();
             return null;
         }
@@ -231,7 +229,7 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
                 int loc = Integer.parseInt(s2);                        // parse #1 as integer, removes whitespace
 
                 String name = line.split(Pattern.quote("'"))[1];
-                double sortIndex = (uid / 2) + 1;  // this will make the sort indices appear like they are normally distributed
+                double sortIndex = (uid / 2.0) + 1;  // this will make the sort indices appear like they are normally distributed
                 DSMItem rowItem = new DSMItem(uid, uid + 1, sortIndex, name, matrix.getDefaultGroup(), null);
                 DSMItem colItem = new DSMItem(uid + 1, uid, sortIndex, name, matrix.getDefaultGroup(), null);
                 uid += 2;  // add two because of column item
@@ -379,7 +377,7 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
             }
 
             // create groupings elements
-            for(Grouping group: matrix.getGroupings()) {
+            for(Grouping group: ((SymmetricDSMData) matrix).getGroupings()) {
                 groupingsElement.addContent(group.getXML(new Element("group")));
             }
 
@@ -470,7 +468,6 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
 
             return 1;
         } catch(Exception e) {  // TODO: add better error handling and bring up an alert box
-            System.out.println(e);
             e.printStackTrace();
             return 0;  // 0 means there was an error somewhere
         }
@@ -522,7 +519,6 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
 
             return 1;
         } catch(Exception e) {  // TODO: add better error handling and bring up an alert box
-            System.out.println(e);
             e.printStackTrace();
             return 0;  // 0 means there was an error somewhere
         }
@@ -673,7 +669,6 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
 
             return 1;
         } catch(Exception e) {  // TODO: add better error handling and bring up an alert box
-            System.out.println(e);
             e.printStackTrace();
             return 0;  // 0 means there was an error somewhere
         }
@@ -732,7 +727,6 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
 
             return 1;
         } catch(Exception e) {  // TODO: add better error handling and bring up an alert box
-            System.out.println(e);
             e.printStackTrace();
             return 0;  // 0 means there was an error somewhere
         }

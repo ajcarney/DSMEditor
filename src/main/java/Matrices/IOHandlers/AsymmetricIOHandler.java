@@ -18,6 +18,7 @@ import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 
 import java.io.*;
+import java.nio.file.attribute.GroupPrincipal;
 import java.util.*;
 
 
@@ -29,7 +30,6 @@ import java.util.*;
  */
 public class AsymmetricIOHandler extends AbstractIOHandler {
 
-    private AsymmetricDSMData matrix;
 
     /**
      * Constructor
@@ -236,10 +236,10 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
             }
 
             // create groupings elements
-            for(Grouping group: matrix.getGroupings(true)) {
+            for(Grouping group: ((AsymmetricDSMData) matrix).getGroupings(true)) {
                 rowGroupingsElement.addContent(group.getXML(new Element("group")));
             }
-            for(Grouping group: matrix.getGroupings(false)) {
+            for(Grouping group: ((AsymmetricDSMData) matrix).getGroupings(false)) {
                 colGroupingsElement.addContent(group.getXML(new Element("group")));
             }
 
@@ -302,35 +302,74 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
         HashMap<String, Integer> rowItems = new HashMap<>();
         HashMap<String, Integer> colItems = new HashMap<>();
 
-        // parse the first line to create rows and columns
+        // parse the first line to create groups
         List<String> line = lines.get(1);
+        HashMap<String, Grouping> colGroups = new HashMap<>();  // skip the first two columns
+        List<String> inOrderColGroups = new ArrayList<>();
         int uid = 1;
-        for(int i = 1; i < line.size(); i++) {
-            DSMItem row = new DSMItem(uid, uid + 1, i, line.get(i), null, null);
-            DSMItem col = new DSMItem(uid + 1, uid, i, line.get(i), null, null);
-            rowItems.put(line.get(i), uid);
-            colItems.put(line.get(i), uid + 1);
+        for (String groupName : line.subList(2, line.size())) {
+            if (!colGroups.containsKey(groupName)) {  // only add the unique group names
+                Grouping group;
+                if (line.get(0).equals("(none)")) {
+                    group = matrix.getDefaultGroup(false);
+                } else {
+                    group = new Grouping(uid, -1, line.get(0), Color.WHITE, Color.BLACK);
+                    matrix.addGrouping(false, group);
+                    uid += 1;
+                }
+
+                colGroups.put(groupName, group);
+            }
+            inOrderColGroups.add(groupName);
+
+        }
+
+        // parse the third line to create col items
+        line = lines.get(2);
+        for(int i = 2; i < line.size(); i++) {
+            DSMItem col = new DSMItem(uid, null, i, line.get(i), colGroups.get(inOrderColGroups.get(i - 2)), null);
+            colItems.put(line.get(i), uid);
             itemsOrder.add(line.get(i));
 
-            uid += 2;
-            matrix.addItem(row, true);
+            uid += 1;
             matrix.addItem(col, false);
         }
 
         // parse all the rest of the rows to determine groups and connections
-        for(int i = 2; i < lines.size(); i++) {
+        HashMap<String, Grouping> rowGroups = new HashMap<>();  // skip the first two columns
+        for(int i = 3; i < lines.size(); i++) {
             line = lines.get(i);
-            Integer rowUid = rowItems.get(itemsOrder.get(i - 1));  // subtract one for header row
 
-            for (int j = 1; j < line.size(); j++) {
+            String groupName = line.get(0);
+            Grouping rowGroup;
+            if (!rowGroups.containsKey(groupName)) {  // only add the unique group names
+                Grouping group;
+                if (groupName.equals("(none)")) {
+                    group = matrix.getDefaultGroup(false);
+                } else {
+                    group = new Grouping(uid, -1, line.get(0), Color.WHITE, Color.BLACK);
+                    matrix.addGrouping(true, group);
+                    uid += 1;
+                }
+                rowGroups.put(groupName, group);
+            }
+            rowGroup = rowGroups.get(groupName);
+
+            DSMItem row = new DSMItem(uid, null, i, line.get(1), rowGroup, null);
+            matrix.addItem(row, true);
+
+            for (int j = 2; j < line.size(); j++) {  // start at 2 to skip the first two columns
                 double weight = Double.parseDouble(line.get(j));
                 if (weight > 0.0) {
-                    Integer colUid = colItems.get(itemsOrder.get(j - 1));  // subtract one for groups column
-                    matrix.modifyConnection(rowUid, colUid, "x", weight, new ArrayList<>());
+                    Integer colUid = colItems.get(itemsOrder.get(j - 2));  // subtract two for group and name columns
+                    matrix.modifyConnection(uid, colUid, "x", weight, new ArrayList<>());
                 }
             }
+
+            uid += 1;
         }
 
+        matrix.reDistributeSortIndices();
         matrix.clearWasModifiedFlag();  // clear flag because no write operations were performed to the file
         matrix.clearStacks();  // make sure there are no changes when it is opened
 
@@ -396,9 +435,11 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
 
     /**
      * Saves a matrix as an adjacency matrix in csv format:
-     * <row>, col1, col2, col3, ...
-     * r1,      w1,   w2,   w3, ...
-     * r2,      w4,   w5,   w6, ...
+     * asymmetric
+     *        ,      , g1,   g2,   g3,   ...
+     * <group>, <row>, col1, col2, col3, ...
+     * g1,      r1,      w1,   w2,   w3, ...
+     * g2,      r2,      w4,   w5,   w6, ...
      * ...
      *
      * @param file      the file to save the csv file to
@@ -408,22 +449,29 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
     public int exportMatrixToAdjacencyMatrix(File file) {
         try {
             StringBuilder contents = new StringBuilder("asymmetric," + matrix.getTitle() + "\n");
-            contents.append("<row>");
 
+            matrix.reDistributeSortIndices();
+
+            // write the column groups
+            contents.append(",");
+            for (DSMItem col : matrix.getCols()) {
+                contents.append(",").append(col.getGroup1().getName());
+            }
+
+            contents.append("\n<group>,<row>");
             for (DSMItem col : matrix.getCols()) {
                 contents.append(",").append(col.getName().getValue());
             }
 
-            for (DSMItem col : matrix.getCols()) {
-                for (DSMItem row : matrix.getRows()) {
-                    contents.append("\n").append(row.getName().getValue());
+            for (DSMItem row : matrix.getRows()) {
+                contents.append("\n").append(row.getGroup1().getName()).append(",").append(row.getName().getValue());
+                for (DSMItem col : matrix.getCols()) {
                     DSMConnection connection = matrix.getConnection(row.getUid(), col.getUid());
                     if (connection != null) {
                         contents.append(",").append(connection.getWeight());
                     } else {
                         contents.append(",0");
                     }
-
                 }
             }
 
