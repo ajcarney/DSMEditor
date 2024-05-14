@@ -55,16 +55,6 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
 
 
     /**
-     * Sets the current matrix used by the IOHandler
-     *
-     * @param matrix  the new matrix object for the io handler
-     */
-    public void setMatrix(MultiDomainDSMData matrix) {
-        this.matrix = matrix;
-    }
-    
-
-    /**
      * Reads an xml file and parses it as an object that extends the template DSM. Returns the object,
      * but does not automatically add it to be handled.
      *
@@ -321,18 +311,7 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
         MultiDomainDSMData matrix = new MultiDomainDSMData();
 
         // read the lines of the file
-        ArrayList<String> lines = new ArrayList<>();
-        Scanner s;
-        try {
-            s = new Scanner(file);
-            while (s.hasNextLine()){
-                lines.add(s.nextLine());
-            }
-            s.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            return null;
-        }
+        List<List<String>> lines = readAdjacencyMatrix(file);
 
         int uid = 1;
         ArrayList<String> itemsOrder = new ArrayList<>();
@@ -342,15 +321,15 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
         HashMap<String, Grouping> groups  = new HashMap<>();
 
         // parse the first line to create rows and columns
-        String[] line = lines.get(0).split(",(?=(?:[^\\\"]*\\\"[^\\\"]*\\\")*[^\\\"]*$)");
+        List<String> line = lines.get(0);
         Grouping defaultDomain = matrix.getDefaultDomain();
         Grouping defaultGroup = matrix.getDefaultDomainGroup(defaultDomain);
-        for(int i = 2; i < line.length; i++) {
-            DSMItem row = new DSMItem(uid, uid + 1, i, line[i], defaultGroup, defaultDomain);
-            DSMItem col = new DSMItem(uid + 1, uid, i, line[i], defaultGroup, defaultDomain);
-            rowItems.put(line[i], uid);
-            colItems.put(line[i], uid + 1);
-            itemsOrder.add(line[i]);
+        for(int i = 2; i < line.size(); i++) {
+            DSMItem row = new DSMItem(uid, uid + 1, i, line.get(i), defaultGroup, defaultDomain);
+            DSMItem col = new DSMItem(uid + 1, uid, i, line.get(i), defaultGroup, defaultDomain);
+            rowItems.put(line.get(i), uid);
+            colItems.put(line.get(i), uid + 1);
+            itemsOrder.add(line.get(i));
 
             uid += 2;
             matrix.addItem(row, true);
@@ -361,28 +340,28 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
         // skip first row and create rows, items, domains, groups, and connections
         int priority = 1;
         for(int i = 1; i < lines.size(); i++) {
-            line = lines.get(i).split(",(?=(?:[^\\\"]*\\\"[^\\\"]*\\\")*[^\\\"]*$)");
+            line = lines.get(i);
             Grouping domain;
             Grouping group;
 
             // add domain if not exists
-            if (domains.containsKey(line[0])) {
-                domain = domains.get(line[0]);
+            if (domains.containsKey(line.get(0))) {
+                domain = domains.get(line.get(0));
             } else {
-                domain = new Grouping(uid, priority, line[0], Color.WHITE, Color.BLACK);
+                domain = new Grouping(uid, priority, line.get(0), Color.WHITE, Color.BLACK);
                 matrix.addDomain(domain);
-                domains.put(line[0], domain);
+                domains.put(line.get(0), domain);
                 priority += 1;
                 uid += 1;
             }
 
             // add grouping if not exists
-            if (groups.containsKey(line[1])) {
-                group = groups.get(line[1]);
+            if (groups.containsKey(line.get(1))) {
+                group = groups.get(line.get(1));
             } else {
-                group = new Grouping(uid, -1, line[1], Color.WHITE, Color.BLACK);
+                group = new Grouping(uid, -1, line.get(1), Color.WHITE, Color.BLACK);
                 // no need to add grouping because this is done automatically when making the item
-                groups.put(line[1], group);
+                groups.put(line.get(1), group);
                 uid += 1;
             }
 
@@ -395,8 +374,8 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
             // update the groups
             matrix.setItemDomainGroup(matrix.getItem(rowUid), domain, group);  // set the group (does both row and column)
 
-            for (int j = 2; j < line.length; j++) {
-                double weight = Double.parseDouble(line[j]);
+            for (int j = 2; j < line.size(); j++) {
+                double weight = Double.parseDouble(line.get(j));
                 if (weight > 0.0) {
                     Integer colUid = colItems.get(itemsOrder.get(j - 1));  // subtract one for groups column
                     matrix.modifyConnection(rowUid, colUid, "x", weight, new ArrayList<>());

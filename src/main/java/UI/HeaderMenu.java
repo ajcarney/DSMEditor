@@ -10,6 +10,7 @@ import Matrices.Data.Entities.Grouping;
 import Matrices.Data.Flags.IPropagationAnalysis;
 import Matrices.Data.MultiDomainDSMData;
 import Matrices.Data.SymmetricDSMData;
+import Matrices.IDSM;
 import Matrices.IOHandlers.AbstractIOHandler;
 import Matrices.IOHandlers.AsymmetricIOHandler;
 import Matrices.IOHandlers.Flags.IThebeauExport;
@@ -294,16 +295,42 @@ public class HeaderMenu {
             fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV File", "*.csv"));  // matlab is the only file type usable
             File file = fileChooser.showOpenDialog(menuBar.getScene().getWindow());
             if(file != null) {  // make sure user did not just close out of the file chooser window
-                SymmetricIOHandler ioHandler = new SymmetricIOHandler(file);
-                SymmetricDSMData matrix = ioHandler.importAdjacencyMatrix(file);
+                String dsmType = AbstractIOHandler.getAdjacencyDSMType(file);
+                AbstractDSMData matrix;
+                AbstractIOHandler ioHandler;
+                IDSM dsm;
+
+                switch(dsmType) {
+                    case "symmetric" -> {
+                        ioHandler = new SymmetricIOHandler(file);
+                        matrix = ((SymmetricIOHandler) ioHandler).importAdjacencyMatrix(file);
+                        dsm = new SymmetricDSM((SymmetricDSMData) matrix, (SymmetricIOHandler) ioHandler);
+                    }
+                    case "multi-domain" -> {
+                        ioHandler = new MultiDomainIOHandler(file);
+                        matrix = ((MultiDomainIOHandler) ioHandler).importAdjacencyMatrix(file);
+                        dsm = new MultiDomainDSM((MultiDomainDSMData) matrix, (MultiDomainIOHandler) ioHandler, this);
+                    }
+                    case "asymmetric" -> {
+                        ioHandler = new AsymmetricIOHandler(file);
+                        matrix = ((AsymmetricIOHandler) ioHandler).importAdjacencyMatrix(file);
+                        dsm = new AsymmetricDSM((AsymmetricDSMData) matrix, (AsymmetricIOHandler) ioHandler);
+                    }
+                    default -> {
+                        // TODO: open window saying there was an error parsing the document
+                        System.out.println("there was an error importing the file " + file);
+                        return;
+                    }
+                }
+
                 if(matrix == null) {
                     // TODO: open window saying there was an error parsing the document
                     System.out.println("there was an error reading the file " + file);
                 } else if(!this.editor.getMatricesCollection().getMatrixFileAbsoluteSavePaths().contains(file.getAbsolutePath())) {
-                    File importedFile = new File(file.getParent(), file.getName().substring(0, file.getName().lastIndexOf('.')) + ".dsm");  // convert .m extension to .dsm
+                    File importedFile = new File(file.getParent(), file.getName().substring(0, file.getName().lastIndexOf('.')) + ".dsm");  // convert .csv extension to .dsm
                     ioHandler.setMatrix(matrix);
                     ioHandler.setSavePath(importedFile);
-                    this.editor.addTab(new SymmetricDSM(matrix, ioHandler));
+                    this.editor.addTab(dsm);
                 } else {
                     editor.focusTab(file);  // focus on that tab because it is already open
                 }

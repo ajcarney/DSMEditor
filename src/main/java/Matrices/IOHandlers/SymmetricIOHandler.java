@@ -57,16 +57,6 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
 
 
     /**
-     * Sets the current matrix used by the IOHandler
-     *
-     * @param matrix  the new matrix object for the io handler
-     */
-    public void setMatrix(SymmetricDSMData matrix) {
-        this.matrix = matrix;
-    }
-
-
-    /**
      * Reads an xml file and parses it as an object that extends the template DSM. Returns the object,
      * but does not automatically add it to be handled.
      *
@@ -283,18 +273,7 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
         SymmetricDSMData matrix = new SymmetricDSMData();
 
         // read the lines of the file
-        ArrayList<String> lines = new ArrayList<>();
-        Scanner s;
-        try {
-            s = new Scanner(file);
-            while (s.hasNextLine()){
-                lines.add(s.nextLine());
-            }
-            s.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            return null;
-        }
+        List<List<String>> lines = readAdjacencyMatrix(file);
 
         ArrayList<String> itemsOrder = new ArrayList<>();
         HashMap<String, Integer> rowItems = new HashMap<>();
@@ -302,15 +281,15 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
         HashMap<String, Grouping> groups  = new HashMap<>();
 
         // parse the first line to create rows and columns
-        String[] line = lines.get(1).split(",(?=(?:[^\\\"]*\\\"[^\\\"]*\\\")*[^\\\"]*$)");
         int uid = 1;
         Grouping defaultGroup = matrix.getDefaultGroup();
-        for(int i = 1; i < line.length; i++) {
-            DSMItem row = new DSMItem(uid, uid + 1, i, line[i], defaultGroup, null);
-            DSMItem col = new DSMItem(uid + 1, uid, i, line[i], defaultGroup, null);
-            rowItems.put(line[i], uid);
-            colItems.put(line[i], uid + 1);
-            itemsOrder.add(line[i]);
+        List<String> line = lines.get(1);
+        for(int i = 1; i < line.size(); i++) {
+            DSMItem row = new DSMItem(uid, uid + 1, i, line.get(i), defaultGroup, null);
+            DSMItem col = new DSMItem(uid + 1, uid, i, line.get(i), defaultGroup, null);
+            rowItems.put(line.get(i), uid);
+            colItems.put(line.get(i), uid + 1);
+            itemsOrder.add(line.get(i));
 
             uid += 2;
             matrix.addItem(row, true);
@@ -319,20 +298,25 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
 
         // parse all the rest of the rows to determine groups and connections
         for(int i = 2; i < lines.size(); i++) {
-            line = lines.get(i).split(",(?=(?:[^\\\"]*\\\"[^\\\"]*\\\")*[^\\\"]*$)");
+            line = lines.get(i);
             Grouping group;
-            if (groups.containsKey(line[0])) {
-                group = groups.get(line[0]);
+            if (groups.containsKey(line.get(0))) {
+                group = groups.get(line.get(0));
             } else {
-                group = new Grouping(uid, -1, line[0], Color.WHITE, Color.BLACK);
-                groups.put(line[0], group);
+                if (line.get(0).equals("(none)")) {
+                    group = matrix.getDefaultGroup();
+                } else {
+                    group = new Grouping(uid, -1, line.get(0), Color.WHITE, Color.BLACK);
+                }
+
+                groups.put(line.get(0), group);
                 uid += 1;
             }
-            Integer rowUid = rowItems.get(itemsOrder.get(i - 1));  // subtract one for header row
+            Integer rowUid = rowItems.get(itemsOrder.get(i - 2));  // subtract 2 for header rows
 
             matrix.setItemGroup(matrix.getItem(rowUid), group);  // set the group (does both row and column)
-            for (int j = 1; j < line.length; j++) {
-                double weight = Double.parseDouble(line[j]);
+            for (int j = 1; j < line.size(); j++) {
+                double weight = Double.parseDouble(line.get(j));
                 if (weight > 0.0) {
                     Integer colUid = colItems.get(itemsOrder.get(j - 1));  // subtract one for groups column
                     matrix.modifyConnection(rowUid, colUid, "x", weight, new ArrayList<>());
@@ -343,7 +327,6 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
         matrix.reDistributeSortIndicesByGroup();
         matrix.clearWasModifiedFlag();  // clear flag because no write operations were performed to the file
         matrix.clearStacks();  // make sure there are no changes when it is opened
-
 
         return matrix;
     }

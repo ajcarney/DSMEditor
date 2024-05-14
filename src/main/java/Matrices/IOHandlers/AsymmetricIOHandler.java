@@ -54,16 +54,6 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
 
 
     /**
-     * Sets the current matrix used by the IOHandler
-     *
-     * @param matrix  the new matrix object for the io handler
-     */
-    public void setMatrix(AsymmetricDSMData matrix) {
-        this.matrix = matrix;
-    }
-
-
-    /**
      * Reads an xml file and parses it as an object that extends the template DSM. Returns the object,
      * but does not automatically add it to be handled.
      *
@@ -306,32 +296,21 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
         AsymmetricDSMData matrix = new AsymmetricDSMData();
 
         // read the lines of the file
-        ArrayList<String> lines = new ArrayList<>();
-        Scanner s;
-        try {
-            s = new Scanner(file);
-            while (s.hasNextLine()){
-                lines.add(s.nextLine());
-            }
-            s.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            return null;
-        }
+        List<List<String>> lines = readAdjacencyMatrix(file);
 
         ArrayList<String> itemsOrder = new ArrayList<>();
         HashMap<String, Integer> rowItems = new HashMap<>();
         HashMap<String, Integer> colItems = new HashMap<>();
 
         // parse the first line to create rows and columns
-        String[] line = lines.get(1).split(",(?=(?:[^\\\"]*\\\"[^\\\"]*\\\")*[^\\\"]*$)");
+        List<String> line = lines.get(1);
         int uid = 1;
-        for(int i = 1; i < line.length; i++) {
-            DSMItem row = new DSMItem(uid, uid + 1, i, line[i], null, null);
-            DSMItem col = new DSMItem(uid + 1, uid, i, line[i], null, null);
-            rowItems.put(line[i], uid);
-            colItems.put(line[i], uid + 1);
-            itemsOrder.add(line[i]);
+        for(int i = 1; i < line.size(); i++) {
+            DSMItem row = new DSMItem(uid, uid + 1, i, line.get(i), null, null);
+            DSMItem col = new DSMItem(uid + 1, uid, i, line.get(i), null, null);
+            rowItems.put(line.get(i), uid);
+            colItems.put(line.get(i), uid + 1);
+            itemsOrder.add(line.get(i));
 
             uid += 2;
             matrix.addItem(row, true);
@@ -340,11 +319,11 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
 
         // parse all the rest of the rows to determine groups and connections
         for(int i = 2; i < lines.size(); i++) {
-            line = lines.get(i).split(",(?=(?:[^\\\"]*\\\"[^\\\"]*\\\")*[^\\\"]*$)");
+            line = lines.get(i);
             Integer rowUid = rowItems.get(itemsOrder.get(i - 1));  // subtract one for header row
 
-            for (int j = 1; j < line.length; j++) {
-                double weight = Double.parseDouble(line[j]);
+            for (int j = 1; j < line.size(); j++) {
+                double weight = Double.parseDouble(line.get(j));
                 if (weight > 0.0) {
                     Integer colUid = colItems.get(itemsOrder.get(j - 1));  // subtract one for groups column
                     matrix.modifyConnection(rowUid, colUid, "x", weight, new ArrayList<>());
@@ -358,7 +337,7 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
         return matrix;
     }
 
-    
+
     /**
      * Saves a matrix to a csv file that includes the matrix metadata
      *

@@ -29,7 +29,9 @@ import org.jdom2.input.SAXBuilder;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 
@@ -51,6 +53,16 @@ public abstract class AbstractIOHandler implements IStandardExports {
      */
     public AbstractIOHandler(File savePath) {
         this.savePath = savePath;
+    }
+
+
+    /**
+     * Sets the current matrix used by the IOHandler
+     *
+     * @param matrix  the new matrix object for the io handler
+     */
+    public void setMatrix(AbstractDSMData matrix) {
+        this.matrix = matrix;
     }
 
 
@@ -115,6 +127,43 @@ public abstract class AbstractIOHandler implements IStandardExports {
         }
     }
 
+
+    /**
+     * Returns the dsm type of adjacency matrix csv file
+     * @param file  the adjacency matrix file to open
+     * @return string of dsm type, empty string on exception
+     */
+    public static String getAdjacencyDSMType(File file) {
+        // read the lines of the file
+        Scanner s;
+        try {
+            s = new Scanner(file);
+            String line = s.nextLine();
+            s.close();
+
+            return line.strip().split(",")[0];
+        } catch (FileNotFoundException | NoSuchElementException ignored) {
+            return "";
+        }
+    }
+
+
+    protected List<List<String>> readAdjacencyMatrix(File file) {
+        List<List<String>> lines = new ArrayList<>();
+        Scanner scanner;
+        try {
+            scanner = new Scanner(file);
+            while (scanner.hasNextLine()){
+                List<String> line = new ArrayList<>(Arrays.asList(scanner.nextLine().split(",(?=(?:[^\\\"]*\\\"[^\\\"]*\\\")*[^\\\"]*$)")));
+                lines.add(line);
+            }
+            scanner.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            return null;
+        }
+        return lines;
+    }
 
     /**
      * Reads an xml file and parses it as an object that extends the template DSM. Returns the object,
