@@ -15,8 +15,7 @@ import java.util.*;
 
 
 /**
- * A class that contains data about a matrix. All operations to a matrix come through
- * this class. Handles both symmetrical and non-symmetrical matrices.
+ * A class that contains data about a matrix.
  * Note: items in a multi-domain dsm will use the property Grouping.group1 to configure groups
  * and Grouping.group2 to configure domains
  * TODO: probably need override for adding an item to ensure item doesn't have a grouping that is not being tracked
@@ -24,11 +23,13 @@ import java.util.*;
  * @author: Aiden Carney
  */
 public class MultiDomainDSMData extends AbstractDSMData implements IZoomable, IPropagationAnalysis {
+    public static final Integer DEFAULT_GROUP_UID = Integer.MAX_VALUE;
+
     private final Grouping defaultDomain = new Grouping(DEFAULT_GROUP_UID, Grouping.DEFAULT_PRIORITY, "default", Color.WHITE, Grouping.DEFAULT_FONT_COLOR);
     private ObservableMap<Grouping, ObservableList<Grouping>> domains;  // hashmap of domains and list of groupings corresponding to that domain
     private final ObservableList<Grouping> sortedDomains;
 
-    public static final Integer DEFAULT_GROUP_UID = Integer.MAX_VALUE;
+
 
     /**
      * Creates a default domain-grouping and adds it to the hashmap
@@ -46,10 +47,23 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable, IP
      * @param domain  the domain to get the default group for
      * @return        the default domain grouping object
      */
-    private Grouping getDefaultDomainGroup(Grouping domain) {
+    public Grouping getDefaultDomainGroup(Grouping domain) {
         for(Grouping domainGrouping : domains.get(domain)) {
             if(domainGrouping.getUid().equals(DEFAULT_GROUP_UID)) {
                 return domainGrouping;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * returns the default domain currently used by the matrix
+     * @return the default domain
+     */
+    public Grouping getDefaultDomain() {
+        for (Grouping domain : domains.keySet()) {
+            if (domain.getUid().equals(DEFAULT_GROUP_UID)) {
+                return domain;
             }
         }
         return null;

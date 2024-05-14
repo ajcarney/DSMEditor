@@ -268,7 +268,13 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
 
     /**
      * Reads a csv file as an adjacency matrix and parses it into a SymmetricDSMData object and returns it. Does not
-     * add it to be handled
+     * add it to be handled. Must be in following format
+     * <group>, col1, col2, col3, ...
+     * g1,      w1,   w2,   w3, ...
+     * ...
+     * g2,      w4,   w5,   w6, ...
+     * ...
+     * where g_i is the group name and w_i is the weight of the connection between the row and column
      *
      * @param file  the file location to read from
      * @return      SymmetricDSMData object of the parsed in matrix
@@ -296,7 +302,7 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
         HashMap<String, Grouping> groups  = new HashMap<>();
 
         // parse the first line to create rows and columns
-        String[] line = lines.get(0).split(",(?=(?:[^\\\"]*\\\"[^\\\"]*\\\")*[^\\\"]*$)");
+        String[] line = lines.get(1).split(",(?=(?:[^\\\"]*\\\"[^\\\"]*\\\")*[^\\\"]*$)");
         int uid = 1;
         Grouping defaultGroup = matrix.getDefaultGroup();
         for(int i = 1; i < line.length; i++) {
@@ -312,7 +318,7 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
         }
 
         // parse all the rest of the rows to determine groups and connections
-        for(int i = 1; i < lines.size(); i++) {
+        for(int i = 2; i < lines.size(); i++) {
             line = lines.get(i).split(",(?=(?:[^\\\"]*\\\"[^\\\"]*\\\")*[^\\\"]*$)");
             Grouping group;
             if (groups.containsKey(line[0])) {
@@ -326,7 +332,7 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
 
             matrix.setItemGroup(matrix.getItem(rowUid), group);  // set the group (does both row and column)
             for (int j = 1; j < line.length; j++) {
-                Double weight = Double.parseDouble(line[j]);
+                double weight = Double.parseDouble(line[j]);
                 if (weight > 0.0) {
                     Integer colUid = colItems.get(itemsOrder.get(j - 1));  // subtract one for groups column
                     matrix.modifyConnection(rowUid, colUid, "x", weight, new ArrayList<>());
@@ -489,7 +495,15 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
 
 
     /**
-     * Saves a matrix as an adjacency matrix in csv format
+     * Saves a matrix as an adjacency matrix in csv format:
+     * Must be in following format
+     * <group>, col1, col2, col3, ...
+     * g1,      w1,   w2,   w3, ...
+     * ...
+     * g2,      w4,   w5,   w6, ...
+     * ...
+     *
+     * where g_i is the group name and w_i is the weight of the connection between the row and column
      *
      * @param file      the file to save the csv file to
      * @return          0 on success, 1 on error
@@ -497,34 +511,24 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
     @Override
     public int exportMatrixToAdjacencyMatrix(File file) {
         try {
-            StringBuilder contents = new StringBuilder();
+            StringBuilder contents = new StringBuilder("symmetric\n");
+            contents.append("<group>");
 
-            ArrayList<ArrayList<Pair<RenderMode, Object>>> template = matrix.getGridArray();
-            int rows = template.size();
-            int columns = template.get(0).size();
+            matrix.reDistributeSortIndices();  // re-number so that rows and columns always align
+            for (DSMItem col : matrix.getCols()) {
+                contents.append(",").append(col.getName().getValue());
+            }
 
-            for(int r=0; r<rows; r++) {
-                for (int c = 0; c < columns; c++) {
-                    Pair<RenderMode, Object> item = template.get(r).get(c);
-
-                    switch(item.getKey()) {
-                        case PLAIN_TEXT, PLAIN_TEXT_V -> contents.append(item.getValue()).append(",");
-                        case ITEM_NAME, ITEM_NAME_V -> contents.append(((DSMItem) item.getValue()).getName().getValue()).append(",");
-                        case GROUPING_ITEM, GROUPING_ITEM_V -> contents.append(((DSMItem) item.getValue()).getGroup1().getName()).append(",");
-                        case INDEX_ITEM -> contents.append(((DSMItem) item.getValue()).getSortIndex()).append(",");
-                        case UNEDITABLE_CONNECTION -> contents.append(",");
-                        case EDITABLE_CONNECTION -> {
-                            int rowUid = ((Pair<DSMItem, DSMItem>)item.getValue()).getKey().getUid();
-                            int colUid = ((Pair<DSMItem, DSMItem>)item.getValue()).getValue().getUid();
-                            if(matrix.getConnection(rowUid, colUid) != null) {
-                                contents.append(matrix.getConnection(rowUid, colUid).getConnectionName());
-                            }
-                            contents.append(",");
-                        }
-
+            for (DSMItem row : matrix.getRows()) {
+                contents.append("\n").append(row.getGroup1().getName());
+                for (DSMItem col : matrix.getCols()) {
+                    DSMConnection conn = matrix.getConnection(row.getUid(), col.getUid());
+                    if (conn != null) {
+                        contents.append(",").append(conn.getWeight());
+                    } else {
+                        contents.append(",0");
                     }
                 }
-                contents.append("\n");
             }
 
             file = forceExtension(file, ".csv");

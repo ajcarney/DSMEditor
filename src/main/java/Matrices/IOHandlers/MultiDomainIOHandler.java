@@ -18,10 +18,7 @@ import org.jdom2.input.SAXBuilder;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.*;
 
 
@@ -308,6 +305,115 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
 
 
     /**
+     * Reads a csv file as an adjacency matrix and parses it into a SymmetricDSMData object and returns it. Does not
+     * add it to be handled. Must be in following format
+     * <domain>, <group>, col1, col2, col3, ...
+     * d1,       g1,      w1,   w2,   w3, ...
+     * ...
+     * d2,       g2,      w4,   w5,   w6, ...
+     * ...
+     * where d_i is the domain, g_i is the group, and w_i is the weight of the connection
+     *
+     * @param file  the file location to read from
+     * @return      SymmetricDSMData object of the parsed in matrix
+     */
+    public MultiDomainDSMData importAdjacencyMatrix(File file) {
+        MultiDomainDSMData matrix = new MultiDomainDSMData();
+
+        // read the lines of the file
+        ArrayList<String> lines = new ArrayList<>();
+        Scanner s;
+        try {
+            s = new Scanner(file);
+            while (s.hasNextLine()){
+                lines.add(s.nextLine());
+            }
+            s.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        int uid = 1;
+        ArrayList<String> itemsOrder = new ArrayList<>();
+        HashMap<String, Integer> rowItems = new HashMap<>();
+        HashMap<String, Integer> colItems = new HashMap<>();
+        HashMap<String, Grouping> domains = new HashMap<>();
+        HashMap<String, Grouping> groups  = new HashMap<>();
+
+        // parse the first line to create rows and columns
+        String[] line = lines.get(0).split(",(?=(?:[^\\\"]*\\\"[^\\\"]*\\\")*[^\\\"]*$)");
+        Grouping defaultDomain = matrix.getDefaultDomain();
+        Grouping defaultGroup = matrix.getDefaultDomainGroup(defaultDomain);
+        for(int i = 2; i < line.length; i++) {
+            DSMItem row = new DSMItem(uid, uid + 1, i, line[i], defaultGroup, defaultDomain);
+            DSMItem col = new DSMItem(uid + 1, uid, i, line[i], defaultGroup, defaultDomain);
+            rowItems.put(line[i], uid);
+            colItems.put(line[i], uid + 1);
+            itemsOrder.add(line[i]);
+
+            uid += 2;
+            matrix.addItem(row, true);
+            matrix.addItem(col, false);
+        }
+
+
+        // skip first row and create rows, items, domains, groups, and connections
+        int priority = 1;
+        for(int i = 1; i < lines.size(); i++) {
+            line = lines.get(i).split(",(?=(?:[^\\\"]*\\\"[^\\\"]*\\\")*[^\\\"]*$)");
+            Grouping domain;
+            Grouping group;
+
+            // add domain if not exists
+            if (domains.containsKey(line[0])) {
+                domain = domains.get(line[0]);
+            } else {
+                domain = new Grouping(uid, priority, line[0], Color.WHITE, Color.BLACK);
+                matrix.addDomain(domain);
+                domains.put(line[0], domain);
+                priority += 1;
+                uid += 1;
+            }
+
+            // add grouping if not exists
+            if (groups.containsKey(line[1])) {
+                group = groups.get(line[1]);
+            } else {
+                group = new Grouping(uid, -1, line[1], Color.WHITE, Color.BLACK);
+                // no need to add grouping because this is done automatically when making the item
+                groups.put(line[1], group);
+                uid += 1;
+            }
+
+            Integer rowUid = rowItems.get(itemsOrder.get(i - 1));  // subtract one for header row
+
+            // update the domains manually
+            matrix.getItem(rowUid).setGroup2(domain);
+            matrix.getItemByAlias(rowUid).setGroup2(domain);
+
+            // update the groups
+            matrix.setItemDomainGroup(matrix.getItem(rowUid), domain, group);  // set the group (does both row and column)
+
+            for (int j = 2; j < line.length; j++) {
+                double weight = Double.parseDouble(line[j]);
+                if (weight > 0.0) {
+                    Integer colUid = colItems.get(itemsOrder.get(j - 1));  // subtract one for groups column
+                    matrix.modifyConnection(rowUid, colUid, "x", weight, new ArrayList<>());
+                }
+            }
+        }
+
+        matrix.reDistributeSortIndices();
+        matrix.clearWasModifiedFlag();  // clear flag because no write operations were performed to the file
+        matrix.clearStacks();  // make sure there are no changes when it is opened
+
+
+        return matrix;
+    }
+
+
+    /**
      * Saves a matrix to a csv file that includes the matrix metadata
      *
      * @param file      the file to save the csv file to
@@ -365,7 +471,13 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
 
 
     /**
-     * Saves a matrix as an adjacency matrix in csv format
+     * Saves a matrix as an adjacency matrix in csv format:
+     * <domain>, <group>, col1, col2, col3, ...
+     * d1,       g1,      w1,   w2,   w3, ...
+     * ...
+     * d2,       g2,      w4,   w5,   w6, ...
+     * ...
+     * where d_i is the domain, g_i is the group, and w_i is the weight of the connection
      *
      * @param file      the file to save the csv file to
      * @return          0 on success, 1 on error
@@ -373,37 +485,26 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
     @Override
     public int exportMatrixToAdjacencyMatrix(File file) {
         try {
-            StringBuilder contents = new StringBuilder("Title," + matrix.getTitle() + "\n");
-            contents.append("Project Name,").append(matrix.getProjectName()).append("\n");
-            contents.append("Customer,").append(matrix.getCustomer()).append("\n");
-            contents.append("Version,").append(matrix.getVersionNumber()).append("\n");
+            StringBuilder contents = new StringBuilder("multi-domain\n");
+            contents.append("<domain>,<group>");
 
-            ArrayList<ArrayList<Pair<RenderMode, Object>>> template = matrix.getGridArray();
-            int columns = template.get(0).size();
+            matrix.reDistributeSortIndices();
+            for (DSMItem col : matrix.getCols()) {
+                contents.append(",").append(col.getName().getValue());
+            }
 
-            for (ArrayList<Pair<RenderMode, Object>> pairs : template) {
-                for (int c = 0; c < columns; c++) {
-                    Pair<RenderMode, Object> item = pairs.get(c);
-
-                    switch (item.getKey()) {
-                        case PLAIN_TEXT, PLAIN_TEXT_V -> contents.append(item.getValue()).append(",");
-                        case MULTI_SPAN_DOMAIN_TEXT -> contents.append(((Triplet<Grouping, Integer, Integer>) item.getValue()).getValue0().getName()).append(",");
-                        case ITEM_NAME, ITEM_NAME_V -> contents.append(((DSMItem) item.getValue()).getName().getValue()).append(",");
-                        case GROUPING_ITEM, GROUPING_ITEM_V -> contents.append(((DSMItem) item.getValue()).getGroup1().getName()).append(",");
-                        case INDEX_ITEM -> contents.append(((DSMItem) item.getValue()).getSortIndex()).append(",");
-                        case UNEDITABLE_CONNECTION, MULTI_SPAN_NULL -> contents.append(",");
-                        case EDITABLE_CONNECTION -> {
-                            int rowUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getKey().getUid();
-                            int colUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getValue().getUid();
-                            if (matrix.getConnection(rowUid, colUid) != null) {
-                                contents.append(matrix.getConnection(rowUid, colUid).getConnectionName());
-                            }
-                            contents.append(",");
-                        }
-
+            for (DSMItem row : matrix.getRows()) {
+                contents.append("\n");
+                contents.append(row.getGroup2().getName()).append(",");  // domain
+                contents.append(row.getGroup1().getName());              // group
+                for (DSMItem col : matrix.getCols()) {
+                    DSMConnection connection = matrix.getConnection(row.getUid(), col.getUid());
+                    if (connection != null) {
+                        contents.append(",").append(connection.getWeight());
+                    } else {
+                        contents.append(",0");
                     }
                 }
-                contents.append("\n");
             }
 
             file = forceExtension(file, ".csv");

@@ -99,6 +99,7 @@ public class Thebeau {
             }
         }
 
+        // TODO: this should be a record class
         results.put("IntraBreakdown", intraCostBreakdown);
         results.put("TotalIntraCost", totalIntraCost);
         results.put("TotalExtraCost", totalExtraCost);

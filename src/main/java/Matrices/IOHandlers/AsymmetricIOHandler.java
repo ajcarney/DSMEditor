@@ -3,6 +3,7 @@ package Matrices.IOHandlers;
 import Constants.Constants;
 import Matrices.Data.AsymmetricDSMData;
 import Matrices.Data.Entities.*;
+import Matrices.Data.SymmetricDSMData;
 import UI.MatrixViews.AbstractMatrixView;
 import javafx.scene.paint.Color;
 import javafx.util.Pair;
@@ -16,10 +17,7 @@ import org.jdom2.input.SAXBuilder;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.*;
 
 
@@ -294,6 +292,74 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
 
 
     /**
+     * Reads a csv file as an adjacency matrix and parses it into a SymmetricDSMData object and returns it. Does not
+     * add it to be handled. Must be in following format
+     * <row>, col1, col2, col3, ...
+     * r1,      w1,   w2,   w3, ...
+     * r2,      w4,   w5,   w6, ...
+     * ...
+     *
+     * @param file  the file location to read from
+     * @return      SymmetricDSMData object of the parsed in matrix
+     */
+    public AsymmetricDSMData importAdjacencyMatrix(File file) {
+        AsymmetricDSMData matrix = new AsymmetricDSMData();
+
+        // read the lines of the file
+        ArrayList<String> lines = new ArrayList<>();
+        Scanner s;
+        try {
+            s = new Scanner(file);
+            while (s.hasNextLine()){
+                lines.add(s.nextLine());
+            }
+            s.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        ArrayList<String> itemsOrder = new ArrayList<>();
+        HashMap<String, Integer> rowItems = new HashMap<>();
+        HashMap<String, Integer> colItems = new HashMap<>();
+
+        // parse the first line to create rows and columns
+        String[] line = lines.get(1).split(",(?=(?:[^\\\"]*\\\"[^\\\"]*\\\")*[^\\\"]*$)");
+        int uid = 1;
+        for(int i = 1; i < line.length; i++) {
+            DSMItem row = new DSMItem(uid, uid + 1, i, line[i], null, null);
+            DSMItem col = new DSMItem(uid + 1, uid, i, line[i], null, null);
+            rowItems.put(line[i], uid);
+            colItems.put(line[i], uid + 1);
+            itemsOrder.add(line[i]);
+
+            uid += 2;
+            matrix.addItem(row, true);
+            matrix.addItem(col, false);
+        }
+
+        // parse all the rest of the rows to determine groups and connections
+        for(int i = 2; i < lines.size(); i++) {
+            line = lines.get(i).split(",(?=(?:[^\\\"]*\\\"[^\\\"]*\\\")*[^\\\"]*$)");
+            Integer rowUid = rowItems.get(itemsOrder.get(i - 1));  // subtract one for header row
+
+            for (int j = 1; j < line.length; j++) {
+                double weight = Double.parseDouble(line[j]);
+                if (weight > 0.0) {
+                    Integer colUid = colItems.get(itemsOrder.get(j - 1));  // subtract one for groups column
+                    matrix.modifyConnection(rowUid, colUid, "x", weight, new ArrayList<>());
+                }
+            }
+        }
+
+        matrix.clearWasModifiedFlag();  // clear flag because no write operations were performed to the file
+        matrix.clearStacks();  // make sure there are no changes when it is opened
+
+        return matrix;
+    }
+
+    
+    /**
      * Saves a matrix to a csv file that includes the matrix metadata
      *
      * @param file      the file to save the csv file to
@@ -350,45 +416,36 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
 
 
     /**
-     * Saves a matrix as an adjacency matrix in csv format
+     * Saves a matrix as an adjacency matrix in csv format:
+     * <row>, col1, col2, col3, ...
+     * r1,      w1,   w2,   w3, ...
+     * r2,      w4,   w5,   w6, ...
+     * ...
      *
      * @param file      the file to save the csv file to
      * @return          0 on success, 1 on error
      */
     @Override
     public int exportMatrixToAdjacencyMatrix(File file) {
-        // TODO
         try {
-            StringBuilder contents = new StringBuilder("Title," + matrix.getTitle() + "\n");
-            contents.append("Project Name,").append(matrix.getProjectName()).append("\n");
-            contents.append("Customer,").append(matrix.getCustomer()).append("\n");
-            contents.append("Version,").append(matrix.getVersionNumber()).append("\n");
+            StringBuilder contents = new StringBuilder("asymmetric," + matrix.getTitle() + "\n");
+            contents.append("<row>");
 
-            ArrayList<ArrayList<Pair<RenderMode, Object>>> template = matrix.getGridArray();
-            int rows = template.size();
-            int columns = template.get(0).size();
+            for (DSMItem col : matrix.getCols()) {
+                contents.append(",").append(col.getName().getValue());
+            }
 
-            for(int r=0; r<rows; r++) {
-                for (int c = 0; c < columns; c++) {
-                    Pair<RenderMode, Object> item = template.get(r).get(c);
-
-                    switch(item.getKey()) {
-                        case PLAIN_TEXT, PLAIN_TEXT_V -> contents.append(item.getValue()).append(",");
-                        case ITEM_NAME, ITEM_NAME_V -> contents.append(((DSMItem) item.getValue()).getName().getValue()).append(",");
-                        case GROUPING_ITEM, GROUPING_ITEM_V -> contents.append(((DSMItem) item.getValue()).getGroup1().getName()).append(",");
-                        case INDEX_ITEM -> contents.append(((DSMItem) item.getValue()).getSortIndex()).append(",");
-                        case UNEDITABLE_CONNECTION -> contents.append(",");
-                        case EDITABLE_CONNECTION -> {
-                            int rowUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getKey().getUid();
-                            int colUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getValue().getUid();
-                            if (matrix.getConnection(rowUid, colUid) != null) {
-                                contents.append(matrix.getConnection(rowUid, colUid).getConnectionName());
-                            }
-                            contents.append(",");
-                        }
+            for (DSMItem col : matrix.getCols()) {
+                for (DSMItem row : matrix.getRows()) {
+                    contents.append("\n").append(row.getName().getValue());
+                    DSMConnection connection = matrix.getConnection(row.getUid(), col.getUid());
+                    if (connection != null) {
+                        contents.append(",").append(connection.getWeight());
+                    } else {
+                        contents.append(",0");
                     }
+
                 }
-                contents.append("\n");
             }
 
             file = forceExtension(file, ".csv");
