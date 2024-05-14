@@ -305,10 +305,10 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
                     group = matrix.getDefaultGroup();
                 } else {
                     group = new Grouping(uid, -1, line.get(0), Color.WHITE, Color.BLACK);
+                    uid += 1;
                 }
 
                 groups.put(line.get(0), group);
-                uid += 1;
             }
             Integer rowUid = rowItems.get(itemsOrder.get(i - 2));  // subtract 2 for header rows
 

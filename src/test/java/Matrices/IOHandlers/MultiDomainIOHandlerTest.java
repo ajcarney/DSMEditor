@@ -109,6 +109,12 @@ public class MultiDomainIOHandlerTest {
         MultiDomainDSMData readMatrix = ioHandler.importAdjacencyMatrix(file);
 
         // Step 4: Compare the original matrix and the read matrix to ensure they are the same
+        for (Grouping domain : readMatrix.getDomains()) {
+            System.out.println(domain.getName() + " " + domain.getUid());
+        }
+        for (Grouping domain : readMatrix.getDomainGroupings()) {
+            System.out.println(domain.getName() + " " + domain.getUid());
+        }
         MatrixHelpers.assertMultiDomainMatricesEqual(originalMatrix, readMatrix);
 
         // Step 5: Clean up

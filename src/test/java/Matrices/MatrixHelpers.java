@@ -63,6 +63,14 @@ public class MatrixHelpers {
             Assertions.assertEquals(origItem.getGroup1().getName(), newItem.getGroup1().getName());
         }
 
+        // ensure alias's are set up correctly
+        for (DSMItem rowItem : newMatrix.getRows()) {
+            DSMItem colItem = findItemByName(newMatrix.getCols(), rowItem.getName().getValue());
+            Assertions.assertNotNull(colItem);
+            Assertions.assertEquals(rowItem.getUid(), colItem.getAliasUid());
+            Assertions.assertEquals(colItem.getUid(), rowItem.getAliasUid());
+        }
+
         // compare connections
         Assertions.assertEquals(originalMatrix.getConnections().size(), newMatrix.getConnections().size());
 
@@ -160,6 +168,14 @@ public class MatrixHelpers {
             Assertions.assertNotNull(newItem);
             Assertions.assertEquals(origItem.getGroup1().getName(), newItem.getGroup1().getName());  // domain grouping
             Assertions.assertEquals(origItem.getGroup2().getName(), newItem.getGroup2().getName());  // domain
+        }
+
+        // ensure alias's are set up correctly
+        for (DSMItem rowItem : newMatrix.getRows()) {
+            DSMItem colItem = findItemByName(newMatrix.getCols(), rowItem.getName().getValue());
+            Assertions.assertNotNull(colItem);
+            Assertions.assertEquals(rowItem.getUid(), colItem.getAliasUid());
+            Assertions.assertEquals(colItem.getUid(), rowItem.getAliasUid());
         }
 
         // compare connections

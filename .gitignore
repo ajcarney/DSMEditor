@@ -10,4 +10,4 @@ release/
 *.iml
 .idea/workspace.xml
 .idea/
-
+.vscode/

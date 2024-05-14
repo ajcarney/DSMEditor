@@ -320,9 +320,18 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
         HashMap<String, Grouping> groups  = new HashMap<>();
 
         // parse the first line to create rows and columns
-        List<String> line = lines.get(0);
+        List<String> line = lines.get(1);
         Grouping defaultDomain = matrix.getDefaultDomain();
         Grouping defaultGroup = matrix.getDefaultDomainGroup(defaultDomain);
+
+        // add domain from first row and remove the default domain so that there is no extra domain at the end
+//        Grouping newDefaultdomain = new Grouping(uid, 1, lines.get(2).get(0), Color.WHITE, Color.BLACK);
+//        uid += 1;
+//        matrix.addDomain(newDefaultdomain);
+//        matrix.removeDomain(defaultDomain);
+//        defaultDomain = newDefaultdomain;
+//        domains.put(defaultDomain.getName(), defaultDomain);
+
         for(int i = 2; i < line.size(); i++) {
             DSMItem row = new DSMItem(uid, uid + 1, i, line.get(i), defaultGroup, defaultDomain);
             DSMItem col = new DSMItem(uid + 1, uid, i, line.get(i), defaultGroup, defaultDomain);
@@ -338,7 +347,7 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
 
         // skip first row and create rows, items, domains, groups, and connections
         int priority = 1;
-        for(int i = 1; i < lines.size(); i++) {
+        for(int i = 2; i < lines.size(); i++) {
             line = lines.get(i);
             Grouping domain;
             Grouping group;
@@ -358,13 +367,16 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
             if (groups.containsKey(line.get(1))) {
                 group = groups.get(line.get(1));
             } else {
-                group = new Grouping(uid, -1, line.get(1), Color.WHITE, Color.BLACK);
-                // no need to add grouping because this is done automatically when making the item
+                if (line.get(1).equals("default")) {
+                    group = matrix.getDefaultDomainGroup(domain);
+                } else {
+                    group = new Grouping(uid, -1, line.get(1), Color.WHITE, Color.BLACK);
+                    uid += 1;
+                }
                 groups.put(line.get(1), group);
-                uid += 1;
             }
 
-            Integer rowUid = rowItems.get(itemsOrder.get(i - 1));  // subtract one for header row
+            Integer rowUid = rowItems.get(itemsOrder.get(i - 2));  // subtract one for header row
 
             // update the domains manually
             matrix.getItem(rowUid).setGroup2(domain);
@@ -375,10 +387,36 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
 
             for (int j = 2; j < line.size(); j++) {
                 double weight = Double.parseDouble(line.get(j));
-                if (weight > 0.0) {
-                    Integer colUid = colItems.get(itemsOrder.get(j - 1));  // subtract one for groups column
+                if (weight != 0.0) {
+                    Integer colUid = colItems.get(itemsOrder.get(j - 2));  // subtract one for groups column
                     matrix.modifyConnection(rowUid, colUid, "x", weight, new ArrayList<>());
                 }
+            }
+        }
+
+        // remove default domain if empty
+        int count = 0;
+        for (DSMItem item : matrix.getRows()) {
+            if (item.getGroup2().equals(defaultDomain)) {
+                count++;
+                break;
+            }
+        }
+        if (count == 0) {
+            matrix.removeDomain(defaultDomain);
+        }
+
+        // remove default domain groups if empty
+        for (Grouping domain : matrix.getDomains()) {
+            count = 0;
+            for (DSMItem item : matrix.getRows()) {
+                if (item.getGroup2().equals(domain) && item.getGroup1().equals(defaultGroup)) {
+                    count++;
+                    break;
+                }
+            }
+            if (count == 0) {
+                matrix.removeDomainGrouping(domain, defaultGroup);
             }
         }
 
