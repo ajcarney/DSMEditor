@@ -36,13 +36,16 @@ public class MatrixHelpers {
      *
      * @param originalMatrix the original matrix
      * @param newMatrix      the new matrix
+     * @param ignoreGroups   whether to ignore groupings when comparing equality
      */
-    public static void assertSymmetricMatricesEqual(SymmetricDSMData originalMatrix, SymmetricDSMData newMatrix) {
+    public static void assertSymmetricMatricesEqual(SymmetricDSMData originalMatrix, SymmetricDSMData newMatrix, boolean ignoreGroups) {
         // compare groups
-        Assertions.assertEquals(originalMatrix.getGroupings().size(), newMatrix.getGroupings().size());
-        for (Grouping origGroup : originalMatrix.getGroupings()) {
-            // search by name because UIDs will be messed up
-            Assertions.assertTrue(newMatrix.getGroupings().stream().map(Grouping::getName).toList().contains(origGroup.getName()));
+        if (!ignoreGroups) {
+            Assertions.assertEquals(originalMatrix.getGroupings().size(), newMatrix.getGroupings().size());
+            for (Grouping origGroup : originalMatrix.getGroupings()) {
+                // search by name because UIDs will be messed up
+                Assertions.assertTrue(newMatrix.getGroupings().stream().map(Grouping::getName).toList().contains(origGroup.getName()));
+            }
         }
 
         // compare items by name and group
@@ -53,14 +56,18 @@ public class MatrixHelpers {
             // search by name because UIDs may be messed up
             DSMItem newItem = findItemByName(newMatrix.getRows(), origItem.getName().getValue());
             Assertions.assertNotNull(newItem);
-            Assertions.assertEquals(origItem.getGroup1().getName(), newItem.getGroup1().getName());
+            if (!ignoreGroups) {
+                Assertions.assertEquals(origItem.getGroup1().getName(), newItem.getGroup1().getName());
+            }
         }
 
         for (DSMItem origItem : originalMatrix.getCols()) {  // columns
             // search by name because UIDs may be messed up
             DSMItem newItem = findItemByName(newMatrix.getCols(), origItem.getName().getValue());
             Assertions.assertNotNull(newItem);
-            Assertions.assertEquals(origItem.getGroup1().getName(), newItem.getGroup1().getName());
+            if (!ignoreGroups) {
+                Assertions.assertEquals(origItem.getGroup1().getName(), newItem.getGroup1().getName());
+            }
         }
 
         // ensure alias's are set up correctly

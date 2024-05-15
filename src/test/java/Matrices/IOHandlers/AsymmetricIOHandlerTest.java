@@ -9,8 +9,15 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 
+/**
+ * Tests the AsymmetricIOHandler class.
+ */
 public class AsymmetricIOHandlerTest {
 
+    /**
+     * Creates an AsymmetricDSMData matrix with some data.
+     * @return An AsymmetricDSMData matrix with some data.
+     */
     public AsymmetricDSMData createMatrix() {
         AsymmetricDSMData matrix = new AsymmetricDSMData();
 
@@ -73,6 +80,27 @@ public class AsymmetricIOHandlerTest {
 
         // Step 3: Use the same SymmetricIOHandler instance to read the matrix back from the file
         AsymmetricDSMData readMatrix = ioHandler.importAdjacencyMatrix(file);
+
+        // Step 4: Compare the original matrix and the read matrix to ensure they are the same
+        MatrixHelpers.assertAsymmetricMatricesEqual(originalMatrix, readMatrix);
+
+        // Step 5: Clean up
+        file.delete();
+    }
+
+    @Test
+    public void testWriteAndReadAsymmetricMatrix() {
+        // Step 1: Create a AsymmetricDSMData matrix and populate it with some data
+        AsymmetricDSMData originalMatrix = createMatrix();
+
+        // Step 2: Create an instance of SymmetricIOHandler and use it to write the matrix to a file
+        File file = new File("testMatrix.dsm");
+        AsymmetricIOHandler ioHandler = new AsymmetricIOHandler(file);
+        ioHandler.setMatrix(originalMatrix);
+        ioHandler.saveMatrixToFile(file);
+
+        // Step 3: Use the same SymmetricIOHandler instance to read the matrix back from the file
+        AsymmetricDSMData readMatrix = ioHandler.readFile();
 
         // Step 4: Compare the original matrix and the read matrix to ensure they are the same
         MatrixHelpers.assertAsymmetricMatricesEqual(originalMatrix, readMatrix);

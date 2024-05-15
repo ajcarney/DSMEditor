@@ -120,4 +120,27 @@ public class MultiDomainIOHandlerTest {
         // Step 5: Clean up
         file.delete();
     }
+
+
+    /**
+     * Tests the ability to write a MultiDomainMatrix to a file and read it back.
+     */
+    @Test
+    public void testWriteAndRead() {
+        MultiDomainDSMData originalMatrix = createMatrix();
+
+        File file = new File("testMatrix.dsm");
+        MultiDomainIOHandler ioHandler = new MultiDomainIOHandler(file);
+        ioHandler.setMatrix(originalMatrix);
+
+        ioHandler.saveMatrixToFile(file);
+
+        MultiDomainDSMData readMatrix = ioHandler.readFile();
+
+        MatrixHelpers.assertMultiDomainMatricesEqual(originalMatrix, readMatrix);
+
+        file.delete();
+    }
+
+
 }

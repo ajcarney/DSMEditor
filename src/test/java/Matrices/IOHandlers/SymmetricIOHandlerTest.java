@@ -16,6 +16,10 @@ import java.util.ArrayList;
  */
 public class SymmetricIOHandlerTest {
 
+    /**
+     * Creates a SymmetricDSMData matrix with some data.
+     * @return A SymmetricDSMData matrix with some data.
+     */
     public SymmetricDSMData createMatrix() {
         SymmetricDSMData matrix = new SymmetricDSMData();
 
@@ -75,7 +79,57 @@ public class SymmetricIOHandlerTest {
         SymmetricDSMData readMatrix = ioHandler.importAdjacencyMatrix(file);
 
         // Step 4: Compare the original matrix and the read matrix to ensure they are the same
-        MatrixHelpers.assertSymmetricMatricesEqual(originalMatrix, readMatrix);
+        MatrixHelpers.assertSymmetricMatricesEqual(originalMatrix, readMatrix, false);
+
+        // Step 5: Clean up
+        file.delete();
+    }
+
+
+    /**
+     * Tests the ability to write a SymmetricDSMData matrix to a Thebeau Matlab file and read it back.
+     */
+    @Test
+    public void testWriteAndReadMatlab() {
+        // Step 1: Create a SymmetricDSMData matrix and populate it with some data
+        SymmetricDSMData originalMatrix = createMatrix();
+
+        // Step 2: Create an instance of SymmetricIOHandler and use it to write the matrix to a file
+        SymmetricIOHandler ioHandler = new SymmetricIOHandler(null);
+        ioHandler.setMatrix(originalMatrix);
+        File file = new File("testMatrix.m");
+        ioHandler.exportMatrixToThebeauMatlabFile(file);
+
+        // Step 3: Use the same SymmetricIOHandler instance to read the matrix back from the file
+        SymmetricDSMData readMatrix = ioHandler.importThebeauMatlabFile(file);
+
+        // Step 4: Compare the original matrix and the read matrix to ensure they are the same
+        MatrixHelpers.assertSymmetricMatricesEqual(originalMatrix, readMatrix, true);
+
+        // Step 5: Clean up
+        file.delete();
+    }
+
+
+    /**
+     * Tests the ability to write a SymmetricDSMData matrix to a file and read it back.
+     */
+    @Test
+    public void testWriteAndRead() {
+        // Step 1: Create a SymmetricDSMData matrix and populate it with some data
+        SymmetricDSMData originalMatrix = createMatrix();
+
+        // Step 2: Create an instance of SymmetricIOHandler and use it to write the matrix to a file
+        File file = new File("testMatrix.dsm");
+        SymmetricIOHandler ioHandler = new SymmetricIOHandler(file);
+        ioHandler.setMatrix(originalMatrix);
+        ioHandler.saveMatrixToFile(file);
+
+        // Step 3: Use the same SymmetricIOHandler instance to read the matrix back from the file
+        SymmetricDSMData readMatrix = ioHandler.readFile();
+
+        // Step 4: Compare the original matrix and the read matrix to ensure they are the same
+        MatrixHelpers.assertSymmetricMatricesEqual(originalMatrix, readMatrix, false);
 
         // Step 5: Clean up
         file.delete();
