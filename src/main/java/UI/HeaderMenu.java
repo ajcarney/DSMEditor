@@ -1,6 +1,5 @@
 package UI;
 
-import Matrices.AsymmetricDSM;
 import Matrices.Data.AbstractDSMData;
 import Matrices.Data.AsymmetricDSMData;
 import Matrices.Data.Entities.DSMConnection;
@@ -10,16 +9,21 @@ import Matrices.Data.Entities.Grouping;
 import Matrices.Data.Flags.IPropagationAnalysis;
 import Matrices.Data.MultiDomainDSMData;
 import Matrices.Data.SymmetricDSMData;
-import Matrices.IDSM;
+import Matrices.EditorTabs.AbstractEditorTab;
+import Matrices.EditorTabs.AsymmetricEditorTab;
+import Matrices.EditorTabs.MultiDomainEditorTab;
+import Matrices.EditorTabs.SymmetricEditorTab;
 import Matrices.IOHandlers.AbstractIOHandler;
 import Matrices.IOHandlers.AsymmetricIOHandler;
 import Matrices.IOHandlers.Flags.IThebeauExport;
 import Matrices.IOHandlers.MultiDomainIOHandler;
 import Matrices.IOHandlers.SymmetricIOHandler;
-import Matrices.MultiDomainDSM;
-import Matrices.SymmetricDSM;
 import UI.MatrixViews.AbstractMatrixView;
 import UI.MatrixViews.Flags.ISymmetricHighlight;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
@@ -52,18 +56,20 @@ public class HeaderMenu {
     private RadioMenuItem interfacesView = new RadioMenuItem("Interfaces");
     private RadioMenuItem fastRenderView = new RadioMenuItem("Fast Render");
 
-    private ArrayList<DSMInterfaceType> currentInterfaces = new ArrayList<>();
+    private List<DSMInterfaceType> currentInterfaces = new ArrayList<>();
 
     private final MenuBar menuBar = new MenuBar();
 
     private final EditorPane editor;
-    //private IDSM matrix;
     private AbstractDSMData matrixData;
     private AbstractIOHandler ioHandler;
     private AbstractMatrixView matrixView;
 
     private boolean disabled = false;
     private boolean crossHighlight = false;
+
+    private BooleanProperty isChanged = new SimpleBooleanProperty(false);
+    private BooleanProperty isMutable = new SimpleBooleanProperty(false);
 
     /**
      * Creates a new instance of the header menu and instantiate widgets on it
@@ -81,7 +87,6 @@ public class HeaderMenu {
         setUpToolsMenu();
         setupViewMenu();
         setupHelpMenu();
-
         menuBar.getMenus().addAll(fileMenu, editMenu, viewMenu, toolsMenu, helpMenu);
     }
 
@@ -145,7 +150,7 @@ public class HeaderMenu {
             SymmetricDSMData newMatrix = new SymmetricDSMData();
             SymmetricIOHandler ioHandler = new SymmetricIOHandler(file, newMatrix);
 
-            this.editor.addTab(new SymmetricDSM(newMatrix, ioHandler));
+            this.editor.addTab(new SymmetricEditorTab(newMatrix, ioHandler));
 
             defaultName += 1;
         });
@@ -159,7 +164,7 @@ public class HeaderMenu {
             AsymmetricDSMData newMatrix = new AsymmetricDSMData();
             AsymmetricIOHandler ioHandler = new AsymmetricIOHandler(file, newMatrix);
 
-            this.editor.addTab(new AsymmetricDSM(newMatrix, ioHandler));
+            this.editor.addTab(new AsymmetricEditorTab(newMatrix, ioHandler));
 
             defaultName += 1;
         });
@@ -174,7 +179,7 @@ public class HeaderMenu {
             MultiDomainDSMData newMatrix = new MultiDomainDSMData();
             MultiDomainIOHandler ioHandler = new MultiDomainIOHandler(file, newMatrix);
 
-            this.editor.addTab(new MultiDomainDSM(newMatrix, ioHandler, this));
+            this.editor.addTab(new MultiDomainEditorTab(newMatrix, ioHandler));
 
             defaultName += 1;
         });
@@ -184,7 +189,7 @@ public class HeaderMenu {
 
 
     /**
-     * Sets up the menu for opening dsms
+     * Sets up the menu for opening DSMs
      *
      * @param menu  the menu item to set the callback for
      */
@@ -201,9 +206,9 @@ public class HeaderMenu {
             }
             // make sure user did not just close out of the file chooser window
             switch (AbstractIOHandler.getFileDSMType(file)) {
-                case "symmetric" -> this.editor.addTab(new SymmetricDSM(file));
-                case "asymmetric" -> this.editor.addTab(new AsymmetricDSM(file));
-                case "multi-domain" -> this.editor.addTab(new MultiDomainDSM(file, this));
+                case "symmetric" -> this.editor.addTab(new SymmetricEditorTab(file));
+                case "asymmetric" -> this.editor.addTab(new AsymmetricEditorTab(file));
+                case "multi-domain" -> this.editor.addTab(new MultiDomainEditorTab(file));
 
                 default -> System.out.println("the type of dsm could not be determined from the file " + file.getAbsolutePath());
             }
@@ -262,7 +267,7 @@ public class HeaderMenu {
 
 
     /**
-     * Sets up the menu for importing dsms from alternative sources (ex. thebeau matlab files)
+     * Sets up the menu for importing DSMs from alternative sources (ex. thebeau matlab files)
      *
      * @param parent  the parent menu
      */
@@ -282,7 +287,7 @@ public class HeaderMenu {
                     File importedFile = new File(file.getParent(), file.getName().substring(0, file.getName().lastIndexOf('.')) + ".dsm");  // convert .m extension to .dsm
                     ioHandler.setMatrix(matrix);
                     ioHandler.setSavePath(importedFile);
-                    this.editor.addTab(new SymmetricDSM(matrix, ioHandler));
+                    this.editor.addTab(new SymmetricEditorTab(matrix, ioHandler));
                 } else {
                     editor.focusTab(file);  // focus on that tab because it is already open
                 }
@@ -298,23 +303,23 @@ public class HeaderMenu {
                 String dsmType = AbstractIOHandler.getAdjacencyDSMType(file);
                 AbstractDSMData matrix;
                 AbstractIOHandler ioHandler;
-                IDSM dsm;
+                AbstractEditorTab dsm;
 
                 switch(dsmType) {
                     case "symmetric" -> {
                         ioHandler = new SymmetricIOHandler(file);
                         matrix = ((SymmetricIOHandler) ioHandler).importAdjacencyMatrix(file);
-                        dsm = new SymmetricDSM((SymmetricDSMData) matrix, (SymmetricIOHandler) ioHandler);
+                        dsm = new SymmetricEditorTab((SymmetricDSMData) matrix, (SymmetricIOHandler) ioHandler);
                     }
                     case "multi-domain" -> {
                         ioHandler = new MultiDomainIOHandler(file);
                         matrix = ((MultiDomainIOHandler) ioHandler).importAdjacencyMatrix(file);
-                        dsm = new MultiDomainDSM((MultiDomainDSMData) matrix, (MultiDomainIOHandler) ioHandler, this);
+                        dsm = new MultiDomainEditorTab((MultiDomainDSMData) matrix, (MultiDomainIOHandler) ioHandler);
                     }
                     case "asymmetric" -> {
                         ioHandler = new AsymmetricIOHandler(file);
                         matrix = ((AsymmetricIOHandler) ioHandler).importAdjacencyMatrix(file);
-                        dsm = new AsymmetricDSM((AsymmetricDSMData) matrix, (AsymmetricIOHandler) ioHandler);
+                        dsm = new AsymmetricEditorTab((AsymmetricDSMData) matrix, (AsymmetricIOHandler) ioHandler);
                     }
                     default -> {
                         // TODO: open window saying there was an error parsing the document
@@ -510,7 +515,7 @@ public class HeaderMenu {
                 }
                 MultiDomainIOHandler ioHandler = new MultiDomainIOHandler(file, multiDomainMatrix);
 
-                this.editor.addTab(new MultiDomainDSM(multiDomainMatrix, ioHandler, this));
+                this.editor.addTab(new MultiDomainEditorTab(multiDomainMatrix, ioHandler));
 
                 defaultName += 1;
             }
@@ -826,5 +831,43 @@ public class HeaderMenu {
         RadioMenuItem currentMode = (RadioMenuItem) toggleGroup.getSelectedToggle();
         toggleGroup.selectToggle(null);
         toggleGroup.selectToggle(currentMode);  // force update to the view mode
+    }
+
+
+
+    public void setupBindings(AbstractEditorTab matrix) {
+        ChangeListener<Boolean> refreshListener = (observable, oldValue, newValue) -> {
+            if(newValue) {
+                refresh(matrix.getMatrixData(), matrix.getMatrixIOHandler(), matrix.getMatrixView());
+                matrixData = matrix.getMatrixData();       // update the matrix data
+                ioHandler = matrix.getMatrixIOHandler();
+                matrixView = matrix.getMatrixView();
+            }
+            isChanged.set(false);  // clear the changed flag because it is taken care of
+        };
+
+        ChangeListener<Boolean> disableListener = (observable, oldValue, newValue) -> setDisabled(!newValue);
+
+        if (matrix != null) {
+            this.isChanged.removeListener(refreshListener);
+            this.isChanged = matrix.isChanged;
+            this.isChanged.addListener(refreshListener);
+
+            refresh(matrix.getMatrixData(), matrix.getMatrixIOHandler(), matrix.getMatrixView());
+            matrixData = matrix.getMatrixData();       // update the matrix data
+            ioHandler = matrix.getMatrixIOHandler();
+            matrixView = matrix.getMatrixView();
+
+
+            this.isMutable.removeListener(disableListener);
+            this.isMutable = matrix.isMutable;
+            this.isMutable.addListener(refreshListener);
+
+            setDisabled(!isMutable.get());
+        } else {
+            refresh(null, null, null);
+        }
+
+
     }
 }

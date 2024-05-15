@@ -2,7 +2,7 @@ package UI;
 
 import Matrices.Data.AbstractDSMData;
 import Matrices.Data.Entities.DSMConnection;
-import Matrices.IDSM;
+import Matrices.EditorTabs.AbstractEditorTab;
 import UI.MatrixViews.AbstractMatrixView;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -193,8 +193,8 @@ public class ConnectionSearchWidget {
         mainLayout.setManaged(false);  // so that the layout will not take up space on the application
         searchInput.setText("");
 
-        for(IDSM matrix : this.editor.getMatricesCollection().getMatrices().values()) {  // clear all search highlight for all matrices for better flow when switching tabs
-            for(AbstractMatrixView view : matrix.getMatrixEditorTab().getAllMatrixViews()) {
+        for(AbstractEditorTab matrix : this.editor.getMatricesCollection().getMatrices().values()) {  // clear all search highlight for all matrices for better flow when switching tabs
+            for(AbstractMatrixView view : matrix.getAllMatrixViews()) {
                 view.clearAllCellsHighlight("search");
             }
         }

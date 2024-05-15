@@ -33,6 +33,7 @@ import javafx.util.Pair;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -92,6 +93,8 @@ public abstract class AbstractMatrixView {
             super(eventType);
         }
     }
+
+
     // add the hashcode to it so that the event name string is unique (the name doesn't matter because it isn't used anywhere is just has to be unique)
     protected EventType<CellChangedEvent> CELL_CHANGED_EVENT = new EventType<>("CELL_CHANGED_EVENT" + this.hashCode());
 
@@ -302,7 +305,7 @@ public abstract class AbstractMatrixView {
      *
      * @param currentInterfaces  the list of interfaces to show in the cells
      */
-    public final void setVisibleInterfaces(ArrayList<DSMInterfaceType> currentInterfaces) {
+    public final void setVisibleInterfaces(List<DSMInterfaceType> currentInterfaces) {
         this.currentInterfaces.clear();
         this.currentInterfaces.addAll(currentInterfaces);
     }

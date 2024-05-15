@@ -1,4 +1,6 @@
 import Matrices.*;
+import Matrices.EditorTabs.AbstractEditorTab;
+import Matrices.EditorTabs.SymmetricEditorTab;
 import UI.EditorPane;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -50,7 +52,7 @@ public class DSMApplication extends Application {
             Constants.Constants.isDebug = true;
             File f = new File("/home/aiden/Documents/DSMEditor/dsms/Elevator_DSM_clustered.dsm");
             if(f.exists()) {
-                editor.addTab(new SymmetricDSM(f));
+                editor.addTab(new SymmetricEditorTab(f));
             }
         }
 
@@ -122,7 +124,7 @@ public class DSMApplication extends Application {
             exists = recoveryDir.mkdir();
         }
         if(exists) {  // make sure recovery directory exists before saving there
-            for (Map.Entry<Integer, IDSM> matrix : editor.getMatricesCollection().getMatrices().entrySet()) {
+            for (Map.Entry<Integer, AbstractEditorTab> matrix : editor.getMatricesCollection().getMatrices().entrySet()) {
                 File f = new File("./.recovery/" + matrix.getValue().getMatrixIOHandler().getSavePath().getName());
                 matrix.getValue().getMatrixIOHandler().saveMatrixToFile(f);
                 matrix.getValue().getMatrixData().setWasModified();  // matrix is not saved to known location, so don't display it as saved to the user

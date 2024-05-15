@@ -180,7 +180,7 @@ public abstract class AbstractIOHandler implements IStandardExports {
      *
      * @return  the parsed in matrix
      */
-    public abstract <T1 extends AbstractDSMData> T1 readFile();
+    public abstract AbstractDSMData readFile();
 
 
     /**
