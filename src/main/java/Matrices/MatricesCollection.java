@@ -8,7 +8,7 @@ import java.util.ArrayList;
 
 
 /**
- * Wrapper class for handling matrix objects. Maps matrix objects to a uid
+ * Wrapper class for handling matrix objects. Maps matrix objects to a UID
  */
 public class MatricesCollection {
 

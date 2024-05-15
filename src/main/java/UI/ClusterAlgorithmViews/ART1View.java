@@ -2,20 +2,17 @@ package UI.ClusterAlgorithmViews;
 
 import Matrices.ClusterAlgorithms.ART1;
 import Matrices.Data.SymmetricDSMData;
-import UI.Widgets.NumericTextField;
-import javafx.beans.property.*;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.Tooltip;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.scene.layout.VBox;
 
 public class ART1View implements IAlgorithmView {
 
-    private final DoubleProperty maxGroups = new SimpleDoubleProperty(50);;
-    private final DoubleProperty vigilance = new SimpleDoubleProperty(0.1);;
-    private final DoubleProperty beta = new SimpleDoubleProperty(4.0);;
+    private final DoubleProperty maxGroups = new SimpleDoubleProperty(50);
+    private final DoubleProperty vigilance = new SimpleDoubleProperty(0.1);
+    private final DoubleProperty beta = new SimpleDoubleProperty(4.0);
 
     private final BooleanProperty debug = new SimpleBooleanProperty(false);
 

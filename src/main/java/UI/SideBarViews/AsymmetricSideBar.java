@@ -122,9 +122,9 @@ public class AsymmetricSideBar extends AbstractSideBar {
                 if (empty || item == null) {
                     setText(null);
                 } else {
-                    switch(item.getValue()) {
-                        case ROW:  setText(item.getKey() + " Row"); break;
-                        case COL:  setText(item.getKey() + " Col"); break;
+                    switch (item.getValue()) {
+                        case ROW -> setText(item.getKey() + " Row");
+                        case COL -> setText(item.getKey() + " Col");
                     }
                 }
             }

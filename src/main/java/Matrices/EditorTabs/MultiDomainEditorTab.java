@@ -42,6 +42,7 @@ import java.util.HashMap;
  * to the static render mode
  */
 public class MultiDomainEditorTab extends AbstractEditorTab {
+    int breakoutNum = 1;
 
     protected final VBox centerLayout = new VBox();
     protected final VBox leftLayout = new VBox();
@@ -127,11 +128,9 @@ public class MultiDomainEditorTab extends AbstractEditorTab {
                 mainSidebar.setDisabled();
                 this.mainMatrixView.setCurrentMode(AbstractMatrixView.MatrixViewMode.STATIC_NAMES);  // TODO: make this change between names weights, fast
                 isMutable.set(false);
-//                headerMenu.setDisabled(true);
             } else {
                 mainSidebar.setEnabled();
                 isMutable.set(true);
-//                headerMenu.setDisabled(false);
             }
             this.mainMatrixView.refreshView();
             this.isChanged.set(true);
@@ -248,6 +247,7 @@ public class MultiDomainEditorTab extends AbstractEditorTab {
      * @param toGroup    the domain for the column items
      */
     public void addBreakOutView(Grouping fromGroup, Grouping toGroup) {
+        // TODO: may want to rethink how ioHandler (in header menu) is used in breakout views
         AbstractDSMData data = this.mainMatrixData.exportZoom(fromGroup, toGroup);
         AbstractMatrixView view;
         AbstractSideBar sideBar;
@@ -266,7 +266,8 @@ public class MultiDomainEditorTab extends AbstractEditorTab {
             throw new AssertionError("Breakout view created was of an invalid type");
         }
 
-        DraggableTab tab = new DraggableTab("Breakout");
+        DraggableTab tab = new DraggableTab("Breakout" + breakoutNum);
+        breakoutNum++;
         tab.setContent(view.getView());
         tab.setDetachable(false);
         tab.setClosable(true);
@@ -276,7 +277,6 @@ public class MultiDomainEditorTab extends AbstractEditorTab {
             this.tabsData.remove(tab);
             this.tabPane.getTabs().remove(tab);
             isMutable.set(true);
-//            headerMenu.setDisabled(false);
         });
 
 
@@ -286,8 +286,6 @@ public class MultiDomainEditorTab extends AbstractEditorTab {
             matrixView = view;
             matrixSideBar = sideBar;
 
-//            headerMenu.refresh(data, ioHandler, view);
-//            headerMenu.setDisabled(false);
             isMutable.set(true);
             isChanged.set(true);
 
@@ -385,7 +383,6 @@ public class MultiDomainEditorTab extends AbstractEditorTab {
     public AbstractDSMData getMatrixData() {
         return matrixData;
 //        return tabsData.get((DraggableTab)tabPane.getSelectionModel().getSelectedItem()).getKey();
-
     }
 
 }

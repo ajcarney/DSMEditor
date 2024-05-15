@@ -21,32 +21,19 @@ import java.util.Random;
  */
 public class Thebeau {
 
-//
-//    private static int getClusterSize(SymmetricDSMData matrix, Grouping group) {
-//        int size = 0;
-//        for (DSMItem row : matrix.getRows()) {
-//            if (row.getGroup1().equals(group)) {
-//                size += 1;
-//            }
-//        }
-//        return size;
-//    }
-//
-//
-//    private static double getConnectionSum(boolean byWeight, DSMConnection ... connections) {
-//        double sum = 0;
-//        for (DSMConnection conn : connections) {
-//            if (conn != null) {
-//                if (byWeight) {
-//                    sum += conn.getWeight();
-//                } else {
-//                    sum += 1;
-//                }
-//            }
-//        }
-//        return sum;
-//    }
+    public static class CoordinationScore {
+        public HashMap<Grouping, Double> intraBreakdown;
+        public double totalIntraCost;
+        public double totalExtraCost;
+        public double totalCost;
 
+        public CoordinationScore(HashMap<Grouping, Double> intraBreakdown, double totalIntraCost, double totalExtraCost, double totalCost) {
+            this.intraBreakdown = intraBreakdown;
+            this.totalIntraCost = totalIntraCost;
+            this.totalExtraCost = totalExtraCost;
+            this.totalCost = totalCost;
+        }
+    }
 
     /**
      * Function to calculate the coordination score of a DSM using Fernandez's thesis (https://dsmweborg.files.wordpress.com/2019/05/msc_thebeau.pdf p28-29)
@@ -62,9 +49,7 @@ public class Thebeau {
      *     TotalExtraCost
      *     TotalCost
      */
-    public static HashMap<String, Object> getCoordinationScore(SymmetricDSMData matrix, Double optimalSizeCluster, Double powcc, Boolean calculateByWeight) {
-        HashMap<String, Object> results = new HashMap<>();
-
+    public static CoordinationScore getCoordinationScore(SymmetricDSMData matrix, Double optimalSizeCluster, Double powcc, Boolean calculateByWeight) {
         HashMap<Grouping, Double> intraCostBreakdown = new HashMap<>();
         double totalIntraCost = 0.0;
         double totalExtraCost = 0.0;
@@ -99,13 +84,7 @@ public class Thebeau {
             }
         }
 
-        // TODO: this should be a record class
-        results.put("IntraBreakdown", intraCostBreakdown);
-        results.put("TotalIntraCost", totalIntraCost);
-        results.put("TotalExtraCost", totalExtraCost);
-        results.put("TotalCost", totalIntraCost + totalExtraCost);
-
-        return results;
+        return new CoordinationScore(intraCostBreakdown, totalIntraCost, totalExtraCost, totalIntraCost + totalExtraCost);
     }
 
 
@@ -122,8 +101,6 @@ public class Thebeau {
      * @return the cluster bid for a given row item
      */
     public static double calculateClusterBid(SymmetricDSMData matrix, Grouping group, DSMItem rowItem, Double optimalSizeCluster, Double powdep, Double powbid, Boolean calculateByWeight) {
-        HashMap<Integer, Double> bids = new HashMap<>();
-
         Integer clusterSize = 0;
         for(DSMItem row : matrix.getRows()) {
             if(row.getGroup1().equals(group)) {
@@ -174,7 +151,7 @@ public class Thebeau {
      * 3. Randomly choose an element
      * 4. Calculate bid from all clusters for the selected element
      * 5. Randomly choose a number between 1 and rand_bid (algorithm parameter)
-     * 6. Calculate the total Coordination Cost if the selected element becomes a member of the cluster with highest bid (use second-highest bid if step 5 is equal to rand_bid)
+     * 6. Calculate the total Coordination Cost if the selected element becomes a member of the cluster with the highest bid (use second-highest bid if step 5 is equal to rand_bid)
      * 7. Randomly choose a number between 1 and rand_accept (algorithm parameter)
      * 8. If new Coordination Cost is lower than the old coordination cost or the number chosen in step 7 is equal to rand_accept, make the change permanent otherwise make no changes
      * 9. Go back to Step 3 until repeated a set number of times
@@ -186,7 +163,7 @@ public class Thebeau {
      * @param powcc              constant to penalize size of cluster in cost calculation
      * @param randBid            constant to determine how often to perform an action based on the second highest bid
      * @param randAccept         constant to determine how often to perform a not necessarily optimal action
-     * @param exclusions         a list of uids to exclude from clustering
+     * @param exclusions         a list of UIDs to exclude from clustering
      * @param calculateByWeight  calculate scores and bidding by weight or by number of occurrences
      * @param numLevels          number of iterations
      * @param randSeed           seed for random number generator
@@ -212,7 +189,7 @@ public class Thebeau {
         }
 
         // calculate initial coordination cost
-        double coordinationCost = (Double)getCoordinationScore(matrix, optimalSizeCluster, powcc, calculateByWeight).get("TotalCost");
+        double coordinationCost = getCoordinationScore(matrix, optimalSizeCluster, powcc, calculateByWeight).totalCost;
 
         // save the best solution
         SymmetricDSMData bestSolution = matrix.createCopy();
@@ -275,7 +252,7 @@ public class Thebeau {
 
             // choose a number between 0 and randAccept to determine if change is permanent regardless of it being optimal
             int nAccept = generator.nextInt(randAccept) + 1;  // add one to randAccept because with truncation nAccept will never be equal to randAccept
-            Double newCoordinationScore = (Double) getCoordinationScore(tempMatrix, optimalSizeCluster, powcc, calculateByWeight).get("TotalCost");
+            Double newCoordinationScore = getCoordinationScore(tempMatrix, optimalSizeCluster, powcc, calculateByWeight).totalCost;
 
             if (nAccept == randAccept || newCoordinationScore < coordinationCost) {  // make the change permanent
                 coordinationCost = newCoordinationScore;

@@ -9,7 +9,6 @@ import java.util.ArrayList;
 
 /**
  * Contains java implementation of the ART1 algorithm.
- * TODO: broken. Need to merge in code from somewhere?
  *
  * @author: Aiden Carney
  */
@@ -48,7 +47,7 @@ public class ART1 {
         // set all items to not having a group
         matrix.clearGroupings();
         itemMemberships = new ArrayList<>();
-        prototypes = new ArrayList<>();  // list of column uids where the prototype has a value
+        prototypes = new ArrayList<>();  // list of column UIDs where the prototype has a value
         prototypeGroups = new ArrayList<>();
     }
 
@@ -142,9 +141,6 @@ public class ART1 {
             for (int i = 1; i < memberIndices.size(); i++) {
                 newPrototype = andVectors(newPrototype, adjacencyMatrix.get(i));
             }
-            //            for(int i = 0; i < newPrototype.size(); i++) {
-            //                newPrototype.set(i, newPrototype.get(i) / memberIndices.size());
-            //            }
 
             prototypes.get(prototypeIndex).clear();
             prototypes.get(prototypeIndex).addAll(newPrototype);

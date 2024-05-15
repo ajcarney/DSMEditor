@@ -54,7 +54,7 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
 
 
     /**
-     * Reads an xml file and parses it as an object that extends the template DSM. Returns the object,
+     * Reads an XML file and parses it as an object that extends the template DSM. Returns the object,
      * but does not automatically add it to be handled.
      *
      * @return  the parsed in matrix
@@ -199,7 +199,7 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
 
 
     /**
-     * Saves the matrix to an xml file specified by the caller of the function. Clears
+     * Saves the matrix to an XML file specified by the caller of the function. Clears
      * the matrix's wasModifiedFlag
      *
      * @param file      the file to save the matrix to
@@ -286,7 +286,6 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
 
             return 1;  // file was successfully saved
         } catch(Exception e) {  // TODO: add better error handling and bring up an alert box
-            System.out.println(e);
             e.printStackTrace();
             return 0;  // 0 means there was an error somewhere
         }
@@ -324,14 +323,6 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
         Grouping defaultDomain = matrix.getDefaultDomain();
         Grouping defaultGroup = matrix.getDefaultDomainGroup(defaultDomain);
 
-        // add domain from first row and remove the default domain so that there is no extra domain at the end
-//        Grouping newDefaultdomain = new Grouping(uid, 1, lines.get(2).get(0), Color.WHITE, Color.BLACK);
-//        uid += 1;
-//        matrix.addDomain(newDefaultdomain);
-//        matrix.removeDomain(defaultDomain);
-//        defaultDomain = newDefaultdomain;
-//        domains.put(defaultDomain.getName(), defaultDomain);
-
         for(int i = 2; i < line.size(); i++) {
             DSMItem row = new DSMItem(uid, uid + 1, i, line.get(i), defaultGroup, defaultDomain);
             DSMItem col = new DSMItem(uid + 1, uid, i, line.get(i), defaultGroup, defaultDomain);
@@ -343,7 +334,6 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
             matrix.addItem(row, true);
             matrix.addItem(col, false);
         }
-
 
         // skip first row and create rows, items, domains, groups, and connections
         int priority = 1;
@@ -479,7 +469,6 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
 
             return 1;
         } catch(Exception e) {  // TODO: add better error handling and bring up an alert box
-            System.out.println(e);
             e.printStackTrace();
             return 0;  // 0 means there was an error somewhere
         }
@@ -531,7 +520,6 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
 
             return 1;
         } catch(Exception e) {  // TODO: add better error handling and bring up an alert box
-            System.out.println(e);
             e.printStackTrace();
             return 0;  // 0 means there was an error somewhere
         }
@@ -664,8 +652,8 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
                             styleExcelCell(workbook, cell, bgColor, null, HORIZONTAL_ROTATION);
                         }
                         case EDITABLE_CONNECTION -> {
-                            Integer rowUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getKey().getUid();
-                            Integer colUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getValue().getUid();
+                            int rowUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getKey().getUid();
+                            int colUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getValue().getUid();
 
                             Cell cell = row.createCell(c + COL_START);
                             if (matrix.getConnection(rowUid, colUid) != null) {

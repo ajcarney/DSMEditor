@@ -6,7 +6,7 @@ import org.controlsfx.control.SearchableComboBox;
 
 
 /**
- * Wrapper class for a DSMItem combobox that allows for searching.
+ * Wrapper class for a DSMItem combo-box that allows for searching.
  * Stores items by uid and not the actual object
  */
 public class DSMItemComboBox extends SearchableComboBox<DSMItem> {

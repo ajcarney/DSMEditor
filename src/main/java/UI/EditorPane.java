@@ -3,16 +3,9 @@ package UI;
 import Constants.Constants;
 import Matrices.Data.AbstractDSMData;
 import Matrices.EditorTabs.AbstractEditorTab;
-import Matrices.IOHandlers.AbstractIOHandler;
 import Matrices.MatricesCollection;
 import UI.MatrixViews.AbstractMatrixView;
-import UI.SideBarViews.AbstractSideBar;
 import UI.Widgets.DraggableTab;
-import javafx.beans.binding.Bindings;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.control.TabPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
@@ -22,7 +15,7 @@ import java.util.HashMap;
 
 
 /**
- * Class to manage the gui for multiple matrices. Contains the file menu, side bar, metadata pane, and the editor
+ * Class to manage the gui for multiple matrices. Contains the file menu, sidebar, metadata pane, and the editor
  *
  * @author Aiden Carney
  */
@@ -35,8 +28,6 @@ public class EditorPane {
     private final HeaderMenu headerMenu;
     private final ConnectionSearchWidget searchWidget;
     private final VBox bottomEditorTabLayout = new VBox();
-
-    public final ObjectProperty<AbstractEditorTab> focusedMatrix = new SimpleObjectProperty<>();  // the data for the focused matrix
 
     private static final double DEFAULT_FONT_SIZE = 12.0;
 
@@ -133,7 +124,7 @@ public class EditorPane {
 
 
     /**
-     * Returns that HashMap that contains the tab objects and matrix uids
+     * Returns that HashMap that contains the tab objects and matrix UIDs
      *
      * @return the tabs HashMap
      */
@@ -143,7 +134,7 @@ public class EditorPane {
 
 
     /**
-     * Returns the TabPane object so it can be added to a scene
+     * Returns the TabPane object, so it can be added to a scene
      *
      * @return the TabPane object with all its widgets
      */
@@ -226,7 +217,6 @@ public class EditorPane {
             this.matrices.removeMatrix(matrixUid);
 
             if(this.tabs.isEmpty()) {
-//                headerMenu.refresh(null, null, null);
                 headerMenu.setupBindings(null);
 
                 this.rootLayout.setLeft(null);
@@ -236,8 +226,6 @@ public class EditorPane {
         });
 
         tab.setOnSelectionChanged(e -> {
-//            headerMenu.refresh(this.matrices.getMatrix(matrixUid).getMatrixData(), this.matrices.getMatrix(matrixUid).getMatrixIOHandler(), this.matrices.getMatrix(matrixUid).getMatrixView());
-//            headerMenu.setDisabled(false);
             headerMenu.setupBindings(this.matrices.getMatrix(matrixUid));
             this.matrices.getMatrix(matrixUid).isChanged.set(true);  // force refresh on tab change, needs to be after to fire event
 

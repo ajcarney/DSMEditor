@@ -3,7 +3,6 @@ package Matrices.IOHandlers;
 import Constants.Constants;
 import Matrices.Data.AsymmetricDSMData;
 import Matrices.Data.Entities.*;
-import Matrices.Data.SymmetricDSMData;
 import UI.MatrixViews.AbstractMatrixView;
 import javafx.scene.paint.Color;
 import javafx.util.Pair;
@@ -17,8 +16,10 @@ import org.jdom2.input.SAXBuilder;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 
-import java.io.*;
-import java.nio.file.attribute.GroupPrincipal;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.OutputStream;
 import java.util.*;
 
 
@@ -54,7 +55,7 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
 
 
     /**
-     * Reads an xml file and parses it as an object that extends the template DSM. Returns the object,
+     * Reads a xml file and parses it as an object that extends the template DSM. Returns the object,
      * but does not automatically add it to be handled.
      *
      * @return  the parsed in matrix
@@ -189,7 +190,7 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
 
 
     /**
-     * Saves the matrix to an xml file specified by the caller of the function. Clears
+     * Saves the matrix to an XML file specified by the caller of the function. Clears
      * the matrix's wasModifiedFlag
      *
      * @param file      the file to save the matrix to
@@ -601,8 +602,8 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
                             styleExcelCell(workbook, cell, bgColor, null, HORIZONTAL_ROTATION);
                         }
                         case EDITABLE_CONNECTION -> {
-                            Integer rowUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getKey().getUid();
-                            Integer colUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getValue().getUid();
+                            int rowUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getKey().getUid();
+                            int colUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getValue().getUid();
 
                             Cell cell = row.createCell(c + COL_START);
                             if (matrix.getConnection(rowUid, colUid) != null) {

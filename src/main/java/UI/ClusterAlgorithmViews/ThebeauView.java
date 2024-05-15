@@ -39,7 +39,7 @@ public class ThebeauView implements IAlgorithmView {
      */
     @Override
     public VBox getParametersPane(SymmetricDSMData matrix) {
-        ArrayList<Integer> items = new ArrayList<>();
+        ArrayList<Integer> items = new ArrayList<>();  // TODO: ???
         for(DSMItem row : matrix.getRows()) {
             items.add(row.getUid());
         }

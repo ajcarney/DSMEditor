@@ -375,7 +375,7 @@ public abstract class AbstractMatrixView {
 
 
     /**
-     * Function to remove several different highlight types of a cell given its grid location by assigning
+     * Function to remove several highlight types of a cell given its grid location by assigning
      * null to that highlight field
      *
      * @param cellLoc       the grid location of a cell (row, column)
@@ -388,7 +388,7 @@ public abstract class AbstractMatrixView {
 
 
     /**
-     * Function to remove several different highlight types of all cells by assigning
+     * Function to remove several highlight types of all cells by assigning
      * null to that highlight field
      *
      * @param highlightType the highlight type to assign to (userHighlight, errorHighlight, symmetryErrorHighlight)

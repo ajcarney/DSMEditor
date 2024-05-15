@@ -22,7 +22,7 @@ public class DSMItemSelector {
 
     /**
      * Default constructor
-     * @param matrix the matrix to select items from. Needed to map uids to names
+     * @param matrix the matrix to select items from. Needed to map UIDs to names
      */
     public DSMItemSelector(AbstractDSMData matrix) {
         this.matrix = matrix;
@@ -78,7 +78,7 @@ public class DSMItemSelector {
             canSelect.addAll(matrix.getCols());
         }
 
-        // make the combobox selector
+        // make the combo-box selector
         DSMItemComboBox itemSelector = new DSMItemComboBox();
 
         itemSelector.getItems().addAll(canSelect);

@@ -206,7 +206,7 @@ public class ClusterAnalysisWindow {
      * runs the algorithm that determines the coordination score of a matrix. Updates content on the main window of the gui
      */
     private void runCoordinationScore() {
-        HashMap<String, Object> coordinationScore = Thebeau.getCoordinationScore(matrix, optimalSizeCluster.doubleValue(), powcc.doubleValue(), countByWeight.isSelected());
+        Thebeau.CoordinationScore coordinationScore = Thebeau.getCoordinationScore(matrix, optimalSizeCluster.doubleValue(), powcc.doubleValue(), countByWeight.isSelected());
 
         Label titleLabel = new Label("Cluster Cost Analysis");
         titleLabel.setStyle(titleLabel.getStyle() + "-fx-font-weight: bold;");
@@ -215,7 +215,7 @@ public class ClusterAnalysisWindow {
 
         VBox intraBreakDown = new VBox();
         ScrollPane intraScroll = new ScrollPane(intraBreakDown);
-        for(Map.Entry<Grouping, Double> b : ((HashMap<Grouping, Double>)coordinationScore.get("IntraBreakdown")).entrySet()) {
+        for(Map.Entry<Grouping, Double> b : coordinationScore.intraBreakdown.entrySet()) {
             HBox breakdown = new HBox();
             Label value = new Label(b.getValue().toString());
             value.setStyle(value.getStyle() + "-fx-font-weight: bold;");
@@ -228,19 +228,19 @@ public class ClusterAnalysisWindow {
         }
 
         HBox intraTotal = new HBox();
-        Label v1 = new Label(coordinationScore.get("TotalIntraCost").toString());
+        Label v1 = new Label(String.valueOf(coordinationScore.totalIntraCost));
         v1.setStyle(v1.getStyle() + "-fx-font-weight: bold;");
         intraTotal.getChildren().addAll(new Label("Total Intra Cluster Cost:"), v1);
         intraTotal.setSpacing(10);
 
         HBox extraTotal = new HBox();
-        Label v2 = new Label(coordinationScore.get("TotalExtraCost").toString());
+        Label v2 = new Label(String.valueOf(coordinationScore.totalExtraCost));
         v2.setStyle(v1.getStyle() + "-fx-font-weight: bold;");
         extraTotal.getChildren().addAll(new Label("Total Extra Cluster Cost:"), v2);
         extraTotal.setSpacing(10);
 
         HBox total = new HBox();
-        Label v3 = new Label(coordinationScore.get("TotalCost").toString());
+        Label v3 = new Label(String.valueOf(coordinationScore.totalCost));
         v3.setStyle(v1.getStyle() + "-fx-font-weight: bold;");
         total.getChildren().addAll(new Label("Total Cost:"), v3);
         total.setSpacing(10);

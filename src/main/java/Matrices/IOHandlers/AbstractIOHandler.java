@@ -175,7 +175,7 @@ public abstract class AbstractIOHandler implements IStandardExports {
     }
 
     /**
-     * Reads an xml file and parses it as an object that extends the template DSM. Returns the object,
+     * Reads a xml file and parses it as an object that extends the template DSM. Returns the object,
      * but does not automatically add it to be handled.
      *
      * @return  the parsed in matrix
@@ -184,7 +184,7 @@ public abstract class AbstractIOHandler implements IStandardExports {
 
 
     /**
-     * Saves the matrix to an xml file specified by the caller of the function. Clears
+     * Saves the matrix to a xml file specified by the caller of the function. Clears
      * the matrix's wasModifiedFlag
      *
      * @param file      the file to save the matrix to
@@ -303,7 +303,7 @@ public abstract class AbstractIOHandler implements IStandardExports {
 
 
     /**
-     * Styles a cell in an excel workbook in place
+     * Styles a cell in an Excel workbook in place
      *
      * @param wb         the workbook object of the spreadsheet that contains the cell
      * @param cell       the cell created from the workbook to style

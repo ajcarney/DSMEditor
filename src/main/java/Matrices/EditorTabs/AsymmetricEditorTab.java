@@ -30,7 +30,7 @@ public class AsymmetricEditorTab extends AbstractEditorTab {
      * Creates a new matrix object by reading in a file. Throws IllegalArgumentException if there was an error reading
      * the file
      *
-     * @param file    the file object that contains a Asymmetric dsm to read
+     * @param file    the file object that contains an Asymmetric dsm to read
      */
     public AsymmetricEditorTab(File file) {
         matrixIOHandler = new AsymmetricIOHandler(file);

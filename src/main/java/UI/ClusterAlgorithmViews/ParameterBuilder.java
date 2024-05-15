@@ -1,6 +1,5 @@
 package UI.ClusterAlgorithmViews;
 
-import Matrices.Data.Entities.DSMItem;
 import Matrices.Data.SymmetricDSMData;
 import UI.Widgets.DSMItemSelector;
 import UI.Widgets.NumericTextField;
@@ -9,17 +8,11 @@ import javafx.beans.property.DoubleProperty;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.*;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
-import javafx.util.Callback;
-import org.controlsfx.control.CheckComboBox;
-import org.controlsfx.control.ListSelectionView;
-
-import java.util.ArrayList;
 
 /**
  * Class with builder pattern to be able to create views for cluster algorithms with less code
@@ -58,9 +51,7 @@ public class ParameterBuilder {
 
 
         NumericTextField entry = new NumericTextField(nProperty.getValue(), intOnly);
-        entry.textProperty().addListener((obs, oldText, newText) -> {
-            nProperty.setValue(entry.getNumericValue());
-        });
+        entry.textProperty().addListener((obs, oldText, newText) -> nProperty.setValue(entry.getNumericValue()));
 
         layout.getChildren().addAll(l, entry);
         layout.setSpacing(5);
@@ -86,9 +77,7 @@ public class ParameterBuilder {
         CheckBox checkbox = new CheckBox(label);
         checkbox.setSelected(bProperty.get());
         checkbox.setMaxWidth(Double.MAX_VALUE);
-        checkbox.selectedProperty().addListener((obs, oldText, newText) -> {
-            bProperty.setValue(checkbox.isSelected());
-        });
+        checkbox.selectedProperty().addListener((obs, oldText, newText) -> bProperty.setValue(checkbox.isSelected()));
 
         layout.getChildren().addAll(checkbox);
         layout.setAlignment(Pos.CENTER);

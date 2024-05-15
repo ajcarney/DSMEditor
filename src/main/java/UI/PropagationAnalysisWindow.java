@@ -35,7 +35,6 @@ import javafx.util.Pair;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 
 /**
@@ -50,7 +49,7 @@ public class PropagationAnalysisWindow<T extends AbstractDSMData & IPropagationA
     Stage window;
     private final BorderPane rootLayout;
 
-    private VBox configLayout;      // side bar
+    private VBox configLayout;  // sidebar
 
     // config pane widgets
     private ComboBox<Integer> startItemEntry;
@@ -83,7 +82,7 @@ public class PropagationAnalysisWindow<T extends AbstractDSMData & IPropagationA
             window.setTitle("Propagation Analysis");
         }
 
-    // side bar
+    // sidebar
         updateConfigWidgets();
 
     // menu
@@ -289,7 +288,7 @@ public class PropagationAnalysisWindow<T extends AbstractDSMData & IPropagationA
         xAxis.setLabel("Item Name");
         yAxis.setLabel("Value");
 
-        XYChart.Series series1 = new XYChart.Series();
+        XYChart.Series<String, Number> series1 = new XYChart.Series<>();
         if(byWeight) {
             series1.setName("Value by Weight");
         } else {
@@ -297,7 +296,7 @@ public class PropagationAnalysisWindow<T extends AbstractDSMData & IPropagationA
         }
 
         for(Map.Entry<Integer, Double> entry : scores.entrySet()) {
-            series1.getData().add(new XYChart.Data(matrix.getItem(entry.getKey()).getName().getValue(), entry.getValue()));
+            series1.getData().add(new XYChart.Data<>(matrix.getItem(entry.getKey()).getName().getValue(), entry.getValue()));
         }
 
         graph.getData().addAll(series1);

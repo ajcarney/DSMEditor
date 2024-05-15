@@ -56,7 +56,7 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
 
 
     /**
-     * Reads an xml file and parses it as an object that extends the template DSM. Returns the object,
+     * Reads an XML file and parses it as an object that extends the template DSM. Returns the object,
      * but does not automatically add it to be handled.
      *
      * @return  the parsed in matrix
@@ -331,7 +331,7 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
 
 
     /**
-     * Saves the matrix to an xml file specified by the caller of the function. Clears
+     * Saves the matrix to an XML file specified by the caller of the function. Clears
      * the matrix's wasModifiedFlag
      *
      * @param file      the file to save the matrix to

@@ -12,7 +12,7 @@ import javafx.scene.control.TextField;
  */
 public class NumericTextField extends TextField {
     private final DoubleProperty numericValue;
-    private boolean integerMode = false;
+    private boolean integerMode;
 
 
     /**

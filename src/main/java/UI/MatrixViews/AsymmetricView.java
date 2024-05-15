@@ -185,8 +185,6 @@ public class AsymmetricView extends AbstractMatrixView {
                 HBox cell = new HBox();  // wrap everything in an HBox so a border can be added easily
                 Label label = null;
 
-                Background defaultBackground = DEFAULT_BACKGROUND;
-
                 switch (item.getKey()) {
                     case PLAIN_TEXT -> {
                         label = new Label((String) item.getValue());
@@ -239,7 +237,7 @@ public class AsymmetricView extends AbstractMatrixView {
                             }
                         });
                         cell.setMinWidth(maxHeight);  // set a min width so that the matrix is less boxy (all connection items will follow this even if not
-                        // explicitly set due to how the freeze grid is set up)
+                                                      // explicitly set due to how the freeze grid is set up)
                     }
                     case GROUPING_ITEM -> {  // dropdown box for choosing group
                         ComboBox<Grouping> groupings = new ComboBox<>();
@@ -325,7 +323,7 @@ public class AsymmetricView extends AbstractMatrixView {
                 rowData.add(cell);
 
                 Cell cellObject = new Cell(new Pair<>(r, c), cell, label, fontSize);
-                cellObject.updateHighlightBG(defaultBackground, "default");
+                cellObject.updateHighlightBG(DEFAULT_BACKGROUND, "default");
                 cells.add(cellObject);
 
             }
@@ -377,8 +375,6 @@ public class AsymmetricView extends AbstractMatrixView {
                 Pair<RenderMode, Object> item = template.get(r).get(c);
                 HBox cell = new HBox();  // wrap everything in an HBox so a border can be added easily
                 Label label = null;
-
-                Background defaultBackground = DEFAULT_BACKGROUND;
 
                 switch (item.getKey()) {
                     case PLAIN_TEXT -> {
@@ -462,7 +458,7 @@ public class AsymmetricView extends AbstractMatrixView {
                 grid.getChildren().add(cell);
 
                 Cell cellData = new Cell(new Pair<>(r, c), cell, label, fontSize);
-                cellData.updateHighlightBG(defaultBackground, "default");
+                cellData.updateHighlightBG(DEFAULT_BACKGROUND, "default");
                 cells.add(cellData);
             }
         }
@@ -476,7 +472,7 @@ public class AsymmetricView extends AbstractMatrixView {
 
 
     /**
-     * Creates the gui that displays with minimal detail so it can render large matrices faster
+     * Creates the gui that displays with minimal detail, so it can render large matrices faster
      */
     @Override
     protected void refreshFastRenderView(boolean isStatic) {
@@ -554,11 +550,11 @@ public class AsymmetricView extends AbstractMatrixView {
         // keep track of the connections so that they can be plotted on a canvas
         // object later. Only the grid location of its row and column items needs
         // to be tracked as it is immutable and only displayed as a single dot.
-        // Also keep track of the uneditable connection cells so they can be
+        // Also keep track of the uneditable connection cells, so they can be
         // plotted as a box
         ArrayList<Triplet<Integer, Integer, Color>> connectionLocations = new ArrayList<>();
 
-        // update the cells so they can be displayed by the freeze grid
+        // update the cells, so they can be displayed by the freeze grid
         for(int r=0; r<numRows; r++) {
             ArrayList<HBox> rowData = new ArrayList<>();
             for(int c=0; c<numCols; c++) {
@@ -730,7 +726,7 @@ public class AsymmetricView extends AbstractMatrixView {
         for(Triplet<Integer, Integer, Color> connection : connectionLocations) {
             graphics_context.setFill(connection.getValue2());
             // coordinates offset by connections start index so subtract it. Coordinates give top right of cell so
-            // center it by averaging cell size. Subtract half the size of the circle so it stays centered
+            // center it by averaging cell size. Subtract half the size of the circle, so it stays centered
             x = ((connection.getValue1() - connectionsCol) * cellSize) + (cellSize / 2) - (connectionDotSize / 2);  // x corresponds to the column number, y corresponds to the row number
             y = ((connection.getValue0() - connectionsRow) * cellSize) + (cellSize / 2) - (connectionDotSize / 2);
             graphics_context.fillOval(x, y, connectionDotSize, connectionDotSize);

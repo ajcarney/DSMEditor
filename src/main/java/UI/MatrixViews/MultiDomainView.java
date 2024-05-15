@@ -621,7 +621,7 @@ public class MultiDomainView extends AbstractMatrixView implements ISymmetricHig
 
 
     /**
-     * Creates the gui that displays with minimal detail so it can render large matrices faster
+     * Creates the gui that displays with minimal detail, so it can render large matrices faster
      */
     @Override
     protected void refreshFastRenderView(boolean isStatic) {
@@ -703,7 +703,7 @@ public class MultiDomainView extends AbstractMatrixView implements ISymmetricHig
         // keep track of the connections so that they can be plotted on a canvas
         // object later. Only the grid location of its row and column items needs
         // to be tracked as it is immutable and only displayed as a single dot.
-        // Also keep track of the uneditable connection cells so they can be
+        // Also keep track of the uneditable connection cells, so they can be
         // plotted as a box
         ArrayList<Triplet<Integer, Integer, Color>> connectionLocations = new ArrayList<>();
         ArrayList<Pair<Integer, Integer>> uneditableConnectionLocations = new ArrayList<>();
@@ -712,15 +712,13 @@ public class MultiDomainView extends AbstractMatrixView implements ISymmetricHig
         // row location, column location, row span, column span
         ArrayList<Quartet<Integer, Integer, Integer, Integer>> cellSpans = new ArrayList<>();
 
-        // update the cells so they can be displayed by the freeze grid
+        // update the cells, so they can be displayed by the freeze grid
         for(int r=0; r<numRows; r++) {
             ArrayList<HBox> rowData = new ArrayList<>();
             for(int c=0; c<numCols; c++) {
                 Pair<RenderMode, Object> item = template.get(r).get(c);
                 HBox cell = new HBox();  // wrap everything in an HBox so a border can be added easily
                 Label label = null;
-
-                Background defaultBackground = DEFAULT_BACKGROUND;
 
                 switch (item.getKey()) {
                     case PLAIN_TEXT -> {
@@ -837,7 +835,7 @@ public class MultiDomainView extends AbstractMatrixView implements ISymmetricHig
                     Cell cellObject = new Cell(new Pair<>(r, c), cell, label, scaledFontSize);
                     rowData.add(cell);
                     cellObject.setCellBorder(Color.BLACK);
-                    cellObject.updateHighlightBG(defaultBackground, "default");
+                    cellObject.updateHighlightBG(DEFAULT_BACKGROUND, "default");
                     cells.add(cellObject);
                 }
             }
@@ -888,7 +886,7 @@ public class MultiDomainView extends AbstractMatrixView implements ISymmetricHig
         for(Triplet<Integer, Integer, Color> connection : connectionLocations) {
             graphics_context.setFill(connection.getValue2());
             // coordinates offset by connections start index so subtract it. Coordinates give top right of cell so
-            // center it by averaging cell size. Subtract half the size of the circle so it stays centered
+            // center it by averaging cell size. Subtract half the size of the circle, so it stays centered
             x = ((connection.getValue1() - connectionsCol) * cellSize) + (cellSize / 2) - (connectionDotSize / 2);  // x corresponds to the column number, y corresponds to the row number
             y = ((connection.getValue0() - connectionsRow) * cellSize) + (cellSize / 2) - (connectionDotSize / 2);
             graphics_context.fillOval(x, y, connectionDotSize, connectionDotSize);
