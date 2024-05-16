@@ -117,7 +117,6 @@ public class MultiDomainEditorTab extends AbstractEditorTab {
         tab.setClosable(false);
 
         tab.setOnSelectionChanged(e -> {
-//            this.headerMenu.refresh(this.matrixData, this.ioHandler, this.matrixView);
             // update the data members for the main view
             this.matrixData = this.mainMatrixData;
             this.matrixIOHandler = this.mainIOHandler;
@@ -126,13 +125,11 @@ public class MultiDomainEditorTab extends AbstractEditorTab {
 
             if(tabsData.keySet().size() > 1) {  // don't allow editing if breakout views are open
                 mainSidebar.setDisabled();
-                this.mainMatrixView.setCurrentMode(AbstractMatrixView.MatrixViewMode.STATIC_NAMES);  // TODO: make this change between names weights, fast
-                isMutable.set(false);
+                isMutable = false;
             } else {
                 mainSidebar.setEnabled();
-                isMutable.set(true);
+                isMutable = true;
             }
-            this.mainMatrixView.refreshView();
             this.isChanged.set(true);
 
             leftLayout.getChildren().clear();
@@ -230,12 +227,12 @@ public class MultiDomainEditorTab extends AbstractEditorTab {
 
         // set up bindings
         this.isSaved.bind(this.mainMatrixData.getWasModifiedProperty().not());  // saved when not modified
-        this.titleProperty.bind(Bindings.createStringBinding(() -> {
-            String title = mainIOHandler.getSavePath().getName();
+        this.title.bind(Bindings.createStringBinding(() -> {
+            String t = mainIOHandler.getSavePath().getName();
             if (mainMatrixData.getWasModifiedProperty().get()) {
-                title += "*";
+                t += "*";
             }
-            return title;
+            return t;
         }, mainMatrixData.getWasModifiedProperty()));
     }
 
@@ -276,7 +273,6 @@ public class MultiDomainEditorTab extends AbstractEditorTab {
            // TODO: ask if user wants to apply changes
             this.tabsData.remove(tab);
             this.tabPane.getTabs().remove(tab);
-            isMutable.set(true);
         });
 
 
@@ -286,7 +282,7 @@ public class MultiDomainEditorTab extends AbstractEditorTab {
             matrixView = view;
             matrixSideBar = sideBar;
 
-            isMutable.set(true);
+            isMutable = true;
             isChanged.set(true);
 
             leftLayout.getChildren().clear();
@@ -358,8 +354,8 @@ public class MultiDomainEditorTab extends AbstractEditorTab {
      */
     @Override
     public AbstractMatrixView getMatrixView() {
-//        return tabsData.get((DraggableTab)tabPane.getSelectionModel().getSelectedItem()).getValue();
         return matrixView;
+//        return tabsData.get((DraggableTab)tabPane.getSelectionModel().getSelectedItem()).getValue();
     }
 
 

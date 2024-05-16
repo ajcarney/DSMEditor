@@ -7,9 +7,9 @@ import UI.MatrixViews.AbstractMatrixView;
 import UI.SideBarViews.AbstractSideBar;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ReadOnlyStringProperty;
+import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
 import javafx.scene.layout.Pane;
 
 import java.util.ArrayList;
@@ -22,10 +22,11 @@ import java.util.List;
  */
 public abstract class AbstractEditorTab {
 
-    public BooleanProperty isMutable = new SimpleBooleanProperty(true);  // true when ui buttons should be able to mutate the visible matrix
-    public BooleanProperty isSaved = new SimpleBooleanProperty(false);  // true when ui buttons should be able to mutate the visible matrix
-    public BooleanProperty isChanged = new SimpleBooleanProperty(false);  // true when matrix has been changed
-    public StringProperty titleProperty = new SimpleStringProperty();  // the title of the tab
+    public BooleanProperty isChanged = new SimpleBooleanProperty(false);  // true when matrix has been changed internally and needs a refresh
+    protected boolean isMutable = true;  // true when ui buttons should be able to mutate the visible matrix
+
+    protected BooleanProperty isSaved = new SimpleBooleanProperty(false);  // true when ui buttons should be able to mutate the visible matrix
+    protected ReadOnlyStringWrapper title = new ReadOnlyStringWrapper();  // the title of the tab
 
     protected AbstractDSMData matrixData;         // the data for the visible matrix
     protected AbstractIOHandler matrixIOHandler;  // the io handler for the visible matrix
@@ -53,7 +54,7 @@ public abstract class AbstractEditorTab {
 
         this.isSaved.bind(this.matrixData.getWasModifiedProperty().not());  // saved when not modified
 
-        this.titleProperty.bind(Bindings.createStringBinding(() -> {
+        this.title.bind(Bindings.createStringBinding(() -> {
             String title = matrixIOHandler.getSavePath().getName();
             if (matrixData.getWasModifiedProperty().get()) {
                 title += "*";
@@ -61,6 +62,23 @@ public abstract class AbstractEditorTab {
             return title;
         }, matrixData.getWasModifiedProperty()));
     }
+
+
+    /**
+     * @return  The title of the tab as a read only property
+     */
+    public ReadOnlyStringProperty titleProperty() {
+        return title.getReadOnlyProperty();
+    }
+
+
+    /**
+     * @return  true if the matrix is mutable, false otherwise
+     */
+    public boolean getIsMutable() {
+        return isMutable;
+    }
+
 
     /**
      * @return  The node to be displayed as the center content

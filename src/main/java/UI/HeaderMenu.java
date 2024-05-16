@@ -842,28 +842,19 @@ public class HeaderMenu {
                 matrixData = matrix.getMatrixData();       // update the matrix data
                 ioHandler = matrix.getMatrixIOHandler();
                 matrixView = matrix.getMatrixView();
+                setDisabled(!matrix.getIsMutable());
             }
-            isChanged.set(false);  // clear the changed flag because it is taken care of
+            matrix.isChanged.set(false);  // clear the changed flag because it is taken care of
         };
-
-        ChangeListener<Boolean> disableListener = (observable, oldValue, newValue) -> setDisabled(!newValue);
 
         if (matrix != null) {
             this.isChanged.removeListener(refreshListener);
             this.isChanged = matrix.isChanged;
-            this.isChanged.addListener(refreshListener);
 
-            refresh(matrix.getMatrixData(), matrix.getMatrixIOHandler(), matrix.getMatrixView());
-            matrixData = matrix.getMatrixData();       // update the matrix data
-            ioHandler = matrix.getMatrixIOHandler();
-            matrixView = matrix.getMatrixView();
+            matrix.isChanged.set(false);  // pulse the changed flag to trigger the refresh
+            matrix.isChanged.addListener(refreshListener);
+            matrix.isChanged.set(true);
 
-
-            this.isMutable.removeListener(disableListener);
-            this.isMutable = matrix.isMutable;
-            this.isMutable.addListener(refreshListener);
-
-            setDisabled(!isMutable.get());
         } else {
             refresh(null, null, null);
         }

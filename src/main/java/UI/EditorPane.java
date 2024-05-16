@@ -180,8 +180,7 @@ public class EditorPane {
 
         DraggableTab tab = new DraggableTab("");
 
-        // bind a "*" to the name if the matrix has not been saved
-        tab.getLabelTextProperty().bind(matrix.titleProperty);
+        tab.getLabelTextProperty().bind(matrix.titleProperty());
 
         this.matrices.getMatrix(matrixUid).getMatrixView().refreshView();
         tab.setContent(this.matrices.getMatrix(matrixUid).getCenterPane());
@@ -227,7 +226,7 @@ public class EditorPane {
 
         tab.setOnSelectionChanged(e -> {
             headerMenu.setupBindings(this.matrices.getMatrix(matrixUid));
-            this.matrices.getMatrix(matrixUid).isChanged.set(true);  // force refresh on tab change, needs to be after to fire event
+//            this.matrices.getMatrix(matrixUid).isChanged.set(true);  // force refresh on tab change, needs to be after to fire event
 
             this.rootLayout.setLeft(this.matrices.getMatrix(matrixUid).getLeftPane());
             this.rootLayout.setRight(this.matrices.getMatrix(matrixUid).getRightPane());

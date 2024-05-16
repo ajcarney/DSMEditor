@@ -46,7 +46,7 @@ public class SymmetricEditorTab extends AbstractEditorTab {
         this.metadata = new MatrixMetaDataPane(this.matrixData);
         this.isSaved.bind(this.matrixData.getWasModifiedProperty().not());  // saved when not modified
 
-        this.titleProperty.bind(Bindings.createStringBinding(() -> {
+        this.title.bind(Bindings.createStringBinding(() -> {
             String title = matrixIOHandler.getSavePath().getName();
             if (matrixData.getWasModifiedProperty().get()) {
                 title += "*";
