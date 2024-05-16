@@ -45,6 +45,13 @@ public abstract class AbstractIOHandler implements IStandardExports {
     protected File savePath;
     protected AbstractDSMData matrix;
 
+    // values returned by function that prompts for save
+    public enum SAVE_PROMPT_OPTIONS {
+        NO_SAVE,
+        SAVE,
+        CANCEL
+    }
+
 
     /**
      * Constructor. Sets the default save path
@@ -214,11 +221,11 @@ public abstract class AbstractIOHandler implements IStandardExports {
      * should be called before removing a matrix. Does not save the matrix only decides what
      * should be done
      *
-     * @return     0 = don't save, 1 = save, 2 = cancel  TODO: this should be enum
+     * @return enum of action to perform
      */
-     public Integer promptSave() {
-        AtomicReference<Integer> code = new AtomicReference<>(); // 0 = close the tab, 1 = save and close, 2 = don't close
-        code.set(2);  // default value
+     public SAVE_PROMPT_OPTIONS promptSave() {
+        AtomicReference<SAVE_PROMPT_OPTIONS> code = new AtomicReference<>(); // 0 = close the tab, 1 = save and close, 2 = don't close
+        code.set(SAVE_PROMPT_OPTIONS.CANCEL);  // default value
         Stage window = new Stage();
 
         Label prompt = new Label("Would you like to save your changes to " + savePath.getAbsolutePath());
@@ -235,19 +242,19 @@ public abstract class AbstractIOHandler implements IStandardExports {
 
         Button saveAndCloseButton = new Button("Save");
         saveAndCloseButton.setOnAction(ee -> {
-            code.set(1);
+            code.set(SAVE_PROMPT_OPTIONS.SAVE);
             window.close();
         });
 
         Button closeButton = new Button("Don't Save");
         closeButton.setOnAction(ee -> {
-            code.set(0);
+            code.set(SAVE_PROMPT_OPTIONS.NO_SAVE);
             window.close();
         });
 
         Button cancelButton = new Button("Cancel");
         cancelButton.setOnAction(ee -> {
-            code.set(2);
+            code.set(SAVE_PROMPT_OPTIONS.CANCEL);
             window.close();
         });
 
@@ -263,6 +270,7 @@ public abstract class AbstractIOHandler implements IStandardExports {
 
         //Display window and wait for it to be closed before returning
         Scene scene = new Scene(layout, 500, 125);
+        window.initOwner(layout.getScene().getWindow());
         window.setScene(scene);
         window.showAndWait();
 

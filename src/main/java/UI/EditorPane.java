@@ -3,6 +3,7 @@ package UI;
 import Constants.Constants;
 import Matrices.Data.AbstractDSMData;
 import Matrices.EditorTabs.AbstractEditorTab;
+import Matrices.IOHandlers.AbstractIOHandler;
 import Matrices.MatricesCollection;
 import UI.MatrixViews.AbstractMatrixView;
 import UI.Widgets.DraggableTab;
@@ -190,16 +191,14 @@ public class EditorPane {
         tab.setOnCloseRequest(e -> {
             if(!matrices.isMatrixSaved(matrixUid)) {
                 focusTab(matrixUid);
-                int selection = this.matrices.getMatrix(matrixUid).getMatrixIOHandler().promptSave();
+                AbstractIOHandler.SAVE_PROMPT_OPTIONS selection = this.matrices.getMatrix(matrixUid).getMatrixIOHandler().promptSave();
 
-                // 0 = close the tab, 1 = save and close, 2 = don't close
-                // TODO: make return code an enum
-                if(selection == 2) {  // user doesn't want to close the pane so consume the event
+                if(selection == AbstractIOHandler.SAVE_PROMPT_OPTIONS.CANCEL) {  // user doesn't want to close the pane so consume the event
                     if(e != null) {
                         e.consume();
                     }
                     return;
-                } else if(selection == 1) {  // user wants to save before closing the pane
+                } else if(selection == AbstractIOHandler.SAVE_PROMPT_OPTIONS.SAVE) {  // user wants to save before closing the pane
                     // TODO: if there is an error saving, then display a message and don't close the file
                     this.matrices.getMatrix(matrixUid).getMatrixIOHandler().saveMatrixToFile(this.matrices.getMatrix(matrixUid).getMatrixIOHandler().getSavePath());
                 }
