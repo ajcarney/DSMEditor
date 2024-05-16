@@ -39,11 +39,6 @@ public class ThebeauView implements IAlgorithmView {
      */
     @Override
     public VBox getParametersPane(SymmetricDSMData matrix) {
-        ArrayList<Integer> items = new ArrayList<>();  // TODO: ???
-        for(DSMItem row : matrix.getRows()) {
-            items.add(row.getUid());
-        }
-
         return new ParameterBuilder()
                 .newNumericEntry(optimalSizeCluster, "Optimal Cluster Size", "", false)
                 .newNumericEntry(powcc, "powcc constant", "Exponential to penalize size of clusters when calculating cluster cost", false)

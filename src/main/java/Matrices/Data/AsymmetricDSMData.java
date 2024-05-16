@@ -272,7 +272,7 @@ public class AsymmetricDSMData extends AbstractDSMData implements IPropagationAn
     /**
      * Renames a grouping. Puts the change on the stack but does not set a checkpoint.
      *
-     * @param grouping  the group who's name should be changed
+     * @param grouping  the group whose name should be changed
      * @param newName   the new name for the group
      */
     public void renameGrouping(Grouping grouping, String newName) {
@@ -293,7 +293,7 @@ public class AsymmetricDSMData extends AbstractDSMData implements IPropagationAn
     /**
      * Changes a color of a grouping. Puts the change on the stack but does not set a checkpoint.
      *
-     * @param grouping  the group who's name should be changed
+     * @param grouping  the group whose name should be changed
      * @param newColor  the new color of the grouping
      */
     public void updateGroupingColor(Grouping grouping, Color newColor) {
@@ -313,7 +313,7 @@ public class AsymmetricDSMData extends AbstractDSMData implements IPropagationAn
     /**
      * Changes a color of a grouping. Puts the change on the stack but does not set a checkpoint.
      *
-     * @param grouping  the grouping who's font color should be changed
+     * @param grouping  the grouping whose font color should be changed
      * @param newColor  the new color of the grouping
      */
     public void updateGroupingFontColor(Grouping grouping, Color newColor) {
