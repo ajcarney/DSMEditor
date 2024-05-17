@@ -1,5 +1,6 @@
 package UI.Widgets;
 
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.Bounds;
@@ -137,6 +138,9 @@ public class FreezeGrid {
     private final ScrollPane scrollCBox = new ScrollPane();
     private final ScrollPane scrollSBox = new ScrollPane();
     private final ScrollPane scrollEBox = new ScrollPane();
+    
+    private final DoubleProperty contentWidth = new SimpleDoubleProperty();  // The actual width of the content in the scroll pane
+    private final DoubleProperty contentHeight = new SimpleDoubleProperty();  // the actual height of the content in the scroll pane
 
     private final BorderPane grid;
 
@@ -808,19 +812,39 @@ public class FreezeGrid {
 
         grid.setStyle(grid.getStyle() + "-fx-border-width: -1; -fx-box-border: transparent; -fx-border-style: none;");
 
+        // create bindings to track the actual content size
+        contentWidth.bind(Bindings.createDoubleBinding(() ->
+            cBox.getBoundsInParent().getWidth()
+            + eBox.getBoundsInParent().getWidth()
+            + wBox.getBoundsInParent().getWidth(),
+        cBox.widthProperty(), eBox.widthProperty(), wBox.widthProperty()));
+
+        contentHeight.bind(Bindings.createDoubleBinding(() ->
+            cBox.getBoundsInParent().getHeight()
+            + nBox.getBoundsInParent().getHeight()
+            + sBox.getBoundsInParent().getHeight(),
+        cBox.heightProperty(), nBox.heightProperty(), sBox.heightProperty()));
+
         // set up scroll bindings
         xScroll.minProperty().bindBidirectional(scrollCBox.hminProperty());
         xScroll.maxProperty().bindBidirectional(scrollCBox.hmaxProperty());
         scrollCBox.hvalueProperty().bindBidirectional(xScroll.valueProperty());
         scrollSBox.hvalueProperty().bindBidirectional(xScroll.valueProperty());
         scrollNBox.hvalueProperty().bindBidirectional(xScroll.valueProperty());
+        xScroll.visibleAmountProperty().bind(Bindings.createDoubleBinding(() -> xScroll.getWidth() / contentWidth.get(), xScroll.widthProperty(), contentWidth));
+        // visible when the scroll bar is smaller than the grid. Add the yScroll width because of how the scroll panes are laid out
+        xScroll.visibleProperty().bind(Bindings.createBooleanBinding(() -> xScroll.getWidth() + yScroll.getWidth() < contentWidth.get(),  
+                xScroll.widthProperty(), yScroll.widthProperty(), contentWidth));
 
         yScroll.minProperty().bindBidirectional(scrollCBox.vminProperty());
         yScroll.maxProperty().bindBidirectional(scrollCBox.vmaxProperty());
         scrollCBox.vvalueProperty().bindBidirectional(yScroll.valueProperty());
         scrollEBox.vvalueProperty().bindBidirectional(yScroll.valueProperty());
         scrollWBox.vvalueProperty().bindBidirectional(yScroll.valueProperty());
-
+        yScroll.visibleAmountProperty().bind(Bindings.createDoubleBinding(() -> yScroll.getHeight() / contentHeight.get(),
+                yScroll.heightProperty(), contentHeight));
+        yScroll.visibleProperty().bind(Bindings.createBooleanBinding(() -> yScroll.getHeight() < contentHeight.get(),  // visible when the scroll bar is smaller than the grid
+                yScroll.heightProperty(), contentHeight));
     }
 
 
@@ -830,7 +854,7 @@ public class FreezeGrid {
      * @return BorderPane of the grid
      */
     public HBox getGrid() {
-        // create hbox for adding the vertical scroll bar and a vbox for adding the horizontal scroll bar
+        // create HBox for adding the vertical scroll bar and a vbox for adding the horizontal scroll bar
         HBox yScrollPane = new HBox();
         VBox xScrollPane = new VBox();
         xScrollPane.getChildren().addAll(grid, xScroll);

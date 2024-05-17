@@ -50,7 +50,7 @@ public class DSMApplication extends Application {
 //                editor.addTab(new SymmetricDSM(f));
 //            }
             Constants.Constants.isDebug = true;
-            File f = new File("/home/aiden/Documents/DSMEditor/dsms/Elevator_DSM_clustered.dsm");
+            File f = new File("/home/aiden/Documents/projects/DSMEditor/elevator_7groups.dsm");
             if(f.exists()) {
                 editor.addTab(new SymmetricEditorTab(f));
             }
