@@ -991,9 +991,10 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable, IP
                     rowsToDelete.remove(rowItem);
                 } else {  // item is not contained so add it
                     DSMItem col = new DSMItem(symmetricMatrix.getColItem(importedRow.getAliasUid()));
-                    importedRow.setAliasUid(col.getUid());
+                    DSMItem row = new DSMItem(importedRow);
+                    row.setAliasUid(col.getUid());
 
-                    addItem(importedRow, true);
+                    addItem(row, true);
                     addItem(col, false);
                 }
             }
@@ -1007,7 +1008,8 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable, IP
             }
 
 
-        } else if(importMatrix instanceof AsymmetricDSMData asymmetricMatrix) {  // importing an asymmetric matrix
+        }
+        else if(importMatrix instanceof AsymmetricDSMData asymmetricMatrix) {  // importing an asymmetric matrix
             ObservableList<Grouping> currentFromDomainGroupings = getDomainGroupings(fromGroup);
             ObservableList<Grouping> currentToDomainGroupings = getDomainGroupings(toGroup);
 
@@ -1082,7 +1084,7 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable, IP
                     importedRow.setAliasUid(col.getUid());
 
                     addItem(importedRow, true);
-                    addItem(new DSMItem(col), false);
+                    addItem(col, false);
                 }
             }
             for(DSMItem row : rowsToDelete) {  // delete the remaining items to finish the merge
