@@ -990,9 +990,7 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable, IP
 
                     rowsToDelete.remove(rowItem);
                 } else {  // item is not contained so add it
-                    DSMItem col = new DSMItem();
-                    col.copyProperties(importedRow);
-                    col.setAliasUid(importedRow.getUid());
+                    DSMItem col = new DSMItem(symmetricMatrix.getColItem(importedRow.getAliasUid()));
                     importedRow.setAliasUid(col.getUid());
 
                     addItem(importedRow, true);

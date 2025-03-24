@@ -1,5 +1,6 @@
 import Matrices.*;
 import Matrices.EditorTabs.AbstractEditorTab;
+import Matrices.EditorTabs.MultiDomainEditorTab;
 import Matrices.EditorTabs.SymmetricEditorTab;
 import UI.EditorPane;
 import javafx.application.Application;
@@ -50,9 +51,9 @@ public class DSMApplication extends Application {
 //                editor.addTab(new SymmetricDSM(f));
 //            }
             Constants.Constants.isDebug = true;
-            File f = new File("/home/aiden/Documents/projects/DSMEditor/elevator_7groups.dsm");
+            File f = new File("/home/aiden/Documents/projects/DSMEditor/DSMED-33_dsm_file_fail_step13.dsm");
             if(f.exists()) {
-                editor.addTab(new SymmetricEditorTab(f));
+                editor.addTab(new MultiDomainEditorTab(f));
             }
         }
 
