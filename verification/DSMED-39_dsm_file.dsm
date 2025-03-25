@@ -1,0 +1,385 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dsm>
+  <info>
+    <title />
+    <project />
+    <customer />
+    <version />
+    <type>asymmetric</type>
+    <file_structure>v2.0.0</file_structure>
+  </info>
+  <columns>
+    <col uid="1705845158">
+      <name>Air Canada</name>
+      <sort_index>1.0</sort_index>
+      <group1>948575308</group1>
+      <group2 />
+      <alias />
+    </col>
+    <col uid="1411173564">
+      <name>Alaska</name>
+      <sort_index>2.0</sort_index>
+      <group1>948575308</group1>
+      <group2 />
+      <alias />
+    </col>
+    <col uid="-1709224567">
+      <name>American</name>
+      <sort_index>3.0</sort_index>
+      <group1>948575308</group1>
+      <group2 />
+      <alias />
+    </col>
+    <col uid="1449612806">
+      <name>Delta</name>
+      <sort_index>4.0</sort_index>
+      <group1>948575308</group1>
+      <group2 />
+      <alias />
+    </col>
+    <col uid="1039681616">
+      <name>United</name>
+      <sort_index>5.0</sort_index>
+      <group1>948575308</group1>
+      <group2 />
+      <alias />
+    </col>
+    <col uid="1054197797">
+      <name>Allegiant</name>
+      <sort_index>6.0</sort_index>
+      <group1>2147483647</group1>
+      <group2 />
+      <alias />
+    </col>
+    <col uid="-355932881">
+      <name>Frontier</name>
+      <sort_index>7.0</sort_index>
+      <group1>2147483647</group1>
+      <group2 />
+      <alias />
+    </col>
+    <col uid="530262623">
+      <name>Funjet</name>
+      <sort_index>8.0</sort_index>
+      <group1>2147483647</group1>
+      <group2 />
+      <alias />
+    </col>
+    <col uid="-1476124962">
+      <name>jetBlue</name>
+      <sort_index>9.0</sort_index>
+      <group1>2147483647</group1>
+      <group2 />
+      <alias />
+    </col>
+    <col uid="-441905720">
+      <name>Southwest</name>
+      <sort_index>10.0</sort_index>
+      <group1>2147483647</group1>
+      <group2 />
+      <alias />
+    </col>
+    <col uid="-193548086">
+      <name>Spirit</name>
+      <sort_index>11.0</sort_index>
+      <group1>2147483647</group1>
+      <group2 />
+      <alias />
+    </col>
+    <col uid="669040604">
+      <name>Sun Country</name>
+      <sort_index>12.0</sort_index>
+      <group1>2147483647</group1>
+      <group2 />
+      <alias />
+    </col>
+  </columns>
+  <rows>
+    <row uid="1236648843">
+      <name>MDW</name>
+      <sort_index>0.5</sort_index>
+      <group1>-651147367</group1>
+      <group2 />
+      <alias />
+    </row>
+    <row uid="-2086989930">
+      <name>ORD</name>
+      <sort_index>1.0</sort_index>
+      <group1>-651147367</group1>
+      <group2 />
+      <alias />
+    </row>
+    <row uid="1359682179">
+      <name>ATW</name>
+      <sort_index>3.0</sort_index>
+      <group1>2147483647</group1>
+      <group2 />
+      <alias />
+    </row>
+    <row uid="1049007901">
+      <name>GRB</name>
+      <sort_index>4.0</sort_index>
+      <group1>2147483647</group1>
+      <group2 />
+      <alias />
+    </row>
+    <row uid="1335967120">
+      <name>MKE</name>
+      <sort_index>4.5</sort_index>
+      <group1>2147483647</group1>
+      <group2 />
+      <alias />
+    </row>
+    <row uid="-554927799">
+      <name>MSN</name>
+      <sort_index>5.0</sort_index>
+      <group1>2147483647</group1>
+      <group2 />
+      <alias />
+    </row>
+    <row uid="254771589">
+      <name>MCCO</name>
+      <sort_index>6.0</sort_index>
+      <group1>1552974577</group1>
+      <group2 />
+      <alias />
+    </row>
+    <row uid="1081185302">
+      <name>PIE</name>
+      <sort_index>6.1</sort_index>
+      <group1>1552974577</group1>
+      <group2 />
+      <alias />
+    </row>
+    <row uid="1130831199">
+      <name>SRQ</name>
+      <sort_index>6.5</sort_index>
+      <group1>1552974577</group1>
+      <group2 />
+      <alias />
+    </row>
+    <row uid="720379401">
+      <name>TPA</name>
+      <sort_index>7.0</sort_index>
+      <group1>1552974577</group1>
+      <group2 />
+      <alias />
+    </row>
+  </rows>
+  <connections>
+    <connection>
+      <row_uid>1359682179</row_uid>
+      <col_uid>1054197797</col_uid>
+      <name>X</name>
+      <weight>1.0</weight>
+      <interfaces />
+    </connection>
+    <connection>
+      <row_uid>1130831199</row_uid>
+      <col_uid>1054197797</col_uid>
+      <name>X</name>
+      <weight>1.0</weight>
+      <interfaces />
+    </connection>
+    <connection>
+      <row_uid>1359682179</row_uid>
+      <col_uid>1449612806</col_uid>
+      <name>X</name>
+      <weight>1.0</weight>
+      <interfaces />
+    </connection>
+    <connection>
+      <row_uid>1359682179</row_uid>
+      <col_uid>1039681616</col_uid>
+      <name>X</name>
+      <weight>1.0</weight>
+      <interfaces />
+    </connection>
+    <connection>
+      <row_uid>1359682179</row_uid>
+      <col_uid>-1709224567</col_uid>
+      <name>X</name>
+      <weight>1.0</weight>
+      <interfaces />
+    </connection>
+    <connection>
+      <row_uid>1049007901</row_uid>
+      <col_uid>-355932881</col_uid>
+      <name>X</name>
+      <weight>1.0</weight>
+      <interfaces />
+    </connection>
+    <connection>
+      <row_uid>1049007901</row_uid>
+      <col_uid>669040604</col_uid>
+      <name>X</name>
+      <weight>1.0</weight>
+      <interfaces />
+    </connection>
+    <connection>
+      <row_uid>1049007901</row_uid>
+      <col_uid>-1709224567</col_uid>
+      <name>X</name>
+      <weight>1.0</weight>
+      <interfaces />
+    </connection>
+    <connection>
+      <row_uid>1049007901</row_uid>
+      <col_uid>1039681616</col_uid>
+      <name>X</name>
+      <weight>1.0</weight>
+      <interfaces />
+    </connection>
+    <connection>
+      <row_uid>1049007901</row_uid>
+      <col_uid>1449612806</col_uid>
+      <name>X</name>
+      <weight>1.0</weight>
+      <interfaces />
+    </connection>
+    <connection>
+      <row_uid>254771589</row_uid>
+      <col_uid>1705845158</col_uid>
+      <name>X</name>
+      <weight>1.0</weight>
+      <interfaces />
+    </connection>
+    <connection>
+      <row_uid>254771589</row_uid>
+      <col_uid>-1476124962</col_uid>
+      <name>X</name>
+      <weight>1.0</weight>
+      <interfaces />
+    </connection>
+    <connection>
+      <row_uid>254771589</row_uid>
+      <col_uid>-441905720</col_uid>
+      <name>X</name>
+      <weight>1.0</weight>
+      <interfaces />
+    </connection>
+    <connection>
+      <row_uid>254771589</row_uid>
+      <col_uid>-193548086</col_uid>
+      <name>X</name>
+      <weight>1.0</weight>
+      <interfaces />
+    </connection>
+    <connection>
+      <row_uid>254771589</row_uid>
+      <col_uid>1449612806</col_uid>
+      <name>X</name>
+      <weight>1.0</weight>
+      <interfaces />
+    </connection>
+    <connection>
+      <row_uid>254771589</row_uid>
+      <col_uid>669040604</col_uid>
+      <name>X</name>
+      <weight>1.0</weight>
+      <interfaces />
+    </connection>
+    <connection>
+      <row_uid>254771589</row_uid>
+      <col_uid>1039681616</col_uid>
+      <name>X</name>
+      <weight>1.0</weight>
+      <interfaces />
+    </connection>
+    <connection>
+      <row_uid>254771589</row_uid>
+      <col_uid>-1709224567</col_uid>
+      <name>X</name>
+      <weight>1.0</weight>
+      <interfaces />
+    </connection>
+    <connection>
+      <row_uid>254771589</row_uid>
+      <col_uid>1411173564</col_uid>
+      <name>X</name>
+      <weight>1.0</weight>
+      <interfaces />
+    </connection>
+    <connection>
+      <row_uid>254771589</row_uid>
+      <col_uid>-355932881</col_uid>
+      <name>X</name>
+      <weight>1.0</weight>
+      <interfaces />
+    </connection>
+    <connection>
+      <row_uid>1236648843</row_uid>
+      <col_uid>1054197797</col_uid>
+      <name>X</name>
+      <weight>1.0</weight>
+      <interfaces />
+    </connection>
+    <connection>
+      <row_uid>1081185302</row_uid>
+      <col_uid>1054197797</col_uid>
+      <name>X</name>
+      <weight>1.0</weight>
+      <interfaces />
+    </connection>
+  </connections>
+  <row_groupings>
+    <group>
+      <uid>2147483647</uid>
+      <priority>-1</priority>
+      <name>Wisconsin</name>
+      <gr>0.7019608020782471</gr>
+      <gg>0.800000011920929</gg>
+      <gb>1.0</gb>
+      <fr>0.0</fr>
+      <fg>0.0</fg>
+      <fb>0.0</fb>
+    </group>
+    <group>
+      <uid>1552974577</uid>
+      <priority>-1</priority>
+      <name>Florida</name>
+      <gr>1.0</gr>
+      <gg>0.7019608020782471</gg>
+      <gb>0.7019608020782471</gb>
+      <fr>0.0</fr>
+      <fg>0.0</fg>
+      <fb>0.0</fb>
+    </group>
+    <group>
+      <uid>-651147367</uid>
+      <priority>-1</priority>
+      <name>Illinois</name>
+      <gr>1.0</gr>
+      <gg>0.800000011920929</gg>
+      <gb>0.7019608020782471</gb>
+      <fr>0.0</fr>
+      <fg>0.0</fg>
+      <fb>0.0</fb>
+    </group>
+  </row_groupings>
+  <col_groupings>
+    <group>
+      <uid>2147483647</uid>
+      <priority>-1</priority>
+      <name>Budget</name>
+      <gr>0.7019608020782471</gr>
+      <gg>0.9019607901573181</gg>
+      <gb>0.7019608020782471</gb>
+      <fr>0.0</fr>
+      <fg>0.0</fg>
+      <fb>0.0</fb>
+    </group>
+    <group>
+      <uid>948575308</uid>
+      <priority>-1</priority>
+      <name>Full Service</name>
+      <gr>0.501960813999176</gr>
+      <gg>0.7019608020782471</gg>
+      <gb>0.501960813999176</gb>
+      <fr>0.0</fr>
+      <fg>0.0</fg>
+      <fb>0.0</fb>
+    </group>
+  </col_groupings>
+  <interfaces />
+</dsm>
