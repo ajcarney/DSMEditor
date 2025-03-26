@@ -35,6 +35,8 @@ To modify row items, use the toolbar on the left-hand side of the screen
 
 Connections can be created using either the toolbar or clicking directly on a cell. To make searching for connections easier, you can use the "F" key as a toggle for enabling cross highlighting of the cell you are hovering over.
 
+See the [Manual](https://github.com/ajcarney/DSMEditor/tree/develop/doc) for more information.
+
 ---
 
 ### Sample Usage
