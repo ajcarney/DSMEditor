@@ -63,10 +63,6 @@ public class ThebeauView implements IAlgorithmView {
      */
     @Override
     public SymmetricDSMData runSimulation(SymmetricDSMData matrix) {
-        for (Integer i : exclusions) {
-            System.out.println(matrix.getItem(i).getName());
-        }
-
         SymmetricDSMData outputMatrix = Thebeau.thebeauAlgorithm(
                 matrix.createCopy(),  // use copy to not modify this matrix
                 optimalSizeCluster.doubleValue(),
