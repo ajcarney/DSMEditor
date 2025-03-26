@@ -45,17 +45,13 @@ public class DSMApplication extends Application {
         Thread.setDefaultUncaughtExceptionHandler(DSMApplication::handleError);
 
         // start with a tab open (used for debugging, remove or comment out for release)
-        if(cliArgs.contains("debug=true")) {
-//            File f = new File("/home/aiden/Documents/DSMEditor/dsms/defect_group_text_color.dsm");
+//        if(cliArgs.contains("debug=true")) {
+//            Constants.Constants.isDebug = true;
+//            File f = new File("/home/aiden/Documents/projects/DSMEditor/test.dsm");
 //            if(f.exists()) {
-//                editor.addTab(new SymmetricDSM(f));
+//                editor.addTab(new SymmetricEditorTab(f));
 //            }
-            Constants.Constants.isDebug = true;
-            File f = new File("/home/aiden/Documents/projects/DSMEditor/test.dsm");
-            if(f.exists()) {
-                editor.addTab(new SymmetricEditorTab(f));
-            }
-        }
+//        }
 
         for (String cliArg : cliArgs) {
             System.out.println(cliArg);
