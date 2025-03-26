@@ -144,6 +144,8 @@ public class FreezeGrid {
 
     private final BorderPane grid;
 
+    private boolean isStatic = false;  // if the grid is static (no scroll bars) or not
+
 
     /**
      * Constructor, does not add any data to the grid
@@ -768,26 +770,26 @@ public class FreezeGrid {
         scrollNBox.hvalueProperty().bindBidirectional(scrollCBox.hvalueProperty());
         scrollNBox.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollNBox.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollNBox.setPannable(true);
+        scrollNBox.setPannable(!isStatic);
 
         scrollSBox.hvalueProperty().bindBidirectional(scrollCBox.hvalueProperty());
         scrollSBox.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollSBox.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollSBox.setPannable(true);
+        scrollSBox.setPannable(!isStatic);
 
         scrollWBox.vvalueProperty().bindBidirectional(scrollCBox.vvalueProperty());
         scrollWBox.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollWBox.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollWBox.setPannable(true);
+        scrollWBox.setPannable(!isStatic);
 
         scrollEBox.vvalueProperty().bindBidirectional(scrollCBox.vvalueProperty());
         scrollEBox.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollEBox.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollEBox.setPannable(true);
+        scrollEBox.setPannable(!isStatic);
 
         scrollCBox.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollCBox.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollCBox.setPannable(true);
+        scrollCBox.setPannable(!isStatic);
 
 
         // add boxes to border pane
@@ -826,25 +828,27 @@ public class FreezeGrid {
         cBox.heightProperty(), nBox.heightProperty(), sBox.heightProperty()));
 
         // set up scroll bindings
-        xScroll.minProperty().bindBidirectional(scrollCBox.hminProperty());
-        xScroll.maxProperty().bindBidirectional(scrollCBox.hmaxProperty());
-        scrollCBox.hvalueProperty().bindBidirectional(xScroll.valueProperty());
-        scrollSBox.hvalueProperty().bindBidirectional(xScroll.valueProperty());
-        scrollNBox.hvalueProperty().bindBidirectional(xScroll.valueProperty());
-        xScroll.visibleAmountProperty().bind(Bindings.createDoubleBinding(() -> xScroll.getWidth() / contentWidth.get(), xScroll.widthProperty(), contentWidth));
-        // visible when the scroll bar is smaller than the grid. Add the yScroll width because of how the scroll panes are laid out
-        xScroll.visibleProperty().bind(Bindings.createBooleanBinding(() -> xScroll.getWidth() + yScroll.getWidth() < contentWidth.get(),  
-                xScroll.widthProperty(), yScroll.widthProperty(), contentWidth));
+        if (!isStatic) {
+            xScroll.minProperty().bindBidirectional(scrollCBox.hminProperty());
+            xScroll.maxProperty().bindBidirectional(scrollCBox.hmaxProperty());
+            scrollCBox.hvalueProperty().bindBidirectional(xScroll.valueProperty());
+            scrollSBox.hvalueProperty().bindBidirectional(xScroll.valueProperty());
+            scrollNBox.hvalueProperty().bindBidirectional(xScroll.valueProperty());
+            xScroll.visibleAmountProperty().bind(Bindings.createDoubleBinding(() -> xScroll.getWidth() / contentWidth.get(), xScroll.widthProperty(), contentWidth));
+            // visible when the scroll bar is smaller than the grid. Add the yScroll width because of how the scroll panes are laid out
+            xScroll.visibleProperty().bind(Bindings.createBooleanBinding(() -> xScroll.getWidth() + yScroll.getWidth() < contentWidth.get(),
+                    xScroll.widthProperty(), yScroll.widthProperty(), contentWidth));
 
-        yScroll.minProperty().bindBidirectional(scrollCBox.vminProperty());
-        yScroll.maxProperty().bindBidirectional(scrollCBox.vmaxProperty());
-        scrollCBox.vvalueProperty().bindBidirectional(yScroll.valueProperty());
-        scrollEBox.vvalueProperty().bindBidirectional(yScroll.valueProperty());
-        scrollWBox.vvalueProperty().bindBidirectional(yScroll.valueProperty());
-        yScroll.visibleAmountProperty().bind(Bindings.createDoubleBinding(() -> yScroll.getHeight() / contentHeight.get(),
-                yScroll.heightProperty(), contentHeight));
-        yScroll.visibleProperty().bind(Bindings.createBooleanBinding(() -> yScroll.getHeight() < contentHeight.get(),  // visible when the scroll bar is smaller than the grid
-                yScroll.heightProperty(), contentHeight));
+            yScroll.minProperty().bindBidirectional(scrollCBox.vminProperty());
+            yScroll.maxProperty().bindBidirectional(scrollCBox.vmaxProperty());
+            scrollCBox.vvalueProperty().bindBidirectional(yScroll.valueProperty());
+            scrollEBox.vvalueProperty().bindBidirectional(yScroll.valueProperty());
+            scrollWBox.vvalueProperty().bindBidirectional(yScroll.valueProperty());
+            yScroll.visibleAmountProperty().bind(Bindings.createDoubleBinding(() -> yScroll.getHeight() / contentHeight.get(),
+                    yScroll.heightProperty(), contentHeight));
+            yScroll.visibleProperty().bind(Bindings.createBooleanBinding(() -> yScroll.getHeight() < contentHeight.get(),  // visible when the scroll bar is smaller than the grid
+                    yScroll.heightProperty(), contentHeight));
+        }
     }
 
 
@@ -879,6 +883,8 @@ public class FreezeGrid {
         scrollWBox.setPannable(!isStatic);
         scrollEBox.setPannable(!isStatic);
         scrollCBox.setPannable(!isStatic);
+
+        this.isStatic = isStatic;
     }
 
 

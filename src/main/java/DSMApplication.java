@@ -51,9 +51,9 @@ public class DSMApplication extends Application {
 //                editor.addTab(new SymmetricDSM(f));
 //            }
             Constants.Constants.isDebug = true;
-            File f = new File("/home/aiden/Documents/projects/DSMEditor/DSMED-33_dsm_file_fail_step13.dsm");
+            File f = new File("/home/aiden/Documents/projects/DSMEditor/test.dsm");
             if(f.exists()) {
-                editor.addTab(new MultiDomainEditorTab(f));
+                editor.addTab(new SymmetricEditorTab(f));
             }
         }
 
