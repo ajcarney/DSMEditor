@@ -1102,10 +1102,10 @@ public class MultiDomainDSMData extends AbstractDSMData implements IZoomable, IP
                     // update the item fields
                     setItemName(rowItem, importedCol.getName().getValue());
                     setItemSortIndex(rowItem, importedCol.getSortIndex());
-                    setItemDomainGroup(rowItem, fromGroup, importedCol.getGroup1());
+                    setItemDomainGroup(rowItem, toGroup, importedCol.getGroup1());
                     setItemName(colItem, importedCol.getName().getValue());
                     setItemSortIndex(colItem, importedCol.getSortIndex());
-                    setItemDomainGroup(colItem, fromGroup, importedCol.getGroup1());
+                    setItemDomainGroup(colItem, toGroup, importedCol.getGroup1());
 
                     // clear connections in this domain and this column
                     ArrayList<DSMConnection> domainConnections = new ArrayList<>();

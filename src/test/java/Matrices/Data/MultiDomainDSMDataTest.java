@@ -683,7 +683,7 @@ public class MultiDomainDSMDataTest {
 
         // TODO: merging of groupings for asymmetric is strange. This may not be desired behavior
         // check that all row domain groupings are present
-        ArrayList<String> expectedD1GroupNames = new ArrayList<>(Arrays.asList("default", "group2", "rowGroup1", "rowGroup2"));
+        ArrayList<String> expectedD1GroupNames = new ArrayList<>(Arrays.asList("default", "rowGroup1", "rowGroup2"));
         ArrayList<String> actualD1GroupNames = matrix.getDomainGroupings(domain).stream().map(Grouping::getName).sorted().collect(Collectors.toCollection(ArrayList::new));
         Assertions.assertIterableEquals(expectedD1GroupNames, actualD1GroupNames);
 
