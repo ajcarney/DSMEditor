@@ -3,7 +3,7 @@ package Matrices.IOHandlers;
 import Constants.Constants;
 import Matrices.Data.AsymmetricDSMData;
 import Matrices.Data.Entities.*;
-import Matrices.Views.AbstractMatrixView;
+import UI.MatrixViews.AbstractMatrixView;
 import javafx.scene.paint.Color;
 import javafx.util.Pair;
 import org.apache.poi.ss.usermodel.*;
@@ -31,7 +31,6 @@ import java.util.*;
  */
 public class AsymmetricIOHandler extends AbstractIOHandler {
 
-    private AsymmetricDSMData matrix;
 
     /**
      * Constructor
@@ -56,17 +55,7 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
 
 
     /**
-     * Sets the current matrix used by the IOHandler
-     *
-     * @param matrix  the new matrix object for the io handler
-     */
-    public void setMatrix(AsymmetricDSMData matrix) {
-        this.matrix = matrix;
-    }
-
-
-    /**
-     * Reads an xml file and parses it as an object that extends the template DSM. Returns the object,
+     * Reads a xml file and parses it as an object that extends the template DSM. Returns the object,
      * but does not automatically add it to be handled.
      *
      * @return  the parsed in matrix
@@ -201,7 +190,7 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
 
 
     /**
-     * Saves the matrix to an xml file specified by the caller of the function. Clears
+     * Saves the matrix to an XML file specified by the caller of the function. Clears
      * the matrix's wasModifiedFlag
      *
      * @param file      the file to save the matrix to
@@ -248,15 +237,15 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
             }
 
             // create groupings elements
-            for(Grouping group: matrix.getGroupings(true)) {
+            for(Grouping group: ((AsymmetricDSMData) matrix).getGroupings(true)) {
                 rowGroupingsElement.addContent(group.getXML(new Element("group")));
             }
-            for(Grouping group: matrix.getGroupings(false)) {
+            for(Grouping group: ((AsymmetricDSMData) matrix).getGroupings(false)) {
                 colGroupingsElement.addContent(group.getXML(new Element("group")));
             }
 
             // create interface type elements
-            for(Map.Entry<String, Vector<DSMInterfaceType>> interfaces : matrix.getInterfaceTypes().entrySet()) {
+            for(Map.Entry<String, List<DSMInterfaceType>> interfaces : matrix.getInterfaceTypes().entrySet()) {
                 Element interfacesGroupingElement = new Element("grouping");
                 interfacesGroupingElement.setAttribute("name", interfaces.getKey());
                 for(DSMInterfaceType i : interfaces.getValue()) {
@@ -290,6 +279,102 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
             e.printStackTrace();
             return 0;  // 0 means there was an error somewhere
         }
+    }
+
+
+    /**
+     * Reads a csv file as an adjacency matrix and parses it into a SymmetricDSMData object and returns it. Does not
+     * add it to be handled. Must be in following format
+     * <row>, col1, col2, col3, ...
+     * r1,      w1,   w2,   w3, ...
+     * r2,      w4,   w5,   w6, ...
+     * ...
+     *
+     * @param file  the file location to read from
+     * @return      SymmetricDSMData object of the parsed in matrix
+     */
+    public AsymmetricDSMData importAdjacencyMatrix(File file) {
+        AsymmetricDSMData matrix = new AsymmetricDSMData();
+
+        // read the lines of the file
+        List<List<String>> lines = readAdjacencyMatrix(file);
+
+        ArrayList<String> itemsOrder = new ArrayList<>();
+        HashMap<String, Integer> rowItems = new HashMap<>();
+        HashMap<String, Integer> colItems = new HashMap<>();
+
+        // parse the first line to create groups
+        List<String> line = lines.get(1);
+        HashMap<String, Grouping> colGroups = new HashMap<>();  // skip the first two columns
+        List<String> inOrderColGroups = new ArrayList<>();
+        int uid = 1;
+        for (String groupName : line.subList(2, line.size())) {
+            if (!colGroups.containsKey(groupName)) {  // only add the unique group names
+                Grouping group;
+                if (line.get(0).equals("(none)")) {
+                    group = matrix.getDefaultGroup(false);
+                } else {
+                    group = new Grouping(uid, -1, line.get(0), Color.WHITE, Color.BLACK);
+                    matrix.addGrouping(false, group);
+                    uid += 1;
+                }
+
+                colGroups.put(groupName, group);
+            }
+            inOrderColGroups.add(groupName);
+
+        }
+
+        // parse the third line to create col items
+        line = lines.get(2);
+        for(int i = 2; i < line.size(); i++) {
+            DSMItem col = new DSMItem(uid, null, i, line.get(i), colGroups.get(inOrderColGroups.get(i - 2)), null);
+            colItems.put(line.get(i), uid);
+            itemsOrder.add(line.get(i));
+
+            uid += 1;
+            matrix.addItem(col, false);
+        }
+
+        // parse all the rest of the rows to determine groups and connections
+        HashMap<String, Grouping> rowGroups = new HashMap<>();  // skip the first two columns
+        for(int i = 3; i < lines.size(); i++) {
+            line = lines.get(i);
+
+            String groupName = line.get(0);
+            Grouping rowGroup;
+            if (!rowGroups.containsKey(groupName)) {  // only add the unique group names
+                Grouping group;
+                if (groupName.equals("(none)")) {
+                    group = matrix.getDefaultGroup(false);
+                } else {
+                    group = new Grouping(uid, -1, line.get(0), Color.WHITE, Color.BLACK);
+                    matrix.addGrouping(true, group);
+                    uid += 1;
+                }
+                rowGroups.put(groupName, group);
+            }
+            rowGroup = rowGroups.get(groupName);
+
+            DSMItem row = new DSMItem(uid, null, i, line.get(1), rowGroup, null);
+            matrix.addItem(row, true);
+
+            for (int j = 2; j < line.size(); j++) {  // start at 2 to skip the first two columns
+                double weight = Double.parseDouble(line.get(j));
+                if (weight > 0.0) {
+                    Integer colUid = colItems.get(itemsOrder.get(j - 2));  // subtract two for group and name columns
+                    matrix.modifyConnection(uid, colUid, "x", weight, new ArrayList<>());
+                }
+            }
+
+            uid += 1;
+        }
+
+        matrix.reDistributeSortIndices();
+        matrix.clearWasModifiedFlag();  // clear flag because no write operations were performed to the file
+        matrix.clearStacks();  // make sure there are no changes when it is opened
+
+        return matrix;
     }
 
 
@@ -332,6 +417,63 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
                     }
                 }
                 contents.append("\n");
+            }
+
+            file = forceExtension(file, ".csv");
+            System.out.println("Exporting to " + file.getAbsolutePath());
+            FileWriter writer = new FileWriter(file);
+            writer.write(contents.toString());
+            writer.close();
+
+            return 1;
+        } catch(Exception e) {  // TODO: add better error handling and bring up an alert box
+            System.out.println(e.getMessage());
+            e.printStackTrace();
+            return 0;  // 0 means there was an error somewhere
+        }
+    }
+
+
+    /**
+     * Saves a matrix as an adjacency matrix in csv format:
+     * asymmetric
+     *        ,      , g1,   g2,   g3,   ...
+     * <group>, <row>, col1, col2, col3, ...
+     * g1,      r1,      w1,   w2,   w3, ...
+     * g2,      r2,      w4,   w5,   w6, ...
+     * ...
+     *
+     * @param file      the file to save the csv file to
+     * @return          0 on success, 1 on error
+     */
+    @Override
+    public int exportMatrixToAdjacencyMatrix(File file) {
+        try {
+            StringBuilder contents = new StringBuilder("asymmetric," + matrix.getTitle() + "\n");
+
+            matrix.reDistributeSortIndices();
+
+            // write the column groups
+            contents.append(",");
+            for (DSMItem col : matrix.getCols()) {
+                contents.append(",").append(col.getGroup1().getName());
+            }
+
+            contents.append("\n<group>,<row>");
+            for (DSMItem col : matrix.getCols()) {
+                contents.append(",").append(col.getName().getValue());
+            }
+
+            for (DSMItem row : matrix.getRows()) {
+                contents.append("\n").append(row.getGroup1().getName()).append(",").append(row.getName().getValue());
+                for (DSMItem col : matrix.getCols()) {
+                    DSMConnection connection = matrix.getConnection(row.getUid(), col.getUid());
+                    if (connection != null) {
+                        contents.append(",").append(connection.getWeight());
+                    } else {
+                        contents.append(",0");
+                    }
+                }
             }
 
             file = forceExtension(file, ".csv");
@@ -460,8 +602,8 @@ public class AsymmetricIOHandler extends AbstractIOHandler {
                             styleExcelCell(workbook, cell, bgColor, null, HORIZONTAL_ROTATION);
                         }
                         case EDITABLE_CONNECTION -> {
-                            Integer rowUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getKey().getUid();
-                            Integer colUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getValue().getUid();
+                            int rowUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getKey().getUid();
+                            int colUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getValue().getUid();
 
                             Cell cell = row.createCell(c + COL_START);
                             if (matrix.getConnection(rowUid, colUid) != null) {

@@ -1,5 +1,6 @@
 package UI;
 
+import Matrices.ClusterAlgorithms.Thebeau;
 import Matrices.Data.Entities.Grouping;
 import Matrices.Data.SymmetricDSMData;
 import Matrices.Data.Entities.DSMItem;
@@ -16,6 +17,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import javafx.stage.Window;
 
 import java.util.*;
 
@@ -204,7 +206,7 @@ public class ClusterAnalysisWindow {
      * runs the algorithm that determines the coordination score of a matrix. Updates content on the main window of the gui
      */
     private void runCoordinationScore() {
-        HashMap<String, Object> coordinationScore = SymmetricDSMData.getCoordinationScore(matrix, optimalSizeCluster.doubleValue(), powcc.doubleValue(), countByWeight.isSelected());
+        Thebeau.CoordinationScore coordinationScore = Thebeau.getCoordinationScore(matrix, optimalSizeCluster.doubleValue(), powcc.doubleValue(), countByWeight.isSelected());
 
         Label titleLabel = new Label("Cluster Cost Analysis");
         titleLabel.setStyle(titleLabel.getStyle() + "-fx-font-weight: bold;");
@@ -213,7 +215,7 @@ public class ClusterAnalysisWindow {
 
         VBox intraBreakDown = new VBox();
         ScrollPane intraScroll = new ScrollPane(intraBreakDown);
-        for(Map.Entry<Grouping, Double> b : ((HashMap<Grouping, Double>)coordinationScore.get("IntraBreakdown")).entrySet()) {
+        for(Map.Entry<Grouping, Double> b : coordinationScore.intraBreakdown.entrySet()) {
             HBox breakdown = new HBox();
             Label value = new Label(b.getValue().toString());
             value.setStyle(value.getStyle() + "-fx-font-weight: bold;");
@@ -226,19 +228,19 @@ public class ClusterAnalysisWindow {
         }
 
         HBox intraTotal = new HBox();
-        Label v1 = new Label(coordinationScore.get("TotalIntraCost").toString());
+        Label v1 = new Label(String.valueOf(coordinationScore.totalIntraCost));
         v1.setStyle(v1.getStyle() + "-fx-font-weight: bold;");
         intraTotal.getChildren().addAll(new Label("Total Intra Cluster Cost:"), v1);
         intraTotal.setSpacing(10);
 
         HBox extraTotal = new HBox();
-        Label v2 = new Label(coordinationScore.get("TotalExtraCost").toString());
+        Label v2 = new Label(String.valueOf(coordinationScore.totalExtraCost));
         v2.setStyle(v1.getStyle() + "-fx-font-weight: bold;");
         extraTotal.getChildren().addAll(new Label("Total Extra Cluster Cost:"), v2);
         extraTotal.setSpacing(10);
 
         HBox total = new HBox();
-        Label v3 = new Label(coordinationScore.get("TotalCost").toString());
+        Label v3 = new Label(String.valueOf(coordinationScore.totalCost));
         v3.setStyle(v1.getStyle() + "-fx-font-weight: bold;");
         total.getChildren().addAll(new Label("Total Cost:"), v3);
         total.setSpacing(10);
@@ -255,8 +257,8 @@ public class ClusterAnalysisWindow {
      * Runs the bidding analysis algorithm for the input matrix. Updates content on the main window of the gui
      */
     private void runClusterBidsAnalysis() {
-        Vector<Grouping> groupOrder = new Vector<>(matrix.getGroupings());
-        Vector<DSMItem> items = matrix.getRows();
+        List<Grouping> groupOrder = new ArrayList<>(matrix.getGroupings());
+        List<DSMItem> items = matrix.getRows();
         items.sort(Comparator.comparing(DSMItem::getSortIndex));
 
         // create data structure for the table
@@ -275,9 +277,7 @@ public class ClusterAnalysisWindow {
                 } else if(c == 1) {
                     rowBids.add(items.get(r).getName().getValue());
                 } else {
-                    HashMap<Integer, Double> groupBids = SymmetricDSMData.calculateClusterBids(matrix, groupOrder.get(c - 2), optimalSizeCluster.doubleValue(), powdep.doubleValue(), powbid.doubleValue(), countByWeight.isSelected());
-
-                    double bid = groupBids.get(items.get(r).getUid());
+                    double bid = Thebeau.calculateClusterBid(matrix, groupOrder.get(c - 2), items.get(r), optimalSizeCluster.doubleValue(), powdep.doubleValue(), powbid.doubleValue(), countByWeight.isSelected());
                     rowBids.add(String.valueOf(bid));
 
                     if(bid > maxBid) {  // check for max or min bids
@@ -365,10 +365,12 @@ public class ClusterAnalysisWindow {
 
     /**
      * Opens the gui window for user interaction
+     * @param parentWindow the parents window so that the scene can open centered
      */
-    public void start() {
+    public void start(Window parentWindow) {
         Scene scene = new Scene(rootLayout, 800, 600);
         window.setScene(scene);
+        window.initOwner(parentWindow);
         window.show();
     }
 

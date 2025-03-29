@@ -4,7 +4,7 @@ import Constants.Constants;
 import Matrices.Data.Entities.*;
 import Matrices.Data.SymmetricDSMData;
 import Matrices.IOHandlers.Flags.IThebeauExport;
-import Matrices.Views.AbstractMatrixView;
+import UI.MatrixViews.AbstractMatrixView;
 import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
@@ -32,7 +32,6 @@ import java.util.regex.Pattern;
  */
 public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExport {
 
-    private SymmetricDSMData matrix;
 
     /**
      * Constructor
@@ -57,17 +56,7 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
 
 
     /**
-     * Sets the current matrix used by the IOHandler
-     *
-     * @param matrix  the new matrix object for the io handler
-     */
-    public void setMatrix(SymmetricDSMData matrix) {
-        this.matrix = matrix;
-    }
-
-
-    /**
-     * Reads an xml file and parses it as an object that extends the template DSM. Returns the object,
+     * Reads an XML file and parses it as an object that extends the template DSM. Returns the object,
      * but does not automatically add it to be handled.
      *
      * @return  the parsed in matrix
@@ -188,7 +177,6 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
         } catch(Exception e) {
             // TODO: add alert box that says the file was corrupted in some way and could not be read in
             System.out.println("Error reading file");
-            System.out.println(e);
             e.printStackTrace();
             return null;
         }
@@ -235,9 +223,13 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
                     connections.add(data);
                 }
             } else if(line.contains("DSMLABEL{")) {
-                int loc = Integer.parseInt(line.split(Pattern.quote("DSMLABEL{"))[1].split(Pattern.quote(","))[0]);
+                // start with line of form 'DSMLABEL{#1, #2} = '...';'
+                String s1 = line.split("^\\s*DSMLABEL*\\{")[1];  // split out to '#1, #2} ...'
+                String s2 = s1.split("\\s*,")[0];                // split out to '#1'
+                int loc = Integer.parseInt(s2);                        // parse #1 as integer, removes whitespace
+
                 String name = line.split(Pattern.quote("'"))[1];
-                double sortIndex = (uid / 2) + 1;  // this will make the sort indices appear like they are normally distributed
+                double sortIndex = (uid / 2.0) + 1;  // this will make the sort indices appear like they are normally distributed
                 DSMItem rowItem = new DSMItem(uid, uid + 1, sortIndex, name, matrix.getDefaultGroup(), null);
                 DSMItem colItem = new DSMItem(uid + 1, uid, sortIndex, name, matrix.getDefaultGroup(), null);
                 uid += 2;  // add two because of column item
@@ -263,7 +255,83 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
 
 
     /**
-     * Saves the matrix to an xml file specified by the caller of the function. Clears
+     * Reads a csv file as an adjacency matrix and parses it into a SymmetricDSMData object and returns it. Does not
+     * add it to be handled. Must be in following format
+     * <group>, col1, col2, col3, ...
+     * g1,      w1,   w2,   w3, ...
+     * ...
+     * g2,      w4,   w5,   w6, ...
+     * ...
+     * where g_i is the group name and w_i is the weight of the connection between the row and column
+     *
+     * @param file  the file location to read from
+     * @return      SymmetricDSMData object of the parsed in matrix
+     */
+    public SymmetricDSMData importAdjacencyMatrix(File file) {
+        SymmetricDSMData matrix = new SymmetricDSMData();
+
+        // read the lines of the file
+        List<List<String>> lines = readAdjacencyMatrix(file);
+
+        ArrayList<String> itemsOrder = new ArrayList<>();
+        HashMap<String, Integer> rowItems = new HashMap<>();
+        HashMap<String, Integer> colItems = new HashMap<>();
+        HashMap<String, Grouping> groups  = new HashMap<>();
+
+        // parse the first line to create rows and columns
+        int uid = 1;
+        Grouping defaultGroup = matrix.getDefaultGroup();
+        List<String> line = lines.get(1);
+        for(int i = 1; i < line.size(); i++) {
+            DSMItem row = new DSMItem(uid, uid + 1, i, line.get(i), defaultGroup, null);
+            DSMItem col = new DSMItem(uid + 1, uid, i, line.get(i), defaultGroup, null);
+            rowItems.put(line.get(i), uid);
+            colItems.put(line.get(i), uid + 1);
+            itemsOrder.add(line.get(i));
+
+            uid += 2;
+            matrix.addItem(row, true);
+            matrix.addItem(col, false);
+        }
+
+        // parse all the rest of the rows to determine groups and connections
+        for(int i = 2; i < lines.size(); i++) {
+            line = lines.get(i);
+            Grouping group;
+            if (groups.containsKey(line.get(0))) {
+                group = groups.get(line.get(0));
+            } else {
+                if (line.get(0).equals("(none)")) {
+                    group = matrix.getDefaultGroup();
+                } else {
+                    group = new Grouping(uid, -1, line.get(0), Color.WHITE, Color.BLACK);
+                    uid += 1;
+                }
+
+                groups.put(line.get(0), group);
+            }
+            Integer rowUid = rowItems.get(itemsOrder.get(i - 2));  // subtract 2 for header rows
+
+            matrix.setItemGroup(matrix.getItem(rowUid), group);  // set the group (does both row and column)
+            for (int j = 1; j < line.size(); j++) {
+                double weight = Double.parseDouble(line.get(j));
+                if (weight > 0.0) {
+                    Integer colUid = colItems.get(itemsOrder.get(j - 1));  // subtract one for groups column
+                    matrix.modifyConnection(rowUid, colUid, "x", weight, new ArrayList<>());
+                }
+            }
+        }
+
+        matrix.reDistributeSortIndicesByGroup();
+        matrix.clearWasModifiedFlag();  // clear flag because no write operations were performed to the file
+        matrix.clearStacks();  // make sure there are no changes when it is opened
+
+        return matrix;
+    }
+
+
+    /**
+     * Saves the matrix to an XML file specified by the caller of the function. Clears
      * the matrix's wasModifiedFlag
      *
      * @param file      the file to save the matrix to
@@ -309,12 +377,12 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
             }
 
             // create groupings elements
-            for(Grouping group: matrix.getGroupings()) {
+            for(Grouping group: ((SymmetricDSMData) matrix).getGroupings()) {
                 groupingsElement.addContent(group.getXML(new Element("group")));
             }
 
             // create interface type elements
-            for(Map.Entry<String, Vector<DSMInterfaceType>> interfaces : matrix.getInterfaceTypes().entrySet()) {
+            for(Map.Entry<String, List<DSMInterfaceType>> interfaces : matrix.getInterfaceTypes().entrySet()) {
                 Element interfacesGroupingElement = new Element("grouping");
                 interfacesGroupingElement.setAttribute("name", interfaces.getKey());
                 for(DSMInterfaceType i : interfaces.getValue()) {
@@ -400,7 +468,57 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
 
             return 1;
         } catch(Exception e) {  // TODO: add better error handling and bring up an alert box
-            System.out.println(e);
+            e.printStackTrace();
+            return 0;  // 0 means there was an error somewhere
+        }
+    }
+
+
+    /**
+     * Saves a matrix as an adjacency matrix in csv format:
+     * Must be in following format
+     * <group>, col1, col2, col3, ...
+     * g1,      w1,   w2,   w3, ...
+     * ...
+     * g2,      w4,   w5,   w6, ...
+     * ...
+     *
+     * where g_i is the group name and w_i is the weight of the connection between the row and column
+     *
+     * @param file      the file to save the csv file to
+     * @return          0 on success, 1 on error
+     */
+    @Override
+    public int exportMatrixToAdjacencyMatrix(File file) {
+        try {
+            StringBuilder contents = new StringBuilder("symmetric\n");
+            contents.append("<group>");
+
+            matrix.reDistributeSortIndices();  // re-number so that rows and columns always align
+            for (DSMItem col : matrix.getCols()) {
+                contents.append(",").append(col.getName().getValue());
+            }
+
+            for (DSMItem row : matrix.getRows()) {
+                contents.append("\n").append(row.getGroup1().getName());
+                for (DSMItem col : matrix.getCols()) {
+                    DSMConnection conn = matrix.getConnection(row.getUid(), col.getUid());
+                    if (conn != null) {
+                        contents.append(",").append(conn.getWeight());
+                    } else {
+                        contents.append(",0");
+                    }
+                }
+            }
+
+            file = forceExtension(file, ".csv");
+            System.out.println("Exporting to " + file.getAbsolutePath());
+            FileWriter writer = new FileWriter(file);
+            writer.write(contents.toString());
+            writer.close();
+
+            return 1;
+        } catch(Exception e) {  // TODO: add better error handling and bring up an alert box
             e.printStackTrace();
             return 0;  // 0 means there was an error somewhere
         }
@@ -551,7 +669,6 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
 
             return 1;
         } catch(Exception e) {  // TODO: add better error handling and bring up an alert box
-            System.out.println(e);
             e.printStackTrace();
             return 0;  // 0 means there was an error somewhere
         }
@@ -589,7 +706,7 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
                 String l = "DSMLABEL{"
                         + (int)row.getSortIndex()
                         + ",1} = '"
-                        + row.getName()
+                        + row.getName().getValue()
                         + "';\n";
                 labelsString.append(l);
             }
@@ -610,7 +727,6 @@ public class SymmetricIOHandler extends AbstractIOHandler implements IThebeauExp
 
             return 1;
         } catch(Exception e) {  // TODO: add better error handling and bring up an alert box
-            System.out.println(e);
             e.printStackTrace();
             return 0;  // 0 means there was an error somewhere
         }

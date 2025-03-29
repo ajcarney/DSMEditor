@@ -2,11 +2,11 @@ package UI;
 
 import Constants.Constants;
 import Matrices.Data.AbstractDSMData;
-import Matrices.IDSM;
+import Matrices.EditorTabs.AbstractEditorTab;
+import Matrices.IOHandlers.AbstractIOHandler;
 import Matrices.MatricesCollection;
-import Matrices.Views.AbstractMatrixView;
+import UI.MatrixViews.AbstractMatrixView;
 import UI.Widgets.DraggableTab;
-import javafx.beans.binding.Bindings;
 import javafx.scene.control.TabPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
@@ -16,7 +16,7 @@ import java.util.HashMap;
 
 
 /**
- * Class to manage the gui for multiple matrices. Contains the file menu, side bar, metadata pane, and the editor
+ * Class to manage the gui for multiple matrices. Contains the file menu, sidebar, metadata pane, and the editor
  *
  * @author Aiden Carney
  */
@@ -88,7 +88,7 @@ public class EditorPane {
      */
     public AbstractDSMData getFocusedMatrixData() {
         try {
-            return matrices.getMatrix(getFocusedMatrixUid()).getMatrixEditorTab().getMatrixData();
+            return matrices.getMatrix(getFocusedMatrixUid()).getMatrixData();
         } catch(Exception e) {
             return null;
         }
@@ -102,7 +102,7 @@ public class EditorPane {
      */
     public AbstractMatrixView getFocusedMatrixView() {
         try {
-            return matrices.getMatrix(getFocusedMatrixUid()).getMatrixEditorTab().getMatrixView();
+            return matrices.getMatrix(getFocusedMatrixUid()).getMatrixView();
         } catch(Exception e) {
             return null;
         }
@@ -115,7 +115,7 @@ public class EditorPane {
      *
      * @return  the uid of the matrix that is focused
      */
-    public IDSM getFocusedMatrix() {
+    public AbstractEditorTab getFocusedMatrix() {
         try {
             return matrices.getMatrix(getFocusedMatrixUid());
         } catch(Exception e) {
@@ -125,7 +125,7 @@ public class EditorPane {
 
 
     /**
-     * Returns that HashMap that contains the tab objects and matrix uids
+     * Returns that HashMap that contains the tab objects and matrix UIDs
      *
      * @return the tabs HashMap
      */
@@ -135,7 +135,7 @@ public class EditorPane {
 
 
     /**
-     * Returns the TabPane object so it can be added to a scene
+     * Returns the TabPane object, so it can be added to a scene
      *
      * @return the TabPane object with all its widgets
      */
@@ -173,7 +173,7 @@ public class EditorPane {
      *
      * @param  matrix  the matrix to add a tab for
      */
-    public void addTab(IDSM matrix) {
+    public void addTab(AbstractEditorTab matrix) {
         int matrixUid = currentMatrixUid;
         currentMatrixUid += 1;
 
@@ -181,33 +181,24 @@ public class EditorPane {
 
         DraggableTab tab = new DraggableTab("");
 
-        // bind a "*" to the name if the matrix has not been saved
-        tab.getLabelTextProperty().bind(Bindings.createStringBinding(() -> {
-            String title = this.matrices.getMatrix(matrixUid).getMatrixIOHandler().getSavePath().getName();
-            if (matrix.getMatrixData().getWasModifiedProperty().get()) {
-                title += "*";
-            }
-            return title;
-        }, matrix.getMatrixData().getWasModifiedProperty()));
-
+        tab.getLabelTextProperty().bind(matrix.titleProperty());
 
         this.matrices.getMatrix(matrixUid).getMatrixView().refreshView();
-        tab.setContent(this.matrices.getMatrix(matrixUid).getMatrixEditorTab().getCenterPane());
+        tab.setContent(this.matrices.getMatrix(matrixUid).getCenterPane());
 
         tab.setDetachable(false);
 
         tab.setOnCloseRequest(e -> {
             if(!matrices.isMatrixSaved(matrixUid)) {
                 focusTab(matrixUid);
-                int selection = this.matrices.getMatrix(matrixUid).getMatrixIOHandler().promptSave();
+                AbstractIOHandler.SAVE_PROMPT_OPTIONS selection = this.matrices.getMatrix(matrixUid).getMatrixIOHandler().promptSave();
 
-                // 0 = close the tab, 1 = save and close, 2 = don't close
-                if(selection == 2) {  // user doesn't want to close the pane so consume the event
+                if(selection == AbstractIOHandler.SAVE_PROMPT_OPTIONS.CANCEL) {  // user doesn't want to close the pane so consume the event
                     if(e != null) {
                         e.consume();
                     }
                     return;
-                } else if(selection == 1) {  // user wants to save before closing the pane
+                } else if(selection == AbstractIOHandler.SAVE_PROMPT_OPTIONS.SAVE) {  // user wants to save before closing the pane
                     // TODO: if there is an error saving, then display a message and don't close the file
                     this.matrices.getMatrix(matrixUid).getMatrixIOHandler().saveMatrixToFile(this.matrices.getMatrix(matrixUid).getMatrixIOHandler().getSavePath());
                 }
@@ -224,7 +215,8 @@ public class EditorPane {
             this.matrices.removeMatrix(matrixUid);
 
             if(this.tabs.isEmpty()) {
-                headerMenu.refresh(null, null, null);
+                headerMenu.setupBindings(null);
+
                 this.rootLayout.setLeft(null);
                 this.rootLayout.setRight(null);
             }
@@ -232,13 +224,13 @@ public class EditorPane {
         });
 
         tab.setOnSelectionChanged(e -> {
-            headerMenu.refresh(this.matrices.getMatrix(matrixUid).getMatrixData(), this.matrices.getMatrix(matrixUid).getMatrixIOHandler(), this.matrices.getMatrix(matrixUid).getMatrixView());
-            headerMenu.setDisabled(false);
+            headerMenu.setupBindings(this.matrices.getMatrix(matrixUid));
+//            this.matrices.getMatrix(matrixUid).isChanged.set(true);  // force refresh on tab change, needs to be after to fire event
 
-            this.rootLayout.setLeft(this.matrices.getMatrix(matrixUid).getMatrixEditorTab().getLeftPane());
-            this.rootLayout.setRight(this.matrices.getMatrix(matrixUid).getMatrixEditorTab().getRightPane());
+            this.rootLayout.setLeft(this.matrices.getMatrix(matrixUid).getLeftPane());
+            this.rootLayout.setRight(this.matrices.getMatrix(matrixUid).getRightPane());
             bottomEditorTabLayout.getChildren().clear();
-            bottomEditorTabLayout.getChildren().add(this.matrices.getMatrix(matrixUid).getMatrixEditorTab().getBottomPane());
+            bottomEditorTabLayout.getChildren().add(this.matrices.getMatrix(matrixUid).getBottomPane());
         });
 
         tabs.put(tab, matrixUid);

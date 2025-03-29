@@ -1,5 +1,6 @@
 package Matrices;
 
+import Matrices.EditorTabs.AbstractEditorTab;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableMap;
 
@@ -7,11 +8,11 @@ import java.util.ArrayList;
 
 
 /**
- * Wrapper class for handling matrix objects. Maps matrix objects to a uid
+ * Wrapper class for handling matrix objects. Maps matrix objects to a UID
  */
 public class MatricesCollection {
 
-    private final ObservableMap<Integer, IDSM> matrices;
+    private final ObservableMap<Integer, AbstractEditorTab> matrices;
 
 
     /**
@@ -28,7 +29,7 @@ public class MatricesCollection {
      * @param uid     the uid to identify the matrix
      * @param matrix  the matrix object
      */
-    public void addMatrix(int uid, IDSM matrix) {
+    public void addMatrix(int uid, AbstractEditorTab matrix) {
         matrices.put(uid, matrix);
     }
 
@@ -36,7 +37,7 @@ public class MatricesCollection {
     /**
      * @return  a list of all the matrix objects
      */
-    public ObservableMap<Integer, IDSM> getMatrices() {
+    public ObservableMap<Integer, AbstractEditorTab> getMatrices() {
         return matrices;
     }
 
@@ -47,7 +48,7 @@ public class MatricesCollection {
      * @param uid  the uid of the matrix
      * @return     the DSM
      */
-    public IDSM getMatrix(int uid) {
+    public AbstractEditorTab getMatrix(int uid) {
         return matrices.get(uid);
     }
 
@@ -67,7 +68,7 @@ public class MatricesCollection {
      */
     public ArrayList<String> getMatrixFileAbsoluteSavePaths() {
         ArrayList<String> saveNames = new ArrayList<>();
-        for(IDSM dsm : this.matrices.values()) {
+        for(AbstractEditorTab dsm : this.matrices.values()) {
             saveNames.add(dsm.getMatrixIOHandler().getSavePath().getAbsolutePath());
         }
         return saveNames;
@@ -75,14 +76,14 @@ public class MatricesCollection {
 
 
     /**
-     * returns whether or not the wasModifiedFlag of a matrix is set or cleared. If
+     * returns whether the wasModifiedFlag of a matrix is set or cleared. If
      * it is set then the matrix is not saved. If the flag is cleared, then the matrix
      * is saved.
      *
-     * @param matrixUid the matrix to check whether or not has been saved
+     * @param matrixUid the matrix to check whether it has been saved
      * @return          true if matrix is saved, false otherwise
      */
     public boolean isMatrixSaved(int matrixUid) {
-        return matrices.get(matrixUid).isMatrixSaved();
+        return !matrices.get(matrixUid).getMatrixData().getWasModified();
     }
 }

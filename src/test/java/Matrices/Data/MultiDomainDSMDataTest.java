@@ -3,6 +3,7 @@ package Matrices.Data;
 import Matrices.Data.Entities.DSMConnection;
 import Matrices.Data.Entities.DSMItem;
 import Matrices.Data.Entities.Grouping;
+import javafx.beans.property.StringProperty;
 import javafx.scene.paint.Color;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -498,6 +499,208 @@ public class MultiDomainDSMDataTest {
         Assertions.assertEquals(2, matrix.getConnections().size());  // make sure connections stayed the same
         Assertions.assertIterableEquals(expectedRowUids, actualRowUids);
         Assertions.assertIterableEquals(expectedColUids, actualColUids);
+    }
+
+
+    /**
+     * Unit test for testing the import and export feature of the MDMs. Tests exporting a symmetric matrix,
+     * adding rows/cols, connections, and groups, and then importing it back. Asserts that the import is correct
+     */
+    @Test
+    public void importSymmetricTest() {
+        MultiDomainDSMData matrix = new MultiDomainDSMData();
+        Grouping domain = matrix.getDefaultDomain();
+        Grouping group = matrix.getDefaultDomainGroup(domain);
+
+        // add a grouping to first domain to ensure it is still there
+        Grouping group1 = new Grouping("original1", null);
+        matrix.addDomainGrouping(domain, group1);
+
+        // create a second domain for stuff that shouldn't be touched
+        Grouping domain2 = new Grouping("domain2", null);
+        Grouping group2 = new Grouping("group2", null);
+        matrix.addDomain(domain2);
+        matrix.addDomainGrouping(domain2, group2);
+
+        // add items to default domain
+        matrix.addItem(new DSMItem(1, 11, 1.0, "item1", group, domain), true);
+        matrix.addItem(new DSMItem(2, 22, 1.0, "item2", group, domain), true);
+        matrix.addItem(new DSMItem(3, 33, 1.0, "item3", group, domain), true);
+        matrix.addItem(new DSMItem(11, 1, 1.0, "item1", group, domain), false);
+        matrix.addItem(new DSMItem(22, 2, 1.0, "item2", group, domain), false);
+        matrix.addItem(new DSMItem(33, 3, 1.0, "item3", group, domain), false);
+
+        // add items to second domain
+        matrix.addItem(new DSMItem(-1, -11, 1.0, "item4", group2, domain2), true);
+        matrix.addItem(new DSMItem(-11, -1, 1.0, "item4", group2, domain2), false);
+        matrix.addItem(new DSMItem(-2, -22, 1.0, "item5", group2, domain2), true);
+        matrix.addItem(new DSMItem(-22, -2, 1.0, "item5", group2, domain2), false);
+
+        // add symmetric connection between 2:11 and 1:22 and -2:-11, -1:-22
+        matrix.modifyConnectionSymmetric(2, 11, "x", 1.0, new ArrayList<>());
+        matrix.modifyConnectionSymmetric(-2, -11, "x", 1.0, new ArrayList<>());
+
+        matrix.setCurrentStateAsCheckpoint();
+
+        SymmetricDSMData symmetric = (SymmetricDSMData) matrix.exportZoom(domain, domain);
+
+        // add an item. Set domain to null because it should know which domain to use when importing
+        symmetric.addItem(new DSMItem(4, 44, 1.0, "item4", group, null), true);
+        symmetric.addItem(new DSMItem(44, 4, 1.0, "item4", group, null), false);
+
+        // add some new groupings
+        Grouping g1 = new Grouping("newGroup1", null);
+        Grouping g2 = new Grouping("newGroup2", null);
+        symmetric.addGrouping(g1);
+        symmetric.addGrouping(g2);
+
+        // add some new items with these groups
+        symmetric.addItem(new DSMItem(5, 55, 1.0, "item5", g1, null), true);
+        symmetric.addItem(new DSMItem(55, 5, 1.0, "item5", g1, null), false);
+        symmetric.addItem(new DSMItem(6, 66, 1.0, "item6", g2, null), true);
+        symmetric.addItem(new DSMItem(66, 6, 1.0, "item6", g2, null), false);
+
+        // add some new connections between old items, old and new, and new only
+        symmetric.modifyConnection(3, 11, "x", 1.0, new ArrayList<>());
+        symmetric.modifyConnection(3, 44, "x", 1.0, new ArrayList<>());
+        symmetric.modifyConnection(4, 33, "x", 1.0, new ArrayList<>());
+        symmetric.modifyConnectionSymmetric(6, 55, "x", 1.0, new ArrayList<>());
+
+
+        // import it back
+        matrix.importZoom(domain, domain, symmetric);
+
+
+        // check that all items are present
+        ArrayList<Integer> expectedRowUids = new ArrayList<>(Arrays.asList(1, 2, 3, 4, 5, 6, -1, -2));
+        ArrayList<Integer> expectedColUids = new ArrayList<>(Arrays.asList(11, 22, 33, 44, 55, 66, -11, -22));
+        ArrayList<Integer> actualRowUids = matrix.getRows().stream().map(DSMItem::getUid).collect(Collectors.toCollection(ArrayList::new));
+        ArrayList<Integer> actualColUids = matrix.getCols().stream().map(DSMItem::getUid).collect(Collectors.toCollection(ArrayList::new));
+        Collections.sort(expectedRowUids);
+        Collections.sort(expectedColUids);
+        Collections.sort(actualRowUids);
+        Collections.sort(actualColUids);
+
+        Assertions.assertIterableEquals(expectedRowUids, actualRowUids);
+        Assertions.assertIterableEquals(expectedColUids, actualColUids);
+
+        // check that all groupings are present
+        ArrayList<String> expectedGroupNames = new ArrayList<>(Arrays.asList("default", "newGroup1", "newGroup2", "original1"));
+        ArrayList<String> actualGroupNames = matrix.getDomainGroupings(domain).stream().map(Grouping::getName).sorted().collect(Collectors.toCollection(ArrayList::new));
+        Assertions.assertIterableEquals(expectedGroupNames, actualGroupNames);
+
+        // check that all connections are present
+        ArrayList<Integer> expectedConnectionRowUids = new ArrayList<>(Arrays.asList( -1,  -2,  1, 2,   3,  3,  4,  5,  6));
+        ArrayList<Integer> expectedConnectionColUids = new ArrayList<>(Arrays.asList(-22, -11, 22, 11, 11, 44, 33, 66, 55));
+        for (int i = 0; i < matrix.getConnections().size(); i++) {
+            DSMConnection conn = matrix.getConnection(expectedConnectionRowUids.get(i), expectedConnectionColUids.get(i));
+            Assertions.assertEquals("x", conn.getConnectionName());
+        }
+        Assertions.assertEquals(expectedConnectionColUids.size(), matrix.getConnections().size());
+
+    }
+
+
+    /**
+     * Unit test for testing the import and export feature of the MDMs. Tests exporting an asymmetric matrix,
+     * adding rows/cols, connections, and groups, and then importing it back. Asserts that the import is correct
+     */
+    @Test
+    public void importAsymmetricTest() {
+        MultiDomainDSMData matrix = new MultiDomainDSMData();
+        Grouping domain = matrix.getDefaultDomain();
+        Grouping group = matrix.getDefaultDomainGroup(domain);
+
+        // create a second domain
+        Grouping domain2 = new Grouping("domain2", null);
+        Grouping group2 = new Grouping("group2", null);
+        matrix.addDomain(domain2);
+        matrix.addDomainGrouping(domain2, group2);
+
+        // add items to default domain
+        matrix.addItem(new DSMItem(1, 11, 1.0, "item1", group, domain), true);
+        matrix.addItem(new DSMItem(2, 22, 1.0, "item2", group, domain), true);
+        matrix.addItem(new DSMItem(3, 33, 1.0, "item3", group, domain), true);
+        matrix.addItem(new DSMItem(11, 1, 1.0, "item1", group, domain), false);
+        matrix.addItem(new DSMItem(22, 2, 1.0, "item2", group, domain), false);
+        matrix.addItem(new DSMItem(33, 3, 1.0, "item3", group, domain), false);
+
+        // add items to second domain
+        matrix.addItem(new DSMItem(-1, -11, 1.0, "item4", group2, domain2), true);
+        matrix.addItem(new DSMItem(-11, -1, 1.0, "item4", group2, domain2), false);
+        matrix.addItem(new DSMItem(-2, -22, 1.0, "item5", group2, domain2), true);
+        matrix.addItem(new DSMItem(-22, -2, 1.0, "item5", group2, domain2), false);
+        matrix.addItem(new DSMItem(-3, -33, 1.0, "item6", group2, domain2), true);
+        matrix.addItem(new DSMItem(-33, -3, 1.0, "item6", group2, domain2), false);
+
+
+        // add symmetric connection between 2:11 and 1:22 and -2:-11, -1:-22
+        matrix.modifyConnectionSymmetric(2, 11, "x", 1.0, new ArrayList<>());
+        matrix.modifyConnectionSymmetric(-2, -11, "x", 1.0, new ArrayList<>());
+
+        matrix.setCurrentStateAsCheckpoint();
+
+        // Export the matrix
+        AsymmetricDSMData asymmetric = (AsymmetricDSMData) matrix.exportZoom(domain, domain2);
+
+        // add an item. Set domain to null because it should know which domain to use when importing
+        asymmetric.addItem(new DSMItem(4, null, 1.0, "r4", group, null), true);
+        asymmetric.addItem(new DSMItem(-44, null, 1.0, "c4", group2, null), false);
+
+        // add some new groupings
+        Grouping g1 = new Grouping("rowGroup1", null);
+        Grouping g2 = new Grouping("rowGroup2", null);
+        Grouping g3 = new Grouping("colGroup1", null);
+        Grouping g4 = new Grouping("colGroup2", null);
+        asymmetric.addGrouping(true, g1);
+        asymmetric.addGrouping(true, g2);
+        asymmetric.addGrouping(false, g3);
+        asymmetric.addGrouping(false, g4);
+
+        // add some new items with these groups
+        asymmetric.addItem(new DSMItem(5,  null, 1.0, "r5", g1, null), true);
+        asymmetric.addItem(new DSMItem(6,  null, 1.0, "r6", g2, null), true);
+        asymmetric.addItem(new DSMItem(-55, null, 1.0, "c5", g3, null), false);
+        asymmetric.addItem(new DSMItem(-66, null, 1.0, "c6", g4, null), false);
+
+        // add some new connections between old items, old and new, and new only
+        asymmetric.modifyConnection(3, -11, "x", 1.0, new ArrayList<>());
+        asymmetric.modifyConnection(3, -44, "x", 1.0, new ArrayList<>());
+        asymmetric.modifyConnection(5, -55, "x", 1.0, new ArrayList<>());
+        asymmetric.modifyConnection(6, -22, "x", 1.0, new ArrayList<>());
+
+
+        // import it back
+        matrix.importZoom(domain, domain2, asymmetric);
+
+
+        // check that all items are present (names should be symmetric)
+        ArrayList<String> expectedNames = new ArrayList<>(Arrays.asList("c4", "c5", "c6", "item1", "item2", "item3", "item4", "item5", "item6", "r4", "r5", "r6"));
+        ArrayList<String> actualRowNames = matrix.getRows().stream().map(DSMItem::getName).map(StringProperty::getValue).sorted().collect(Collectors.toCollection(ArrayList::new));
+        ArrayList<String> actualColNames = matrix.getCols().stream().map(DSMItem::getName).map(StringProperty::getValue).sorted().collect(Collectors.toCollection(ArrayList::new));
+        Assertions.assertIterableEquals(expectedNames, actualRowNames);
+        Assertions.assertIterableEquals(expectedNames, actualColNames);
+
+        // TODO: merging of groupings for asymmetric is strange. This may not be desired behavior
+        // check that all row domain groupings are present
+        ArrayList<String> expectedD1GroupNames = new ArrayList<>(Arrays.asList("default", "rowGroup1", "rowGroup2"));
+        ArrayList<String> actualD1GroupNames = matrix.getDomainGroupings(domain).stream().map(Grouping::getName).sorted().collect(Collectors.toCollection(ArrayList::new));
+        Assertions.assertIterableEquals(expectedD1GroupNames, actualD1GroupNames);
+
+        // check that all groupings for second domain are present
+        ArrayList<String> expectedD2GroupNames = new ArrayList<>(Arrays.asList("colGroup1", "colGroup2", "default", "group2"));
+        ArrayList<String> actualD2GroupNames = matrix.getDomainGroupings(domain2).stream().map(Grouping::getName).sorted().collect(Collectors.toCollection(ArrayList::new));
+        Assertions.assertIterableEquals(expectedD2GroupNames, actualD2GroupNames);
+
+        // check that all connections are present
+        ArrayList<Integer> expectedConnectionRowUids = new ArrayList<>(Arrays.asList( 2,  1,  -2,  -1,   3,   3,   5,   6));
+        ArrayList<Integer> expectedConnectionColUids = new ArrayList<>(Arrays.asList(11, 22, -11, -22, -11, -44, -55, -22));
+        for (int i = 0; i < matrix.getConnections().size(); i++) {
+            DSMConnection conn = matrix.getConnection(expectedConnectionRowUids.get(i), expectedConnectionColUids.get(i));
+            Assertions.assertEquals("x", conn.getConnectionName());
+        }
+        Assertions.assertEquals(expectedConnectionColUids.size(), matrix.getConnections().size());
+
     }
 
 }

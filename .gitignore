@@ -3,8 +3,12 @@ release/
 .log/
 .recovery/
 *.dsm
+!verification/*.dsm
 *.m
 *.csv
 *.py
 *.xlsx
+*.iml
 .idea/workspace.xml
+.idea/
+.vscode/

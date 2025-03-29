@@ -1,20 +1,26 @@
 package Matrices.EditorTabs;
 
-import Matrices.Data.*;
+import Matrices.Data.AbstractDSMData;
+import Matrices.Data.AsymmetricDSMData;
 import Matrices.Data.Entities.Grouping;
+import Matrices.Data.MultiDomainDSMData;
+import Matrices.Data.SymmetricDSMData;
 import Matrices.IOHandlers.AbstractIOHandler;
 import Matrices.IOHandlers.AsymmetricIOHandler;
 import Matrices.IOHandlers.MultiDomainIOHandler;
 import Matrices.IOHandlers.SymmetricIOHandler;
-import Matrices.SideBarTools.AbstractSideBar;
-import Matrices.SideBarTools.AsymmetricSideBar;
-import Matrices.SideBarTools.MultiDomainSideBar;
-import Matrices.SideBarTools.SymmetricSideBar;
-import Matrices.Views.*;
-import UI.HeaderMenu;
 import UI.MatrixMetaDataPane;
+import UI.MatrixViews.AbstractMatrixView;
+import UI.MatrixViews.AsymmetricView;
+import UI.MatrixViews.MultiDomainView;
+import UI.MatrixViews.SymmetricView;
+import UI.SideBarViews.AbstractSideBar;
+import UI.SideBarViews.AsymmetricSideBar;
+import UI.SideBarViews.MultiDomainSideBar;
+import UI.SideBarViews.SymmetricSideBar;
 import UI.Widgets.DraggableTab;
 import UI.Widgets.Misc;
+import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -35,17 +41,18 @@ import java.util.HashMap;
  * adding breakout views by selecting the domains to zoom to. When breakout views are open the main view is set
  * to the static render mode
  */
-public class MultiDomainEditorTab implements IEditorTab {
+public class MultiDomainEditorTab extends AbstractEditorTab {
+    int breakoutNum = 1;
 
     protected final VBox centerLayout = new VBox();
     protected final VBox leftLayout = new VBox();
     protected final VBox rightLayout = new VBox();
     protected final HBox bottomLayout = new HBox();
 
-    protected final MultiDomainDSMData matrixData;
-    protected final MultiDomainView matrixView;
-    protected final MultiDomainIOHandler ioHandler;
-    protected final HeaderMenu headerMenu;
+    protected final MultiDomainDSMData mainMatrixData;
+    protected final MultiDomainView mainMatrixView;
+    protected final MultiDomainIOHandler mainIOHandler;
+    protected final MultiDomainSideBar mainSidebar;
 
 
     protected final TabPane tabPane = new TabPane();
@@ -57,9 +64,43 @@ public class MultiDomainEditorTab implements IEditorTab {
      *
      * @param data        the data for the multi-domain matrix
      * @param ioHandler   the ioHandler object for the matrix
-     * @param headerMenu  the header menu instance so that it can update it for the matrix on the currently selected tab
      */
-    public MultiDomainEditorTab(MultiDomainDSMData data, MultiDomainIOHandler ioHandler, HeaderMenu headerMenu) {
+    public MultiDomainEditorTab(MultiDomainDSMData data, MultiDomainIOHandler ioHandler) {
+        this.mainMatrixData = data;
+        this.mainIOHandler = ioHandler;
+        this.mainMatrixView = new MultiDomainView(this.mainMatrixData, 12.0);
+        this.mainSidebar = new MultiDomainSideBar(this.mainMatrixData, this.mainMatrixView);
+
+        init();  // set up the tab pane
+    }
+
+
+    /**
+     * Creates a new matrix object by reading in a file. Throws IllegalArgumentException if there was an error reading
+     * the file
+     *
+     * @param file    the file object that contains a MultiDomain dsm to read
+     */
+    public MultiDomainEditorTab(File file) {
+        this.mainIOHandler = new MultiDomainIOHandler(file);
+        this.mainMatrixData = mainIOHandler.readFile();
+        if(this.mainMatrixData == null) {
+            throw new IllegalArgumentException("There was an error reading the matrix at " + file);  // error because error occurred on file read
+        }
+        mainIOHandler.setMatrix(this.mainMatrixData);
+
+        this.mainMatrixView = new MultiDomainView(mainMatrixData, 12.0);
+        this.mainSidebar = new MultiDomainSideBar(mainMatrixData, mainMatrixView);
+
+
+        init();  // set up the tab pane
+    }
+
+
+    /**
+     * Initializes the tab pane and sets the main view to the tab
+     */
+    private void init() {
         VBox.setVgrow(centerLayout, Priority.ALWAYS);
         HBox.setHgrow(centerLayout, Priority.ALWAYS);
         centerLayout.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
@@ -70,35 +111,31 @@ public class MultiDomainEditorTab implements IEditorTab {
 
         leftLayout.setAlignment(Pos.CENTER);
 
-        this.matrixData = data;
-        this.ioHandler = ioHandler;
-        this.headerMenu = headerMenu;
-
-        this.matrixView = new MultiDomainView(this.matrixData, 12.0);
-
         DraggableTab tab = new DraggableTab("Main View");
-        tab.setContent(this.matrixView.getView());
+        tab.setContent(this.mainMatrixView.getView());
         tab.setDetachable(false);
         tab.setClosable(false);
 
         tab.setOnSelectionChanged(e -> {
-            this.headerMenu.refresh(this.matrixData, this.ioHandler, this.matrixView);
+            // update the data members for the main view
+            this.matrixData = this.mainMatrixData;
+            this.matrixIOHandler = this.mainIOHandler;
+            this.matrixView = this.mainMatrixView;
+            this.matrixSideBar = this.mainSidebar;
 
-            // don't allow editing if breakout views are open
-            MultiDomainSideBar sideBar = new MultiDomainSideBar(this.matrixData, this.matrixView);
-            if(tabsData.keySet().size() > 1) {
-                sideBar.setDisabled();
-                headerMenu.setDisabled(true);
+            if(tabsData.keySet().size() > 1) {  // don't allow editing if breakout views are open
+                mainSidebar.setDisabled();
+                isMutable = false;
             } else {
-                sideBar.setEnabled();
-                headerMenu.setDisabled(false);
+                mainSidebar.setEnabled();
+                isMutable = true;
             }
-            this.matrixView.refreshView();
+            this.isChanged.set(true);
 
             leftLayout.getChildren().clear();
-            leftLayout.getChildren().add(sideBar.getLayout());
+            leftLayout.getChildren().add(mainSidebar.getLayout());
 
-            MatrixMetaDataPane metadata = new MatrixMetaDataPane(this.matrixData);
+            MatrixMetaDataPane metadata = new MatrixMetaDataPane(this.mainMatrixData);
             rightLayout.getChildren().clear();
             rightLayout.getChildren().add(metadata.getLayout());
 
@@ -109,6 +146,7 @@ public class MultiDomainEditorTab implements IEditorTab {
             zoomButton.setOnAction(ee -> {
                 // Create Root window
                 Stage window = new Stage();
+                window.initOwner(centerLayout.getScene().getWindow());
                 window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
                 window.setTitle("Configure Groupings");
 
@@ -136,7 +174,7 @@ public class MultiDomainEditorTab implements IEditorTab {
                 fromDomain.setPadding(new Insets(0));
                 fromDomain.setCellFactory(groupingItemCellFactory);
                 fromDomain.setButtonCell(groupingItemCellFactory.call(null));
-                fromDomain.getItems().addAll(this.matrixData.getDomains());
+                fromDomain.getItems().addAll(this.mainMatrixData.getDomains());
 
                 ComboBox<Grouping> toDomain = new ComboBox<>();
                 toDomain.setPromptText("To Domain");
@@ -144,7 +182,7 @@ public class MultiDomainEditorTab implements IEditorTab {
                 toDomain.setPadding(new Insets(0));
                 toDomain.setCellFactory(groupingItemCellFactory);
                 toDomain.setButtonCell(groupingItemCellFactory.call(null));
-                toDomain.getItems().addAll(this.matrixData.getDomains());
+                toDomain.getItems().addAll(this.mainMatrixData.getDomains());
 
                 HBox mainView = new HBox();
                 mainView.setSpacing(15);
@@ -184,8 +222,18 @@ public class MultiDomainEditorTab implements IEditorTab {
         });
 
         tabPane.getTabs().add(tab);
-        tabsData.put(tab, new Pair<>(this.matrixData, this.matrixView));
+        tabsData.put(tab, new Pair<>(this.mainMatrixData, this.mainMatrixView));
         centerLayout.getChildren().add(tabPane);
+
+        // set up bindings
+        this.isSaved.bind(this.mainMatrixData.getWasModifiedProperty().not());  // saved when not modified
+        this.title.bind(Bindings.createStringBinding(() -> {
+            String t = mainIOHandler.getSavePath().getName();
+            if (mainMatrixData.getWasModifiedProperty().get()) {
+                t += "*";
+            }
+            return t;
+        }, mainMatrixData.getWasModifiedProperty()));
     }
 
 
@@ -196,7 +244,8 @@ public class MultiDomainEditorTab implements IEditorTab {
      * @param toGroup    the domain for the column items
      */
     public void addBreakOutView(Grouping fromGroup, Grouping toGroup) {
-        AbstractDSMData data = this.matrixData.exportZoom(fromGroup, toGroup);
+        // TODO: may want to rethink how ioHandler (in header menu) is used in breakout views
+        AbstractDSMData data = this.mainMatrixData.exportZoom(fromGroup, toGroup);
         AbstractMatrixView view;
         AbstractSideBar sideBar;
         AbstractIOHandler ioHandler;
@@ -214,7 +263,8 @@ public class MultiDomainEditorTab implements IEditorTab {
             throw new AssertionError("Breakout view created was of an invalid type");
         }
 
-        DraggableTab tab = new DraggableTab("Breakout");
+        DraggableTab tab = new DraggableTab("Breakout" + breakoutNum);
+        breakoutNum++;
         tab.setContent(view.getView());
         tab.setDetachable(false);
         tab.setClosable(true);
@@ -223,13 +273,17 @@ public class MultiDomainEditorTab implements IEditorTab {
            // TODO: ask if user wants to apply changes
             this.tabsData.remove(tab);
             this.tabPane.getTabs().remove(tab);
-            headerMenu.setDisabled(false);
         });
 
 
         tab.setOnSelectionChanged(e -> {
-            headerMenu.refresh(data, ioHandler, view);
-            headerMenu.setDisabled(false);
+            matrixData = data;
+            matrixIOHandler = ioHandler;
+            matrixView = view;
+            matrixSideBar = sideBar;
+
+            isMutable = true;
+            isChanged.set(true);
 
             leftLayout.getChildren().clear();
             leftLayout.getChildren().add(sideBar.getLayout());
@@ -241,9 +295,9 @@ public class MultiDomainEditorTab implements IEditorTab {
             bottomLayout.getChildren().clear();
             Button applyButton = new Button("Apply Changes");
             applyButton.setOnAction(ee -> {
-                this.matrixData.importZoom(fromGroup, toGroup, data);
-                this.matrixData.setCurrentStateAsCheckpoint();
-                this.matrixView.refreshView();  // refresh the main view
+                this.mainMatrixData.importZoom(fromGroup, toGroup, data);
+                this.mainMatrixData.setCurrentStateAsCheckpoint();
+                this.mainMatrixView.refreshView();  // refresh the main view
             });
             HBox applyButtonLayout = new HBox();
             applyButtonLayout.setAlignment(Pos.CENTER);
@@ -300,7 +354,8 @@ public class MultiDomainEditorTab implements IEditorTab {
      */
     @Override
     public AbstractMatrixView getMatrixView() {
-        return tabsData.get((DraggableTab)tabPane.getSelectionModel().getSelectedItem()).getValue();
+        return matrixView;
+//        return tabsData.get((DraggableTab)tabPane.getSelectionModel().getSelectedItem()).getValue();
     }
 
 
@@ -322,7 +377,8 @@ public class MultiDomainEditorTab implements IEditorTab {
      */
     @Override
     public AbstractDSMData getMatrixData() {
-        return tabsData.get((DraggableTab)tabPane.getSelectionModel().getSelectedItem()).getKey();
+        return matrixData;
+//        return tabsData.get((DraggableTab)tabPane.getSelectionModel().getSelectedItem()).getKey();
     }
 
 }

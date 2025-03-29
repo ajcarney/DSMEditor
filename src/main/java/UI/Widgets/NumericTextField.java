@@ -12,6 +12,7 @@ import javafx.scene.control.TextField;
  */
 public class NumericTextField extends TextField {
     private final DoubleProperty numericValue;
+    private boolean integerMode;
 
 
     /**
@@ -19,11 +20,18 @@ public class NumericTextField extends TextField {
      * numbers are entered in the area
      *
      * @param initialValue default text to display
+     * @param intMode true to specify only integers are allowed
      */
-    public NumericTextField(Double initialValue) {
+    public NumericTextField(Double initialValue, boolean intMode) {
+        integerMode = intMode;
         if(initialValue != null) {
             numericValue = new SimpleDoubleProperty(initialValue);
-            setText(initialValue.toString());
+            if (integerMode) {
+                setText(String.valueOf(initialValue.intValue()));
+            } else {
+                setText(initialValue.toString());
+            }
+
         } else {
             numericValue = new SimpleDoubleProperty();
             setText("");
@@ -38,26 +46,59 @@ public class NumericTextField extends TextField {
 
             int numPeriods = 0;
             StringBuilder modifiedValue = new StringBuilder();
-            for (int i = 0; i < newValue.length(); i++) {  // rebuild the string with no characters that are not numeric or have multiple decimal places
-                if (newValue.charAt(i) == '.') {
+
+            // allow first character to be a negative sign
+            if (newValue.charAt(0) == '.') {
+                if(!integerMode) {
                     numPeriods += 1;
-                    if (numPeriods > 1) {
-                        modifiedValue.append("");
+                    modifiedValue.append(".");
+                }
+            } else if ("-0123456789".contains(String.valueOf(newValue.charAt(0)))) { // char is not numeric and should be removed
+                modifiedValue.append(newValue.charAt(0));
+            }
+
+            for (int i = 1; i < newValue.length(); i++) {  // rebuild the string with no characters that are not numeric or have multiple decimal places
+                if (newValue.charAt(i) == '.') {
+                    if(!integerMode) {
+                        numPeriods += 1;
+                        if (numPeriods <= 1) {
+                            modifiedValue.append(".");
+                        }
                     } else {
-                        modifiedValue.append(".");
+                        break;  // don't add anything after the decimal
                     }
-                } else if (!"0123456789".contains(String.valueOf(newValue.charAt(i)))) { // char is not numeric and should be removed
-                    modifiedValue.append("");
-                } else {
+                } else if ("0123456789".contains(String.valueOf(newValue.charAt(i)))) { // char is not numeric and should be removed
                     modifiedValue.append(newValue.charAt(i));
                 }
             }
 
-            if(!"".equals(modifiedValue.toString()) && !".".equals(modifiedValue.toString())) {
+            // only update if a valid number
+            if(!"".contentEquals(modifiedValue) && !".".contentEquals(modifiedValue) && !"-".contentEquals(modifiedValue)) {
                 numericValue.set(Double.parseDouble(modifiedValue.toString()));
             }
             numericTextField.setText(modifiedValue.toString());
         });
+    }
+
+
+    /**
+     * Creates the NumericTextField object and sets up callbacks to ensure only
+     * numbers are entered in the area. Allow doubles
+     *
+     * @param initialValue default text to display
+     */
+    public NumericTextField(Double initialValue) {
+        this(initialValue, false);
+    }
+
+
+    /**
+     * Sets the new value for integer mode
+     *
+     * @param integerMode if the input box should only allow integers or also doubles
+     */
+    public void setIntegerMode(boolean integerMode) {
+        this.integerMode = integerMode;
     }
 
 

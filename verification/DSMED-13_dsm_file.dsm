@@ -1,0 +1,336 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dsm>
+  <info>
+    <title>Simple Symmetric DSM</title>
+    <project>DSM Editor Tool QA</project>
+    <customer>Acme</customer>
+    <version>0.1.5</version>
+    <type>symmetric</type>
+    <file_structure>v2.0.0</file_structure>
+  </info>
+  <columns>
+    <col uid="1320379719">
+      <name>A</name>
+      <sort_index>0.5</sort_index>
+      <group1>2147483647</group1>
+      <group2 />
+      <alias>-1739473701</alias>
+    </col>
+    <col uid="967377196">
+      <name>B</name>
+      <sort_index>0.6</sort_index>
+      <group1>2147483647</group1>
+      <group2 />
+      <alias>311714821</alias>
+    </col>
+    <col uid="-303398780">
+      <name>C</name>
+      <sort_index>0.7</sort_index>
+      <group1>2147483647</group1>
+      <group2 />
+      <alias>2082905199</alias>
+    </col>
+    <col uid="-1748910292">
+      <name>G</name>
+      <sort_index>0.81</sort_index>
+      <group1>1542129959</group1>
+      <group2 />
+      <alias>-1256243831</alias>
+    </col>
+    <col uid="195816708">
+      <name>H</name>
+      <sort_index>0.82</sort_index>
+      <group1>1542129959</group1>
+      <group2 />
+      <alias>-1714465247</alias>
+    </col>
+    <col uid="1147998959">
+      <name>D</name>
+      <sort_index>1.0</sort_index>
+      <group1>1545498553</group1>
+      <group2 />
+      <alias>573020357</alias>
+    </col>
+    <col uid="-470477833">
+      <name>E</name>
+      <sort_index>2.0</sort_index>
+      <group1>1545498553</group1>
+      <group2 />
+      <alias>1902939795</alias>
+    </col>
+    <col uid="944278800">
+      <name>I</name>
+      <sort_index>3.0</sort_index>
+      <group1>1545498553</group1>
+      <group2 />
+      <alias>-223545709</alias>
+    </col>
+    <col uid="335954827">
+      <name>J</name>
+      <sort_index>4.0</sort_index>
+      <group1>1545498553</group1>
+      <group2 />
+      <alias>-1493613559</alias>
+    </col>
+  </columns>
+  <rows>
+    <row uid="-1739473701">
+      <name>A</name>
+      <sort_index>0.5</sort_index>
+      <group1>2147483647</group1>
+      <group2 />
+      <alias>1320379719</alias>
+    </row>
+    <row uid="311714821">
+      <name>B</name>
+      <sort_index>0.6</sort_index>
+      <group1>2147483647</group1>
+      <group2 />
+      <alias>967377196</alias>
+    </row>
+    <row uid="2082905199">
+      <name>C</name>
+      <sort_index>0.7</sort_index>
+      <group1>2147483647</group1>
+      <group2 />
+      <alias>-303398780</alias>
+    </row>
+    <row uid="-1256243831">
+      <name>G</name>
+      <sort_index>0.81</sort_index>
+      <group1>1542129959</group1>
+      <group2 />
+      <alias>-1748910292</alias>
+    </row>
+    <row uid="-1714465247">
+      <name>H</name>
+      <sort_index>0.82</sort_index>
+      <group1>1542129959</group1>
+      <group2 />
+      <alias>195816708</alias>
+    </row>
+    <row uid="573020357">
+      <name>D</name>
+      <sort_index>1.0</sort_index>
+      <group1>1545498553</group1>
+      <group2 />
+      <alias>1147998959</alias>
+    </row>
+    <row uid="1902939795">
+      <name>E</name>
+      <sort_index>2.0</sort_index>
+      <group1>1545498553</group1>
+      <group2 />
+      <alias>-470477833</alias>
+    </row>
+    <row uid="-223545709">
+      <name>I</name>
+      <sort_index>3.0</sort_index>
+      <group1>1545498553</group1>
+      <group2 />
+      <alias>944278800</alias>
+    </row>
+    <row uid="-1493613559">
+      <name>J</name>
+      <sort_index>4.0</sort_index>
+      <group1>1545498553</group1>
+      <group2 />
+      <alias>335954827</alias>
+    </row>
+  </rows>
+  <connections>
+    <connection>
+      <row_uid>311714821</row_uid>
+      <col_uid>1320379719</col_uid>
+      <name>X</name>
+      <weight>1.0</weight>
+      <interfaces>
+        <interface uid="137018602" />
+        <interface uid="-577221201" />
+        <interface uid="1195209710" />
+      </interfaces>
+    </connection>
+    <connection>
+      <row_uid>-1739473701</row_uid>
+      <col_uid>967377196</col_uid>
+      <name>X</name>
+      <weight>1.0</weight>
+      <interfaces />
+    </connection>
+    <connection>
+      <row_uid>573020357</row_uid>
+      <col_uid>1320379719</col_uid>
+      <name>X</name>
+      <weight>1.0</weight>
+      <interfaces />
+    </connection>
+    <connection>
+      <row_uid>-1739473701</row_uid>
+      <col_uid>1147998959</col_uid>
+      <name>X</name>
+      <weight>1.0</weight>
+      <interfaces />
+    </connection>
+    <connection>
+      <row_uid>-1739473701</row_uid>
+      <col_uid>195816708</col_uid>
+      <name>X</name>
+      <weight>1.0</weight>
+      <interfaces />
+    </connection>
+    <connection>
+      <row_uid>-1739473701</row_uid>
+      <col_uid>335954827</col_uid>
+      <name>X</name>
+      <weight>1.0</weight>
+      <interfaces />
+    </connection>
+    <connection>
+      <row_uid>2082905199</row_uid>
+      <col_uid>967377196</col_uid>
+      <name>X</name>
+      <weight>1.0</weight>
+      <interfaces />
+    </connection>
+    <connection>
+      <row_uid>311714821</row_uid>
+      <col_uid>-303398780</col_uid>
+      <name>X</name>
+      <weight>1.0</weight>
+      <interfaces />
+    </connection>
+    <connection>
+      <row_uid>311714821</row_uid>
+      <col_uid>1147998959</col_uid>
+      <name>X</name>
+      <weight>1.0</weight>
+      <interfaces />
+    </connection>
+    <connection>
+      <row_uid>1902939795</row_uid>
+      <col_uid>1147998959</col_uid>
+      <name>X</name>
+      <weight>1.5</weight>
+      <interfaces>
+        <interface uid="-577221201" />
+      </interfaces>
+    </connection>
+    <connection>
+      <row_uid>573020357</row_uid>
+      <col_uid>-470477833</col_uid>
+      <name>X</name>
+      <weight>1.5</weight>
+      <interfaces>
+        <interface uid="-577221201" />
+      </interfaces>
+    </connection>
+    <connection>
+      <row_uid>-223545709</row_uid>
+      <col_uid>1147998959</col_uid>
+      <name>X</name>
+      <weight>1.0</weight>
+      <interfaces />
+    </connection>
+    <connection>
+      <row_uid>573020357</row_uid>
+      <col_uid>944278800</col_uid>
+      <name>X</name>
+      <weight>1.0</weight>
+      <interfaces />
+    </connection>
+    <connection>
+      <row_uid>-1493613559</row_uid>
+      <col_uid>1147998959</col_uid>
+      <name>X</name>
+      <weight>1.0</weight>
+      <interfaces>
+        <interface uid="14141925" />
+        <interface uid="1551569064" />
+      </interfaces>
+    </connection>
+    <connection>
+      <row_uid>573020357</row_uid>
+      <col_uid>335954827</col_uid>
+      <name>X</name>
+      <weight>1.0</weight>
+      <interfaces>
+        <interface uid="14141925" />
+      </interfaces>
+    </connection>
+    <connection>
+      <row_uid>573020357</row_uid>
+      <col_uid>967377196</col_uid>
+      <name>X</name>
+      <weight>1.0</weight>
+      <interfaces />
+    </connection>
+  </connections>
+  <groupings>
+    <group>
+      <uid>2147483647</uid>
+      <priority>-1</priority>
+      <name>G1</name>
+      <gr>0.800000011920929</gr>
+      <gg>0.501960813999176</gg>
+      <gb>0.6000000238418579</gb>
+      <fr>0.0</fr>
+      <fg>0.0</fg>
+      <fb>0.0</fb>
+    </group>
+    <group>
+      <uid>1545498553</uid>
+      <priority>-1</priority>
+      <name>G2</name>
+      <gr>0.9019607901573181</gr>
+      <gg>0.9019607901573181</gg>
+      <gb>0.3019607961177826</gb>
+      <fr>0.0</fr>
+      <fg>0.0</fg>
+      <fb>0.0</fb>
+    </group>
+    <group>
+      <uid>1542129959</uid>
+      <priority>-1</priority>
+      <name>G3</name>
+      <gr>0.7019608020782471</gr>
+      <gg>0.9019607901573181</gg>
+      <gb>0.7019608020782471</gb>
+      <fr>0.0</fr>
+      <fg>0.0</fg>
+      <fb>0.0</fb>
+    </group>
+  </groupings>
+  <interfaces>
+    <grouping name="Mechanical">
+      <interface>
+        <uid>137018602</uid>
+        <name>ME1</name>
+        <abbrev>TH</abbrev>
+      </interface>
+      <interface>
+        <uid>14141925</uid>
+        <name>ME2</name>
+        <abbrev>A</abbrev>
+      </interface>
+    </grouping>
+    <grouping name="Logical">
+      <interface>
+        <uid>-577221201</uid>
+        <name>D1</name>
+        <abbrev>L</abbrev>
+      </interface>
+    </grouping>
+    <grouping name="Electrical">
+      <interface>
+        <uid>1195209710</uid>
+        <name>I1</name>
+        <abbrev>I</abbrev>
+      </interface>
+      <interface>
+        <uid>1551569064</uid>
+        <name>I2</name>
+        <abbrev>J</abbrev>
+      </interface>
+    </grouping>
+  </interfaces>
+</dsm>

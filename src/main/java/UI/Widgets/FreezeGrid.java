@@ -1,5 +1,6 @@
 package UI.Widgets;
 
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.Bounds;
@@ -132,7 +133,18 @@ public class FreezeGrid {
     private final ScrollBar xScroll = new ScrollBar();
     private final ScrollBar yScroll = new ScrollBar();
 
+    private final ScrollPane scrollNBox = new ScrollPane();
+    private final ScrollPane scrollWBox = new ScrollPane();
+    private final ScrollPane scrollCBox = new ScrollPane();
+    private final ScrollPane scrollSBox = new ScrollPane();
+    private final ScrollPane scrollEBox = new ScrollPane();
+    
+    private final DoubleProperty contentWidth = new SimpleDoubleProperty();  // The actual width of the content in the scroll pane
+    private final DoubleProperty contentHeight = new SimpleDoubleProperty();  // the actual height of the content in the scroll pane
+
     private final BorderPane grid;
+
+    private boolean isStatic = false;  // if the grid is static (no scroll bars) or not
 
 
     /**
@@ -220,7 +232,7 @@ public class FreezeGrid {
         }
 
         // optionally allow adding to scene because this is expensive and may mess up nodes parents if update grid is
-        // not called afterwards
+        // not called afterward
         if(addToDummy) {
             // a dummy scene is needed to calculate preferred sizes of nodes
             StackPane ghostPane = new StackPane();
@@ -477,7 +489,7 @@ public class FreezeGrid {
                 box.getChildren().add(l);
                 box.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
                 HBox.setHgrow(box, Priority.ALWAYS);
-                if(row.get(c).equals("")) {
+                if(row.get(c).isEmpty()) {
                     box = null;
                 }
                 FreezeGridCell cell = new FreezeGridCell(new Pair<>(r, c), box);
@@ -670,7 +682,7 @@ public class FreezeGrid {
             neGridConstraints.getKey().getKey()       // ne start x
         );
 
-        ScrollPane scrollNBox = new ScrollPane(nnBox);  // configure scroll pane later
+        scrollNBox.setContent(nnBox);  // configure scroll pane later
         if(!nnBox.getChildren().isEmpty()) {
             nBox.getChildren().add(scrollNBox);
         }
@@ -688,7 +700,7 @@ public class FreezeGrid {
             swGridConstraints.getKey().getValue(),    // sw start y
             swGridConstraints.getValue().getKey()     // sw end x
         );
-        ScrollPane scrollWBox = new ScrollPane(wBox);  // configure scroll pane later
+        scrollWBox.setContent(wBox);  // configure scroll pane later
 
         // create center box
         GridPane cBox = createCornerBox(
@@ -697,7 +709,7 @@ public class FreezeGrid {
                 seGridConstraints.getKey().getValue(),    // se start y
                 seGridConstraints.getKey().getKey()       // se start x
         );
-        ScrollPane scrollCBox = new ScrollPane(cBox);  // configure scroll pane later
+        scrollCBox.setContent(cBox);  // configure scroll pane later
 
 
         // create SW box
@@ -715,7 +727,7 @@ public class FreezeGrid {
             seGridConstraints.getKey().getKey()       // se start x
         );
 
-        ScrollPane scrollSBox = new ScrollPane(ssBox);  // configure scroll pane later
+        scrollSBox.setContent(ssBox);  // configure scroll pane later
         if(!ssBox.getChildren().isEmpty()) {
             sBox.getChildren().add(scrollSBox);
         }
@@ -733,7 +745,7 @@ public class FreezeGrid {
             seGridConstraints.getKey().getValue(),    // se start y
             seGridConstraints.getValue().getKey()     // se end x
         );
-        ScrollPane scrollEBox = new ScrollPane(eBox);  // configure scroll pane later
+        scrollEBox.setContent(eBox);
 
 
         // set cell pref sizes to row/col sizes
@@ -758,26 +770,26 @@ public class FreezeGrid {
         scrollNBox.hvalueProperty().bindBidirectional(scrollCBox.hvalueProperty());
         scrollNBox.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollNBox.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollNBox.setPannable(true);
+        scrollNBox.setPannable(!isStatic);
 
         scrollSBox.hvalueProperty().bindBidirectional(scrollCBox.hvalueProperty());
         scrollSBox.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollSBox.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollSBox.setPannable(true);
+        scrollSBox.setPannable(!isStatic);
 
         scrollWBox.vvalueProperty().bindBidirectional(scrollCBox.vvalueProperty());
         scrollWBox.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollWBox.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollWBox.setPannable(true);
+        scrollWBox.setPannable(!isStatic);
 
         scrollEBox.vvalueProperty().bindBidirectional(scrollCBox.vvalueProperty());
         scrollEBox.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollEBox.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollEBox.setPannable(true);
+        scrollEBox.setPannable(!isStatic);
 
         scrollCBox.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollCBox.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollCBox.setPannable(true);
+        scrollCBox.setPannable(!isStatic);
 
 
         // add boxes to border pane
@@ -802,19 +814,41 @@ public class FreezeGrid {
 
         grid.setStyle(grid.getStyle() + "-fx-border-width: -1; -fx-box-border: transparent; -fx-border-style: none;");
 
+        // create bindings to track the actual content size
+        contentWidth.bind(Bindings.createDoubleBinding(() ->
+            cBox.getBoundsInParent().getWidth()
+            + eBox.getBoundsInParent().getWidth()
+            + wBox.getBoundsInParent().getWidth(),
+        cBox.widthProperty(), eBox.widthProperty(), wBox.widthProperty()));
+
+        contentHeight.bind(Bindings.createDoubleBinding(() ->
+            cBox.getBoundsInParent().getHeight()
+            + nBox.getBoundsInParent().getHeight()
+            + sBox.getBoundsInParent().getHeight(),
+        cBox.heightProperty(), nBox.heightProperty(), sBox.heightProperty()));
+
         // set up scroll bindings
-        xScroll.minProperty().bindBidirectional(scrollCBox.hminProperty());
-        xScroll.maxProperty().bindBidirectional(scrollCBox.hmaxProperty());
-        scrollCBox.hvalueProperty().bindBidirectional(xScroll.valueProperty());
-        scrollSBox.hvalueProperty().bindBidirectional(xScroll.valueProperty());
-        scrollNBox.hvalueProperty().bindBidirectional(xScroll.valueProperty());
+        if (!isStatic) {
+            xScroll.minProperty().bindBidirectional(scrollCBox.hminProperty());
+            xScroll.maxProperty().bindBidirectional(scrollCBox.hmaxProperty());
+            scrollCBox.hvalueProperty().bindBidirectional(xScroll.valueProperty());
+            scrollSBox.hvalueProperty().bindBidirectional(xScroll.valueProperty());
+            scrollNBox.hvalueProperty().bindBidirectional(xScroll.valueProperty());
+            xScroll.visibleAmountProperty().bind(Bindings.createDoubleBinding(() -> xScroll.getWidth() / contentWidth.get(), xScroll.widthProperty(), contentWidth));
+            // visible when the scroll bar is smaller than the grid. Add the yScroll width because of how the scroll panes are laid out
+            xScroll.visibleProperty().bind(Bindings.createBooleanBinding(() -> xScroll.getWidth() + yScroll.getWidth() < contentWidth.get(),
+                    xScroll.widthProperty(), yScroll.widthProperty(), contentWidth));
 
-        yScroll.minProperty().bindBidirectional(scrollCBox.vminProperty());
-        yScroll.maxProperty().bindBidirectional(scrollCBox.vmaxProperty());
-        scrollCBox.vvalueProperty().bindBidirectional(yScroll.valueProperty());
-        scrollEBox.vvalueProperty().bindBidirectional(yScroll.valueProperty());
-        scrollWBox.vvalueProperty().bindBidirectional(yScroll.valueProperty());
-
+            yScroll.minProperty().bindBidirectional(scrollCBox.vminProperty());
+            yScroll.maxProperty().bindBidirectional(scrollCBox.vmaxProperty());
+            scrollCBox.vvalueProperty().bindBidirectional(yScroll.valueProperty());
+            scrollEBox.vvalueProperty().bindBidirectional(yScroll.valueProperty());
+            scrollWBox.vvalueProperty().bindBidirectional(yScroll.valueProperty());
+            yScroll.visibleAmountProperty().bind(Bindings.createDoubleBinding(() -> yScroll.getHeight() / contentHeight.get(),
+                    yScroll.heightProperty(), contentHeight));
+            yScroll.visibleProperty().bind(Bindings.createBooleanBinding(() -> yScroll.getHeight() < contentHeight.get(),  // visible when the scroll bar is smaller than the grid
+                    yScroll.heightProperty(), contentHeight));
+        }
     }
 
 
@@ -824,13 +858,33 @@ public class FreezeGrid {
      * @return BorderPane of the grid
      */
     public HBox getGrid() {
-        // create hbox for adding the vertical scroll bar and a vbox for adding the horizontal scroll bar
+        // create HBox for adding the vertical scroll bar and a vbox for adding the horizontal scroll bar
         HBox yScrollPane = new HBox();
         VBox xScrollPane = new VBox();
         xScrollPane.getChildren().addAll(grid, xScroll);
         yScrollPane.getChildren().addAll(xScrollPane, yScroll);
         yScrollPane.setAlignment(Pos.CENTER);
         return yScrollPane;
+    }
+
+
+    /**
+     * shows or hides the scroll bars
+     * @param isStatic true if nothing should be able to move around
+     */
+    public void setStatic(boolean isStatic) {
+        xScroll.setVisible(!isStatic);
+        yScroll.setVisible(!isStatic);
+        xScroll.setManaged(!isStatic);
+        yScroll.setManaged(!isStatic);
+
+        scrollNBox.setPannable(!isStatic);
+        scrollSBox.setPannable(!isStatic);
+        scrollWBox.setPannable(!isStatic);
+        scrollEBox.setPannable(!isStatic);
+        scrollCBox.setPannable(!isStatic);
+
+        this.isStatic = isStatic;
     }
 
 

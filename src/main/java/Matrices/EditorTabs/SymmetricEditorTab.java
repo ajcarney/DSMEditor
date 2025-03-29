@@ -1,101 +1,58 @@
 package Matrices.EditorTabs;
 
-import Matrices.Data.AsymmetricDSMData;
 import Matrices.Data.SymmetricDSMData;
-import Matrices.SideBarTools.SymmetricSideBar;
-import Matrices.Views.AbstractMatrixView;
-import Matrices.Views.SymmetricView;
+import Matrices.IOHandlers.SymmetricIOHandler;
 import UI.MatrixMetaDataPane;
-import javafx.scene.layout.Pane;
+import UI.MatrixViews.SymmetricView;
+import UI.SideBarViews.SymmetricSideBar;
+import javafx.beans.binding.Bindings;
 
-import java.util.ArrayList;
+import java.io.File;
 
 
 /**
  * The editor tab for symmetric matrices. Only shows the matrix view as the main content
  */
-public class SymmetricEditorTab implements IEditorTab {
-
-    SymmetricDSMData matrixData;
-    SymmetricView matrixView;
-    SymmetricSideBar sideBar;
-    MatrixMetaDataPane metadata;
-
+public class SymmetricEditorTab extends AbstractEditorTab {
 
     /**
-     * Generic constructor. Takes the data for a symmetric DSM
+     * Takes the data for a symmetric DSM
      *
      * @param matrixData  the data for the symmetric matrix
      */
-    public SymmetricEditorTab(SymmetricDSMData matrixData) {
-        this.matrixData = matrixData;
-        this.matrixView = new SymmetricView(this.matrixData, 12.0);
-        this.sideBar = new SymmetricSideBar(this.matrixData, this.matrixView);
+    public SymmetricEditorTab(SymmetricDSMData matrixData, SymmetricIOHandler ioHandler) {
+        super(matrixData, ioHandler);
+        this.matrixView = new SymmetricView((SymmetricDSMData) this.matrixData, 12.0);
+        this.matrixSideBar = new SymmetricSideBar((SymmetricDSMData) this.matrixData, (SymmetricView) this.matrixView);
+    }
+
+    /**
+     * Creates a new matrix object by reading in a file. Throws IllegalArgumentException if there was an error reading
+     * the file
+     *
+     * @param file    the file object that contains a symmetric dsm to read
+     */
+    public SymmetricEditorTab(File file) {
+        matrixIOHandler = new SymmetricIOHandler(file);
+        matrixData = matrixIOHandler.readFile();
+        if(matrixData == null) {
+            throw new IllegalArgumentException("There was an error reading the matrix at " + file);  // error because error occurred on file read
+        }
+        matrixIOHandler.setMatrix(matrixData);
+
+        matrixView = new SymmetricView((SymmetricDSMData) matrixData, 12.0);
+        matrixSideBar = new SymmetricSideBar((SymmetricDSMData) matrixData, (SymmetricView) matrixView);
+
         this.metadata = new MatrixMetaDataPane(this.matrixData);
+        this.isSaved.bind(this.matrixData.getWasModifiedProperty().not());  // saved when not modified
+
+        this.title.bind(Bindings.createStringBinding(() -> {
+            String title = matrixIOHandler.getSavePath().getName();
+            if (matrixData.getWasModifiedProperty().get()) {
+                title += "*";
+            }
+            return title;
+        }, matrixData.getWasModifiedProperty()));
     }
 
-
-    /**
-     * @return  The node to be displayed as the center content
-     */
-    @Override
-    public Pane getCenterPane() {
-        return matrixView.getView();
-    }
-
-
-    /**
-     * @return  The node to be displayed as the left content
-     */
-    @Override
-    public Pane getLeftPane() {
-        return sideBar.getLayout();
-    }
-
-
-    /**
-     * @return  The node to be displayed as the right content
-     */
-    @Override
-    public Pane getRightPane() {
-        return metadata.getLayout();
-    }
-
-
-    /**
-     * @return  The node to be displayed as the bottom content
-     */
-    @Override
-    public Pane getBottomPane() {
-        return new Pane();
-    }
-
-
-    /**
-     * @return  The matrix view used by the tab
-     */
-    @Override
-    public SymmetricView getMatrixView() {
-        return matrixView;
-    }
-
-
-    /**
-     * @return  all the matrix views currently in the editor tab
-     */
-    @Override
-    public ArrayList<AbstractMatrixView> getAllMatrixViews() {
-        ArrayList<AbstractMatrixView> views = new ArrayList<>();
-        views.add(matrixView);
-        return views;
-    }
-
-
-    /**
-     * @return  the matrix data of the open matrix
-     */
-    @Override
-    public SymmetricDSMData getMatrixData() {
-        return matrixData;
-    }
 }

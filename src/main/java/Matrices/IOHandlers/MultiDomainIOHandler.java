@@ -3,7 +3,7 @@ package Matrices.IOHandlers;
 import Constants.Constants;
 import Matrices.Data.Entities.*;
 import Matrices.Data.MultiDomainDSMData;
-import Matrices.Views.AbstractMatrixView;
+import UI.MatrixViews.AbstractMatrixView;
 import javafx.scene.paint.Color;
 import javafx.util.Pair;
 import org.apache.poi.ss.usermodel.*;
@@ -18,10 +18,7 @@ import org.jdom2.input.SAXBuilder;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.*;
 
 
@@ -33,7 +30,6 @@ import java.util.*;
  */
 public class MultiDomainIOHandler extends AbstractIOHandler {
 
-    private MultiDomainDSMData matrix;
 
     /**
      * Constructor
@@ -58,17 +54,7 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
 
 
     /**
-     * Sets the current matrix used by the IOHandler
-     *
-     * @param matrix  the new matrix object for the io handler
-     */
-    public void setMatrix(MultiDomainDSMData matrix) {
-        this.matrix = matrix;
-    }
-    
-
-    /**
-     * Reads an xml file and parses it as an object that extends the template DSM. Returns the object,
+     * Reads an XML file and parses it as an object that extends the template DSM. Returns the object,
      * but does not automatically add it to be handled.
      *
      * @return  the parsed in matrix
@@ -213,7 +199,7 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
 
 
     /**
-     * Saves the matrix to an xml file specified by the caller of the function. Clears
+     * Saves the matrix to an XML file specified by the caller of the function. Clears
      * the matrix's wasModifiedFlag
      *
      * @param file      the file to save the matrix to
@@ -258,11 +244,11 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
             }
 
             // create domain and domain-grouping elements
-            for(Grouping domain: matrix.getDomains()) {
+            for(Grouping domain: ((MultiDomainDSMData) matrix).getDomains()) {
                 Element domainElement = domain.getXML(new Element("domain"));
 
                 Element domainGroupingsElement = new Element("domainGroupings");
-                for(Grouping domainGroup : matrix.getDomainGroupings(domain)) {
+                for(Grouping domainGroup : ((MultiDomainDSMData) matrix).getDomainGroupings(domain)) {
                     domainGroupingsElement.addContent(domainGroup.getXML(new Element("group")));
                 }
                 domainElement.addContent(domainGroupingsElement);
@@ -271,7 +257,7 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
             }
 
             // create interface type elements
-            for(Map.Entry<String, Vector<DSMInterfaceType>> interfaces : matrix.getInterfaceTypes().entrySet()) {
+            for(Map.Entry<String, List<DSMInterfaceType>> interfaces : matrix.getInterfaceTypes().entrySet()) {
                 Element interfacesGroupingElement = new Element("grouping");
                 interfacesGroupingElement.setAttribute("name", interfaces.getKey());
                 for(DSMInterfaceType i : interfaces.getValue()) {
@@ -300,10 +286,136 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
 
             return 1;  // file was successfully saved
         } catch(Exception e) {  // TODO: add better error handling and bring up an alert box
-            System.out.println(e);
             e.printStackTrace();
             return 0;  // 0 means there was an error somewhere
         }
+    }
+
+
+    /**
+     * Reads a csv file as an adjacency matrix and parses it into a SymmetricDSMData object and returns it. Does not
+     * add it to be handled. Must be in following format
+     * <domain>, <group>, col1, col2, col3, ...
+     * d1,       g1,      w1,   w2,   w3, ...
+     * ...
+     * d2,       g2,      w4,   w5,   w6, ...
+     * ...
+     * where d_i is the domain, g_i is the group, and w_i is the weight of the connection
+     *
+     * @param file  the file location to read from
+     * @return      SymmetricDSMData object of the parsed in matrix
+     */
+    public MultiDomainDSMData importAdjacencyMatrix(File file) {
+        MultiDomainDSMData matrix = new MultiDomainDSMData();
+
+        // read the lines of the file
+        List<List<String>> lines = readAdjacencyMatrix(file);
+
+        int uid = 1;
+        ArrayList<String> itemsOrder = new ArrayList<>();
+        HashMap<String, Integer> rowItems = new HashMap<>();
+        HashMap<String, Integer> colItems = new HashMap<>();
+        HashMap<String, Grouping> domains = new HashMap<>();
+        HashMap<String, Grouping> groups  = new HashMap<>();
+
+        // parse the first line to create rows and columns
+        List<String> line = lines.get(1);
+        Grouping defaultDomain = matrix.getDefaultDomain();
+        Grouping defaultGroup = matrix.getDefaultDomainGroup(defaultDomain);
+
+        for(int i = 2; i < line.size(); i++) {
+            DSMItem row = new DSMItem(uid, uid + 1, i, line.get(i), defaultGroup, defaultDomain);
+            DSMItem col = new DSMItem(uid + 1, uid, i, line.get(i), defaultGroup, defaultDomain);
+            rowItems.put(line.get(i), uid);
+            colItems.put(line.get(i), uid + 1);
+            itemsOrder.add(line.get(i));
+
+            uid += 2;
+            matrix.addItem(row, true);
+            matrix.addItem(col, false);
+        }
+
+        // skip first row and create rows, items, domains, groups, and connections
+        int priority = 1;
+        for(int i = 2; i < lines.size(); i++) {
+            line = lines.get(i);
+            Grouping domain;
+            Grouping group;
+
+            // add domain if not exists
+            if (domains.containsKey(line.get(0))) {
+                domain = domains.get(line.get(0));
+            } else {
+                domain = new Grouping(uid, priority, line.get(0), Color.WHITE, Color.BLACK);
+                matrix.addDomain(domain);
+                domains.put(line.get(0), domain);
+                priority += 1;
+                uid += 1;
+            }
+
+            // add grouping if not exists
+            if (groups.containsKey(line.get(1))) {
+                group = groups.get(line.get(1));
+            } else {
+                if (line.get(1).equals("default")) {
+                    group = matrix.getDefaultDomainGroup(domain);
+                } else {
+                    group = new Grouping(uid, -1, line.get(1), Color.WHITE, Color.BLACK);
+                    uid += 1;
+                }
+                groups.put(line.get(1), group);
+            }
+
+            Integer rowUid = rowItems.get(itemsOrder.get(i - 2));  // subtract one for header row
+
+            // update the domains manually
+            matrix.getItem(rowUid).setGroup2(domain);
+            matrix.getItemByAlias(rowUid).setGroup2(domain);
+
+            // update the groups
+            matrix.setItemDomainGroup(matrix.getItem(rowUid), domain, group);  // set the group (does both row and column)
+
+            for (int j = 2; j < line.size(); j++) {
+                double weight = Double.parseDouble(line.get(j));
+                if (weight != 0.0) {
+                    Integer colUid = colItems.get(itemsOrder.get(j - 2));  // subtract one for groups column
+                    matrix.modifyConnection(rowUid, colUid, "x", weight, new ArrayList<>());
+                }
+            }
+        }
+
+        // remove default domain if empty
+        int count = 0;
+        for (DSMItem item : matrix.getRows()) {
+            if (item.getGroup2().equals(defaultDomain)) {
+                count++;
+                break;
+            }
+        }
+        if (count == 0) {
+            matrix.removeDomain(defaultDomain);
+        }
+
+        // remove default domain groups if empty
+        for (Grouping domain : matrix.getDomains()) {
+            count = 0;
+            for (DSMItem item : matrix.getRows()) {
+                if (item.getGroup2().equals(domain) && item.getGroup1().equals(defaultGroup)) {
+                    count++;
+                    break;
+                }
+            }
+            if (count == 0) {
+                matrix.removeDomainGrouping(domain, defaultGroup);
+            }
+        }
+
+        matrix.reDistributeSortIndices();
+        matrix.clearWasModifiedFlag();  // clear flag because no write operations were performed to the file
+        matrix.clearStacks();  // make sure there are no changes when it is opened
+
+
+        return matrix;
     }
 
 
@@ -357,7 +469,57 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
 
             return 1;
         } catch(Exception e) {  // TODO: add better error handling and bring up an alert box
-            System.out.println(e);
+            e.printStackTrace();
+            return 0;  // 0 means there was an error somewhere
+        }
+    }
+
+
+    /**
+     * Saves a matrix as an adjacency matrix in csv format:
+     * <domain>, <group>, col1, col2, col3, ...
+     * d1,       g1,      w1,   w2,   w3, ...
+     * ...
+     * d2,       g2,      w4,   w5,   w6, ...
+     * ...
+     * where d_i is the domain, g_i is the group, and w_i is the weight of the connection
+     *
+     * @param file      the file to save the csv file to
+     * @return          0 on success, 1 on error
+     */
+    @Override
+    public int exportMatrixToAdjacencyMatrix(File file) {
+        try {
+            StringBuilder contents = new StringBuilder("multi-domain\n");
+            contents.append("<domain>,<group>");
+
+            matrix.reDistributeSortIndices();
+            for (DSMItem col : matrix.getCols()) {
+                contents.append(",").append(col.getName().getValue());
+            }
+
+            for (DSMItem row : matrix.getRows()) {
+                contents.append("\n");
+                contents.append(row.getGroup2().getName()).append(",");  // domain
+                contents.append(row.getGroup1().getName());              // group
+                for (DSMItem col : matrix.getCols()) {
+                    DSMConnection connection = matrix.getConnection(row.getUid(), col.getUid());
+                    if (connection != null) {
+                        contents.append(",").append(connection.getWeight());
+                    } else {
+                        contents.append(",0");
+                    }
+                }
+            }
+
+            file = forceExtension(file, ".csv");
+            System.out.println("Exporting to " + file.getAbsolutePath());
+            FileWriter writer = new FileWriter(file);
+            writer.write(contents.toString());
+            writer.close();
+
+            return 1;
+        } catch(Exception e) {  // TODO: add better error handling and bring up an alert box
             e.printStackTrace();
             return 0;  // 0 means there was an error somewhere
         }
@@ -490,8 +652,8 @@ public class MultiDomainIOHandler extends AbstractIOHandler {
                             styleExcelCell(workbook, cell, bgColor, null, HORIZONTAL_ROTATION);
                         }
                         case EDITABLE_CONNECTION -> {
-                            Integer rowUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getKey().getUid();
-                            Integer colUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getValue().getUid();
+                            int rowUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getKey().getUid();
+                            int colUid = ((Pair<DSMItem, DSMItem>) item.getValue()).getValue().getUid();
 
                             Cell cell = row.createCell(c + COL_START);
                             if (matrix.getConnection(rowUid, colUid) != null) {

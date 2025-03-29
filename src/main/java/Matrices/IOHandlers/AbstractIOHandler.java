@@ -2,7 +2,7 @@ package Matrices.IOHandlers;
 
 import Matrices.Data.AbstractDSMData;
 import Matrices.IOHandlers.Flags.IStandardExports;
-import Matrices.Views.AbstractMatrixView;
+import UI.MatrixViews.AbstractMatrixView;
 import UI.Widgets.Misc;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.geometry.Insets;
@@ -29,7 +29,9 @@ import org.jdom2.input.SAXBuilder;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 
@@ -43,6 +45,13 @@ public abstract class AbstractIOHandler implements IStandardExports {
     protected File savePath;
     protected AbstractDSMData matrix;
 
+    // values returned by function that prompts for save
+    public enum SAVE_PROMPT_OPTIONS {
+        NO_SAVE,
+        SAVE,
+        CANCEL
+    }
+
 
     /**
      * Constructor. Sets the default save path
@@ -51,6 +60,16 @@ public abstract class AbstractIOHandler implements IStandardExports {
      */
     public AbstractIOHandler(File savePath) {
         this.savePath = savePath;
+    }
+
+
+    /**
+     * Sets the current matrix used by the IOHandler
+     *
+     * @param matrix  the new matrix object for the io handler
+     */
+    public void setMatrix(AbstractDSMData matrix) {
+        this.matrix = matrix;
     }
 
 
@@ -82,7 +101,7 @@ public abstract class AbstractIOHandler implements IStandardExports {
      * @param extension the extension to force
      * @return          a file object with the extension at the end
      */
-    static public File forceExtension(File file, String extension) {
+    public static File forceExtension(File file, String extension) {
         String path = file.getAbsolutePath();
         if(!path.endsWith(extension)) {
             path += extension;
@@ -117,16 +136,62 @@ public abstract class AbstractIOHandler implements IStandardExports {
 
 
     /**
-     * Reads an xml file and parses it as an object that extends the template DSM. Returns the object,
+     * Returns the dsm type of adjacency matrix csv file
+     * @param file  the adjacency matrix file to open
+     * @return string of dsm type, empty string on exception
+     */
+    public static String getAdjacencyDSMType(File file) {
+        // read the lines of the file
+        Scanner s;
+        try {
+            s = new Scanner(file);
+            String line = s.nextLine();
+            s.close();
+
+            return line.strip().split(",")[0];
+        } catch (FileNotFoundException | NoSuchElementException ignored) {
+            return "";
+        }
+    }
+
+
+    /**
+     * This method reads an adjacency matrix from a CSV file.
+     * The method uses a Scanner to read the file line by line. Each line is split into a list of strings,
+     * representing the cells of the matrix row. The list of strings is then added to a list of lists,
+     * representing the entire matrix.
+     *
+     * @param file The CSV file to read the adjacency matrix from.
+     * @return A list of lists of strings representing the adjacency matrix. Each inner list represents a row of the matrix.
+     */
+    protected List<List<String>> readAdjacencyMatrix(File file) {
+        List<List<String>> lines = new ArrayList<>();
+        Scanner scanner;
+        try {
+            scanner = new Scanner(file);
+            while (scanner.hasNextLine()){
+                List<String> line = new ArrayList<>(Arrays.asList(scanner.nextLine().split(",(?=(?:[^\\\"]*\\\"[^\\\"]*\\\")*[^\\\"]*$)")));
+                lines.add(line);
+            }
+            scanner.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            return null;
+        }
+        return lines;
+    }
+
+    /**
+     * Reads a xml file and parses it as an object that extends the template DSM. Returns the object,
      * but does not automatically add it to be handled.
      *
      * @return  the parsed in matrix
      */
-    public abstract <T1 extends AbstractDSMData> T1 readFile();
+    public abstract AbstractDSMData readFile();
 
 
     /**
-     * Saves the matrix to an xml file specified by the caller of the function. Clears
+     * Saves the matrix to a xml file specified by the caller of the function. Clears
      * the matrix's wasModifiedFlag
      *
      * @param file      the file to save the matrix to
@@ -156,11 +221,11 @@ public abstract class AbstractIOHandler implements IStandardExports {
      * should be called before removing a matrix. Does not save the matrix only decides what
      * should be done
      *
-     * @return     0 = don't save, 1 = save, 2 = cancel
+     * @return enum of action to perform
      */
-     public Integer promptSave() {
-        AtomicReference<Integer> code = new AtomicReference<>(); // 0 = close the tab, 1 = save and close, 2 = don't close
-        code.set(2);  // default value
+     public SAVE_PROMPT_OPTIONS promptSave() {
+        AtomicReference<SAVE_PROMPT_OPTIONS> code = new AtomicReference<>(); // 0 = close the tab, 1 = save and close, 2 = don't close
+        code.set(SAVE_PROMPT_OPTIONS.CANCEL);  // default value
         Stage window = new Stage();
 
         Label prompt = new Label("Would you like to save your changes to " + savePath.getAbsolutePath());
@@ -177,19 +242,19 @@ public abstract class AbstractIOHandler implements IStandardExports {
 
         Button saveAndCloseButton = new Button("Save");
         saveAndCloseButton.setOnAction(ee -> {
-            code.set(1);
+            code.set(SAVE_PROMPT_OPTIONS.SAVE);
             window.close();
         });
 
         Button closeButton = new Button("Don't Save");
         closeButton.setOnAction(ee -> {
-            code.set(0);
+            code.set(SAVE_PROMPT_OPTIONS.NO_SAVE);
             window.close();
         });
 
         Button cancelButton = new Button("Cancel");
         cancelButton.setOnAction(ee -> {
-            code.set(2);
+            code.set(SAVE_PROMPT_OPTIONS.CANCEL);
             window.close();
         });
 
@@ -205,6 +270,7 @@ public abstract class AbstractIOHandler implements IStandardExports {
 
         //Display window and wait for it to be closed before returning
         Scene scene = new Scene(layout, 500, 125);
+        window.initOwner(layout.getScene().getWindow());
         window.setScene(scene);
         window.showAndWait();
 
@@ -229,7 +295,23 @@ public abstract class AbstractIOHandler implements IStandardExports {
 
 
     /**
-     * Styles a cell in an excel workbook in place
+     * Opens a file chooser window to choose a location to export a matrix to csv
+     *
+     * @param window the window associated with the file chooser
+     */
+    @Override
+    public void promptExportToAdjacencyMatrix(Window window) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV File", "*.csv"));  // dsm is the only file type usable
+        File fileName = fileChooser.showSaveDialog(window);
+        if(fileName != null) {
+            int code = exportMatrixToAdjacencyMatrix(fileName);
+        }
+    }
+
+
+    /**
+     * Styles a cell in an Excel workbook in place
      *
      * @param wb         the workbook object of the spreadsheet that contains the cell
      * @param cell       the cell created from the workbook to style
@@ -283,13 +365,15 @@ public abstract class AbstractIOHandler implements IStandardExports {
     /**
      * Opens a window to export a matrix to a png file with different configuration options
      *
-     * @param matrix      the matrix object to save to an image
-     * @param matrixView  the matrix gui handler for the matrix object
+     * @param parentWindow the parent window so that the popup can open centered
+     * @param matrix       the matrix object to save to an image
+     * @param matrixView   the matrix gui handler for the matrix object
      */
     @Override
-     public void exportToImage(AbstractDSMData matrix, AbstractMatrixView matrixView) {
+    public void exportToImage(Window parentWindow, AbstractDSMData matrix, AbstractMatrixView matrixView) {
         // Create Root window
         Stage window = new Stage();
+        window.initOwner(parentWindow);
         window.initModality(Modality.APPLICATION_MODAL); //Block events to other windows
         window.setTitle("DSMEditor");
 
@@ -375,7 +459,7 @@ public abstract class AbstractIOHandler implements IStandardExports {
 
         Button saveButton = new Button("Save");
         saveButton.setOnAction(e -> {
-            if(!saveLocation.getText().equals("")){
+            if(!saveLocation.getText().isEmpty()){
                 File file = new File(saveLocation.getText());
                 BufferedImage img = SwingFXUtils.fromFXImage(preview.snapshot(new SnapshotParameters(), null), null);
                 try {
@@ -439,7 +523,7 @@ public abstract class AbstractIOHandler implements IStandardExports {
             HBox centeredMatrix = new HBox();
 
             if(fastRender.isSelected()) {
-                matrixView.setCurrentMode(AbstractMatrixView.MatrixViewMode.FAST_RENDER);
+                matrixView.setCurrentMode(AbstractMatrixView.MatrixViewMode.STATIC_FAST_RENDER);
             } else if(showConnectionNames.isSelected()) {
                 matrixView.setCurrentMode(AbstractMatrixView.MatrixViewMode.STATIC_NAMES);
             } else {

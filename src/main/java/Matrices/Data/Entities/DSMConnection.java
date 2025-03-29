@@ -164,7 +164,7 @@ public class DSMConnection {
      * Adds the xml representation of a connection to an XML Element object
      *
      * @param connElement  the root to add the connection data to
-     * @return             an xml representation of the connection object so that it can be saved to a file
+     * @return             a xml representation of the connection object so that it can be saved to a file
      */
     public Element getXML(Element connElement) {
         connElement.addContent(new Element("row_uid").setText(Integer.valueOf(getRowUid()).toString()));
@@ -203,7 +203,7 @@ public class DSMConnection {
         }
 
         // cast to this object
-        return isSameConnectionType(c) && (c.getRowUid() == this.getRowUid()) && (c.getColUid() == this.getColUid());  // compare based on name, weight, and uids
+        return isSameConnectionType(c) && (c.getRowUid() == this.getRowUid()) && (c.getColUid() == this.getColUid());  // compare based on name, weight, and uid
     }
 
 

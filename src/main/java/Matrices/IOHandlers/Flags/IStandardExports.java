@@ -1,7 +1,7 @@
 package Matrices.IOHandlers.Flags;
 
 import Matrices.Data.AbstractDSMData;
-import Matrices.Views.AbstractMatrixView;
+import UI.MatrixViews.AbstractMatrixView;
 import javafx.stage.Window;
 
 import java.io.File;
@@ -34,6 +34,23 @@ public interface IStandardExports {
 
 
     /**
+     * Saves a matrix as an adjacency matrix in csv format
+     *
+     * @param file      the file to save the csv file to
+     * @return          0 on success, 1 on error
+     */
+    int exportMatrixToAdjacencyMatrix(File file);
+
+
+    /**
+     * Opens a file chooser window to choose a location to export an adjacency matrix
+     *
+     * @param window the window associated with the file chooser
+     */
+    void promptExportToAdjacencyMatrix(Window window);
+
+
+    /**
      * Saves a matrix to an Excel Spreadsheet file.
      *
      * @param file      A File object of the location of the .xlsx file
@@ -53,9 +70,10 @@ public interface IStandardExports {
     /**
      * Opens a window to export a matrix to a png file with different configuration options
      *
+     * @param parentWindow the parent window so that the popup can open centered
      * @param matrix      the matrix object to save to an image
      * @param matrixView  the matrix gui handler for the matrix object
      */
-    void exportToImage(AbstractDSMData matrix, AbstractMatrixView matrixView);
+    void exportToImage(Window parentWindow, AbstractDSMData matrix, AbstractMatrixView matrixView);
 
 }

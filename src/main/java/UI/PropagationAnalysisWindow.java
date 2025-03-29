@@ -3,6 +3,7 @@ package UI;
 import Matrices.Data.AbstractDSMData;
 import Matrices.Data.Entities.DSMItem;
 import Matrices.Data.Flags.IPropagationAnalysis;
+import UI.Widgets.DSMItemSelector;
 import UI.Widgets.NumericTextField;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.IntegerProperty;
@@ -27,6 +28,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.stage.Window;
 import javafx.util.Callback;
 import javafx.util.Pair;
 
@@ -47,7 +49,7 @@ public class PropagationAnalysisWindow<T extends AbstractDSMData & IPropagationA
     Stage window;
     private final BorderPane rootLayout;
 
-    private VBox configLayout;      // side bar
+    private VBox configLayout;  // sidebar
 
     // config pane widgets
     private ComboBox<Integer> startItemEntry;
@@ -57,11 +59,11 @@ public class PropagationAnalysisWindow<T extends AbstractDSMData & IPropagationA
 
     private RadioButton countByOccurrence;
 
+    private final ObservableList<Integer> itemExclusions = FXCollections.observableArrayList();
+
     // main content widgets
     private final VBox graphLayout;
     private final VBox rawOutputLayout;
-
-    ListView<Integer> itemExclusions;
 
 
     /**
@@ -80,7 +82,7 @@ public class PropagationAnalysisWindow<T extends AbstractDSMData & IPropagationA
             window.setTitle("Propagation Analysis");
         }
 
-    // side bar
+    // sidebar
         updateConfigWidgets();
 
     // menu
@@ -238,42 +240,9 @@ public class PropagationAnalysisWindow<T extends AbstractDSMData & IPropagationA
         countMethodLayout.setPadding(new Insets(10));
 
     // exclusions layout
-        VBox exclusionsLayout = new VBox();
+        DSMItemSelector itemSelector = new DSMItemSelector(matrix);
+        VBox exclusionsLayout = itemSelector.getItemSelector("Exclusions", true, itemExclusions);
 
-        Label exclusionsLabel = new Label("Excluded Items");
-        itemExclusions = new ListView<>();
-        itemExclusions.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        itemExclusions.setCellFactory(cellFactory);
-        Button deleteSelected = new Button("Delete Selected Item(s)");
-        deleteSelected.setOnAction(ee -> itemExclusions.getItems().removeAll(itemExclusions.getSelectionModel().getSelectedItems()));
-
-        HBox exceptionSelectorLayout = new HBox();
-        ComboBox<Integer> itemExceptionSelector = new ComboBox<>();
-        itemExceptionSelector.setButtonCell(cellFactory.call(null));
-        itemExceptionSelector.setCellFactory(cellFactory);
-
-        ArrayList<Integer> exceptions = new ArrayList<>();
-        for(DSMItem row : matrix.getRows()) {
-            exceptions.add(row.getUid());
-        }
-
-        itemExceptionSelector.getItems().addAll(exceptions);
-        itemExceptionSelector.setMaxWidth(Double.MAX_VALUE);
-        HBox.setHgrow(itemExceptionSelector, Priority.ALWAYS);
-        itemExceptionSelector.setPromptText("Exclusion");
-
-        Button addException = new Button("Add Exclusion");
-        addException.setOnAction(e -> {
-            if(itemExceptionSelector.getValue() == null || itemExclusions.getItems().contains(itemExceptionSelector.getValue())) return;
-            itemExclusions.getItems().add(itemExceptionSelector.getValue());
-        });
-
-        exceptionSelectorLayout.getChildren().addAll(itemExceptionSelector, addException);
-
-        exclusionsLayout.getChildren().addAll(exclusionsLabel, itemExclusions, deleteSelected, exceptionSelectorLayout);
-        exclusionsLayout.setPadding(new Insets(10));
-        exclusionsLayout.setAlignment(Pos.CENTER);
-        exclusionsLayout.setSpacing(5);
 
     // add to config layout
         configLayout = new VBox();
@@ -297,7 +266,7 @@ public class PropagationAnalysisWindow<T extends AbstractDSMData & IPropagationA
             minimumWeight = -Double.MAX_VALUE;
         }
 
-        ArrayList<Integer> exclusions = new ArrayList<>(itemExclusions.getItems());
+        ArrayList<Integer> exclusions = new ArrayList<>(itemExclusions);
 
         boolean byWeight = !countByOccurrence.isSelected();
 
@@ -319,7 +288,7 @@ public class PropagationAnalysisWindow<T extends AbstractDSMData & IPropagationA
         xAxis.setLabel("Item Name");
         yAxis.setLabel("Value");
 
-        XYChart.Series series1 = new XYChart.Series();
+        XYChart.Series<String, Number> series1 = new XYChart.Series<>();
         if(byWeight) {
             series1.setName("Value by Weight");
         } else {
@@ -327,7 +296,7 @@ public class PropagationAnalysisWindow<T extends AbstractDSMData & IPropagationA
         }
 
         for(Map.Entry<Integer, Double> entry : scores.entrySet()) {
-            series1.getData().add(new XYChart.Data(matrix.getItem(entry.getKey()).getName().getValue(), entry.getValue()));
+            series1.getData().add(new XYChart.Data<>(matrix.getItem(entry.getKey()).getName().getValue(), entry.getValue()));
         }
 
         graph.getData().addAll(series1);
@@ -338,7 +307,7 @@ public class PropagationAnalysisWindow<T extends AbstractDSMData & IPropagationA
         // update raw data layout
         ObservableList<Pair<String, Double>> tableItems = FXCollections.observableArrayList();
         for(Map.Entry<Integer, Double> entry : scores.entrySet()) {
-            tableItems.add(new Pair(matrix.getItem(entry.getKey()).getName().getValue(), entry.getValue()));
+            tableItems.add(new Pair<>(matrix.getItem(entry.getKey()).getName().getValue(), entry.getValue()));
         }
 
         TableView<Pair<String, Double>> table = new TableView<>();
@@ -382,10 +351,12 @@ public class PropagationAnalysisWindow<T extends AbstractDSMData & IPropagationA
 
     /**
      * Opens and starts the gui so users can interact with it.
+     * @param parentWindow the parents window so that the scene can open centered
      */
-    public void start() {
+    public void start(Window parentWindow) {
         Scene scene = new Scene(rootLayout, 1200, 800);
         window.setScene(scene);
+        window.initOwner(parentWindow);
         window.show();
     }
 
