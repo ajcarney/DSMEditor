@@ -205,7 +205,7 @@
                         <id>createDirs</id>
                         <phase>package</phase>
                         <configuration>
-                            <tasks>
+                            <target>
                                 <delete dir="./release"/>
                                 <mkdir dir="./release"/>
                                 <mkdir dir="./release/win64"/>
@@ -261,7 +261,7 @@
                                 <chmod file="./release/mac/DSMEditor-Mac.sh" perm="ugo+rwx"/>
                                 <chmod file="./release/linux/DSMEditor-Linux.sh" perm="ugo+rwx"/>
 
-                            </tasks>
+                            </target>
                         </configuration>
                         <goals>
                             <goal>run</goal>
